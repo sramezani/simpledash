@@ -4,12 +4,75 @@ A dated log with one entry per session. **Newest entry first.**
 
 It is written for future Claude sessions: read the latest entry before starting work. Ideas that fall outside the roadmap go here too (Working rule 5).
 
+## 2026-10-11 · Session 2 · Pricing, theme file and UI rules (Sprint 0, before code)
+
+### Done
+
+- **Pricing** (Siamak's request): the €9 plan is now called Starter and also comes yearly at €90 (2 months free). Growth (€19 a month) shows as "Coming soon" in the pricing section.
+  - Written into SPEC sections 1, 5, 9, 12, 16, 17, 20 and 22–27.
+  - Also in CHECKLIST Sprints 3–4, DECISIONS, README and CLAUDE.md.
+- **One theme and brand file:** `src/config/theme.ts` holds every colour, radius, shadow and brand fact. Guards make sure the code only uses its tokens (SPEC section 18).
+- **UI quality bar** and **code structure and reuse rules:** SPEC sections 18 and 4, plus new conventions in CLAUDE.md.
+- **Sprint 0 checklist:** new tasks for the theme file and the component base, with a dev-only `/ui-kit` page.
+- **No more section signs:** Siamak asked what the section sign was. Every one in the docs is now plain words ("section 16"), and CLAUDE.md has a rule against symbols like it.
+- No app code, no installs, no git. `docs/ROADMAP.md` is untouched.
+
+### Siamak's answers
+
+- Pricing is a section on the landing page (`/#pricing`), not its own page.
+- The €9/€90 plan is called **Starter**.
+- A **Monthly / Yearly switch** on the pricing section. Growth always shows €19 a month.
+- **Light theme only** in V1. Dark mode stays an idea, and the theme file is ready for it.
+- **UI:** Siamak likes DataFast's UI because it is "perfect", not because of its looks, and doesn't want it copied. It sets the bar for polish.
+
+### Learned
+
+- Email clients and the Open Graph image renderer need plain hex colours. So the theme file uses hex, and the CSS variables are written from it.
+- Next.js needs `next/font` calls in their own module, so fonts are the one thing outside the theme file (`src/lib/theme/fonts.ts`).
+- **Versions on npm today:**
+  - lucide-react 1.55
+  - class-variance-authority 0.7.1, clsx 2.1.1, tailwind-merge 3.7, tw-animate-css 1.4
+  - server-only 0.0.1
+  - shadcn 4.21.4, tailwindcss 4.3.3, next 16.4.0
+
+### Problems
+
+- **ugrep and `|`:** it treats `|` in a pattern as "or", so searching Markdown tables matches almost every line. Use Python for those searches.
+
+### Ideas (outside the roadmap, for later)
+
+- A yearly price for Growth when it launches.
+- Dark mode that follows the system setting. It's still an idea, but now only one palette away.
+
+### Next
+
+- **Siamak:**
+  - Review the new SPEC sections 4, 16, 17 and 18, and the new rows in `docs/DECISIONS.md`.
+  - Before Sprint 3, decide whether the prices include VAT and the refund rule for yearly plans (SPEC section 27).
+  - The Sprint 0 account setup from Session 1 still stands.
+- **Claude, Sprint 0 (updated order):**
+  1. Scaffold Next.js 16 with TypeScript 6.0, Tailwind 4 and shadcn/ui.
+  2. Set up ESLint, Prettier and Vitest, with `npm run check`.
+  3. Run `codegraph init -i`.
+  4. Build the theme file, `ThemeStyle`, the Tailwind mapping and the guards (palette removed, lint rules, mapping and contrast tests).
+  5. Build the component base:
+     - the folder layers and their import rules
+     - the first shadcn parts, moved onto tokens
+     - `Logo` and `Container`
+     - `/ui-kit`
+     - `docs/ui.md`
+  6. Set up Drizzle, local Postgres in Compose, and the first migration (Better Auth tables).
+  7. Write `.env.example`, the Dockerfile and `compose.yaml`.
+  8. Add `/api/health` and the "hello" page, using the theme.
+  9. Write `docs/deploy.md`.
+  10. Run the Lighthouse baseline.
+
 ## 2026-10-11 · Session 1 · Planning (start of Sprint 0)
 
 ### Done
 
 - Read `docs/ROADMAP.md`.
-- Checked every fact it marks "from memory, verify" against official docs and npm. Details and sources are in `docs/SPEC.md` §25.
+- Checked every fact it marks "from memory, verify" against official docs and npm. Details and sources are in `docs/SPEC.md` section 25.
 - Asked Siamak 4 questions. Answers:
   - Ranges are full days ending yesterday.
   - Better Auth instead of Auth.js.
@@ -56,7 +119,7 @@ It is written for future Claude sessions: read the latest entry before starting 
 
 - **Siamak:**
   - Review `docs/SPEC.md` and the "Claude" defaults in `docs/DECISIONS.md`.
-  - Answer the 3 open questions in SPEC §27 before Sprint 3.
+  - Answer the 3 open questions in SPEC section 27 before Sprint 3.
   - Install Docker.
   - Start the Sprint 0 account setup: Supabase, Hetzner with Coolify, Cloudflare.
 - **Claude, Sprint 0:**

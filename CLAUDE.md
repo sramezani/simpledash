@@ -1,6 +1,6 @@
 # SimpleDash: brief for Claude Code
 
-SimpleDash (simpledash.app) turns the Google Analytics 4 data a founder already has into one simple dashboard page, a Monday email and an optional public stats page. It has no tracking script of its own. It is built for indie hackers and small SaaS or content sites that already run GA4. There is one plan: €9 a month, with a 14-day trial and no card needed.
+SimpleDash (simpledash.app) turns the Google Analytics 4 data a founder already has into one simple dashboard page, a Monday email and an optional public stats page. It has no tracking script of its own. It is built for indie hackers and small SaaS or content sites that already run GA4. There is one plan on sale, Starter: €9 a month or €90 a year, with a 14-day trial and no card needed. A Growth plan (€19 a month) shows as "coming soon" in the pricing section.
 
 - **What and why:** `docs/ROADMAP.md`. This is Siamak's brief; don't edit it.
 - **How:** `docs/SPEC.md`. Update the spec before building something differently, and log the change in `docs/DECISIONS.md`.
@@ -34,12 +34,13 @@ These are not up for debate. Anything that would break one goes to Siamak first.
 7. **Fast.** Public pages (landing, public stats, legal) target 100 in all four Lighthouse categories, and never go below 95. The dashboard targets the same for Accessibility and Best Practices: serve from cache and refresh in the background.
 8. **Cheap to run.** Well under €1 per customer per month.
 
-## Stack (details and versions in `docs/SPEC.md` §3)
+## Stack (details and versions in `docs/SPEC.md` section 3)
 
 | Area | Choice |
 | --- | --- |
 | Framework | Next.js 16 (App Router, standalone Docker image, Cache Components), React 19, TypeScript 6.0 (pinned) |
-| UI | Tailwind CSS 4 and shadcn/ui |
+| UI | Tailwind CSS 4, shadcn/ui and lucide icons |
+| Theme and brand | One file, `src/config/theme.ts`, written into each page as CSS variables. Light theme only in V1 |
 | Charts | shadcn/ui charts (Recharts) in the dashboard only. Server-rendered SVG on landing and public pages |
 | Live globe | cobe, loaded lazily |
 | Database | Postgres on Supabase, used as plain Postgres, through Drizzle ORM and postgres.js. Local Postgres in Docker for development |
@@ -80,6 +81,16 @@ docker compose up -d db   # local Postgres
 - **Tests:** put them next to the code (`*.test.ts`), using Vitest.
 - **Dates:** use calendar dates in the site's GA4 time zone. Ranges end yesterday, and yesterday is marked "still updating".
 - **Brand:** the name is always one word, SimpleDash. The logo and favicon are a "–" dash mark.
+- **Theme tokens only:** `src/config/theme.ts` is the only place for colours, radius, shadows and brand facts.
+  - Use token classes such as `bg-primary` and `text-muted-foreground`.
+  - Never use hex, `rgb()` or `oklch()` values, Tailwind palette colours (`bg-blue-500`) or arbitrary colour classes. Lint and tests enforce this.
+- **Reuse first:** before writing a component, helper or util, look for one in CodeGraph, `src/components/ui`, `src/components/shared` and `src/lib`.
+  - Add shadcn parts with its CLI instead of writing them.
+  - Extend with a prop or a `cva` variant instead of copying, and pull shared code out the second time it's needed.
+  - Prefer platform APIs (`Intl`, `URL`) and the packages we already have over new ones.
+- **Layers:** `src/config` → `components/ui` → `components/shared` → feature folders → `src/app`. Each imports only from its own folder and the layers before it, and shared blocks never fetch data. Plans and prices come only from `src/config/plans.ts`, and the card list only from `src/config/cards.ts`. Details are in `docs/SPEC.md` section 4.
+- **UI quality:** mobile first. Cards use container queries and the shared `CardShell` states, with no layout shift. Before ticking a UI task, check it at 375 px and 1440 px and do a keyboard-only pass. The bar is DataFast-level polish with our own design (`docs/SPEC.md` section 18).
+- **Docs:** use plain words in the docs too. Refer to a part of a doc as "section 16", never with symbols such as the section sign.
 - **Plain words on screen:**
 
 | On screen | GA4 source |

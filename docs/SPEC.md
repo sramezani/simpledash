@@ -2,10 +2,12 @@
 
 Oct 11, 2026 · Written by Claude Code from `docs/ROADMAP.md` · Status: approved plan, before any Sprint 0 code
 
+**Updated Oct 11, 2026 (session 2):** a yearly price and Growth shown as "coming soon" (sections 16 and 17), one theme and brand file and a UI quality bar (section 18), and code structure and reuse rules (section 4).
+
 The roadmap says **what** to build and **why**. This spec says **how**.
 
 - To build something differently, change this file first and add a line to `docs/DECISIONS.md`.
-- `§` numbers below refer to sections of this file.
+- References like "section 16" point to the numbered sections of this file.
 
 ## 1. Scope
 
@@ -29,10 +31,17 @@ Out of scope:
 
 Siamak's decisions on Oct 11, 2026 (also in `docs/DECISIONS.md`):
 
-- **Date ranges** are made of full days ending yesterday. 12 months means the last 12 full months (§8).
-- **Better Auth** handles Google sign-in instead of Auth.js (§6).
-- **Stripe Managed Payments** handles VAT and sales tax, with Stripe as the merchant of record (§16).
-- **When a trial ends unpaid**, the dashboard locks and the weekly email and public page pause too. All data is kept (§16).
+- **Date ranges** are made of full days ending yesterday. 12 months means the last 12 full months (section 8).
+- **Better Auth** handles Google sign-in instead of Auth.js (section 6).
+- **Stripe Managed Payments** handles VAT and sales tax, with Stripe as the merchant of record (section 16).
+- **When a trial ends unpaid**, the dashboard locks and the weekly email and public page pause too. All data is kept (section 16).
+
+Added later the same day:
+
+- **Pricing:** one plan, **Starter**, at €9 a month or €90 a year (2 months free). **Growth** (€19 a month) shows as "Coming soon". Pricing is a section on the landing page with a Monthly / Yearly switch (sections 16 and 17). This replaces the roadmap's "one plan at €9 a month" for V1.
+- **Theme and brand in one file:** `src/config/theme.ts`, and the code only uses its tokens (section 18).
+- **Light theme only** in V1, confirmed (section 18).
+- **UI bar:** the polish of the best tools in this space (Siamak named DataFast), with our own design (section 18).
 
 ## 2. Architecture
 
@@ -77,21 +86,24 @@ Versions were checked on npm on Oct 11, 2026. Pin exact versions in `package.jso
 | Framework | Next.js App Router, `output: "standalone"`, Cache Components on | 16.4 | Turbopack by default. `proxy.ts` replaces `middleware.ts`. `next lint` is gone |
 | UI library | React | 19.3 | |
 | Styling | Tailwind CSS | 4.3 | CSS-first config |
-| Components | shadcn/ui (CLI `shadcn`) on Radix | CLI 4.21 | Copied into `src/components/ui` |
-| Charts | shadcn/ui charts (Recharts), **dashboard only** | recharts 3.10 | Landing and public pages use server-rendered SVG (§15, §17) |
+| Components | shadcn/ui (CLI `shadcn`) on Radix | CLI 4.21 | Copied into `src/components/ui`. Brings its helpers: `class-variance-authority` 0.7, `clsx` 2.1, `tailwind-merge` 3.7, `tw-animate-css` 1.4 |
+| Icons | lucide-react (shadcn's default set) | 1.55 | One icon set, tree-shaken |
+| Theme and brand | `src/config/theme.ts`, written into each page as CSS variables by `ThemeStyle` | — | One file for colours, radius, shadows and brand facts (section 18) |
+| Charts | shadcn/ui charts (Recharts), **dashboard only** | recharts 3.10 | Landing and public pages use server-rendered SVG (sections 15 and 17) |
 | Globe | cobe | 2.0 | About 5 KB, loaded lazily |
 | Language | TypeScript, strict | 6.0.3, pinned | typescript-eslint needs < 6.1. TypeScript 7 comes later |
-| Database | Postgres on Supabase free tier, plain Postgres | Supabase default (17) | Shared pooler in session mode (§21) |
+| Database | Postgres on Supabase free tier, plain Postgres | Supabase default (17) | Shared pooler in session mode (section 21) |
 | ORM | Drizzle ORM and drizzle-kit, with the postgres.js driver | 0.45 / 0.31 / postgres 3.4 | SQL migrations in `drizzle/` |
-| Auth | Better Auth: Google provider, Drizzle adapter | 1.7 | Replaces Auth.js (§6) |
+| Auth | Better Auth: Google provider, Drizzle adapter | 1.7 | Replaces Auth.js (section 6) |
 | Google APIs | `@google-analytics/data`, `@google-analytics/admin` (both v1beta), `google-auth-library` | 7.2 / 10.1 / 11.2 | Official clients |
 | Validation | Zod | 4.x | Env vars and inputs |
+| Server-only guard | `server-only` | 0.0.1 | The build fails if browser code imports a server module (section 4) |
 | Email | Resend, React Email (`@react-email/components`) | resend 6.x | |
 | Payments | Stripe Checkout, Customer Portal and webhooks, with Managed Payments | stripe 23 | |
 | Errors and uptime | Sentry (`@sentry/nextjs`), server only | 11.x | Free Developer plan |
 | Tests | Vitest | 5.x | Unit tests only |
 | Lint and format | ESLint 10 flat config (`eslint-config-next` core-web-vitals and typescript) and Prettier 3 (with the Tailwind plugin) | | |
-| Font | Geist via `next/font` (self-hosted at build time) | | |
+| Font | Geist via `next/font` (self-hosted at build time) | | Loaded in `src/lib/theme/fonts.ts` (section 18) |
 | Package manager | npm | | Already installed |
 
 **Changes from the roadmap's suggested defaults** (the roadmap allows these with a one-line reason):
@@ -116,10 +128,16 @@ Versions were checked on npm on Oct 11, 2026. Pin exact versions in `package.jso
 ├── docs/                            ROADMAP, SPEC, CHECKLIST, STORY, DECISIONS, <area>.md
 └── src/
     ├── proxy.ts                     sends signed-out visitors from /dashboard and /settings to /signin
+    ├── config/                      product data: plain values, no imports from app code (rules below)
+    │   ├── theme.ts                 THE theme and brand file: colours, radius, shadows, name, tagline (section 18)
+    │   ├── plans.ts                 plans, prices and features (section 16)
+    │   └── cards.ts                 the card list: id, title, help text, CSV, public-page default (section 11)
     ├── app/
-    │   ├── layout.tsx · icon.svg · apple-icon.png · opengraph-image.tsx
-    │   ├── (marketing)/             page.tsx (landing) · privacy/ · terms/
+    │   ├── layout.tsx · global-error.tsx · globals.css
+    │   ├── icon.tsx · apple-icon.tsx · opengraph-image.tsx   drawn from the theme file and Logo
+    │   ├── (marketing)/             page.tsx (landing, with the #pricing section) · privacy/ · terms/
     │   ├── (app)/                   dashboard/ · settings/          (signed in)
+    │   ├── (dev)/ui-kit/            every token and shared block on one page (404 in production)
     │   ├── signin/
     │   ├── admin/                   usage counts (ADMIN_EMAILS only)
     │   ├── p/[slug]/                public page + opengraph-image.tsx
@@ -135,45 +153,80 @@ Versions were checked on npm on Oct 11, 2026. Pin exact versions in `package.jso
     │       ├── internal/jobs/[job]/
     │       └── health/
     ├── components/
-    │   ├── ui/                      shadcn components
-    │   ├── cards/                   one file per card
+    │   ├── ui/                      shadcn parts, added with the CLI and styled only through tokens
+    │   ├── shared/                  our building blocks: Container, Logo, CardShell, StatTile, Delta,
+    │   │                            RankedList, EmptyState, Notice, SegmentedControl, BillingSwitch…
+    │   ├── cards/                   one file per card, built from shared blocks
     │   ├── charts/                  VisitorsChart (Recharts) · StaticLineChart (SVG, no JS)
-    │   └── globe/                   LiveGlobe (lazy)
+    │   ├── globe/                   LiveGlobe (lazy)
+    │   ├── marketing/               Hero · HowItWorks · Pricing · Faq · Footer
+    │   └── settings/                the settings sections
     └── lib/
         ├── env.ts                   Zod-checked env; the only place that reads process.env
+        ├── utils.ts                 cn() for merging classes (shadcn)
+        ├── theme/                   css.ts (theme → CSS variables) · theme-style.tsx · fonts.ts · contrast.ts
         ├── db/                      client.ts · schema.ts
         ├── auth/                    auth.ts (Better Auth) · session.ts (requireUser, requireSite) · google.ts
         ├── ga4/                     clients · ranges · reports · cache · errors · properties ·
         │                            realtime · labels · ai-sources · geo/ · sample/
         ├── summary/                 summary.ts
-        ├── billing/                 stripe.ts · plan.ts · webhook.ts
+        ├── billing/                 stripe.ts · plan.ts · checkout.ts · webhook.ts
         ├── email/                   weekly-email.tsx · send.ts · unsubscribe.ts
         ├── csv.ts
-        └── format.ts                numbers, durations, % change
+        └── format.ts                numbers, durations, % change, dates and prices
 ```
 
 Tests sit next to the code they test (`*.test.ts`).
+
+### Code structure and reuse
+
+More features come in V2 (several sites, alerts, revenue), so the code is built in layers, and every piece has one home.
+
+**Layers.** Each layer imports only from its own folder and the layers above it. ESLint `no-restricted-imports` rules per folder enforce this.
+
+| Layer | Folder | What goes in | May import |
+| --- | --- | --- | --- |
+| 1. Product data | `src/config/` | `theme.ts`, `plans.ts`, `cards.ts`: plain values, no logic | Nothing from the app |
+| 2. Primitives | `src/components/ui/` | shadcn parts, added with its CLI and styled only through tokens | `lib/utils` |
+| 3. Building blocks | `src/components/shared/` | Our reusable blocks. Props in, UI out, no data fetching | Layers 1–2, `lib/utils`, `lib/format` |
+| 4. Features | `src/components/` `cards/`, `charts/`, `globe/`, `marketing/`, `settings/` | One feature each, built from blocks | Layers 1–3 and `src/lib` |
+| 5. Routes | `src/app/` | Thin pages and handlers: access check, params, then features | Everything above |
+
+`src/lib/` holds the helpers and the data access (GA4, database, auth, billing, email). Only features and routes use its data modules.
+
+**Rules:**
+
+- **Look before writing.** Search CodeGraph, `components/ui`, `components/shared` and `src/lib` first. Add shadcn parts with its CLI instead of writing them.
+- **Extend, don't copy.** A new look is a prop or a `cva` variant on the existing component, never a copy of it. Shared code is pulled out the second time it is needed.
+- **One home per helper.** Formatting (numbers, durations, %, dates, prices) lives only in `src/lib/format.ts`. Class merging lives only in `cn()` (`src/lib/utils.ts`).
+- **Platform first.** Use `Intl`, `URL`, `AbortSignal.timeout`, `crypto.randomUUID` and the packages we already have before adding one. No lodash and no date library.
+- **Server code stays on the server.** Modules that touch secrets, the database or Google start with `import "server-only"`, so the build fails if browser code imports them.
+- **Typed links.** `typedRoutes: true` in `next.config.ts`, so a broken internal link fails the typecheck.
+- **One card list.** `src/config/cards.ts` feeds the dashboard, the public page, the card picker in settings and the CSV route. No other list of cards exists.
+- **One plan list.** Plan names, prices and features come only from `src/config/plans.ts` (section 16).
+- **Every shared block shows on `/ui-kit`**, a dev-only page with every token and block (404 in production). It is where a theme change or a new block gets checked.
 
 ## 5. Routes and screens
 
 | Route | Purpose | Who | Rendering |
 | --- | --- | --- | --- |
-| `/` | **Landing**: headline, demo dashboard on sample data, how it works in 3 steps, price, FAQ, sign-in button | public | static |
+| `/` | **Landing**: headline, demo dashboard on sample data, how it works in 3 steps, pricing section (`#pricing`, section 17), FAQ, sign-in button | public | static |
 | `/signin` | **Sign in**: one screen saying what we read (read-only), then "Continue with Google" | public | static |
-| `/dashboard` | **Dashboard**: the cards (§11) | signed in | dynamic, streamed per card, cache-first |
+| `/dashboard` | **Dashboard**: the cards (section 11) | signed in | dynamic, streamed per card, cache-first |
 | `/settings` | **Settings**: account, weekly email, public page, billing, disconnect Google, delete account | signed in | dynamic |
-| `/p/[slug]` | **Public page** (§15) | public | cached about 10 minutes, plus Cloudflare |
+| `/p/[slug]` | **Public page** (section 15) | public | cached about 10 minutes, plus Cloudflare |
 | `/privacy`, `/terms` | **Legal** | public | static |
-| `/robots.txt`, `/sitemap.xml`, `/llms.txt` | **SEO files** (§17) | public | static or cached |
-| `/admin` | Usage counts (§20) | `ADMIN_EMAILS` | dynamic |
-| `/email/unsubscribe` | One-click unsubscribe (§14) | signed token | dynamic |
+| `/robots.txt`, `/sitemap.xml`, `/llms.txt` | **SEO files** (section 17) | public | static or cached |
+| `/admin` | Usage counts (section 20) | `ADMIN_EMAILS` | dynamic |
+| `/email/unsubscribe` | One-click unsubscribe (section 14) | signed token | dynamic |
+| `/ui-kit` | Every theme token and shared block on one page (sections 4 and 18) | development only; 404 in production | static |
 | `/api/auth/*` | Better Auth (sign-in, callback, sign-out) | — | — |
 | `/api/live` | Realtime data for the dashboard | signed in | 60 s memory cache |
 | `/api/p/[slug]/live` | Realtime data for a public page with Live turned on | public | 60 s memory cache |
-| `/api/csv/[card]` | CSV download (§13) | signed in | — |
-| `/api/icon/[domain]` | Site icon proxy (§19) | public | cached 30 days |
-| `/api/stripe/webhook` | Stripe events (§16) | Stripe signature | — |
-| `/api/internal/jobs/[job]` | Scheduled jobs (§20) | Bearer `CRON_SECRET` | — |
+| `/api/csv/[card]` | CSV download (section 13) | signed in | — |
+| `/api/icon/[domain]` | Site icon proxy (section 19) | public | cached 30 days |
+| `/api/stripe/webhook` | Stripe events (section 16) | Stripe signature | — |
+| `/api/internal/jobs/[job]` | Scheduled jobs (section 20) | Bearer `CRON_SECRET` | — |
 | `/api/health` | Health check with a database ping | public | not cached |
 
 ## 6. Sign-in and Google access
@@ -196,8 +249,8 @@ Tests sit next to the code they test (`*.test.ts`).
 ### Flow
 
 1. On `/signin`, "Continue with Google" opens Google's consent screen. That one screen covers sign-in and read-only Analytics access. Google sends the user back to `/api/auth/callback/google`, then on to `/dashboard`.
-2. **Scope check:** Google lets people untick scopes on the consent screen. If the Google `account.scope` lacks `analytics.readonly`, show the **Analytics access not granted** state (§12). Its "Allow read-only access" button starts the Google flow again.
-3. **First visit:** if the user has no site yet, run the automatic property choice (§7). While it runs, the dashboard shows "Finding your Google Analytics site…". Then it shows real numbers.
+2. **Scope check:** Google lets people untick scopes on the consent screen. If the Google `account.scope` lacks `analytics.readonly`, show the **Analytics access not granted** state (section 12). Its "Allow read-only access" button starts the Google flow again.
+3. **First visit:** if the user has no site yet, run the automatic property choice (section 7). While it runs, the dashboard shows "Finding your Google Analytics site…". Then it shows real numbers.
 
 ### Access tokens on the server
 
@@ -223,13 +276,13 @@ When a refresh fails with `invalid_grant`, set `site.status = 'needs_reconnect'`
 3. Delete `report_cache` rows for the user's properties that no other site uses.
 4. Sign the user out.
 
-Settings, notes, the signup event and the public page's slug are kept, so signing in again restores everything. The weekly email and public page pause on their own until Google is reconnected (§14, §15).
+Settings, notes, the signup event and the public page's slug are kept, so signing in again restores everything. The weekly email and public page pause on their own until Google is reconnected (sections 14 and 15).
 
 ### Delete account (settings, confirmed by typing DELETE)
 
 1. Cancel any Stripe subscription immediately.
 2. Revoke the Google token.
-3. Delete the `user` row. This cascades to every table in §9.
+3. Delete the `user` row. This cascades to every table in section 9.
 4. Delete caches no other site uses.
 5. Sign the user out and show "Your account and data were deleted."
 
@@ -246,7 +299,7 @@ Stripe keeps its own payment records, because it is the merchant of record.
 `chooseProperty(userId)` in `src/lib/ga4/properties.ts`:
 
 1. **List properties:** call `listAccountSummaries` (Admin API v1beta, page size 200, following every page). Keep ordinary GA4 properties.
-2. **No properties:** no site is created. The dashboard shows sample data and the "No GA4 property" banner (§12).
+2. **No properties:** no site is created. The dashboard shows sample data and the "No GA4 property" banner (section 12).
 3. **One property:** use it.
 4. **More than one:** for up to the first 20 properties, run a `runReport` with `activeUsers` from `7daysAgo` to `yesterday` (GA4 reads these in each property's own time zone).
    - Run them 5 at a time, with a 5 s timeout each.
@@ -255,7 +308,7 @@ Stripe keeps its own payment records, because it is the merchant of record.
 5. **Fetch details** for the chosen property:
    - `getProperty` gives `timeZone`, `createTime`, `serviceLevel` and `currencyCode`.
    - `listDataStreams` gives the first web stream's `defaultUri`. Its hostname, without `www.`, becomes the "Showing: mysite.com" label. If there is no web stream, use the property's display name.
-6. **Save and warm:** insert the `site` (`is_active = true`), then warm the default range (§10.3) so the dashboard opens from cache.
+6. **Save and warm:** insert the `site` (`is_active = true`), then warm the default range (section 10.3) so the dashboard opens from cache.
 
 **The switcher** sits at the top of the dashboard: "Showing: mysite.com ▾".
 
@@ -284,7 +337,7 @@ Stripe keeps its own payment records, because it is the merchant of record.
 **Where ranges live:**
 
 - The range is in the URL (`?range=7d|30d|12m`), so links can be shared and nothing is stored.
-- The weekly email uses the 7-day range computed on a Monday, which is exactly last Monday to Sunday (§14).
+- The weekly email uses the 7-day range computed on a Monday, which is exactly last Monday to Sunday (section 14).
 
 **Still updating:**
 
@@ -292,7 +345,7 @@ Stripe keeps its own payment records, because it is the merchant of record.
 - When a chart includes yesterday, its last segment is dashed and labelled "Still updating".
 - The date switch has a short hint: "Ends yesterday. Google may still be adding to yesterday."
 
-**Today** shows only as "right now", in the live globe (§11.10).
+**Today** shows only as "right now", in the live globe (section 11.10).
 
 **% change:**
 
@@ -345,7 +398,7 @@ Unique on (`user_id`, `property_id`).
 | Column | Type | Notes |
 | --- | --- | --- |
 | `property_id` | text | |
-| `report` | text | e.g. `totals`, `sources` (§10.2) |
+| `report` | text | e.g. `totals`, `sources` (section 10.2) |
 | `range_type` | text | `7d` · `30d` · `12m` |
 | `params_hash` | text | Hash of extra inputs: signup event, AI list version, limits |
 | `window_start`, `window_end` | date | The dates actually fetched |
@@ -363,7 +416,7 @@ Primary key (`property_id`, `report`, `range_type`, `params_hash`).
   - A slug is 3–40 characters of `[a-z0-9-]`. Reserved words are blocked.
   - The page shows the user's active site.
 - **`user_settings`**: `user_id` pk fk, `weekly_email` boolean (default true), `email_notice_dismissed` boolean (default false), `created_at`, `updated_at`.
-- **`billing`**: `user_id` pk fk, `trial_ends_at` (sign-up + 14 days), `status` (Stripe subscription status or null), `stripe_customer_id`, `stripe_subscription_id`, `current_period_end`, `updated_at`.
+- **`billing`**: `user_id` pk fk, `trial_ends_at` (sign-up + 14 days), `status` (Stripe subscription status or null), `stripe_customer_id`, `stripe_subscription_id`, `plan_interval` (`month` or `year`, null until the first payment), `current_period_end`, `updated_at`.
 - **`email_send`**: `user_id` fk, `week_start` date, `sent_at`, `provider_message_id`. The primary key is (`user_id`, `week_start`), so a week's email can only go out once.
 - **`stripe_event`**: `event_id` pk, `type`, `received_at`. The webhook skips events it has already stored.
 
@@ -385,7 +438,7 @@ This is the only code that talks to Google Analytics. Pages, the email and jobs 
 
 ### 10.2 Reports for one range
 
-Every request sets `returnPropertyQuota: true`. The date ranges come from §8.
+Every request sets `returnPropertyQuota: true`. The date ranges come from section 8.
 
 "Both periods" means two `dateRanges` in one request. GA4 then adds a `dateRange` dimension to each row.
 
@@ -400,8 +453,8 @@ Every request sets `returnPropertyQuota: true`. The date ranges come from §8.
 | 7 | `countries` | `countryId`, `country` | `activeUsers` | — | current | desc, 50 | Countries |
 | 8 | `devices` | `deviceCategory` | `activeUsers` | — | current | desc | Devices |
 | 9 | `actions` | `eventName` | `eventCount` | `eventName` in [`file_download`, `click`, `form_submit`, signup event] | both | — | Actions, Signups, summary, email |
-| 10 | `ai_sources` | `sessionSource` | `activeUsers` | AI filter (§11.5) | current | desc, 20 | AI traffic, email |
-| 11 | `ai_pages` | `landingPage` | `activeUsers` | AI filter (§11.5) | current | desc, 10 | AI traffic |
+| 10 | `ai_sources` | `sessionSource` | `activeUsers` | AI filter (section 11.5) | current | desc, 20 | AI traffic, email |
+| 11 | `ai_pages` | `landingPage` | `activeUsers` | AI filter (section 11.5) | current | desc, 10 | AI traffic |
 
 **Batching:**
 
@@ -418,7 +471,7 @@ Every request sets `returnPropertyQuota: true`. The date ranges come from §8.
 | `(other)` | Other. GA4 groups rare values this way on large properties |
 | `deviceCategory` values | Desktop, Mobile, Tablet. Anything else is Other |
 
-Channel names are mapped to plain words in §11.4.
+Channel names are mapped to plain words in section 11.4.
 
 ### 10.3 Cache: show old data at once, refresh in the background
 
@@ -465,9 +518,10 @@ Other limits:
 The dashboard is one scrolling page.
 
 - **Top bar:** dash logo, the "Showing: mysite.com ▾" switcher, the date switch (7 days · 30 days · 12 months) and a link to settings.
-- **Below it:** notices (weekly email notice, state banners from §12), then the cards.
+- **Below it:** notices (weekly email notice, state banners from section 12), then the cards.
 - **Layout:** one column on phones, a grid on wider screens.
-- **On every card:** a title, a short help popover (ⓘ) in plain words, and "Download CSV" (§13). The summary line has no CSV.
+- **On every card:** a title, a short help popover (ⓘ) in plain words, and "Download CSV" (section 13). The summary line has no CSV.
+- **Built from shared parts:** every card sits in the shared `CardShell` (title, help, CSV, and the loading, empty, error, stale and locked states). The card list, titles and help text come from `src/config/cards.ts` (section 4).
 
 Help text for every count: "Visitors that Google Analytics counted. People who refuse cookies or block GA aren't included."
 
@@ -519,10 +573,10 @@ Each number shows its % change with an arrow and a word. Colour is never the onl
 
 ### 11.3 Visitors chart
 
-- A shadcn line chart (Recharts) drawn from the `series` points. Detail per range is in §8.
+- A shadcn line chart (Recharts) drawn from the `series` points. Detail per range is in section 8.
 - X-axis labels use the site's time zone. The tooltip shows the date and the visitors.
 - The last segment is dashed and labelled "Still updating" when the window includes yesterday.
-- **Chart notes** (§13) are small markers on their day. On the hourly chart they sit at midnight; on the monthly chart, on their month. The note text shows on hover or keyboard focus.
+- **Chart notes** (section 13) are small markers on their day. On the hourly chart they sit at midnight; on the monthly chart, on their month. The note text shows on hover or keyboard focus.
 - **Text alternative:**
   - A visually hidden caption, e.g. "Visitors per day, 4 Oct to 10 Oct, highest 312 on 7 Oct".
   - A "View as table" toggle.
@@ -531,7 +585,7 @@ Each number shows its % change with an arrow and a word. Colour is never the onl
 
 - **Default view:** `sessionSource`, top 10, with "Show more" up to 50.
 - **Toggle:** "Sources | Channels".
-- **Site icons:** served by `/api/icon/<domain>` (§19).
+- **Site icons:** served by `/api/icon/<domain>` (section 19).
   - Sources that look like domains use that domain.
   - Common names map to domains: google → google.com, bing → bing.com, t.co → x.com, and so on.
   - Anything else gets a generic icon.
@@ -643,11 +697,11 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 | --- | --- | --- |
 | **No GA4 property** | No properties in the account summaries | The dashboard on sample data, with the banner "No Google Analytics site found. Here's how to add GA4 in 5 minutes." It has 3 short steps inline and a link to Google's guide |
 | **No data yet** | Both periods have zero visitors | Banner: "Google Analytics hasn't recorded any visits for mysite.com in this period. If you just added it, check back tomorrow." Cards show empty states, not zeros |
-| **Key events missing** | No signup event chosen | The Signups card shows the picker or the how-to (§11.2) |
+| **Key events missing** | No signup event chosen | The Signups card shows the picker or the how-to (section 11.2) |
 | **Analytics access not granted** | The Analytics scope was unticked on Google's consent screen | Card: "SimpleDash needs read-only access to Google Analytics." Button: "Allow access" |
 | **Google access revoked** | `invalid_grant` or a 401 | Banner: "Google access ended. Reconnect to see fresh numbers." Button: "Reconnect Google". Cached numbers stay visible, greyed out |
-| **Google quota reached** | A 429 from Google | A note on the cards with the time it clears. Cached numbers stay (§10.4) |
-| **Trial ended** | Trial over and no paid subscription | A locked overlay on the cards: "Your free trial has ended. Keep SimpleDash for €9 a month." Button: "Upgrade". Settings still work, and nothing is deleted |
+| **Google quota reached** | A 429 from Google | A note on the cards with the time it clears. Cached numbers stay (section 10.4) |
+| **Trial ended** | Trial over and no paid subscription | A locked overlay on the cards: "Your free trial has ended. Keep SimpleDash for €9 a month or €90 a year." The Monthly / Yearly switch and an "Upgrade" button (section 16). Settings still work, and nothing is deleted |
 | **Lost access to the property** | A 403 from Google | A banner, plus the switcher |
 
 **Other empty states from the roadmap:**
@@ -685,7 +739,7 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 
 - The `weekly-email` job runs every hour. It picks users who meet all of these:
   - The weekly email is on.
-  - The account is not locked (§16).
+  - The account is not locked (section 16).
   - The active site has status `ok`.
   - Local time in the site's time zone is Monday, 13:00–13:59.
   - There is no `email_send` row for this week yet.
@@ -702,6 +756,7 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 - An AI traffic line, only when it's above 0.
 - An "Open your dashboard" button.
 - **Footer:** why they get the email, a settings link and an unsubscribe link.
+- **Look:** the colours, name and logo come from the theme file (section 18), as inline styles, because email clients don't support CSS variables.
 
 **Sending:**
 
@@ -721,7 +776,7 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 
 - Resend's free plan allows 3,000 emails a month but only **100 a day**.
 - Move to Pro ($20 a month) before about 90 users have the weekly email on.
-- Sentry's free cron monitor watches this job (§20).
+- Sentry's free cron monitor watches this job (section 20).
 
 ## 15. Public page `/p/<slug>`
 
@@ -729,7 +784,7 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 
 - Turned on from its dashboard card or from settings.
 - **Slug:** defaults to the domain, e.g. `mysite-com`. Must be unique.
-- **Cards:** the user picks which cards to show.
+- **Cards:** the user picks which cards to show, from the card list in `src/config/cards.ts` (section 4).
 - **Indexing:** "Let search engines index this page" is on by default.
 - **Copy link** button.
 
@@ -773,6 +828,17 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 
 ## 16. Billing
 
+**Plans and prices** (Siamak, Oct 11, 2026). They live in one place, `src/config/plans.ts`, which feeds the pricing section, the upgrade screens, settings, structured data and `llms.txt`.
+
+| Plan | Price | What it includes | Status |
+| --- | --- | --- | --- |
+| **Starter** | €9 a month, or €90 a year (2 months free) | One GA4 site, no traffic limits, every V1 feature, and a 14-day free trial with no card | On sale |
+| **Growth** | €19 a month | Everything in Starter, plus the roadmap's V2 list: several sites, Search Console, traffic alerts, mentions on the chart, revenue next to traffic, and asking your data in plain English | "Coming soon" in the pricing section only. No button and no waitlist |
+
+- "2 months free" is worked out from the prices (12 × €9 − €90 = €18, which is 2 months of €9). It is never typed in by hand.
+- Stripe has one product, Starter, with two prices. Their IDs are in `STRIPE_PRICE_MONTHLY` and `STRIPE_PRICE_YEARLY` (section 22).
+- Growth arrives with V2 (roadmap Sprint 5), together with its Stripe price and its limits.
+
 **Trial:**
 
 - `billing.trial_ends_at` is set to sign-up + 14 days when the user is created.
@@ -786,21 +852,25 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 
 **What locked means:**
 
-- The dashboard overlay (§12).
+- The dashboard overlay (section 12).
 - No weekly email.
 - The public page is paused.
 - No GA4 calls: jobs skip locked users.
 - All data is kept.
 
-**Upgrade:** a server action creates a Checkout Session.
+**Upgrade:** a server action, `startCheckout` (`src/lib/billing/checkout.ts`), creates a Checkout Session.
 
-- Subscription mode, for `STRIPE_PRICE_ID` (€9 a month).
+- **Where:** the locked overlay (section 12) and Settings → Billing. Both hold the same Monthly / Yearly switch as the pricing section (`BillingSwitch`), here as a form field named `interval`. The form posts to the server action, so upgrading needs no JavaScript.
+- **Price:** the action checks `interval` (`month` or `year`) with Zod and picks `STRIPE_PRICE_MONTHLY` or `STRIPE_PRICE_YEARLY` on the server. **The browser never sends a price ID.**
+- Subscription mode, for the chosen price.
 - **Stripe Managed Payments** is turned on, so Stripe is the merchant of record and handles VAT and sales tax.
 - The product needs an eligible digital tax code (SaaS).
-- If 48 hours or more of the trial are left, pass `subscription_data.trial_end`, so upgrading early doesn't cost trial days. Check in Sprint 4 that Managed Payments supports this; if not, charge right away.
+- If 48 hours or more of the trial are left, pass `subscription_data.trial_end`, so upgrading early doesn't cost trial days. This works the same for both prices. Check in Sprint 4 that Managed Payments supports this; if not, charge right away.
 - On success, go to `/dashboard?upgraded=1`. On cancel, go to `/settings`.
 
-**Manage:** a Stripe Customer Portal session for card, invoices and cancelling. Check in Sprint 4 that the Portal works with Managed Payments.
+**Manage:** a Stripe Customer Portal session for card, invoices, cancelling, and switching between monthly and yearly. The Portal's plan-switching setting lists both Starter prices. Check in Sprint 4 that the Portal works with Managed Payments.
+
+**Settings → Billing** shows the plan in plain words, for example "Free trial · 9 days left" or "Starter · €90 a year · renews on 11 Oct 2027", with "Upgrade" or "Manage billing".
 
 **Webhook** (`/api/stripe/webhook`):
 
@@ -810,11 +880,12 @@ There is no setup screen. Every state below is a card or banner on the dashboard
   - `checkout.session.completed`
   - `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`
   - `invoice.paid`, `invoice.payment_failed`
-- **Unit tests:** signature check, each event to status, repeated events, and out-of-order events (the newest subscription state wins).
+- Read the subscription's price and store its interval (`month` or `year`) in `billing.plan_interval`. A price that isn't one of the two Starter prices is reported to Sentry.
+- **Unit tests:** signature check, each event to status, price to `plan_interval`, repeated events, and out-of-order events (the newest subscription state wins).
 
 **Managed Payments limits:** subscriptions can only be created through Checkout or Payment Links, and Connect isn't supported. Neither affects us.
 
-**Price on the landing page:** "€9 a month". Whether that includes VAT is an open question (§27).
+**Prices on the landing page:** the pricing section (section 17). Whether the prices include VAT is an open question (section 27).
 
 ## 17. Landing page, legal pages and SEO files
 
@@ -837,15 +908,29 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 2. We find your GA4 site.
 3. See your visitors, sources and top pages on one page.
 
-**Price:** €9 a month, flat, no traffic limits, one GA4 site, a 14-day free trial and no card.
+**Pricing section** (`#pricing`, linked as "Pricing" from the landing page's top bar and footer). Everything on its cards comes from `src/config/plans.ts` (section 16).
+
+- **Monthly / Yearly switch** (the shared `BillingSwitch`):
+  - Two radio buttons styled as a segmented control, labelled "Monthly" and "Yearly · 2 months free".
+  - CSS `:has()` shows the price that matches the checked option, so it needs no JavaScript.
+  - It starts on Monthly. Arrow keys move between the options, and focus is visible.
+- **Starter card:**
+  - "€9 / month", or "€90 / year" when Yearly is picked.
+  - Its feature list: one GA4 site, no traffic limits, full history from day one, the weekly email, the public page.
+  - The button "Start free trial" → `/signin`, with "14 days free · no card" under it.
+  - Billing is only chosen at upgrade (section 16), because the trial needs no card.
+- **Growth card:**
+  - "€19 / month" whichever option is picked, with a "Coming soon" badge.
+  - "Everything in Starter, plus" its feature list (section 16).
+  - No button and no waitlist.
 
 **FAQ:** "Do I need GA4?" and "What do you store?".
 
-**Brand:** the name is always SimpleDash, one word. The logo is a "–" dash mark, which is also the favicon (`icon.svg`, `apple-icon.png`).
+**Brand:** the name is always SimpleDash, one word. The logo is a "–" dash mark, drawn by the shared `Logo` component. The favicons (`icon.tsx`, `apple-icon.tsx`) and the Open Graph images draw it from the theme file (section 18), so a brand colour change reaches them too.
 
 ### Legal pages (`/privacy`, `/terms`)
 
-Both are static, in plain English. Claude drafts them, Siamak reviews them (this is not legal advice), and they need Siamak's legal details (§27).
+Both are static, in plain English. Claude drafts them, Siamak reviews them (this is not legal advice), and they need Siamak's legal details (section 27).
 
 **The privacy policy must cover:**
 
@@ -861,8 +946,8 @@ Both are static, in plain English. Claude drafts them, Siamak reviews them (this
 
 - the service
 - the trial
-- price and billing through Stripe as merchant of record
-- cancellation
+- prices and billing through Stripe as merchant of record: monthly or yearly, renewing automatically
+- cancellation and refunds (the refund rule for yearly plans is an open question, section 27)
 - acceptable use
 - liability
 - governing law
@@ -872,15 +957,118 @@ Both are static, in plain English. Claude drafts them, Siamak reviews them (this
 - **Titles and descriptions:** unique per page, with the title template "%s · SimpleDash".
 - **Canonical URLs:** built from `APP_URL`.
 - **Open Graph images:** one for the landing page (`opengraph-image.tsx`, generated at build time) and one per public page.
-- **Structured data:** `SoftwareApplication` JSON-LD on the landing page: name, description, `applicationCategory` "BusinessApplication", `operatingSystem` "Web", and `offers` (price "9", priceCurrency "EUR").
+- **Structured data:** `SoftwareApplication` JSON-LD on the landing page: name, description, `applicationCategory` "BusinessApplication", `operatingSystem` "Web", and `offers`.
+  - Two `Offer`s, each with a `UnitPriceSpecification`: €9 a month (`unitCode` "MON") and €90 a year (`unitCode` "ANN"), priceCurrency "EUR", both from `plans.ts`.
+  - Growth is left out until it can be bought.
 - **`robots.txt`:**
   - Allows `/`, `/privacy`, `/terms` and `/p/`.
   - Blocks `/dashboard`, `/settings`, `/admin`, `/signin`, `/api/` and `/email/`.
   - Links to the sitemap.
 - **`sitemap.xml`:** landing, privacy and terms (Sprint 3), plus public pages (Sprint 4).
-- **`llms.txt`:** short plain text for AI assistants: what SimpleDash is, who it's for, features, price, what we store, and key links.
+- **`llms.txt`:** short plain text for AI assistants: what SimpleDash is, who it's for, features, prices (Starter at €9 a month or €90 a year; Growth at €19 a month, coming soon), what we store, and key links (including `/#pricing`).
 
-## 18. Performance and accessibility
+## 18. Design, performance and accessibility
+
+### Design system: one theme and brand file
+
+Siamak's rule: the whole look and the brand live in one file, and the code only uses its tokens. Changing that file re-themes the site, the weekly email, the Open Graph images and the favicons.
+
+**The file: `src/config/theme.ts`**
+
+- **`brand`:** name (SimpleDash), tagline, description, URL and support email.
+- **`colors.light`:** the tokens below, as hex values. Hex works everywhere the theme is needed: CSS, email clients and the Open Graph image renderer.
+- **`radius` and `shadows`.**
+- **Two settings at the top drive the rest:**
+  - `brandColor` feeds `primary`, `ring`, `brand` and `chart-1`, so changing the main colour is a one-line edit.
+  - The `neutral` scale feeds the surfaces, borders and quiet text.
+- **Plain data with no runtime imports,** so pages, emails, Open Graph images, tests and the globe can all import it.
+- **Light theme only in V1.** A `colors.dark` palette can be added later: the CSS then gets a `prefers-color-scheme: dark` block, and nothing else changes.
+
+**Tokens**
+
+| Group | Tokens | Used for |
+| --- | --- | --- |
+| Surfaces and text | `background`, `foreground`, `card`, `popover`, `muted`, `secondary`, `accent`, each with a `-foreground` | Page, cards, menus, quiet text and hover backgrounds (shadcn's names) |
+| Actions | `primary`, `primary-foreground`, `ring`, `destructive`, `destructive-foreground` | Buttons, links, focus rings, delete account |
+| Lines | `border`, `input` | Card edges and form fields |
+| Brand | `brand` | The dash in the logo |
+| Changes | `positive`, `negative` | % change up and down, always with an arrow and a word |
+| Notes | `warning` | "Still updating" and quota notes |
+| Charts | `chart-1` to `chart-5` | Chart lines and series. `chart-1` is the visitors line |
+| Layers | `overlay` | The dim layer behind dialogs |
+
+**How the values reach the page:**
+
+- `src/lib/theme/css.ts` turns the theme into CSS variables (`--primary: #…`). It is a pure function with tests.
+- `<ThemeStyle />` writes them into `<head>` from the root layout and from `global-error.tsx`. A saved edit shows at once in development, and there is no generated file.
+- `src/app/globals.css` only maps token names to Tailwind utilities (`@theme inline { --color-primary: var(--primary); … }`), so classes like `bg-primary` and `text-muted-foreground` exist. It holds no colour values.
+- `color-scheme: light` is set, and shadcn's class-based `dark:` variant stays unused.
+
+**The same values outside the page:**
+
+- The weekly email, the Open Graph images, the live globe's colours and `viewport.themeColor` import `theme.ts` directly.
+- The favicons (`icon.tsx`, `apple-icon.tsx`) draw the dash with the `Logo` component in `brandColor`.
+- **Fonts are the one exception.** Next.js needs `next/font` calls in their own module, so `src/lib/theme/fonts.ts` loads Geist. Changing the font is one import line there.
+
+**Guards**, all part of `npm run check`:
+
+1. **Only tokens exist.** Tailwind's default colours are removed (`@theme { --color-*: initial; }`), so classes like `bg-blue-500` don't exist.
+2. **No raw colours.** ESLint (`no-restricted-syntax`) blocks hex, `rgb()`, `hsl()` and `oklch()` strings, and arbitrary colour and font-size classes such as `bg-[#…]` or `text-[13px]`, everywhere except `src/config/theme.ts`.
+3. **Nothing missing.** A test checks that every token has a Tailwind mapping in `globals.css`, that every mapping has a token, and that `globals.css` holds no colour values.
+4. **Contrast.** A test checks WCAG AA: 4.5:1 for every text and background pair, and 3:1 for the focus ring and `chart-1` against the card. A theme edit that would hurt accessibility (and Lighthouse) fails with a message naming the pair.
+
+When a shadcn part is added, it is moved onto tokens. For example, the dialog overlay uses `bg-overlay` instead of `bg-black/50`, and the destructive button uses `text-destructive-foreground` instead of `text-white`.
+
+### UI quality bar
+
+The bar is the polish of the best tools in this space: everything clear, quick and in its place. Siamak named DataFast as the example. It is the bar to match, **not a design to copy**: SimpleDash keeps its own layout, colours and words.
+
+**Layout and style:**
+
+- **Numbers first.** The 4 numbers and the visitors chart are visible without scrolling on a 1440 × 900 screen, and right under the top bar on a phone.
+- **One visual language:**
+  - neutral surfaces with one accent colour
+  - 1 px borders and flat cards
+  - shadows only on raised layers (menus, dialogs)
+  - one radius scale
+- **Type:** Geist, sizes from Tailwind's type scale only, and sentence case everywhere.
+
+**Numbers and lists:**
+
+- **Numbers** use `tabular-nums` and are always formatted by `src/lib/format.ts`. A change shows an arrow, the % and a word; colour is never the only signal.
+- **Ranked lists** (Sources, Pages, Countries, AI traffic) share one `RankedList` block:
+  - each row has an icon or flag, a label and a value
+  - a soft share bar sits behind the row (`bg-primary/10`)
+  - the whole row highlights on hover
+  - long labels are cut short, and the full text stays available on hover and to screen readers
+  - "Show more" expands in place, with no jump
+
+**Interaction:**
+
+- Every control has hover, active, disabled and visible focus states, all from tokens.
+- Touch targets are at least 44 × 44 px.
+- The date switch is a segmented control made of links to `?range=`, so it works without JavaScript.
+
+**States:**
+
+- Every card uses the shared `CardShell`, so the loading, empty, error, stale and locked states look the same everywhere.
+- Skeletons have the final size, so nothing moves when the numbers arrive (no layout shift).
+- No spinners for page content.
+
+**Responsive:**
+
+- Mobile first. Cards use container queries (`@container`), so one card fits the dashboard grid, the public page and the landing demo.
+- No horizontal scrolling down to 320 px wide.
+- Every screen is checked at 320, 375, 768, 1024 and 1440 px at the end of each sprint.
+
+**Motion:** 150–200 ms ease-out, only for changes of state (hover, open, expand). Nothing animates on page load, and `prefers-reduced-motion` is respected.
+
+**Before a UI task is ticked:**
+
+- Check it in the browser at 375 px and 1440 px.
+- Do a keyboard-only pass.
+- Confirm there are no console errors.
+- Run Lighthouse as described under Performance below.
 
 ### Performance (principle 7)
 
@@ -895,7 +1083,7 @@ Both are static, in plain English. Claude drafts them, Siamak reviews them (this
 **Dashboard:**
 
 - Server components, streamed card by card with Suspense.
-- Cache first (§10.3).
+- Cache first (section 10.3).
 - Recharts and cobe are split into their own chunks, and the globe loads only when visible.
 
 **Lint:** `eslint-config-next`'s core-web-vitals rules are on.
@@ -915,18 +1103,18 @@ Both are static, in plain English. Claude drafts them, Siamak reviews them (this
 - **Charts:** a caption plus "View as table". The globe has its text list.
 - **Changes:** shown with arrows and words, never colour alone.
 - `prefers-reduced-motion` is respected.
-- **Theme:** light only in V1.
+- **Theme:** light only in V1, confirmed by Siamak on Oct 11, 2026. The theme file can take a dark palette later (Design system, above).
 
 ## 19. Security
 
 **Tokens and secrets:**
 
-- Google tokens are encrypted at rest (§6), and revoked or deleted on disconnect and account deletion.
+- Google tokens are encrypted at rest (section 6), and revoked or deleted on disconnect and account deletion.
 - Secrets live only in env vars, read through `src/lib/env.ts` and checked with Zod at startup.
 - `.env*` files are git-ignored, except `.env.example`.
 - Secrets are never logged. Sentry's `beforeSend` strips headers and cookies.
 
-**Access:** every request is scoped to the signed-in user's own site (`requireSite()`, §6).
+**Access:** every request is scoped to the signed-in user's own site (`requireSite()`, section 6).
 
 **Job endpoints:**
 
@@ -954,7 +1142,7 @@ A full CSP is a later improvement: script nonces would make the static pages dyn
 
 **Rate limits:** a Cloudflare rate-limiting rule on `/api/` (the free plan allows one rule).
 
-**CSV:** formula escaping (§13).
+**CSV:** formula escaping (section 13).
 
 **Cookies:** only necessary ones (session and OAuth state), so there is no cookie banner.
 
@@ -965,7 +1153,7 @@ Jobs run as Coolify scheduled tasks. Each one runs `node scripts/run-job.mjs <jo
 | Job | When | What it does |
 | --- | --- | --- |
 | `warm-cache` | hourly at :05 | For sites that are active, unlocked and `ok`, whose owner signed in during the last 14 days: refresh the 7-day reports when they're stale or the day has turned in the site's time zone. Skips quota-blocked sites |
-| `weekly-email` | hourly at :00 | §14 |
+| `weekly-email` | hourly at :00 | Section 14 |
 | `cleanup` | daily at 03:30 UTC | Deletes `report_cache` rows not fetched for 7 days, and expired sessions and verification rows |
 | backup | nightly at 02:00 UTC | Runs in a separate small container with a Postgres client and rclone. `pg_dump` (custom format) of Supabase, then gzip, then the R2 bucket. An R2 lifecycle rule deletes copies after 30 days. Restore one into local Postgres once, to prove it works |
 
@@ -981,7 +1169,7 @@ Jobs run as Coolify scheduled tasks. Each one runs `node scripts/run-job.mjs <jo
 
 - Signups: total, last 7 days and last 30 days.
 - Connected sites.
-- On trial, paying and locked.
+- On trial, paying (monthly and yearly) and locked.
 - Trial-to-paid rate.
 - Public pages turned on.
 - Weekly email turned on.
@@ -1029,7 +1217,7 @@ Siamak does this; Claude writes the step-by-step guide in `docs/deploy.md` durin
    - Set env vars in Coolify.
    - Health check on `/api/health`.
    - Auto-deploy on push to `main`.
-   - Add the scheduled tasks from §20.
+   - Add the scheduled tasks from section 20.
 3. **Supabase:**
    - Project in `eu-central-1` (Frankfurt).
    - `DATABASE_URL` is the shared pooler in **session mode**. That works over IPv4. The direct connection is IPv6-only, and Docker has no IPv6 by default.
@@ -1070,7 +1258,8 @@ These become `.env.example` in Sprint 0. Each variable is added in the sprint sh
 | `EMAIL_FROM` | Sender address | `SimpleDash <hello@simpledash.app>` | Sprint 4 |
 | `STRIPE_SECRET_KEY` | Stripe API | test key in development | Sprint 4 |
 | `STRIPE_WEBHOOK_SECRET` | Webhook signatures | | Sprint 4 |
-| `STRIPE_PRICE_ID` | The €9 monthly price | `price_…` | Sprint 4 |
+| `STRIPE_PRICE_MONTHLY` | Starter, €9 a month | `price_…` | Sprint 4 |
+| `STRIPE_PRICE_YEARLY` | Starter, €90 a year | `price_…` | Sprint 4 |
 | `SENTRY_DSN` | Server error reports | | Sprint 4 |
 | `SENTRY_AUTH_TOKEN` | Optional: upload source maps at build time | | Sprint 4 |
 | `ADMIN_EMAILS` | Who can open `/admin` | comma-separated | Sprint 4 |
@@ -1091,14 +1280,21 @@ Vitest unit tests only. The roadmap rules out end-to-end tests.
 - Error mapping: 429, 401, 403 and 5xx.
 - Property choice.
 
-**Summary:** every rule in §11.1.
+**Summary:** every rule in section 11.1.
 
 **Billing:**
 
-- Webhooks: signature check, each event, repeated events and event order.
+- Webhooks: signature check, each event, price to `plan_interval`, repeated events and event order.
 - `getPlan`.
+- Plans: "2 months free" worked out from the prices, and `interval` to the right Stripe price ID.
 
-**Small helpers:** CSV escaping, unsubscribe tokens and slug rules.
+**Theme** (section 18):
+
+- `css.ts` writes a CSS variable for every token.
+- Every token has a Tailwind mapping in `globals.css`, and every mapping has a token. `globals.css` holds no colour values.
+- WCAG AA contrast: 4.5:1 for every text and background pair, 3:1 for the focus ring and `chart-1`.
+
+**Small helpers:** CSV escaping, unsubscribe tokens, slug rules and price formatting.
 
 **Before ticking a task:** `npm run check` (typecheck, lint and tests) must pass.
 
@@ -1111,7 +1307,7 @@ Vitest unit tests only. The roadmap rules out end-to-end tests.
 | Cloudflare (DNS, proxy, cache, Email Routing) and R2 (10 GB free) | €0 |
 | Resend | €0, then $20 at about 90 weekly-email users |
 | Sentry Developer | €0 |
-| Stripe and Managed Payments | Per payment: Stripe's fees plus 3.5% (about €0.32 on €9) |
+| Stripe and Managed Payments | Per payment: Stripe's fees plus 3.5%. That's about €0.32 on €9 a month, or €3.15 on €90 a year (about €0.26 a month) |
 
 **At 100 customers:** about €25 a month in total, roughly €0.25 per customer, not counting payment fees. That's well under the €1 limit.
 
@@ -1121,22 +1317,22 @@ Vitest unit tests only. The roadmap rules out end-to-end tests.
 
 | Topic | What we found | Source | What it means for us |
 | --- | --- | --- | --- |
-| Field names | Every name in the roadmap's card table exists. Also available: `sessionPrimaryChannelGroup`, `yearMonth`, `isoYearIsoWeek`, `linkDomain`, `fileName`, `outbound` | [API schema](https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema) | Queries in §10.2 use these names |
-| AI channel | GA4 has a default channel "AI Assistant". It covers ChatGPT, Gemini, Deepseek, Copilot and Grok, and excludes AI Overviews and AI Mode | [Default channel group](https://support.google.com/analytics/answer/9756891) | AI card = channel OR our domain list (§11.5) |
-| Key events | `keyEvents` only counts from when an event was marked key. Older data doesn't change | [API schema](https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema) | Signups uses `eventCount` (§11.2) |
+| Field names | Every name in the roadmap's card table exists. Also available: `sessionPrimaryChannelGroup`, `yearMonth`, `isoYearIsoWeek`, `linkDomain`, `fileName`, `outbound` | [API schema](https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema) | Queries in section 10.2 use these names |
+| AI channel | GA4 has a default channel "AI Assistant". It covers ChatGPT, Gemini, Deepseek, Copilot and Grok, and excludes AI Overviews and AI Mode | [Default channel group](https://support.google.com/analytics/answer/9756891) | AI card = channel OR our domain list (section 11.5) |
+| Key events | `keyEvents` only counts from when an event was marked key. Older data doesn't change | [API schema](https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema) | Signups uses `eventCount` (section 11.2) |
 | Realtime | Last 30 minutes (60 on 360). Dimensions include `city`, `country`, `countryId` and `unifiedScreenName`, but **no `pagePath`** | [Realtime schema](https://developers.google.com/analytics/devguides/reporting/data/v1/realtime-api-schema), [basics](https://developers.google.com/analytics/devguides/reporting/data/v1/realtime-basics) | Live pages show page titles. The globe uses a lookup table |
-| Quotas | Per standard property: 200,000 tokens a day, 40,000 an hour, 14,000 per project per property per hour, 10 concurrent requests, and **10 server errors per project per property per hour** (then requests are blocked). `returnPropertyQuota` shows what's left | [Quotas](https://developers.google.com/analytics/devguides/reporting/data/v1/quotas) | Cache, batch, limit concurrency, careful retries (§10.4) |
+| Quotas | Per standard property: 200,000 tokens a day, 40,000 an hour, 14,000 per project per property per hour, 10 concurrent requests, and **10 server errors per project per property per hour** (then requests are blocked). `returnPropertyQuota` shows what's left | [Quotas](https://developers.google.com/analytics/devguides/reporting/data/v1/quotas) | Cache, batch, limit concurrency, careful retries (section 10.4) |
 | Freshness | Realtime: minutes. Standard intraday: 2–6 hours. Daily: about 12 hours. "Data processing can take 24-48 hours" | [Data freshness](https://support.google.com/analytics/answer/11198161) | Ranges end yesterday, marked "still updating". The email goes out Monday at 13:00 |
 | OAuth Testing status | Refresh tokens expire in 7 days in "Testing". They also stop after 6 months unused, on revocation, or when time-limited access expires | [OAuth 2.0](https://developers.google.com/identity/protocols/oauth2#expiration) | Publish "In production" early, and handle `invalid_grant` |
 | Unverified apps | Capped at 100 new users. Verification needs a verified domain, privacy policy and demo video, and takes 3–5 business days (from the roadmap) | [Unverified apps](https://support.google.com/cloud/answer/7454865), [sensitive scopes](https://developers.google.com/identity/protocols/oauth2/production-readiness/sensitive-scope-verification) | Submit in Sprint 3 |
-| Admin API | v1beta has `accountSummaries`, `properties` (`timeZone`, `createTime`, `serviceLevel`), `dataStreams` and `keyEvents` | [Admin API](https://developers.google.com/analytics/devguides/config/admin/v1/rest) | Property choice (§7) and the signup picker |
+| Admin API | v1beta has `accountSummaries`, `properties` (`timeZone`, `createTime`, `serviceLevel`), `dataStreams` and `keyEvents` | [Admin API](https://developers.google.com/analytics/devguides/config/admin/v1/rest) | Property choice (section 7) and the signup picker |
 | Supabase free | 500 MB database. "May pause" after 7 days of low activity. The shared pooler is IPv4-only and session mode supports prepared statements. The direct connection is IPv6 | [Pricing](https://supabase.com/pricing), [connecting](https://supabase.com/docs/guides/database/connecting-to-postgres), [production checklist](https://supabase.com/docs/guides/deployment/going-into-prod) | Session pooler. The health check keeps it active |
 | Resend | Free: 3,000 a month, 100 a day. Pro: $20 for 50,000 with no daily cap | [Pricing](https://resend.com/pricing) | Upgrade at about 90 weekly-email users |
-| Stripe Managed Payments | Stripe is the merchant of record and handles tax in 80+ countries, for an extra 3.5% per transaction. European businesses are supported, and SaaS qualifies. Subscriptions must be created through Checkout or Payment Links | [Overview](https://docs.stripe.com/payments/managed-payments), [eligibility](https://docs.stripe.com/payments/managed-payments/eligibility) | §16 |
+| Stripe Managed Payments | Stripe is the merchant of record and handles tax in 80+ countries, for an extra 3.5% per transaction. European businesses are supported, and SaaS qualifies. Subscriptions must be created through Checkout or Payment Links | [Overview](https://docs.stripe.com/payments/managed-payments), [eligibility](https://docs.stripe.com/payments/managed-payments/eligibility) | Section 16 |
 | Stripe Checkout trials | `subscription_data.trial_end` and `trial_period_days` are supported | [Free trials](https://docs.stripe.com/payments/checkout/free-trials) | Early upgrade keeps the remaining trial days |
-| Next.js 16 | `proxy.ts`, Turbopack by default, no `next lint`. With Cache Components on, `revalidate` and `dynamic` exports are removed in favour of `"use cache"`. The docs can be fetched as Markdown | [Upgrade guide](https://nextjs.org/docs/app/guides/upgrading/version-16), [segment config](https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config) | §3, §15 |
-| Better Auth | Google `accessType: "offline"` and `prompt`, `encryptOAuthTokens`, `updateAccountOnSignIn`, and `getAccessToken` with automatic refresh | [Google](https://www.better-auth.com/docs/authentication/google), [options](https://www.better-auth.com/docs/reference/options), [OAuth](https://www.better-auth.com/docs/concepts/oauth) | §6 |
-| Sentry free | 5,000 errors, 1 uptime monitor and 1 cron monitor | [Pricing](https://sentry.io/pricing/) | §20 |
+| Next.js 16 | `proxy.ts`, Turbopack by default, no `next lint`. With Cache Components on, `revalidate` and `dynamic` exports are removed in favour of `"use cache"`. The docs can be fetched as Markdown | [Upgrade guide](https://nextjs.org/docs/app/guides/upgrading/version-16), [segment config](https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config) | Sections 3 and 15 |
+| Better Auth | Google `accessType: "offline"` and `prompt`, `encryptOAuthTokens`, `updateAccountOnSignIn`, and `getAccessToken` with automatic refresh | [Google](https://www.better-auth.com/docs/authentication/google), [options](https://www.better-auth.com/docs/reference/options), [OAuth](https://www.better-auth.com/docs/concepts/oauth) | Section 6 |
+| Sentry free | 5,000 errors, 1 uptime monitor and 1 cron monitor | [Pricing](https://sentry.io/pricing/) | Section 20 |
 | Funnel API | Still v1alpha according to the roadmap. Not checked, because it's V2 | — | — |
 
 ## 26. To verify in later sprints
@@ -1148,7 +1344,8 @@ Vitest unit tests only. The roadmap rules out end-to-end tests.
 | The REST transport (`fallback`) for the GA4 clients | Sprint 1 |
 | Whether the hourly chart for 7 days looks right on small sites | Sprint 2 |
 | The exact "AI Assistant" channel string the API returns on a real property | Sprint 3 |
-| Managed Payments with `trial_end` in Checkout, with the Customer Portal, and the right tax code | Sprint 4 |
+| The ESLint colour rules catch raw colours in class names and strings without false alarms, and the shadcn parts work with Tailwind's default colours removed | Sprint 0 |
+| Managed Payments with two prices (€9 a month, €90 a year), `trial_end` in Checkout, the Customer Portal (including switching between monthly and yearly), and the right tax code | Sprint 4 |
 | Supabase's Postgres version, so the backup client version matches | Sprint 4 |
 
 ## 27. Open questions (not blocking Sprint 0)
@@ -1156,5 +1353,6 @@ Vitest unit tests only. The roadmap rules out end-to-end tests.
 | Question | Needed by |
 | --- | --- |
 | Legal entity name, address, country and contact email for the privacy policy and terms | Sprint 3 |
-| Is "€9 a month" shown with VAT included? (Managed Payments can handle tax-inclusive prices) | Sprint 3 (landing page price) |
+| Are the prices (€9 a month, €90 a year, and Growth's €19 a month) shown with VAT included? (Managed Payments can handle tax-inclusive prices) | Sprint 3 (pricing section) |
+| What is the refund rule for yearly plans? The terms need it | Sprint 3 |
 | Support address: `hello@simpledash.app` forwarded to your inbox with Cloudflare Email Routing? | Sprint 3 |

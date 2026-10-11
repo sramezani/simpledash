@@ -14,6 +14,10 @@ What's done and what's next, in plain words.
   - Done right after the Next.js scaffold, so there is code to index.
 - [ ] Next.js, TypeScript, Tailwind, shadcn/ui, lint, format and unit-test setup
   - [ ] `npm run check` runs typecheck, lint and tests, with one passing test
+- [ ] Theme and brand file (`src/config/theme.ts`): all colours, corner radius, shadows and brand facts in one place
+  - [ ] Only theme colours can be used: Tailwind's default colours removed, lint blocks raw colours, and a test checks contrast
+- [ ] Component base: folder layers with import rules, the first shadcn parts, `Logo` and `Container`, and a dev-only `/ui-kit` page that shows every token and component
+  - [ ] `docs/ui.md`: how the theme file, tokens and components work
 - [ ] Postgres on Supabase (plain Postgres via the ORM) and first migration (users)
   - [ ] Local Postgres in Docker for development. Supabase is for production only
   - [ ] Drizzle set up. The first migration creates Better Auth's tables, including `user`
@@ -68,13 +72,13 @@ What's done and what's next, in plain words.
   - [ ] Check that the hourly 7-day chart reads well on a small site; switch to daily if not
 - [ ] Sources, Pages, Countries and Devices ranked lists
 - [ ] Summary line built from the numbers
-- [ ] Mobile-friendly layout
+- [ ] Responsive layout, checked at 320, 375, 768, 1024 and 1440 px wide
 - [ ] Accessible: keyboard navigation, visible focus, good contrast, and text alternatives for every chart
 - [ ] **Done when:** the dashboard shows a real site correctly, and the numbers match GA4's own reports for the same range.
 
 **Siamak's part**
 
-- [ ] Compare the dashboard with GA4's own reports for the same dates. The list of which GA4 report to check for each card is in `docs/SPEC.md` §11
+- [ ] Compare the dashboard with GA4's own reports for the same dates. The list of which GA4 report to check for each card is in `docs/SPEC.md` section 11
 
 ## Sprint 3: the extras that make it special
 
@@ -97,7 +101,8 @@ What's done and what's next, in plain words.
 **Siamak's part**
 
 - [ ] Legal details for the privacy policy and terms: business name, address, country and contact email
-- [ ] Decide whether "€9 a month" includes VAT
+- [ ] Decide whether the prices (€9 a month, €90 a year) include VAT
+- [ ] Decide the refund rule for yearly plans (for the terms)
 - [ ] Cloudflare Email Routing: `hello@simpledash.app` forwards to your inbox
 - [ ] Verify ownership of `simpledash.app` in Google Search Console (needed for Google's app verification)
 - [ ] Record the demo video and submit the app for verification
@@ -108,10 +113,12 @@ What's done and what's next, in plain words.
   - [ ] One-line notice in the dashboard that the email is on, with a way to turn it off
 - [ ] Public page: turn on from its card or settings, choose slug and cards, "Powered by SimpleDash" link
 - [ ] Public pages in `sitemap.xml`, with a "let search engines index this page" option (on by default)
-- [ ] Stripe: 14-day trial without card, €9 plan, checkout, portal, webhook, locked state after the trial
+- [ ] Stripe: 14-day trial without card, Starter plan at €9 a month or €90 a year, checkout with the Monthly / Yearly choice, portal (including switching between monthly and yearly), webhook, locked state after the trial
   - [ ] When the trial ends unpaid, the weekly email and the public page pause too, and all data is kept
+- [ ] Pricing section on the landing page: a Monthly / Yearly switch that needs no JavaScript, Starter (€9 a month or €90 a year, "2 months free") and Growth (€19 a month, "Coming soon", no button)
+  - [ ] Plans and prices come only from `src/config/plans.ts`, which also feeds the upgrade screens, structured data and `llms.txt`
 - [ ] Settings: disconnect Google, delete account and all data
-- [ ] Production hardening: nightly database backup to Cloudflare R2, uptime check, error tracking, basic usage counts (signups, connected sites, paying)
+- [ ] Production hardening: nightly database backup to Cloudflare R2, uptime check, error tracking, basic usage counts (signups, connected sites, paying monthly and yearly)
   - [ ] Restore one backup into local Postgres to prove it works
 - [ ] Final Lighthouse pass on landing, legal and a public page: 95 or more in all four categories
 - [ ] Launch kit: Product Hunt page, Indie Hackers post, X thread, screenshots
@@ -120,9 +127,9 @@ What's done and what's next, in plain words.
 **Siamak's part**
 
 - [ ] Stripe account. Apply for Managed Payments, then create:
-  - [ ] The product (€9 a month, SaaS tax code)
+  - [ ] The Starter product with two prices, €9 a month and €90 a year (SaaS tax code)
   - [ ] The webhook endpoint
-  - [ ] The Customer Portal settings
+  - [ ] The Customer Portal settings, allowing a switch between monthly and yearly
 - [ ] Resend: add `simpledash.app` and its SPF, DKIM and DMARC records in Cloudflare
 - [ ] Cloudflare R2: a bucket and API token for backups, with a 30-day delete rule
 - [ ] Sentry: a project for the server, plus the uptime monitor on `/api/health`

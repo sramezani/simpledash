@@ -58,3 +58,22 @@ Each technical decision gets one line with its reason.
 | 2026-10-11 | Backups: a small container runs `pg_dump` and rclone to R2, kept for 30 days | Off-server and cheap, as the roadmap says | Claude |
 | 2026-10-11 | No cookie banner | Only necessary cookies, and no analytics on simpledash.app in V1 | Claude |
 | 2026-10-11 | Basic security headers, without a full CSP in V1 | Script nonces would turn the static pages dynamic | Claude |
+| 2026-10-11 | The €9 plan is called Starter and also comes yearly: €9 a month or €90 a year (2 months free). This replaces the roadmap's "one plan at €9 a month" for V1 | A yearly option next to monthly, still flat with no traffic limits. "Starter" reads as the first step before Growth | Siamak |
+| 2026-10-11 | Growth (€19 a month) shows in the pricing section as "Coming soon", with no button and no waitlist | Shows what's next. There's nothing to buy until V2, and no waitlist means no extra data to store | Siamak |
+| 2026-10-11 | Pricing is a section on the landing page (`/#pricing`) with a Monthly / Yearly switch, not its own page | One page, with no extra route to keep at Lighthouse 100 | Siamak |
+| 2026-10-11 | Theme and brand live in one file, `src/config/theme.ts`, and the code only uses its tokens | The whole site can be re-themed from one place | Siamak |
+| 2026-10-11 | Light theme only in V1, confirmed. The theme file is laid out so a dark palette can be added later | Chosen over dark mode that follows the system setting | Siamak |
+| 2026-10-11 | The theme file is TypeScript with hex colours. `<ThemeStyle />` writes them into each page as CSS variables, and `globals.css` only maps the names | One source for the site, emails, Open Graph images, favicons and the globe. Hex works in email clients and the Open Graph renderer, and an edit shows at once in development | Claude |
+| 2026-10-11 | Tailwind's default colours removed, ESLint blocks raw colours outside the theme file, and tests check the token mappings and WCAG AA contrast | Only tokens can be used, and a theme change can't quietly break accessibility or Lighthouse | Claude |
+| 2026-10-11 | Favicons (`icon.tsx`, `apple-icon.tsx`) and Open Graph images are drawn from the theme file and the `Logo` component | A brand change updates them too | Claude |
+| 2026-10-11 | Code in layers: `config` → `components/ui` → `components/shared` → feature folders → `app`, with import rules in ESLint | Reuse without tangles as V2 features arrive | Claude |
+| 2026-10-11 | Product data in `src/config/`: `theme.ts`, `plans.ts` and `cards.ts` | Prices, plans and the card list are written once and used by the landing page, settings, public page, structured data and `llms.txt` | Claude |
+| 2026-10-11 | Cards adapt with container queries | The same card fits the dashboard grid, the public page and the landing demo | Claude |
+| 2026-10-11 | The pricing switch starts on Monthly | Matches "€9 a month", the price used everywhere else | Claude |
+| 2026-10-11 | Two Stripe price IDs, `STRIPE_PRICE_MONTHLY` and `STRIPE_PRICE_YEARLY`, replace `STRIPE_PRICE_ID`. The server picks one from the chosen interval | The browser never sends a price ID | Claude |
+| 2026-10-11 | `billing.plan_interval` (`month` or `year`), stored by the webhook | Settings and usage counts can show monthly or yearly without calling Stripe | Claude |
+| 2026-10-11 | Dev-only `/ui-kit` page with every token and shared block | One place to check a theme change or a new block | Claude |
+| 2026-10-11 | Next.js typed routes (`typedRoutes: true`) | A broken internal link fails the typecheck | Claude |
+| 2026-10-11 | lucide-react for icons | shadcn's default icon set, tree-shaken | Claude |
+| 2026-10-11 | shadcn's helper packages: `class-variance-authority`, `clsx`, `tailwind-merge`, `tw-animate-css` | Installed by shadcn/ui. `cva` handles variants and `cn()` merges classes, so nobody writes their own | Claude |
+| 2026-10-11 | `server-only` in server modules | The build fails if secrets, the database or GA4 code would reach the browser | Claude |
