@@ -1,0 +1,15 @@
+.git
+.next
+node_modules
+npm-debug.log*
+.env
+.env.*
+!.env.example
+docs
+coverage
+.codegraph
+.lighthouse
+*.md
+!README.md
+Dockerfile
+compose.yaml

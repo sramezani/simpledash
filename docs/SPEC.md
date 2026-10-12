@@ -330,7 +330,7 @@ Stripe keeps its own payment records, because it is the merchant of record.
 
 | Date switch | Current period | Compared with | Chart points |
 | --- | --- | --- | --- |
-| **7 days** (default) | the 7 days ending yesterday | the 7 days before that | hourly (`dateHour`), 168 points. Check with real data in Sprint 2 |
+| **7 days** (default) | the 7 days ending yesterday | the 7 days before that | daily (`date`), 7 points. Hourly was tried in Sprint 2 and read as noise on small sites (see `docs/DECISIONS.md`) |
 | **30 days** | the 30 days ending yesterday | the 30 days before that | daily (`date`), 30 points |
 | **12 months** | the 12 full calendar months before this month | the 12 months before that | monthly (`yearMonth`), 12 points |
 
@@ -445,7 +445,7 @@ Every request sets `returnPropertyQuota: true`. The date ranges come from sectio
 | # | Report | Dimensions | Metrics | Filter | Periods | Order and limit | Used by |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `totals` | — | `activeUsers`, `screenPageViews`, `userEngagementDuration` | — | both | — | Visitors, Page views, Avg. time, summary, email |
-| 2 | `series` | `dateHour` / `date` / `yearMonth` | `activeUsers` | — | current | by dimension | Visitors chart |
+| 2 | `series` | `date` / `yearMonth` | `activeUsers` | — | current | by dimension | Visitors chart |
 | 3 | `sources` | `sessionSource` | `activeUsers` | — | both | visitors desc, 50 | Sources, summary, email |
 | 4 | `channels` | `sessionDefaultChannelGroup` | `activeUsers` | — | current | desc, 25 | Sources (Channels toggle) |
 | 5 | `pages` | `pagePath` | `screenPageViews`, `activeUsers` | — | current | views desc, 50 | Pages, email |
@@ -576,7 +576,7 @@ Each number shows its % change with an arrow and a word. Colour is never the onl
 - A shadcn line chart (Recharts) drawn from the `series` points. Detail per range is in section 8.
 - X-axis labels use the site's time zone. The tooltip shows the date and the visitors.
 - The last segment is dashed and labelled "Still updating" when the window includes yesterday.
-- **Chart notes** (section 13) are small markers on their day. On the hourly chart they sit at midnight; on the monthly chart, on their month. The note text shows on hover or keyboard focus.
+- **Chart notes** (section 13) are small markers on their day; on the monthly chart, on their month. The note text shows on hover or keyboard focus.
 - **Text alternative:**
   - A visually hidden caption, e.g. "Visitors per day, 4 Oct to 10 Oct, highest 312 on 7 Oct".
   - A "View as table" toggle.
@@ -673,8 +673,9 @@ The card shows "12 visitors right now", a globe of places and the top 5 live pag
 
 **From place names to coordinates** (on the server):
 
-- A static lookup table built from Natural Earth's populated places (public domain, about 7,000 cities), matched on country code and city name.
-- If no city matches, use the country centroid.
+- A static lookup table built from GeoNames (CC BY 4.0, through the `all-the-cities` package) by `scripts/build-places.mjs`: about 14,000 places with 30,000+ people, matched on country code and city name (accents ignored, plus a few English names such as Cologne).
+- If no city matches, use the country's population-weighted centre.
+- Changed from Natural Earth in Sprint 3: Natural Earth's populated places aren't packaged on npm. GeoNames needs a credit line, which is in the privacy policy and the Right now card's help.
 - Only coordinates and counts are sent to the browser.
 
 **`/api/live`** returns `{ total, places: [{ lat, lng, visitors, label }], pages: [{ title, visitors }] }`. It is cached for 60 seconds per property, in memory.
@@ -741,9 +742,9 @@ There is no setup screen. Every state below is a card or banner on the dashboard
   - The weekly email is on.
   - The account is not locked (section 16).
   - The active site has status `ok`.
-  - Local time in the site's time zone is Monday, 13:00–13:59.
+  - Local time in the site's time zone is Monday, between 13:00 and 17:59.
   - There is no `email_send` row for this week yet.
-- 13:00 leaves time for GA4's usual 12-hour processing of Sunday.
+- 13:00 leaves time for GA4's usual 12-hour processing of Sunday. The window runs to 17:59 so that a send that failed or was skipped (Resend down, a deploy at the wrong minute) is tried again the next hour, without sending in the evening.
 - The job fetches fresh 7-day reports: `totals`, `sources`, `pages`, `actions` and `ai_sources`. These also update the dashboard cache.
 - If there were no visitors in either week, no email is sent.
 
@@ -822,7 +823,7 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 **When it's not live:**
 
 - **Paused:** when the owner is locked (trial ended, unpaid) or disconnected from Google, the page only says "This page is paused." with the SimpleDash link. It is `noindex` and drops out of the sitemap.
-- **Turned off:** the page returns 404.
+- **Turned off (or never made):** the page shows "Page not found" with `noindex`. The page streams inside a Suspense boundary (Cache Components), so the status code is already 200 when the database answers; a real 404 status would need a lookup before rendering on every view. Search engines treat a `noindex` page like a 404.
 
 **Sitemap:** includes pages that are on, indexable and not paused.
 
@@ -885,7 +886,7 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 
 **Managed Payments limits:** subscriptions can only be created through Checkout or Payment Links, and Connect isn't supported. Neither affects us.
 
-**Prices on the landing page:** the pricing section (section 17). Whether the prices include VAT is an open question (section 27).
+**Prices on the landing page:** the pricing section (section 17). Prices include VAT.
 
 ## 17. Landing page, legal pages and SEO files
 
@@ -1155,7 +1156,7 @@ Jobs run as Coolify scheduled tasks. Each one runs `node scripts/run-job.mjs <jo
 | `warm-cache` | hourly at :05 | For sites that are active, unlocked and `ok`, whose owner signed in during the last 14 days: refresh the 7-day reports when they're stale or the day has turned in the site's time zone. Skips quota-blocked sites |
 | `weekly-email` | hourly at :00 | Section 14 |
 | `cleanup` | daily at 03:30 UTC | Deletes `report_cache` rows not fetched for 7 days, and expired sessions and verification rows |
-| backup | nightly at 02:00 UTC | Runs in a separate small container with a Postgres client and rclone. `pg_dump` (custom format) of Supabase, then gzip, then the R2 bucket. An R2 lifecycle rule deletes copies after 30 days. Restore one into local Postgres once, to prove it works |
+| backup | nightly at 02:00 UTC | Runs in a separate small container with a Postgres client and rclone. `pg_dump` (custom format) of our `public` and `drizzle` schemas (not Supabase's own), without the rows of `report_cache`, `session` and `verification`, then gzip, then the R2 bucket. An R2 lifecycle rule deletes copies after 30 days. Restore one into local Postgres once, to prove it works. Setup and restore: `docs/backup.md` |
 
 ### Monitoring
 
@@ -1260,8 +1261,8 @@ These become `.env.example` in Sprint 0. Each variable is added in the sprint sh
 | `STRIPE_WEBHOOK_SECRET` | Webhook signatures | | Sprint 4 |
 | `STRIPE_PRICE_MONTHLY` | Starter, €9 a month | `price_…` | Sprint 4 |
 | `STRIPE_PRICE_YEARLY` | Starter, €90 a year | `price_…` | Sprint 4 |
-| `SENTRY_DSN` | Server error reports | | Sprint 4 |
-| `SENTRY_AUTH_TOKEN` | Optional: upload source maps at build time | | Sprint 4 |
+| `STRIPE_MANAGED_PAYMENTS` | Turns Managed Payments on in Checkout | `true` (default) | Sprint 4 |
+| `SENTRY_DSN` | Server error reports (optional) | | Sprint 4 |
 | `ADMIN_EMAILS` | Who can open `/admin` | comma-separated | Sprint 4 |
 | `BACKUP_DATABASE_URL` | Backup container: database to dump | `postgres://…` | Sprint 4 |
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | Backup container: where dumps go | | Sprint 4 |
@@ -1342,17 +1343,17 @@ Vitest unit tests only. The roadmap rules out end-to-end tests.
 | The Better Auth CLI command and generated schema | Sprint 0 |
 | How Better Auth encrypts tokens, and `getAccessToken` refreshing them | Sprint 1 |
 | The REST transport (`fallback`) for the GA4 clients | Sprint 1 |
-| Whether the hourly chart for 7 days looks right on small sites | Sprint 2 |
+| ~~Whether the hourly chart for 7 days looks right on small sites~~ It didn't: 7 days is daily now | Sprint 2 |
 | The exact "AI Assistant" channel string the API returns on a real property | Sprint 3 |
 | The ESLint colour rules catch raw colours in class names and strings without false alarms, and the shadcn parts work with Tailwind's default colours removed | Sprint 0 |
-| Managed Payments with two prices (€9 a month, €90 a year), `trial_end` in Checkout, the Customer Portal (including switching between monthly and yearly), and the right tax code | Sprint 4 |
-| Supabase's Postgres version, so the backup client version matches | Sprint 4 |
+| ~~Managed Payments with two prices, `trial_end` in Checkout, the Customer Portal, and the right tax code~~ Checked in test mode on Oct 12, 2026: Checkout accepts `managed_payments` together with `subscription_data.trial_end`; the product has the SaaS tax code `txcd_10103001` and VAT-inclusive prices. The Portal opens with the default settings; switching between monthly and yearly needs the Portal's "customers can switch plans" setting with both prices (Siamak's part) | Sprint 4 |
+| ~~Supabase's Postgres version, so the backup client version matches~~ Postgres 17.11: the backup image is `postgres:17-alpine` | Sprint 4 |
 
 ## 27. Open questions (not blocking Sprint 0)
 
 | Question | Needed by |
 | --- | --- |
 | Legal entity name, address, country and contact email for the privacy policy and terms | Sprint 3 |
-| Are the prices (€9 a month, €90 a year, and Growth's €19 a month) shown with VAT included? (Managed Payments can handle tax-inclusive prices) | Sprint 3 (pricing section) |
-| What is the refund rule for yearly plans? The terms need it | Sprint 3 |
+| ~~Are the prices shown with VAT included?~~ Yes, VAT included (Siamak, Oct 11, 2026) | Sprint 3 (pricing section) |
+| ~~What is the refund rule for yearly plans?~~ A full refund within 14 days of a yearly payment (Siamak, Oct 11, 2026) | Sprint 3 |
 | Support address: `hello@simpledash.app` forwarded to your inbox with Cloudflare Email Routing? | Sprint 3 |

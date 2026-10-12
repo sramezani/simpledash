@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791744494871,
+      "tag": "0000_auth_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791745635196,
+      "tag": "0001_sites_and_report_cache",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791748860043,
+      "tag": "0002_chart_notes",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791750152801,
+      "tag": "0003_email_public_page_billing",
+      "breakpoints": true
+    }
+  ]
+}
