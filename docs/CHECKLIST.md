@@ -171,6 +171,7 @@ What's done and what's next, in plain words.
 - [x] Signed in, the landing page shows "Dashboard" instead of "Sign in" (12 Oct)
 - [x] Segmented switches slide smoothly (12 Oct)
 - [x] Pricing: "2 months free" note with an arrow, rolling prices, "Save €18 / €38 a year", Growth's yearly price (12 Oct)
+- [x] Custom date range: "Custom…" in the date menu opens a two-month calendar (one month on phones) with Start/End fields, Clear and Apply; menu keys like DataFast (12 Oct)
 - [ ] Siamak: add `/demo` to the Cloudflare cache rule, and change the demo slug in `src/config/demo.ts` when the real one is ready
 - [ ] Lighthouse on the landing page, `/demo` and a public page after deploy (not run locally this session)
 

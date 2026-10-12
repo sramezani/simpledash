@@ -4,6 +4,27 @@ A dated log with one entry per session. **Newest entry first.**
 
 It is written for future Claude sessions: read the latest entry before starting work. Ideas that fall outside the roadmap go here too (Working rule 5).
 
+## 2026-10-12 · Session 6 · Custom date ranges
+
+### Done
+
+- **Custom ranges** in the URL: `?range=2026-09-01..2026-09-30`. `parseRange` checks real days, puts them in order and starts no earlier than GA4's first day (14 Aug 2015); `rangeWindow` cuts them at today in the site's time zone and at 5 years. Compared with the same number of days just before. Hourly for one day, daily up to 92 days, monthly after. A range that ends today isn't compared; a finished one is cached for 24 hours. Summary: "145 visitors from 1 Oct 2025 to 28 Feb 2026", "Visitors up 4% vs the 30 days before".
+- **The date menu** (`RangePicker`): keys like DataFast's (T, Y, W, M, L, C), active only while the menu is open and hidden on touch screens; "Custom…" opens `CustomRangePanel` under the button: shadcn `calendar` (react-day-picker 9.14.0) with two months (one on phones), hover preview, future days greyed, Start/End date fields in step with it, Clear and Apply. It loads in its own chunk when Custom is first pointed at.
+- **Public pages:** custom ranges work there too, capped at 20 new ranges per site per hour (`allowPublicCustomRange`), because anyone can type one and each costs the owner's quota. Past the cap: cached numbers and a notice.
+- `rangeLabel`, `previousPeriodWords`, `isPreset`, `customDays` replace the per-preset maps; `rangeMenu` returns everything the menu needs. `maxAge` now takes the window.
+- Checked at 1440 and 375 px (the panel stays on screen and scrolls inside on short phones), keyboard (open the menu, press C), Apply navigating to the new address, a real custom range on `/p/meetline-me` with live GA4 numbers, and a production build (landing still static). 276 tests pass; typecheck and lint are clean.
+
+### Learned
+
+- shadcn's `calendar.tsx` defines its day buttons inline, so every render remounts all 42 of them. With a hover preview, a click that lands mid-render is lost. Stable components fix it (noted in `docs/ui.md`).
+- Opening a Radix popover from a dropdown item: open it in the menu's `onCloseAutoFocus` (and prevent the default), or the menu's focus handling closes it again straight away.
+- The shadcn CLI pauses on "overwrite button.tsx?"; `yes n | npx shadcn add calendar` answers it. It also installs `cn` and `date-fns`, which aren't needed.
+
+### Ideas (outside the roadmap)
+
+- DataFast's ‹ › arrows next to the date menu, to step to the period before or after.
+- "More periods" (this month, last month, this year) if people ask.
+
 ## 2026-10-12 · Session 5 · UI polish: live demo, overview, ranges, pricing; sharper flags
 
 ### Done

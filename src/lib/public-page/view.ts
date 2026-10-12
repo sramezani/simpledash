@@ -8,7 +8,8 @@ import { db } from "@/lib/db/client";
 import { billing, publicPage, site } from "@/lib/db/schema";
 import { getReports } from "@/lib/ga4/cache";
 import { cacheDeps } from "@/lib/ga4/data";
-import { comparisonGap, type RangeType, type RangeWindow } from "@/lib/ga4/ranges";
+import { allowPublicCustomRange } from "@/lib/ga4/limiter";
+import { comparisonGap, customDays, type RangeType, type RangeWindow } from "@/lib/ga4/ranges";
 import { REPORTS, type Payloads, type ReportName } from "@/lib/ga4/reports";
 import { reportError } from "@/lib/report-error";
 
@@ -36,6 +37,8 @@ export type PublicView =
       signupEvent: string | null;
       /** Why the numbers can't be compared with the period before, or null when they can. */
       comparisonGap: string | null;
+      /** Too many new custom ranges were asked for this hour: only cached numbers are shown. */
+      customLimited: boolean;
     };
 
 export const publicTag = (slug: string) => `public:${slug}`;
@@ -80,7 +83,12 @@ export async function getPublicView(slug: string, range: RangeType): Promise<Pub
       void task().catch((error) => reportError("Public page refresh failed", error, { slug }));
     },
   };
-  const result = await getReports(owned, range, reportsFor(cards), deps, { audience: "public" });
+  const customLimited =
+    customDays(range) !== null && !allowPublicCustomRange(owned.propertyId, range);
+  const result = await getReports(owned, range, reportsFor(cards), deps, {
+    audience: "public",
+    cacheOnly: customLimited,
+  });
   return {
     kind: "live",
     label,
@@ -94,6 +102,7 @@ export async function getPublicView(slug: string, range: RangeType): Promise<Pub
     ),
     signupEvent: cards.includes("signups") ? owned.signupEvent : null,
     comparisonGap: comparisonGap(result.window, owned.propertyCreatedAt),
+    customLimited,
   };
 }
 

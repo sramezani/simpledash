@@ -205,3 +205,17 @@ describe("buildSummary for single days", () => {
     );
   });
 });
+
+describe("buildSummary for custom ranges", () => {
+  it("names the days, with years when they differ", () => {
+    expect(buildSummary({ ...base, range: "2026-09-01..2026-09-30", sources: null })).toBe(
+      "Visitors up 23% vs the 30 days before.",
+    );
+    expect(
+      buildSummary({ ...base, range: "2025-10-01..2026-02-28", comparable: false, sources: null }),
+    ).toBe("123 visitors from 1 Oct 2025 to 28 Feb 2026.");
+    expect(
+      buildSummary({ ...base, range: "2026-09-14..2026-09-14", comparable: false, sources: null }),
+    ).toBe("123 visitors on 14 Sep.");
+  });
+});

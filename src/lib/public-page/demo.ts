@@ -28,5 +28,6 @@ export async function getDemoView(range: RangeType, now?: Date): Promise<LiveVie
     reports: sampleReports(window, REPORTS),
     signupEvent: SAMPLE_SIGNUP_EVENT,
     comparisonGap: comparisonGap(window, null),
+    customLimited: false,
   };
 }

@@ -137,7 +137,8 @@ const COUNTRIES: [string, string, number][] = [
 ];
 
 function samplePayload<R extends ReportName>(report: R, window: RangeWindow): Payloads[R] {
-  const soFar = window.type === "today" ? dayShare(window.lastHour ?? 23) : 1;
+  const soFar =
+    window.granularity === "dateHour" && window.endsToday ? dayShare(window.lastHour ?? 23) : 1;
   const current = Math.round(uniqueVisitors(window.current) * soFar);
   const previous = uniqueVisitors(window.previous);
   const payloads: { [K in ReportName]: () => Payloads[K] } = {

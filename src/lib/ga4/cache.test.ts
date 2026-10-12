@@ -9,6 +9,7 @@ import {
   type CacheRow,
 } from "./cache";
 import { resetLimiter } from "./limiter";
+import { rangeWindow } from "./ranges";
 
 const NOW = new Date("2026-10-11T12:00:00Z");
 const HOUR = 3_600_000;
@@ -300,15 +301,21 @@ describe("cache only (locked accounts)", () => {
 
 describe("freshness", () => {
   it("is 3 hours for 7 and 30 days, 24 hours for 12 months, at least 12 hours for public pages", () => {
-    expect(maxAge("7d", "owner")).toBe(3 * HOUR);
-    expect(maxAge("30d", "owner")).toBe(3 * HOUR);
-    expect(maxAge("12m", "owner")).toBe(24 * HOUR);
-    expect(maxAge("7d", "public")).toBe(12 * HOUR);
-    expect(maxAge("12m", "public")).toBe(24 * HOUR);
+    const now = new Date("2026-10-11T12:00:00Z");
+    const w = (range: Parameters<typeof rangeWindow>[0]) => rangeWindow(range, "UTC", now);
+    expect(maxAge(w("7d"), "owner")).toBe(3 * HOUR);
+    expect(maxAge(w("30d"), "owner")).toBe(3 * HOUR);
+    expect(maxAge(w("12m"), "owner")).toBe(24 * HOUR);
+    expect(maxAge(w("7d"), "public")).toBe(12 * HOUR);
+    expect(maxAge(w("12m"), "public")).toBe(24 * HOUR);
     // Today keeps changing: fresh for half an hour, an hour on public pages.
-    expect(maxAge("today", "owner")).toBe(HOUR / 2);
-    expect(maxAge("today", "public")).toBe(HOUR);
-    expect(maxAge("yesterday", "owner")).toBe(3 * HOUR);
+    expect(maxAge(w("today"), "owner")).toBe(HOUR / 2);
+    expect(maxAge(w("today"), "public")).toBe(HOUR);
+    expect(maxAge(w("yesterday"), "owner")).toBe(3 * HOUR);
+    // Custom: a finished past period won't change; one that ends today keeps changing.
+    expect(maxAge(w("2026-09-01..2026-09-30"), "owner")).toBe(24 * HOUR);
+    expect(maxAge(w("2026-10-01..2026-10-10"), "owner")).toBe(3 * HOUR);
+    expect(maxAge(w("2026-10-01..2026-10-11"), "owner")).toBe(HOUR / 2);
   });
 
   it("lets a public page use a row a dashboard would refresh", async () => {

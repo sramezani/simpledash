@@ -4,6 +4,8 @@ Oct 11, 2026 · Written by Claude Code from `docs/ROADMAP.md` · Status: approve
 
 **Updated Oct 11, 2026 (session 2):** a yearly price and Growth shown as "coming soon" (sections 16 and 17), one theme and brand file and a UI quality bar (section 18), and code structure and reuse rules (section 4).
 
+**Updated Oct 12, 2026 (session 6):** custom date ranges with a calendar, and keys in the date menu (sections 8 and 15).
+
 **Updated Oct 12, 2026 (session 5):** Today and Yesterday ranges with hourly charts (section 8), the overview card and toolbar, fixed-height lists (section 11), the live demo in a browser frame at `/demo` and the signed-in landing page (section 17), the pricing switch's animations and Growth's yearly price (section 17), and the motion rules (section 18).
 
 The roadmap says **what** to build and **why**. This spec says **how**.
@@ -338,10 +340,20 @@ Stripe keeps its own payment records, because it is the merchant of record.
 | **Last 7 days** (default) | the 7 days ending yesterday | the 7 days before that | daily (`date`), 7 points. Hourly was tried in Sprint 2 and read as noise over a week on small sites (see `docs/DECISIONS.md`) |
 | **Last 30 days** | the 30 days ending yesterday | the 30 days before that | daily (`date`), 30 points |
 | **Last 12 months** | the 12 full calendar months before this month | the 12 months before that | monthly (`yearMonth`), 12 points |
+| **Custom** | any run of whole days, from 14 Aug 2015 (GA4's first day) up to today, at most 5 years | the same number of days just before | hourly for one day, daily up to 92 days, monthly after |
 
 **Where ranges live:**
 
-- The range is in the URL (`?range=today|yesterday|7d|30d|12m`), so links can be shared and nothing is stored. The menu is listed in `src/lib/ga4/ranges.ts` (`rangeMenu`).
+- The range is in the URL, so links can be shared and nothing is stored: `?range=today|yesterday|7d|30d|12m`, or `?range=2026-09-01..2026-09-30` for a custom range. Anything else falls back to the default. Days after today are cut off on the server, in the site's time zone.
+- The menu and its keys are built by `rangeMenu` in `src/lib/ga4/ranges.ts`.
+
+**The date menu** (`RangePicker`, like DataFast's):
+
+- Today, Yesterday, then Last 7 days, Last 30 days, Last 12 months, then "Custom…".
+- Keys while the menu is open: T, Y, W (week), M (month), L (last 12 months) and C (custom). They are shown next to each choice, except on touch screens. They only work while the menu is open, so typing elsewhere never changes the range (WCAG 2.1.4).
+- **Custom** opens a calendar (shadcn `calendar`, react-day-picker) under the menu button: two months side by side, one on phones. The first click picks the first day, the second the last day, and the days between are shaded while pointing. Start and End date fields stay in step with it. Days after today and before GA4's first day can't be picked. "Clear" empties the choice; "Apply" goes to the new address, and one picked day applies as a single day.
+- The calendar's code loads the first time "Custom" is pointed at or chosen, so pages don't carry it otherwise.
+- With a custom range, the button shows its days ("1 Sep – 30 Sep") and the period isn't repeated next to it.
 - The weekly email uses the 7-day range computed on a Monday, which is exactly last Monday to Sunday (section 14).
 
 **Still updating:**
@@ -350,8 +362,9 @@ Stripe keeps its own payment records, because it is the merchant of record.
 - When a daily or monthly chart includes yesterday, its last segment is dashed and labelled "Still updating". On the hourly Yesterday chart every hour is solid, and the hint says it once.
 - The period next to the date menu has a short hint: "Google may still be adding to yesterday."
 
-**Today:**
+**Today** (and a custom range that ends today):
 
+- A period that ends today isn't compared ("Today isn't over yet") and its cache is fresh for 30 minutes.
 - Google adds today's visits a few hours late (standard properties). The latest hours it hasn't reported yet are left off the chart rather than drawn as zeros, and the latest reported hour is dashed.
 - The hint says "So far today. Google adds visits a few hours late."
 - "Right now" in the live globe (section 11.10) stays the place for the last 30 minutes.
@@ -488,9 +501,9 @@ Channel names are mapped to plain words in section 11.4.
 
 1. **Read** the cache row for each property, report, range type and params. There is one row per report, always holding the newest fetch.
 2. **Decide if it's fresh.** A row is fresh when its window matches the current window and `fetched_at` is newer than:
-   - 30 minutes for Today (1 hour on a public page), because today keeps changing
-   - 3 hours for Yesterday, 7 days and 30 days
-   - 24 hours for 12 months
+   - 30 minutes for any period that ends today (1 hour on a public page), because today keeps changing
+   - 3 hours for Yesterday, 7 days, 30 days and custom ranges that include yesterday
+   - 24 hours for 12 months and for custom ranges that ended before yesterday (they won't change)
    - 12 hours when the reader is a public page (Today excepted)
 3. **Act on it:**
    - **Fresh:** return it.
@@ -814,7 +827,8 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 **Page contents:**
 
 - The same layout as the dashboard: the toolbar (the site chip is the page's `h1`), the summary line, the overview card and the list cards (section 11).
-- The same five ranges as the dashboard, through `?range=`.
+- The same ranges as the dashboard, custom ones included, through `?range=`.
+- **Custom ranges are capped:** anyone can type one into a public page's address, and each new one costs the owner's GA4 quota. A public page may fetch at most 20 new custom ranges per site per hour (`allowPublicCustomRange` in `src/lib/ga4/limiter.ts`); a range asked for in the last hour is always allowed again. Past the cap, the page shows only cached numbers and says "This page can't load more custom ranges right now."
 - A "Powered by SimpleDash" footer link to `https://simpledash.app`.
 - **No private data.** Nothing from settings, no email address, no notes, no user name and no property ID appears in the page or in what it loads.
 

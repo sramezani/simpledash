@@ -71,6 +71,7 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/public">, "sear
             reports: sampleReports(window, REPORTS),
             signupEvent: cards.includes("signups") ? SAMPLE_SIGNUP_EVENT : null,
             comparisonGap: comparisonGap(window, null),
+            customLimited: false,
           }}
         />
       )}

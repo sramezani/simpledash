@@ -39,7 +39,7 @@ Pages:
 | `/` | Landing page: the live demo in a browser frame, how it works, pricing (`/#pricing`), FAQ. Shows "Dashboard" instead of "Sign in" when you're signed in |
 | `/demo` | The live demo: a real public stats page, set in `src/config/demo.ts` (sample data if that page is off) |
 | `/signin` | "Continue with Google" (needs `GOOGLE_CLIENT_ID` and the redirect URI on the Google client) |
-| `/dashboard` | The dashboard (signed in) |
+| `/dashboard` | The dashboard (signed in). `?range=today`, `yesterday`, `7d` (default), `30d`, `12m`, or a custom range like `?range=2026-09-01..2026-09-30` |
 | `/settings` | Account, weekly email, public page, billing, disconnect Google, delete account (signed in) |
 | `/admin` | Usage counts (only for `ADMIN_EMAILS`; a 404 for everyone else) |
 | `/p/<slug>` | A public stats page |

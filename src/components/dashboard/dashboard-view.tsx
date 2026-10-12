@@ -19,7 +19,8 @@ import { formatDuration, formatNumber } from "@/lib/format";
 import { deriveStats } from "@/lib/ga4/derive";
 import {
   freshnessNote,
-  PREVIOUS_PERIOD_WORDS,
+  isPreset,
+  previousPeriodWords,
   rangeMenu,
   type RangeType,
   type RangeWindow,
@@ -84,8 +85,8 @@ export function DashboardView(props: DashboardViewProps) {
     ? chartPoints(series.points, series.granularity, window.lastPointPending)
     : null;
   const period = periodLabel(window);
-  const versus = `vs ${PREVIOUS_PERIOD_WORDS[range]}`;
-  const csvHref = (id: CardId) => `/api/csv/${id}?range=${range}`;
+  const versus = `vs ${previousPeriodWords(range)}`;
+  const csvHref = (id: CardId) => `/api/csv/${id}?range=${encodeURIComponent(range)}`;
   const csvLink = (id: CardId) =>
     props.csv ? <CsvLink href={csvHref(id)} label={cardById[id].title} /> : undefined;
   const marks = points && props.notes ? noteMarks(props.notes, points, window.granularity) : [];
@@ -201,9 +202,8 @@ export function DashboardView(props: DashboardViewProps) {
           <h1 className="sr-only">Dashboard</h1>
           <OverviewToolbar
             site={props.site}
-            range={range}
-            options={rangeMenu(props.basePath ?? "/dashboard", props.query)}
-            period={period}
+            menu={rangeMenu(range, window, props.basePath ?? "/dashboard", props.query)}
+            period={isPreset(range) ? period : null}
             note={freshnessNote(window)}
           />
           {props.notices}

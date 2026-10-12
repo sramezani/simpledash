@@ -1,6 +1,13 @@
 import { formatNumber, formatPercent, percentChange } from "@/lib/format";
 import { sourceLabel } from "@/lib/ga4/labels";
-import { PREVIOUS_PERIOD_WORDS as PREVIOUS, type RangeType } from "@/lib/ga4/ranges";
+import { formatDay } from "@/lib/format";
+import {
+  customDays,
+  isPreset,
+  previousPeriodWords,
+  type RangePreset,
+  type RangeType,
+} from "@/lib/ga4/ranges";
 import type { Payloads } from "@/lib/ga4/reports";
 
 /**
@@ -22,13 +29,22 @@ export type SummaryInput = {
 };
 
 /** "145 visitors in the last 12 months", "12 visitors today so far". */
-const PERIOD: Record<RangeType, string> = {
+const PERIOD: Record<RangePreset, string> = {
   today: "today so far",
   yesterday: "yesterday",
   "7d": "in the last 7 days",
   "30d": "in the last 30 days",
   "12m": "in the last 12 months",
 };
+
+/** The period in a sentence: "in the last 7 days", "on 12 Sep", "from 1 Sep to 30 Sep". */
+function periodWords(range: RangeType): string {
+  if (isPreset(range)) return PERIOD[range];
+  const { start, end } = customDays(range)!;
+  if (start === end) return `on ${formatDay(start)}`;
+  const withYear = start.slice(0, 4) !== end.slice(0, 4);
+  return `from ${formatDay(start, withYear)} to ${formatDay(end, withYear)}`;
+}
 
 /** Changes smaller than this read as "about the same". */
 const SAME_BAND = 3;
@@ -82,14 +98,14 @@ export function buildSummary(input: SummaryInput): string | null {
   let first: string;
   if (change === null) {
     // Rule 3: no comparison possible.
-    const period = email ? "last week" : PERIOD[input.range];
+    const period = email ? "last week" : periodWords(input.range);
     const noun = current.visitors === 1 ? "visitor" : "visitors";
     first = `${formatNumber(current.visitors)} ${noun} ${period}`;
     const main = mainSourceOfVisitors(input.sources, current.visitors);
     if (main) first += `, mostly from ${main}`;
   } else {
     // Rules 1 and 2.
-    const versus = email ? "the week before" : PREVIOUS[input.range];
+    const versus = email ? "the week before" : previousPeriodWords(input.range);
     if (Math.abs(change) < SAME_BAND) {
       first = `Visitors about the same as ${versus}`;
     } else {

@@ -6,6 +6,8 @@
  * - A breaker opens after 5 server errors in an hour, because Google blocks a
  *   project and property pair after 10.
  * - When the hourly token quota runs low, background refreshes are skipped.
+ * - Public pages may ask for at most PUBLIC_CUSTOM_LIMIT new custom ranges an hour,
+ *   because anyone can type one into the address and each one costs the owner's quota.
  */
 
 const MAX_CONCURRENT = 5;
@@ -88,10 +90,33 @@ export function isQuotaLow(propertyId: string, now: number = Date.now()): boolea
   return true;
 }
 
+export const PUBLIC_CUSTOM_LIMIT = 20;
+const publicCustom = new Map<string, Map<string, number>>();
+
+/**
+ * May a public page fetch this custom range for this property? A range asked for in
+ * the last hour is always allowed again (it is cached); a new one only while fewer
+ * than PUBLIC_CUSTOM_LIMIT were asked for in the last hour.
+ */
+export function allowPublicCustomRange(
+  propertyId: string,
+  range: string,
+  now: number = Date.now(),
+): boolean {
+  const seen = publicCustom.get(propertyId) ?? new Map<string, number>();
+  for (const [r, at] of seen) if (now - at > HOUR) seen.delete(r);
+  publicCustom.set(propertyId, seen);
+  if (seen.has(range)) return true;
+  if (seen.size >= PUBLIC_CUSTOM_LIMIT) return false;
+  seen.set(range, now);
+  return true;
+}
+
 /** For tests. */
 export function resetLimiter() {
   running.clear();
   waiting.clear();
   serverErrors.clear();
   lowQuotaUntil.clear();
+  publicCustom.clear();
 }

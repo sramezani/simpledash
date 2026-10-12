@@ -1,15 +1,20 @@
+import { formatDay, formatDayRange } from "@/lib/format";
+
 /**
  * Date ranges and comparisons (docs/SPEC.md section 8). All dates are calendar
  * dates (YYYY-MM-DD) in the site's GA4 time zone, worked out with Intl and
- * plain date arithmetic. Ranges are full days ending yesterday, except "Today",
- * which is today so far.
+ * plain date arithmetic. Preset ranges are full days ending yesterday, except
+ * "Today", which is today so far. A custom range is any run of days up to today.
  */
 
-export const RANGE_TYPES = ["today", "yesterday", "7d", "30d", "12m"] as const;
-export type RangeType = (typeof RANGE_TYPES)[number];
-export const DEFAULT_RANGE: RangeType = "7d";
+export const RANGE_PRESETS = ["today", "yesterday", "7d", "30d", "12m"] as const;
+export type RangePreset = (typeof RANGE_PRESETS)[number];
+/** A custom range of whole days, both included: "2026-09-01..2026-09-30". */
+export type CustomRange = `${string}..${string}`;
+export type RangeType = RangePreset | CustomRange;
+export const DEFAULT_RANGE: RangePreset = "7d";
 
-export const RANGE_LABELS: Record<RangeType, string> = {
+const PRESET_LABELS: Record<RangePreset, string> = {
   today: "Today",
   yesterday: "Yesterday",
   "7d": "Last 7 days",
@@ -17,14 +22,20 @@ export const RANGE_LABELS: Record<RangeType, string> = {
   "12m": "Last 12 months",
 };
 
-/** "the previous 7 days", used by the summary line and screen readers. */
-export const PREVIOUS_PERIOD_WORDS: Record<RangeType, string> = {
+const PRESET_PREVIOUS: Record<RangePreset, string> = {
   today: "yesterday",
   yesterday: "the day before",
   "7d": "the previous 7 days",
   "30d": "the previous 30 days",
   "12m": "the previous 12 months",
 };
+
+/** GA4 has no data before this day, so a custom range can't start earlier. */
+export const GA4_FIRST_DAY = "2015-08-14";
+/** Custom ranges are at most about 5 years, so the period before stays a sane request. */
+export const MAX_CUSTOM_DAYS = 5 * 366;
+/** Custom ranges up to this many days are drawn per day; longer ones per month. */
+const MAX_DAILY_POINTS = 92;
 
 export type Granularity = "dateHour" | "date" | "yearMonth";
 export type DateRange = { start: string; end: string };
@@ -39,16 +50,69 @@ export type RangeWindow = {
   granularity: Granularity;
   /** The current period includes yesterday, which GA4 may still be adding to. */
   includesYesterday: boolean;
+  /** The current period ends today, which isn't over: no comparison, short cache. */
+  endsToday: boolean;
   /** The chart's last point is still filling up: drawn dashed. */
   lastPointPending: boolean;
-  /** Hourly charts: the last hour shown (the current hour for "Today"). */
+  /** Hourly charts: the last hour shown (the current hour for today). */
   lastHour: number | null;
 };
 
-/** Reads `?range=` safely. Anything unknown becomes the default. */
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+const CUSTOM = /^(\d{4}-\d{2}-\d{2})\.\.(\d{4}-\d{2}-\d{2})$/;
+
+/** A real calendar day as YYYY-MM-DD ("2026-02-30" is not). */
+export function isIsoDay(value: string): boolean {
+  return ISO_DAY.test(value) && fromUtc(toUtc(value)) === value;
+}
+
+/** The custom range for two days, in order, from GA4's first day: "2026-09-01..2026-09-30". */
+export function customRange(a: string, b: string): CustomRange {
+  let [start, end] = a <= b ? [a, b] : [b, a];
+  if (start < GA4_FIRST_DAY) start = GA4_FIRST_DAY;
+  if (end < start) end = start;
+  return `${start}..${end}`;
+}
+
+/** The two days of a custom range, or null for a preset. */
+export function customDays(range: RangeType): DateRange | null {
+  const match = CUSTOM.exec(range);
+  return match ? { start: match[1]!, end: match[2]! } : null;
+}
+
+export function isPreset(range: RangeType): range is RangePreset {
+  return (RANGE_PRESETS as readonly string[]).includes(range);
+}
+
+/** Reads `?range=` safely: a preset or a valid custom range. Anything else becomes the default. */
 export function parseRange(value: unknown, fallback: RangeType = DEFAULT_RANGE): RangeType {
   const v = Array.isArray(value) ? value[0] : value;
-  return RANGE_TYPES.includes(v as RangeType) ? (v as RangeType) : fallback;
+  if (typeof v !== "string") return fallback;
+  if (isPreset(v as RangeType)) return v as RangePreset;
+  const match = CUSTOM.exec(v);
+  if (!match || !isIsoDay(match[1]!) || !isIsoDay(match[2]!)) return fallback;
+  return customRange(match[1]!, match[2]!);
+}
+
+/** "Last 7 days", or a custom range's days: "1 Sep – 30 Sep", "Mon 12 Oct". */
+export function rangeLabel(range: RangeType): string {
+  if (isPreset(range)) return PRESET_LABELS[range];
+  const days = customDays(range)!;
+  return days.start === days.end ? dayName(days.start) : formatDayRange(days.start, days.end);
+}
+
+/** "the previous 7 days", "the day before", "the 30 days before": for the summary and screen readers. */
+export function previousPeriodWords(range: RangeType): string {
+  if (isPreset(range)) return PRESET_PREVIOUS[range];
+  const days = daysIn(customDays(range)!);
+  return days === 1 ? "the day before" : `the ${days} days before`;
+}
+
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** "Mon 12 Oct". */
+export function dayName(isoDate: string): string {
+  return `${WEEKDAYS[toUtc(isoDate).getUTCDay()]} ${formatDay(isoDate)}`;
 }
 
 /** Today's calendar date in a time zone, as YYYY-MM-DD. */
@@ -113,6 +177,30 @@ export function rangeWindow(
   const yesterday = addDays(today, -1);
   const base = { type, timeZone, today };
 
+  const custom = customDays(type);
+  if (custom) {
+    // Never past today in the site's time zone, and at most MAX_CUSTOM_DAYS long.
+    const end = custom.end > today ? today : custom.end;
+    let start = custom.start > end ? end : custom.start;
+    if (daysIn({ start, end }) > MAX_CUSTOM_DAYS) start = addDays(end, -(MAX_CUSTOM_DAYS - 1));
+    const days = daysIn({ start, end });
+    const granularity: Granularity =
+      days === 1 ? "dateHour" : days <= MAX_DAILY_POINTS ? "date" : "yearMonth";
+    const endsToday = end === today;
+    return {
+      ...base,
+      current: { start, end },
+      previous: { start: addDays(start, -days), end: addDays(start, -1) },
+      granularity,
+      includesYesterday: start <= yesterday && end >= yesterday,
+      endsToday,
+      // A single past day is drawn solid, like Yesterday; otherwise the newest point is
+      // dashed while Google may still be adding to it.
+      lastPointPending: granularity === "dateHour" ? endsToday : end >= yesterday,
+      lastHour: granularity === "dateHour" ? (endsToday ? hourIn(timeZone, now) : 23) : null,
+    };
+  }
+
   if (type === "today" || type === "yesterday") {
     const day = type === "today" ? today : yesterday;
     const before = addDays(day, -1);
@@ -122,6 +210,7 @@ export function rangeWindow(
       previous: { start: before, end: before },
       granularity: "dateHour",
       includesYesterday: type === "yesterday",
+      endsToday: type === "today",
       // Today's latest hour is still filling up. Yesterday's hours are all shown solid,
       // with "still updating" said once above the cards.
       lastPointPending: type === "today",
@@ -139,6 +228,7 @@ export function rangeWindow(
       previous: { start: previousStart, end: addDays(start, -1) },
       granularity: "yearMonth",
       includesYesterday: end === yesterday,
+      endsToday: false,
       lastPointPending: end === yesterday,
       lastHour: null,
     };
@@ -152,6 +242,7 @@ export function rangeWindow(
     previous: { start: addDays(start, -days), end: addDays(start, -1) },
     granularity: "date",
     includesYesterday: true,
+    endsToday: false,
     lastPointPending: true,
     lastHour: null,
   };
@@ -204,45 +295,100 @@ export function lacksHistory(
 
 /**
  * Why the numbers can't be compared with the period before, or null when they can.
- * Today isn't over, so comparing it with all of yesterday would always read "down".
+ * Today isn't over, so a period that ends today would always read "down".
  */
 export function comparisonGap(
   window: RangeWindow,
   propertyCreatedAt: Date | null | undefined,
 ): string | null {
-  if (window.type === "today") return "Today isn't over yet";
+  if (window.endsToday) return "Today isn't over yet";
   if (lacksHistory(window, propertyCreatedAt)) return "Not enough history to compare";
   return null;
 }
 
+/** The menu key for each preset (DataFast-style), shown next to it and active while the menu is open. */
+const SHORTCUTS: Record<RangePreset, string> = {
+  today: "T",
+  yesterday: "Y",
+  "7d": "W",
+  "30d": "M",
+  "12m": "L",
+};
+
+/** Stands for the chosen days in the custom range's address; the date menu swaps it for "start..end". */
+const CUSTOM_SLOT = "CUSTOM_RANGE";
+
+export type RangeMenu = {
+  /** The range shown now, and its label: "Last 7 days", "1 Sep – 30 Sep". */
+  value: RangeType;
+  label: string;
+  presets: {
+    value: RangePreset;
+    label: string;
+    href: string;
+    shortcut: string;
+    /** A line above it, between the single days and the longer periods. */
+    separated: boolean;
+  }[];
+  custom: {
+    /** The page address with `slot` where "start..end" goes. */
+    href: string;
+    slot: string;
+    /** The days the calendar starts with: the period shown now. */
+    start: string;
+    end: string;
+    /** The first and last days that can be picked (today in the site's time zone). */
+    firstDay: string;
+    lastDay: string;
+  };
+};
+
 /**
- * The date menu's options, linking to `basePath?range=…`. The page's default range
- * has no `?range=`; `query` keeps other search params (dev previews, the embedded demo).
+ * The date menu (docs/SPEC.md section 8): the presets, each linking to
+ * `basePath?range=…` (the page's default range has no `?range=`), and what the
+ * custom range calendar needs. `query` keeps other search params (dev previews,
+ * the embedded demo).
  */
 export function rangeMenu(
+  range: RangeType,
+  window: Pick<RangeWindow, "current" | "today">,
   basePath: string,
   query: Record<string, string> = {},
   defaultRange: RangeType = DEFAULT_RANGE,
-): { value: RangeType; label: string; href: string; separated: boolean }[] {
-  return RANGE_TYPES.map((r) => {
+): RangeMenu {
+  const href = (r: string) => {
     const params = new URLSearchParams(query);
     if (r !== defaultRange) params.set("range", r);
     const search = params.toString();
-    return {
+    return search ? `${basePath}?${search}` : basePath;
+  };
+  return {
+    value: range,
+    label: rangeLabel(range),
+    presets: RANGE_PRESETS.map((r) => ({
       value: r,
-      label: RANGE_LABELS[r],
-      href: search ? `${basePath}?${search}` : basePath,
-      // A line between the single days and the longer periods.
+      label: PRESET_LABELS[r],
+      href: href(r),
+      shortcut: SHORTCUTS[r],
       separated: r === "7d",
-    };
-  });
+    })),
+    custom: {
+      href: href(CUSTOM_SLOT),
+      slot: CUSTOM_SLOT,
+      start: window.current.start,
+      end: window.current.end,
+      firstDay: GA4_FIRST_DAY,
+      lastDay: window.today,
+    },
+  };
 }
 
 /** What to say about the newest numbers, next to the period. */
 export function freshnessNote(
-  window: Pick<RangeWindow, "type" | "includesYesterday">,
+  window: Pick<RangeWindow, "type" | "includesYesterday" | "endsToday">,
 ): string | null {
   if (window.type === "today") return "So far today. Google adds visits a few hours late.";
+  if (window.endsToday) return "Includes today so far. Google adds visits a few hours late.";
   if (window.includesYesterday) return "Google may still be adding to yesterday.";
   return null;
 }

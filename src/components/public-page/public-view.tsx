@@ -11,13 +11,20 @@ import { StaticLineChart } from "@/components/charts/static-line-chart";
 import { LiveCard } from "@/components/globe/live-card";
 import { Container } from "@/components/shared/container";
 import { LogoMark } from "@/components/shared/logo";
+import { Notice } from "@/components/shared/notice";
 import { OverviewToolbar } from "@/components/shared/overview-toolbar";
 import { SiteChip } from "@/components/shared/site-chip";
 import { brand } from "@/config/theme";
 import { chartCaption, chartPoints, periodLabel } from "@/lib/charts/series";
 import { formatDuration, formatNumber } from "@/lib/format";
 import { deriveStats } from "@/lib/ga4/derive";
-import { freshnessNote, PREVIOUS_PERIOD_WORDS, rangeMenu, type RangeType } from "@/lib/ga4/ranges";
+import {
+  freshnessNote,
+  isPreset,
+  previousPeriodWords,
+  rangeMenu,
+  type RangeType,
+} from "@/lib/ga4/ranges";
 import type { PublicView as View } from "@/lib/public-page/view";
 import { buildSummary } from "@/lib/summary/summary";
 
@@ -54,7 +61,7 @@ export function PublicView({
     ? chartPoints(series.points, series.granularity, window.lastPointPending)
     : null;
   const period = periodLabel(window);
-  const versus = `vs ${PREVIOUS_PERIOD_WORDS[range]}`;
+  const versus = `vs ${previousPeriodWords(range)}`;
   const metrics = (
     [
       {
@@ -88,11 +95,15 @@ export function PublicView({
         <Container className="flex flex-col gap-4 pt-5 sm:pt-6">
           <OverviewToolbar
             site={<SiteChip as="h1" domain={view.label} label={view.label} />}
-            range={range}
-            options={rangeMenu(basePath, query, defaultRange)}
-            period={period}
+            menu={rangeMenu(range, window, basePath, query, defaultRange)}
+            period={isPreset(range) ? period : null}
             note={freshnessNote(window)}
           />
+          {view.customLimited ? (
+            <Notice tone="warning" title="This page can't load more custom ranges right now.">
+              Try again in an hour, or pick a range from the menu.
+            </Notice>
+          ) : null}
           {has("summary") ? (
             <SummaryLine
               text={buildSummary({

@@ -79,24 +79,25 @@ export type ReportsResult<R extends ReportName> = {
 
 const HOUR = 60 * 60 * 1000;
 
-/** How long a cached report counts as fresh. Today keeps changing, so it goes stale soonest. */
-export function maxAge(rangeType: RangeType, audience: Audience): number {
-  if (rangeType === "today") return audience === "public" ? HOUR : HOUR / 2;
-  const base = rangeType === "12m" ? 24 * HOUR : 3 * HOUR;
+/**
+ * How long a cached report counts as fresh. A period that ends today keeps changing,
+ * so it goes stale soonest; one that ended before yesterday won't change any more.
+ */
+export function maxAge(
+  window: Pick<RangeWindow, "type" | "endsToday" | "includesYesterday">,
+  audience: Audience,
+): number {
+  if (window.endsToday) return audience === "public" ? HOUR : HOUR / 2;
+  const settled = window.type === "12m" || !window.includesYesterday;
+  const base = settled ? 24 * HOUR : 3 * HOUR;
   return audience === "public" ? Math.max(base, 12 * HOUR) : base;
 }
 
-function isFresh(
-  row: CacheRow,
-  window: RangeWindow,
-  rangeType: RangeType,
-  audience: Audience,
-  now: Date,
-) {
+function isFresh(row: CacheRow, window: RangeWindow, audience: Audience, now: Date) {
   return (
     row.windowStart === window.current.start &&
     row.windowEnd === window.current.end &&
-    now.getTime() - row.fetchedAt.getTime() < maxAge(rangeType, audience)
+    now.getTime() - row.fetchedAt.getTime() < maxAge(window, audience)
   );
 }
 
@@ -221,7 +222,7 @@ export async function getReports<R extends ReportName>(
   // Stale: show it now, refresh after the response is sent.
   const stale = names.filter((r) => {
     const row = rows.get(r);
-    return row && !isFresh(row, window, rangeType, audience, now);
+    return row && !isFresh(row, window, audience, now);
   });
   let refreshing = false;
   if (
@@ -243,7 +244,7 @@ export async function getReports<R extends ReportName>(
         {
           data: (row?.payload ?? null) as Payload<R> | null,
           fetchedAt: row?.fetchedAt ?? null,
-          fresh: row ? isFresh(row, window, rangeType, audience, now) : false,
+          fresh: row ? isFresh(row, window, audience, now) : false,
         },
       ];
     }),
@@ -299,9 +300,7 @@ export async function warmReports(
   const params: ReportParams = { signupEvent: site.signupEvent };
   const keys = names.map((report) => ({ report, paramsHash: paramsKey(report, params) }));
   const rows = await deps.store.read(site.propertyId, rangeType, keys);
-  const fresh = new Set(
-    rows.filter((r) => isFresh(r, window, rangeType, "owner", now)).map((r) => r.report),
-  );
+  const fresh = new Set(rows.filter((r) => isFresh(r, window, "owner", now)).map((r) => r.report));
   const todo = names.filter((r) => !fresh.has(r));
   if (todo.length === 0) return "fresh";
   const { error } = await fetchAndStore(deps, site, rangeType, window, todo, params, now);

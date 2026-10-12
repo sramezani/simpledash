@@ -3,6 +3,10 @@ import {
   addDays,
   addMonths,
   comparisonGap,
+  isIsoDay,
+  MAX_CUSTOM_DAYS,
+  previousPeriodWords,
+  rangeLabel,
   daysIn,
   endOfMonth,
   freshnessNote,
@@ -192,18 +196,89 @@ describe("comparisonGap", () => {
 });
 
 describe("rangeMenu", () => {
-  it("links each range, leaving out ?range= for the default", () => {
-    const menu = rangeMenu("/dashboard");
-    expect(menu.map((o) => o.value)).toEqual(["today", "yesterday", "7d", "30d", "12m"]);
-    expect(menu.find((o) => o.value === "7d")?.href).toBe("/dashboard");
-    expect(menu.find((o) => o.value === "today")?.href).toBe("/dashboard?range=today");
-    expect(menu.filter((o) => o.separated).map((o) => o.value)).toEqual(["7d"]);
+  const w = rangeWindow("7d", "UTC", new Date("2026-10-11T12:00:00Z"));
+
+  it("links each preset with its key, leaving out ?range= for the default", () => {
+    const { presets, value, label } = rangeMenu("7d", w, "/dashboard");
+    expect(value).toBe("7d");
+    expect(label).toBe("Last 7 days");
+    expect(presets.map((o) => o.value)).toEqual(["today", "yesterday", "7d", "30d", "12m"]);
+    expect(presets.map((o) => o.shortcut)).toEqual(["T", "Y", "W", "M", "L"]);
+    expect(presets.find((o) => o.value === "7d")?.href).toBe("/dashboard");
+    expect(presets.find((o) => o.value === "today")?.href).toBe("/dashboard?range=today");
+    expect(presets.filter((o) => o.separated).map((o) => o.value)).toEqual(["7d"]);
   });
 
   it("keeps other search params and a page's own default", () => {
-    const menu = rangeMenu("/demo", { embed: "1" }, "12m");
-    expect(menu.find((o) => o.value === "12m")?.href).toBe("/demo?embed=1");
-    expect(menu.find((o) => o.value === "7d")?.href).toBe("/demo?embed=1&range=7d");
+    const { presets, custom } = rangeMenu("12m", w, "/demo", { embed: "1" }, "12m");
+    expect(presets.find((o) => o.value === "12m")?.href).toBe("/demo?embed=1");
+    expect(presets.find((o) => o.value === "7d")?.href).toBe("/demo?embed=1&range=7d");
+    expect(custom.href.replace(custom.slot, "2026-09-01..2026-09-30")).toBe(
+      "/demo?embed=1&range=2026-09-01..2026-09-30",
+    );
+  });
+
+  it("starts the calendar on the period shown and stops it at today", () => {
+    const { custom, label } = rangeMenu("2026-09-01..2026-09-30", w, "/dashboard");
+    expect(label).toBe("1 Sep – 30 Sep");
+    expect(custom).toMatchObject({
+      start: "2026-10-04",
+      end: "2026-10-10",
+      firstDay: "2015-08-14",
+      lastDay: "2026-10-11",
+    });
+  });
+});
+
+describe("custom ranges", () => {
+  const now = new Date("2026-10-11T14:30:00Z");
+
+  it("reads valid ranges from ?range=, in order, and refuses the rest", () => {
+    expect(parseRange("2026-09-01..2026-09-30")).toBe("2026-09-01..2026-09-30");
+    expect(parseRange("2026-09-30..2026-09-01")).toBe("2026-09-01..2026-09-30");
+    expect(parseRange("2010-01-01..2016-01-01")).toBe("2015-08-14..2016-01-01");
+    for (const bad of ["2026-02-30..2026-03-01", "2026-9-1..2026-9-30", "x..y", "2026-09-01"]) {
+      expect(parseRange(bad), bad).toBe("7d");
+    }
+    expect(isIsoDay("2028-02-29")).toBe(true);
+    expect(isIsoDay("2027-02-29")).toBe(false);
+  });
+
+  it("is compared with the same number of days just before", () => {
+    const w = rangeWindow("2026-09-01..2026-09-30", "UTC", now);
+    expect(w.current).toEqual({ start: "2026-09-01", end: "2026-09-30" });
+    expect(w.previous).toEqual({ start: "2026-08-02", end: "2026-08-31" });
+    expect(w.granularity).toBe("date");
+    expect(w.includesYesterday).toBe(false);
+    expect(w.lastPointPending).toBe(false);
+    expect(comparisonGap(w, null)).toBeNull();
+    expect(previousPeriodWords("2026-09-01..2026-09-30")).toBe("the 30 days before");
+  });
+
+  it("is hourly for one day, daily up to about 3 months, monthly after", () => {
+    expect(rangeWindow("2026-09-14..2026-09-14", "UTC", now).granularity).toBe("dateHour");
+    expect(rangeWindow("2026-07-01..2026-09-30", "UTC", now).granularity).toBe("date");
+    expect(rangeWindow("2025-01-01..2026-09-30", "UTC", now).granularity).toBe("yearMonth");
+    expect(rangeLabel("2026-09-14..2026-09-14")).toBe("Mon 14 Sep");
+    expect(previousPeriodWords("2026-09-14..2026-09-14")).toBe("the day before");
+  });
+
+  it("stops at today, and a range ending today isn't compared", () => {
+    const w = rangeWindow("2026-10-01..2026-12-31", "UTC", now);
+    expect(w.current.end).toBe("2026-10-11");
+    expect(w.endsToday).toBe(true);
+    expect(w.includesYesterday).toBe(true);
+    expect(comparisonGap(w, null)).toBe("Today isn't over yet");
+    expect(freshnessNote(w)).toMatch(/^Includes today so far/);
+    const today = rangeWindow("2026-10-11..2026-10-11", "UTC", now);
+    expect(today.granularity).toBe("dateHour");
+    expect(today.lastHour).toBe(14);
+  });
+
+  it("is at most about 5 years", () => {
+    const w = rangeWindow("2015-08-14..2026-09-30", "UTC", now);
+    expect(w.current.end).toBe("2026-09-30");
+    expect(daysIn(w.current)).toBe(MAX_CUSTOM_DAYS);
   });
 });
 

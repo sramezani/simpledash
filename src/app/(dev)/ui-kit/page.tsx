@@ -248,7 +248,13 @@ export default function UiKitPage() {
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <SiteChip domain="github.com" label="github.com" />
-            <RangePicker value="7d" options={rangeMenu("/ui-kit")} />
+            <RangePicker
+              {...rangeMenu(
+                "7d",
+                { current: { start: "2026-10-05", end: "2026-10-11" }, today: "2026-10-12" },
+                "/ui-kit",
+              )}
+            />
             <SegmentedRadio
               name="kit-interval"
               label="Billing"
