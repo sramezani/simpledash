@@ -129,9 +129,9 @@ export function csvTable(
   }
 }
 
-/** "20261004" → "2026-10-04", "202610" → "2026-10". */
+/** "2026100414" → "2026-10-04 14:00", "20261004" → "2026-10-04", "202610" → "2026-10". */
 function keyToIso(key: string): string {
-  return key.length === 8
-    ? `${key.slice(0, 4)}-${key.slice(4, 6)}-${key.slice(6)}`
-    : `${key.slice(0, 4)}-${key.slice(4, 6)}`;
+  const month = `${key.slice(0, 4)}-${key.slice(4, 6)}`;
+  if (key.length === 10) return `${month}-${key.slice(6, 8)} ${key.slice(8)}:00`;
+  return key.length === 8 ? `${month}-${key.slice(6)}` : month;
 }

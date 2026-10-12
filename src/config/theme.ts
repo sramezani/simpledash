@@ -10,7 +10,7 @@
  * - `npm run check` tests WCAG AA contrast for every text and background pair here.
  */
 
-/** The main colour. It feeds `primary`, `ring`, `brand` and `chart-1`. */
+/** The main colour. It feeds `primary`, `ring` and `brand`. */
 const brandColor = "#4A42DB";
 
 /** The neutral scale. It feeds surfaces, borders and quiet text. */
@@ -70,14 +70,18 @@ export const colors = {
     negative: "#B91C1C",
     // Notes such as "Still updating"
     warning: "#B45309",
-    // Charts: chart-1 is the visitors line
-    "chart-1": brandColor,
+    // Charts: chart-1 is the visitors line, a light clear blue (also the soft bars in lists)
+    "chart-1": "#2F94E4",
     "chart-2": "#0284C7",
     "chart-3": "#D97706",
     "chart-4": "#059669",
     "chart-5": "#DB2777",
     // Layers: the dim layer behind dialogs (used with an opacity, e.g. bg-overlay/50)
     overlay: neutral[950],
+    // Decoration: the three dots of the browser window around the landing demo
+    "window-close": "#FF5F57",
+    "window-minimize": "#FEBC2E",
+    "window-zoom": "#28C840",
   },
 } as const;
 

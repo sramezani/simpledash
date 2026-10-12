@@ -21,9 +21,10 @@ import { SignupPicker } from "@/components/cards/signup-picker";
 import { EmailNotice } from "@/components/dashboard/email-notice";
 import { LockedPanel } from "@/components/dashboard/locked-panel";
 import { ShareCard } from "@/components/dashboard/share-card";
+import { SiteChip } from "@/components/shared/site-chip";
 import { Badge } from "@/components/ui/badge";
 import { uiKitEnabled } from "@/lib/env";
-import { parseRange, rangeWindow } from "@/lib/ga4/ranges";
+import { comparisonGap, parseRange, rangeWindow } from "@/lib/ga4/ranges";
 import { REPORTS } from "@/lib/ga4/reports";
 import { addDays } from "@/lib/ga4/ranges";
 import { sampleLive, sampleReports, SAMPLE_SIGNUP_EVENT } from "@/lib/ga4/sample/sample";
@@ -88,7 +89,11 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
   const state = STATES.find((s) => s === params.state) ?? "normal";
   const window = rangeWindow(range, "Europe/Amsterdam");
   const reports = sampleReports(window, REPORTS);
-  const site = <Badge variant="outline">yoursite.com (preview)</Badge>;
+  const site = (
+    <SiteChip domain={null} label="yoursite.com">
+      <Badge variant="secondary">Preview</Badge>
+    </SiteChip>
+  );
   const quotaUntil = new Date(`${window.today}T15:00:00Z`);
 
   if (state === "not-granted") return <AccessNotGranted signIn={noop} />;
@@ -163,7 +168,10 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
         }
         signupEvent={signupEvent}
         signupPicker={signupEvent ? <SignupChange picker={picker} /> : picker}
-        comparable={state !== "no-history"}
+        comparisonGap={
+          state === "no-history" ? "Not enough history to compare" : comparisonGap(window, null)
+        }
+        query={state === "normal" ? undefined : { state }}
         notes={previewNotes}
         notesPanel={
           <ChartNotes

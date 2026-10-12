@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { plans } from "@/config/plans";
-import { monthsFreeOnYearly, planInWords, priceInWords, yearlyLabel } from "./prices";
+import {
+  monthsFreeLabel,
+  monthsFreeOnYearly,
+  planInWords,
+  priceInWords,
+  yearlyLabel,
+  yearlySaving,
+} from "./prices";
 
 describe("prices", () => {
   it("works out the months free from the prices", () => {
@@ -8,6 +15,13 @@ describe("prices", () => {
     expect(monthsFreeOnYearly({ month: 10, year: 100 })).toBe(2);
     expect(monthsFreeOnYearly({ month: 9, year: 99 })).toBe(1);
     expect(yearlyLabel()).toBe("Yearly · 2 months free");
+  });
+
+  it("works out the yearly saving for each plan", () => {
+    expect(yearlySaving(plans.starter.prices)).toBe(18);
+    expect(yearlySaving(plans.growth.prices)).toBe(38);
+    expect(monthsFreeLabel()).toBe("2 months free");
+    expect(monthsFreeLabel({ month: 9, year: 99 })).toBe("1 month free");
   });
 
   it("states prices in words from plans.ts", () => {

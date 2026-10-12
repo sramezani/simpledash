@@ -10,6 +10,12 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
 ];
 
+// Public pages are cached at Cloudflare for 10 minutes (docs/SPEC.md section 15).
+const publicCache = {
+  key: "Cache-Control",
+  value: "public, s-maxage=600, stale-while-revalidate=86400",
+};
+
 const nextConfig: NextConfig = {
   output: "standalone",
   cacheComponents: true,
@@ -25,11 +31,15 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },
-      // Public stats pages: Cloudflare keeps them 10 minutes (docs/SPEC.md section 15).
+      { source: "/p/:slug", headers: [publicCache] },
+      // The live demo is shown in a frame on our own landing page, and only there.
+      // A later rule wins for the same header, so this replaces the two above.
       {
-        source: "/p/:slug",
+        source: "/demo",
         headers: [
-          { key: "Cache-Control", value: "public, s-maxage=600, stale-while-revalidate=86400" },
+          publicCache,
+          { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
         ],
       },
     ];

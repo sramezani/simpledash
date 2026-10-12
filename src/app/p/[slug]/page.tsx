@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: PageProps<"/p/[slug]">): Prom
 /** A public stats page, /p/<slug> (docs/SPEC.md section 15). */
 export default function PublicPage(props: PageProps<"/p/[slug]">) {
   return (
-    <Suspense fallback={<DashboardSkeleton />}>
+    <Suspense fallback={<DashboardSkeleton header={false} />}>
       <Content {...props} />
     </Suspense>
   );

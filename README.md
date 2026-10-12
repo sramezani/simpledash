@@ -14,7 +14,7 @@ There is no new tracking script. Visitor data comes from the user's own GA4 prop
 
 ## Status
 
-All of V1 (Sprints 0–4) is built: the project setup, Google sign-in with read-only Analytics, the automatic site choice, the GA4 data layer with its cache, the full dashboard (summary line, the 4 numbers, the visitors chart with notes, Sources, Pages, Countries, Devices, AI traffic, Actions, the live globe, CSV on every card, every state), the landing page with a demo and pricing, the legal pages and SEO files, the Monday email, public stats pages, Stripe billing with the 14-day trial, settings (disconnect Google, delete account), usage counts, Sentry and nightly backups. What's left before launch is mostly accounts and settings on Siamak's side (see Sprint 4 in the checklist). Progress is tracked in [docs/CHECKLIST.md](docs/CHECKLIST.md), and the session log is in [docs/STORY.md](docs/STORY.md).
+All of V1 (Sprints 0–4) is built: the project setup, Google sign-in with read-only Analytics, the automatic site choice, the GA4 data layer with its cache, the full dashboard (summary line, the 4 numbers, the visitors chart with notes, Sources, Pages, Countries, Devices, AI traffic, Actions, the live globe, CSV on every card, every state), the landing page with a live demo and pricing, the legal pages and SEO files, the Monday email, public stats pages, Stripe billing with the 14-day trial, settings (disconnect Google, delete account), usage counts, Sentry and nightly backups. What's left before launch is mostly accounts and settings on Siamak's side (see Sprint 4 in the checklist). Progress is tracked in [docs/CHECKLIST.md](docs/CHECKLIST.md), and the session log is in [docs/STORY.md](docs/STORY.md).
 
 ## Requirements
 
@@ -36,7 +36,8 @@ Pages:
 
 | Page | What it is |
 | --- | --- |
-| `/` | Landing page: demo dashboard on sample data, how it works, pricing (`/#pricing`), FAQ |
+| `/` | Landing page: the live demo in a browser frame, how it works, pricing (`/#pricing`), FAQ. Shows "Dashboard" instead of "Sign in" when you're signed in |
+| `/demo` | The live demo: a real public stats page, set in `src/config/demo.ts` (sample data if that page is off) |
 | `/signin` | "Continue with Google" (needs `GOOGLE_CLIENT_ID` and the redirect URI on the Google client) |
 | `/dashboard` | The dashboard (signed in) |
 | `/settings` | Account, weekly email, public page, billing, disconnect Google, delete account (signed in) |

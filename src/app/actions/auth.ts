@@ -1,9 +1,10 @@
 "use server";
 
 import type { Route } from "next";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/auth";
+import { SIGNED_IN_HINT } from "@/lib/auth/signed-in-hint";
 
 /**
  * Starts Google sign-in: one consent screen for sign-in and read-only Analytics.
@@ -20,5 +21,6 @@ export async function signInWithGoogle() {
 
 export async function signOut() {
   await auth.api.signOut({ headers: await headers() });
+  (await cookies()).delete(SIGNED_IN_HINT);
   redirect("/");
 }

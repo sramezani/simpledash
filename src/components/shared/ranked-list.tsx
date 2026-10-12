@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -20,23 +20,41 @@ type RankedListProps = {
   /** Column headings for the values: ["Visitors"] or ["Views", "Visitors"]. */
   columns: string[];
   rows: RankedRow[];
-  /** Rows shown before "Show more". */
+  /** Shown in the list's place when there are no rows (it keeps the same height). */
+  empty?: ReactNode;
+  /** Rows that fit before "Show more". The list is always this tall. */
   initial?: number;
 };
 
 /**
- * The ranked list used by Sources, Pages, Countries, Devices and AI traffic
- * (docs/SPEC.md section 18): icon, label and value, a soft share bar behind the
- * row, the full label on hover and for screen readers, and "Show more" that
- * expands in place without JavaScript.
+ * The ranked list used by Sources, Pages, Countries, Devices, Actions and AI traffic
+ * (docs/SPEC.md section 18): icon, label and value, a soft blue share bar behind the
+ * row that grows in, the full label on hover and for screen readers.
+ *
+ * The list has a fixed height of `initial` rows, whatever the number of rows, so the
+ * cards line up and nothing moves. "Show more" turns it into a scrolling list in
+ * place, without JavaScript.
  */
-export function RankedList({ id, itemLabel, columns, rows, initial = 10 }: RankedListProps) {
+export function RankedList({ id, itemLabel, columns, rows, empty, initial = 10 }: RankedListProps) {
   const max = Math.max(1, ...rows.map((r) => r.values[0] ?? 0));
   const more = rows.length - initial;
+  const viewport = { "--rows": initial } as CSSProperties;
+
+  if (rows.length === 0) {
+    return (
+      <div
+        style={viewport}
+        className="flex h-[calc(var(--rows)*2.375rem+3.375rem)] flex-col justify-center pointer-coarse:h-[calc(var(--rows)*2.375rem+4.125rem)]"
+      >
+        {empty}
+      </div>
+    );
+  }
+
   return (
     <div className="group/list flex flex-col gap-1">
       <div
-        className="flex items-center justify-between gap-3 px-2 text-xs text-muted-foreground"
+        className="flex items-center justify-between gap-3 px-2 text-xs text-muted-foreground group-has-[[data-show-more]:checked]/list:pr-4"
         aria-hidden="true"
       >
         <span>{itemLabel}</span>
@@ -48,7 +66,11 @@ export function RankedList({ id, itemLabel, columns, rows, initial = 10 }: Ranke
           ))}
         </span>
       </div>
-      <ol id={`${id}-list`} className="flex flex-col gap-0.5">
+      <ol
+        id={`${id}-list`}
+        style={viewport}
+        className="flex h-[calc(var(--rows)*2.375rem-0.125rem)] [scrollbar-width:thin] flex-col gap-0.5 overflow-hidden group-has-[[data-show-more]:checked]/list:overflow-y-auto group-has-[[data-show-more]:checked]/list:overscroll-contain group-has-[[data-show-more]:checked]/list:pr-2"
+      >
         {rows.map((row, index) => {
           const share = (row.values[0] ?? 0) / max;
           const spoken = columns
@@ -58,14 +80,15 @@ export function RankedList({ id, itemLabel, columns, rows, initial = 10 }: Ranke
             <li
               key={row.key}
               className={cn(
-                "relative flex min-h-8 items-center gap-2 rounded-md px-2 py-1 text-sm transition-colors duration-150 ease-out hover:bg-muted",
-                index >= initial && "hidden group-has-[[data-show-more]:checked]/list:flex",
+                "relative flex h-9 shrink-0 items-center gap-2 rounded-md px-2 text-sm transition-colors duration-150 ease-out hover:bg-muted",
+                index >= initial &&
+                  "hidden animate-in duration-300 fade-in-0 group-has-[[data-show-more]:checked]/list:flex",
               )}
             >
               <span
                 aria-hidden="true"
-                className="absolute inset-y-0.5 left-0 rounded-md bg-primary/10"
-                style={{ width: `${Math.max(share * 100, 1)}%` }}
+                style={{ "--share": `${Math.max(share * 100, 1)}%` } as CSSProperties}
+                className="absolute inset-y-0 left-0 w-(--share) rounded-md bg-chart-1/12 transition-[width] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] starting:w-0"
               />
               {row.icon ? (
                 <span className="relative flex size-4 shrink-0 items-center justify-center">
@@ -94,14 +117,17 @@ export function RankedList({ id, itemLabel, columns, rows, initial = 10 }: Ranke
         })}
       </ol>
       {more > 0 ? (
-        <label className="mt-1 inline-flex h-8 cursor-pointer items-center self-start rounded-md px-2 text-sm font-medium text-primary hover:bg-muted has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring pointer-coarse:h-11">
+        <label className="inline-flex h-8 cursor-pointer items-center self-start rounded-md px-2 text-sm font-medium text-primary transition-colors duration-150 hover:bg-muted has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring pointer-coarse:h-11">
           <input type="checkbox" data-show-more className="sr-only" aria-controls={`${id}-list`} />
           <span className="group-has-[[data-show-more]:checked]/list:hidden">Show {more} more</span>
           <span className="hidden group-has-[[data-show-more]:checked]/list:inline">
             Show fewer
           </span>
         </label>
-      ) : null}
+      ) : (
+        // Keeps the height of the "Show more" line, so every list card is as tall.
+        <span aria-hidden="true" className="h-8 pointer-coarse:h-11" />
+      )}
     </div>
   );
 }

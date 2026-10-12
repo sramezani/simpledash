@@ -1,6 +1,6 @@
 import { formatNumber, formatPercent, percentChange } from "@/lib/format";
 import { sourceLabel } from "@/lib/ga4/labels";
-import type { RangeType } from "@/lib/ga4/ranges";
+import { PREVIOUS_PERIOD_WORDS as PREVIOUS, type RangeType } from "@/lib/ga4/ranges";
 import type { Payloads } from "@/lib/ga4/reports";
 
 /**
@@ -21,15 +21,13 @@ export type SummaryInput = {
   audience?: "dashboard" | "email";
 };
 
-const PREVIOUS: Record<RangeType, string> = {
-  "7d": "the previous 7 days",
-  "30d": "the previous 30 days",
-  "12m": "the previous 12 months",
-};
-const LAST: Record<RangeType, string> = {
-  "7d": "the last 7 days",
-  "30d": "the last 30 days",
-  "12m": "the last 12 months",
+/** "145 visitors in the last 12 months", "12 visitors today so far". */
+const PERIOD: Record<RangeType, string> = {
+  today: "today so far",
+  yesterday: "yesterday",
+  "7d": "in the last 7 days",
+  "30d": "in the last 30 days",
+  "12m": "in the last 12 months",
 };
 
 /** Changes smaller than this read as "about the same". */
@@ -84,7 +82,7 @@ export function buildSummary(input: SummaryInput): string | null {
   let first: string;
   if (change === null) {
     // Rule 3: no comparison possible.
-    const period = email ? "last week" : `in ${LAST[input.range]}`;
+    const period = email ? "last week" : PERIOD[input.range];
     const noun = current.visitors === 1 ? "visitor" : "visitors";
     first = `${formatNumber(current.visitors)} ${noun} ${period}`;
     const main = mainSourceOfVisitors(input.sources, current.visitors);

@@ -25,7 +25,8 @@ export const plans = {
     name: "Growth",
     status: "coming_soon",
     currency: "EUR",
-    prices: { month: 19 },
+    // Shown on the pricing section only; not on sale yet.
+    prices: { month: 19, year: 190 },
     summary: "Everything in Starter, plus:",
     features: [
       "Several sites",

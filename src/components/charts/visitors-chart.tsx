@@ -10,23 +10,27 @@ const config = { visitors: { label: "Visitors", color: "var(--chart-1)" } } sati
 
 type TooltipProps = { active?: boolean; payload?: { payload?: ChartPoint }[] };
 
+/** The same tooltip as the server-rendered chart's (StaticLineChart). */
 function VisitorsTooltip({ active, payload }: TooltipProps) {
   const point = payload?.[0]?.payload;
   if (!active || !point) return null;
   return (
-    <div className="rounded-lg border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-md">
+    <div className="flex flex-col gap-0.5 rounded-lg border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-md">
       <p className="text-muted-foreground">{point.label}</p>
       <p className="font-medium tabular-nums">
         {formatNumber(point.visitors)} {point.visitors === 1 ? "visitor" : "visitors"}
-        {point.pending !== null && point.solid === null ? " · still updating" : ""}
       </p>
+      {point.pending !== null && point.solid === null ? (
+        <p className="text-warning">Still updating</p>
+      ) : null}
     </div>
   );
 }
 
 /**
- * The visitors line on the dashboard (shadcn charts, Recharts). The last part is
- * dashed while Google is still adding to yesterday. Nothing animates on load.
+ * The visitors line on the dashboard (shadcn charts, Recharts): a smooth light-blue
+ * line over a soft fill, drawn in from the left, matching the server-rendered chart
+ * on public pages. The last part is dashed while it is still updating.
  */
 type VisitorsChartProps = {
   points: ChartPoint[];
@@ -62,10 +66,12 @@ export default function VisitorsChart({
 }: VisitorsChartProps) {
   const ticks = points.filter((p) => p.tick).map((p) => p.key);
   const tickLabel = new Map(points.map((p) => [p.key, p.tick]));
-  // A week or a year has few points: show each one as a dot.
-  const dot = points.length <= 12 ? { r: 3, strokeWidth: 2 } : false;
+  const activeDot = { r: 5, strokeWidth: 2.5, className: "fill-card stroke-chart-1" };
   return (
-    <ChartContainer config={config} className="aspect-auto h-56 w-full @2xl:h-64">
+    <ChartContainer
+      config={config}
+      className="aspect-auto h-56 w-full animate-chart-reveal @2xl:h-64 [&_.recharts-cartesian-grid_line]:stroke-border"
+    >
       <AreaChart
         data={points}
         margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
@@ -82,11 +88,11 @@ export default function VisitorsChart({
       >
         <defs>
           <linearGradient id="visitors-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--color-visitors)" stopOpacity={0.22} />
-            <stop offset="100%" stopColor="var(--color-visitors)" stopOpacity={0.02} />
+            <stop offset="0%" stopColor="var(--color-visitors)" stopOpacity={0.26} />
+            <stop offset="100%" stopColor="var(--color-visitors)" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid vertical={false} />
+        <CartesianGrid vertical={false} strokeDasharray="3 4" />
         <XAxis
           dataKey="key"
           ticks={ticks}
@@ -103,7 +109,10 @@ export default function VisitorsChart({
           allowDecimals={false}
           tickFormatter={(v: number) => formatCompact(v)}
         />
-        <ChartTooltip cursor content={<VisitorsTooltip />} />
+        <ChartTooltip
+          cursor={{ stroke: "var(--color-visitors)", strokeOpacity: 0.5, strokeDasharray: "3 3" }}
+          content={<VisitorsTooltip />}
+        />
         {notes.map((note) => (
           <ReferenceLine
             key={note.id}
@@ -113,27 +122,39 @@ export default function VisitorsChart({
             label={<NoteMarker note={note} />}
           />
         ))}
+        {/* One soft fill under the whole line, then the solid and dashed parts on top. */}
         <Area
-          dataKey="solid"
-          type="linear"
-          stroke="var(--color-visitors)"
-          strokeWidth={2}
+          dataKey="visitors"
+          type="monotone"
+          stroke="none"
           fill="url(#visitors-fill)"
           isAnimationActive={false}
-          dot={dot}
-          activeDot={{ r: 4 }}
+          dot={false}
+          activeDot={false}
+          tooltipType="none"
+        />
+        <Area
+          dataKey="solid"
+          type="monotone"
+          stroke="var(--color-visitors)"
+          strokeWidth={2.25}
+          strokeLinecap="round"
+          fill="none"
+          isAnimationActive={false}
+          dot={false}
+          activeDot={activeDot}
         />
         <Area
           dataKey="pending"
-          type="linear"
+          type="monotone"
           stroke="var(--color-visitors)"
-          strokeWidth={2}
-          strokeDasharray="4 4"
-          fill="url(#visitors-fill)"
-          fillOpacity={0.5}
+          strokeWidth={2.25}
+          strokeDasharray="5 5"
+          strokeLinecap="round"
+          fill="none"
           isAnimationActive={false}
-          dot={dot}
-          activeDot={{ r: 4 }}
+          dot={false}
+          activeDot={activeDot}
         />
       </AreaChart>
     </ChartContainer>

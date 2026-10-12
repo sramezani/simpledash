@@ -112,6 +112,32 @@ describe("parseReport", () => {
     expect(points.at(-1)).toEqual({ key: "20261010", visitors: 2 });
   });
 
+  it("leaves off today's latest hours that Google hasn't reported yet", () => {
+    const today = rangeWindow("today", "UTC", new Date("2026-10-11T14:30:00Z"));
+    const res = response(
+      ["dateHour"],
+      ["activeUsers"],
+      [
+        ["2026101108", 3],
+        ["2026101111", 4],
+      ],
+    );
+    const { points, granularity } = parseReport("series", res, today);
+    expect(granularity).toBe("dateHour");
+    expect(points.map((p) => p.key)).toEqual(
+      Array.from({ length: 12 }, (_, h) => `20261011${String(h).padStart(2, "0")}`),
+    );
+    expect(points[9]).toEqual({ key: "2026101109", visitors: 0 });
+    expect(parseReport("series", { rows: [] }, today).points).toEqual([]);
+  });
+
+  it("asks GA4 for hours on today and yesterday", () => {
+    const today = rangeWindow("today", "UTC", new Date("2026-10-11T14:30:00Z"));
+    expect(buildRequest("series", today, { signupEvent: null }).dimensions).toEqual([
+      { name: "dateHour" },
+    ]);
+  });
+
   it("joins sources across both periods", () => {
     const res = response(
       ["sessionSource", "dateRange"],

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { cacheLife } from "next/cache";
-import { DemoDashboard } from "@/components/marketing/demo-dashboard";
+import { DemoFrame } from "@/components/marketing/demo-frame";
 import { Faq } from "@/components/marketing/faq";
 import { Hero } from "@/components/marketing/hero";
 import { HowItWorks } from "@/components/marketing/how-it-works";
@@ -18,16 +17,16 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-/** The landing page (docs/SPEC.md section 17). Static; the demo's dates refresh daily. */
+/** The landing page (docs/SPEC.md section 17). Static; the live demo loads in its frame. */
 export default function HomePage() {
   return (
     <>
       <SiteHeader />
       <main id="main">
         <Hero />
-        <section aria-label="A sample dashboard" className="pb-6">
+        <section aria-label="Live demo" className="pb-10 sm:pb-14">
           <Container>
-            <Demo />
+            <DemoFrame />
           </Container>
         </section>
         <HowItWorks />
@@ -41,10 +40,4 @@ export default function HomePage() {
       />
     </>
   );
-}
-
-async function Demo() {
-  "use cache";
-  cacheLife("days");
-  return <DemoDashboard now={new Date()} />;
 }

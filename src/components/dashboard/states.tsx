@@ -3,7 +3,10 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Container } from "@/components/shared/container";
 import { GoogleButton } from "@/components/shared/google-button";
-import { LogoMark } from "@/components/shared/logo";
+import { Logo, LogoMark } from "@/components/shared/logo";
+import { SiteChip } from "@/components/shared/site-chip";
+import { Badge } from "@/components/ui/badge";
+import { SAMPLE_DOMAIN } from "@/lib/ga4/sample/sample";
 import { Notice } from "@/components/shared/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatTime } from "@/lib/format";
@@ -148,34 +151,60 @@ export function DashboardFrame({ children, nav }: { children: ReactNode; nav?: R
 }
 
 /** Shown while the dashboard loads: the final layout, so nothing moves when numbers arrive. */
-export function DashboardSkeleton({ message }: { message?: string }) {
+export function DashboardSkeleton({
+  message,
+  header = true,
+}: {
+  message?: string;
+  /** The dashboard's top bar. Public pages have none. */
+  header?: boolean;
+}) {
   return (
     <>
-      <header className="border-b bg-background">
-        <Container className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2.5">
-          <LogoMark className="size-7 text-brand" />
-          <Skeleton className="h-9 w-48" />
-          <Skeleton className="order-last h-9 w-full sm:order-none sm:ml-auto sm:w-72 pointer-coarse:h-12" />
-          <Skeleton className="size-9" />
-        </Container>
-      </header>
-      <main id="main" className="py-6" aria-busy="true">
-        <Container className="flex flex-col gap-4">
-          <p className="h-5 text-sm text-muted-foreground" role="status">
-            {message ?? ""}
-          </p>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {Array.from({ length: 4 }, (_, i) => (
-              <div key={i} className="flex h-32 flex-col gap-3 rounded-xl border bg-card p-4">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-9 w-24" />
-                <Skeleton className="h-4 w-16" />
-              </div>
-            ))}
+      {header ? (
+        <header className="border-b bg-background">
+          <Container className="flex h-14 items-center gap-3">
+            <Logo />
+            <Skeleton className="ml-auto h-9 w-28" />
+          </Container>
+        </header>
+      ) : null}
+      <main id="main" className="pb-16" aria-busy="true">
+        <Container className="flex flex-col gap-4 pt-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <Skeleton className="h-9 w-40 rounded-lg pointer-coarse:h-11" />
+            <Skeleton className="h-9 w-36 rounded-lg pointer-coarse:h-11" />
+            <p className="h-5 text-sm text-muted-foreground sm:ml-1" role="status">
+              {message ?? ""}
+            </p>
           </div>
-          <Skeleton className="h-80 rounded-xl" />
+          <Skeleton className="h-6 w-3/4 max-w-xl" />
+          <div className="@container overflow-hidden rounded-2xl border bg-card shadow-xs">
+            <div className="grid grid-cols-2 @3xl:grid-cols-4">
+              {Array.from({ length: 4 }, (_, i) => (
+                <div key={i} className="flex flex-col gap-2.5 px-4 py-4 @2xl:px-5">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-8 w-24" />
+                  <Skeleton className="h-3 w-12" />
+                </div>
+              ))}
+            </div>
+            <div className="px-3 pt-1 pb-4 @2xl:px-5">
+              <Skeleton className="mb-2 h-8 w-24" />
+              <Skeleton className="h-56 rounded-lg @2xl:h-64" />
+            </div>
+          </div>
         </Container>
       </main>
     </>
+  );
+}
+
+/** The sample site's chip, with a "Sample data" badge so nobody mistakes it for theirs. */
+export function SampleSiteChip() {
+  return (
+    <SiteChip domain={null} label={SAMPLE_DOMAIN}>
+      <Badge variant="secondary">Sample data</Badge>
+    </SiteChip>
   );
 }

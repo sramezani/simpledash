@@ -191,3 +191,17 @@ describe("buildSummary rule 5: no reasons", () => {
     expect(buildSummary({ ...base, totals: null })).toBeNull();
   });
 });
+
+describe("buildSummary for single days", () => {
+  it("says today so far, without a comparison", () => {
+    expect(
+      buildSummary({ ...base, range: "today", comparable: false, totals: totals(12, 40) }),
+    ).toBe("12 visitors today so far, mostly from Google.");
+  });
+
+  it("compares yesterday with the day before", () => {
+    expect(buildSummary({ ...base, range: "yesterday", sources: null })).toBe(
+      "Visitors up 23% vs the day before.",
+    );
+  });
+});

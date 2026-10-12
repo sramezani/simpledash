@@ -3,19 +3,27 @@ import { ActionsCard } from "@/components/cards/actions-card";
 import { AiCard } from "@/components/cards/ai-card";
 import { CountriesCard } from "@/components/cards/countries-card";
 import { DevicesCard } from "@/components/cards/devices-card";
+import { OverviewCard, type OverviewMetric } from "@/components/cards/overview-card";
 import { PagesCard } from "@/components/cards/pages-card";
 import { SourcesCard } from "@/components/cards/sources-card";
-import { StatCard } from "@/components/cards/stat-card";
 import { SummaryLine } from "@/components/cards/summary-line";
-import { VisitorsCard } from "@/components/cards/visitors-card";
 import { VisitorsChartLazy } from "@/components/charts/visitors-chart-lazy";
 import { Container } from "@/components/shared/container";
 import { CsvLink } from "@/components/shared/csv-link";
+import { CsvMenu } from "@/components/shared/csv-menu";
+import { OverviewToolbar } from "@/components/shared/overview-toolbar";
+import { PopoverButton } from "@/components/shared/popover-button";
 import { cardById, type CardId } from "@/config/cards";
-import { chartCaption, chartPoints, noteMarks } from "@/lib/charts/series";
-import { formatDayRange, formatDuration, formatMonth, formatNumber } from "@/lib/format";
+import { chartCaption, chartPoints, noteMarks, periodLabel } from "@/lib/charts/series";
+import { formatDuration, formatNumber } from "@/lib/format";
 import { deriveStats } from "@/lib/ga4/derive";
-import { PREVIOUS_PERIOD_WORDS, type RangeType, type RangeWindow } from "@/lib/ga4/ranges";
+import {
+  freshnessNote,
+  PREVIOUS_PERIOD_WORDS,
+  rangeMenu,
+  type RangeType,
+  type RangeWindow,
+} from "@/lib/ga4/ranges";
 import type { Payload, ReportName } from "@/lib/ga4/reports";
 import { buildSummary } from "@/lib/summary/summary";
 import { RefreshSoon } from "./refresh-soon";
@@ -28,20 +36,22 @@ type DashboardViewProps = {
   window: RangeWindow;
   reports: DashboardReports;
   signupEvent: string | null;
-  /** False when the previous period started before the property existed. */
-  comparable: boolean;
-  /** The switcher, or a "Sample data" badge. */
+  /** Why the numbers can't be compared with the period before, or null when they can. */
+  comparisonGap: string | null;
+  /** The site switcher, or the sample site's chip. */
   site: ReactNode;
   /** State banners and notices, shown above the cards. */
   notices?: ReactNode;
-  /** The Signups picker: in the card when no event is chosen, behind "Change" otherwise. */
+  /** The Signups picker: behind "Choose an event", or behind "Change" once one is chosen. */
   signupPicker?: ReactNode;
   /** Grey the numbers out: they are cached and can't be refreshed. */
   dimmed?: boolean;
   /** Set when a background refresh started: the page reloads its data once. */
   refreshToken?: string | null;
-  /** Where the date switch links to. */
+  /** Where the date menu links to. */
   basePath?: "/dashboard" | "/ui-kit/dashboard";
+  /** Other search params the date menu keeps (dev preview). */
+  query?: Record<string, string>;
   /** Chart notes in this range, and the panel to add and edit them. */
   notes?: { id: string; day: string; text: string }[];
   notesPanel?: ReactNode;
@@ -55,16 +65,10 @@ type DashboardViewProps = {
   footer?: ReactNode;
 };
 
-export function periodLabel(window: RangeWindow) {
-  const { start, end } = window.current;
-  return window.granularity === "yearMonth"
-    ? `${formatMonth(start)} – ${formatMonth(end)}`
-    : formatDayRange(start, end);
-}
-
 /** The dashboard page body, shared by real sites and sample data (docs/SPEC.md section 11). */
 export function DashboardView(props: DashboardViewProps) {
-  const { range, window, reports, signupEvent, comparable, dimmed } = props;
+  const { range, window, reports, signupEvent, comparisonGap, dimmed } = props;
+  const comparable = comparisonGap === null;
   const totals = reports.totals?.data ?? null;
   const stats = deriveStats(totals, reports.actions?.data ?? null, signupEvent, comparable);
   const summary = buildSummary({
@@ -77,64 +81,61 @@ export function DashboardView(props: DashboardViewProps) {
   });
   const series = reports.series?.data ?? null;
   const points = series
-    ? chartPoints(series.points, series.granularity, window.includesYesterday)
+    ? chartPoints(series.points, series.granularity, window.lastPointPending)
     : null;
   const period = periodLabel(window);
   const versus = `vs ${PREVIOUS_PERIOD_WORDS[range]}`;
+  const csvHref = (id: CardId) => `/api/csv/${id}?range=${range}`;
   const csvLink = (id: CardId) =>
-    props.csv ? (
-      <CsvLink href={`/api/csv/${id}?range=${range}`} label={cardById[id].title} />
-    ) : undefined;
+    props.csv ? <CsvLink href={csvHref(id)} label={cardById[id].title} /> : undefined;
   const marks = points && props.notes ? noteMarks(props.notes, points, window.granularity) : [];
-  const common = {
-    versus,
-    missing: comparable ? undefined : "Not enough history to compare",
-    dimmed,
-  };
+
+  const metrics: OverviewMetric[] = [
+    {
+      id: "visitors",
+      value: stats ? formatNumber(stats.visitors.value ?? 0) : null,
+      change: stats?.visitors.change ?? null,
+    },
+    {
+      id: "page-views",
+      value: stats ? formatNumber(stats.pageViews.value ?? 0) : null,
+      change: stats?.pageViews.change ?? null,
+    },
+    {
+      id: "avg-time",
+      value: stats?.avgTime.value != null ? formatDuration(stats.avgTime.value) : null,
+      change: stats?.avgTime.change ?? null,
+    },
+    {
+      id: "signups",
+      value: stats?.signups?.value != null ? formatNumber(stats.signups.value) : null,
+      change: stats?.signups?.change ?? null,
+      action: signupEvent ? props.signupPicker : undefined,
+      children:
+        signupEvent || !props.signupPicker ? undefined : (
+          <PopoverButton
+            id="signup-pick"
+            panel={props.signupPicker}
+            panelClassName="w-80"
+            className="inline-flex h-9 items-center self-start rounded-lg border border-dashed px-3 text-sm font-medium text-primary transition-colors duration-150 hover:bg-muted pointer-coarse:h-11"
+          >
+            Choose your signup event
+          </PopoverButton>
+        ),
+    },
+  ];
+
+  const csvCards: CardId[] = ["chart", "visitors", "page-views", "avg-time"];
+  if (signupEvent) csvCards.push("signups");
+  const csvItems = csvCards.map((id) => ({ href: csvHref(id), label: cardById[id].title }));
 
   const cards = (
     <>
       <SummaryLine text={summary} />
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard
-          id="visitors"
-          value={stats ? formatNumber(stats.visitors.value ?? 0) : null}
-          change={stats?.visitors.change ?? null}
-          actions={csvLink("visitors")}
-          {...common}
-        />
-        <StatCard
-          id="page-views"
-          value={stats ? formatNumber(stats.pageViews.value ?? 0) : null}
-          change={stats?.pageViews.change ?? null}
-          actions={csvLink("page-views")}
-          {...common}
-        />
-        <StatCard
-          id="avg-time"
-          value={stats?.avgTime.value != null ? formatDuration(stats.avgTime.value) : null}
-          change={stats?.avgTime.change ?? null}
-          actions={csvLink("avg-time")}
-          {...common}
-        />
-        <StatCard
-          id="signups"
-          value={stats?.signups?.value != null ? formatNumber(stats.signups.value) : null}
-          change={stats?.signups?.change ?? null}
-          {...common}
-          actions={
-            signupEvent ? (
-              <>
-                {props.signupPicker}
-                {csvLink("signups")}
-              </>
-            ) : undefined
-          }
-        >
-          {signupEvent ? undefined : props.signupPicker}
-        </StatCard>
-      </div>
-      <VisitorsCard
+      <OverviewCard
+        metrics={metrics}
+        versus={versus}
+        missing={comparisonGap ?? undefined}
         points={points}
         caption={points ? chartCaption(points, window.granularity, period) : ""}
         chart={
@@ -143,10 +144,10 @@ export function DashboardView(props: DashboardViewProps) {
           ) : null
         }
         dimmed={dimmed}
-        actions={csvLink("chart")}
+        actions={props.csv ? <CsvMenu id="overview" items={csvItems} /> : undefined}
         footer={props.notesPanel}
         hint={
-          props.notesPanel && props.notes?.length === 0
+          props.notesPanel && props.notes?.length === 0 && window.granularity !== "dateHour"
             ? "Add a note, like “Launched on Product Hunt”"
             : undefined
         }
@@ -194,16 +195,17 @@ export function DashboardView(props: DashboardViewProps) {
 
   return (
     <>
-      <TopBar range={range} site={props.site} basePath={props.basePath} />
+      <TopBar basePath={props.basePath} />
       <main id="main" className="pb-16">
-        <Container className="flex flex-col gap-4 pt-4">
+        <Container className="flex flex-col gap-4 pt-5">
           <h1 className="sr-only">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">{period}</span>
-            {window.includesYesterday
-              ? " · Ends yesterday. Google may still be adding to yesterday."
-              : null}
-          </p>
+          <OverviewToolbar
+            site={props.site}
+            range={range}
+            options={rangeMenu(props.basePath ?? "/dashboard", props.query)}
+            period={period}
+            note={freshnessNote(window)}
+          />
           {props.notices}
           {props.lockedPanel ? (
             <div className="relative">

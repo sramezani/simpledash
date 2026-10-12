@@ -7,22 +7,28 @@ import { SegmentedRadio } from "./segmented-radio";
  */
 export function BillingSwitch({
   yearlyLabel,
+  yearlyNote,
   name = "interval",
+  size,
   className,
 }: {
-  /** "Yearly · 2 months free", worked out from the prices (src/lib/billing/prices.ts). */
+  /** "Yearly · 2 months free" or "Yearly", worked out from the prices (src/lib/billing/prices.ts). */
   yearlyLabel: string;
+  /** Said after "Yearly" to screen readers, when the page shows it elsewhere ("2 months free"). */
+  yearlyNote?: string;
   name?: string;
+  size?: "sm" | "md";
   className?: string;
 }) {
   return (
     <SegmentedRadio
       name={name}
       label="Billing period"
+      size={size}
       className={className}
       options={[
         { value: "month", label: "Monthly" },
-        { value: "year", label: yearlyLabel },
+        { value: "year", label: yearlyLabel, srLabel: yearlyNote },
       ]}
     />
   );

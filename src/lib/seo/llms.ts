@@ -27,7 +27,7 @@ ${brand.name} is for indie hackers, solo founders and small SaaS or content site
 ## Pricing
 
 - ${starter.name}: ${formatPrice(starter.prices.month)} a month or ${formatPrice(starter.prices.year)} a year (${monthsFreeOnYearly()} months free), VAT included. One GA4 site, no traffic limits, every feature. ${starter.trialDays}-day free trial, no card needed.
-- ${growth.name}: ${formatPrice(growth.prices.month)} a month, coming soon. Adds several sites, Search Console, traffic alerts, mentions on the chart, revenue next to traffic, and asking your data in plain English.
+- ${growth.name}: ${formatPrice(growth.prices.month)} a month or ${formatPrice(growth.prices.year)} a year, coming soon. Adds several sites, Search Console, traffic alerts, mentions on the chart, revenue next to traffic, and asking your data in plain English.
 
 ## What ${brand.name} stores
 
@@ -35,7 +35,8 @@ Users and settings, encrypted Google access tokens, chart notes, public page set
 
 ## Links
 
-- [Home](${appUrl}/): what ${brand.name} is, with a sample dashboard
+- [Home](${appUrl}/): what ${brand.name} is, with a live demo
+- [Live demo](${appUrl}/demo): a real public stats page made with ${brand.name}
 - [Pricing](${appUrl}/#pricing): the plans and the free trial
 - [Sign in](${appUrl}/signin): start with a Google account
 - [Privacy policy](${appUrl}/privacy): what is stored and what is read from Google

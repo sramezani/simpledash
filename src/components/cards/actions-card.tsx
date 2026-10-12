@@ -40,32 +40,31 @@ export function ActionsCard({ counts, signupEvent, dimmed, actions }: ActionsCar
 
   return (
     <CardShell id="actions" title={card.title} help={card.help} dimmed={dimmed} actions={actions}>
-      {rows.length === 0 ? (
-        <EmptyState icon={MousePointerClickIcon} title="No actions recorded yet.">
-          Turn on Enhanced Measurement in Google Analytics to count downloads, outbound clicks and
-          forms.{" "}
-          <a
-            href={HELP}
-            target="_blank"
-            rel="noreferrer"
-            className="font-medium text-primary underline-offset-2 hover:underline"
-          >
-            How to turn it on
-          </a>
-        </EmptyState>
-      ) : (
-        <RankedList
-          id="actions-list"
-          itemLabel="Action"
-          columns={["Count"]}
-          rows={rows.map((row) => ({
-            key: row.key,
-            label: row.label,
-            values: [row.value],
-            icon: <row.icon className="size-3.5 text-muted-foreground" aria-hidden="true" />,
-          }))}
-        />
-      )}
+      <RankedList
+        id="actions-list"
+        itemLabel="Action"
+        columns={["Count"]}
+        rows={rows.map((row) => ({
+          key: row.key,
+          label: row.label,
+          values: [row.value],
+          icon: <row.icon className="size-3.5 text-muted-foreground" aria-hidden="true" />,
+        }))}
+        empty={
+          <EmptyState icon={MousePointerClickIcon} title="No actions recorded yet.">
+            Turn on Enhanced Measurement in Google Analytics to count downloads, outbound clicks and
+            forms.{" "}
+            <a
+              href={HELP}
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-primary underline-offset-2 hover:underline"
+            >
+              How to turn it on
+            </a>
+          </EmptyState>
+        }
+      />
     </CardShell>
   );
 }

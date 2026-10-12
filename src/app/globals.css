@@ -12,11 +12,27 @@
 /* Light theme only in V1: `dark:` classes (from shadcn parts) never apply, whatever the OS setting. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* `signed-in:` applies when this browser is signed in (src/lib/auth/signed-in-hint.ts). */
+@custom-variant signed-in (&:where([data-signed-in], [data-signed-in] *));
+
 /* Only theme tokens exist: Tailwind's default palette is removed. */
 @theme {
   --color-*: initial;
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* Handwritten notes on the landing page ("Interactive demo", "2 months free"). */
+  --font-hand: var(--font-caveat), "Segoe Print", "Bradley Hand", cursive;
+
+  /* The visitors line draws in from the left when a chart appears. */
+  --animate-chart-reveal: chart-reveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  @keyframes chart-reveal {
+    from {
+      clip-path: inset(0 100% 0 0);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
 }
 
 @theme inline {
@@ -49,6 +65,9 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
   --color-overlay: var(--overlay);
+  --color-window-close: var(--window-close);
+  --color-window-minimize: var(--window-minimize);
+  --color-window-zoom: var(--window-zoom);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -88,6 +107,31 @@
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+  }
+}
+
+/* Small popovers (help, CSV) fade and drop in, and fade out when they close. */
+.anchored-popover {
+  opacity: 0;
+  translate: 0 -0.25rem;
+  scale: 0.98;
+  transition:
+    opacity 150ms ease-out,
+    translate 150ms ease-out,
+    scale 150ms ease-out,
+    overlay 150ms allow-discrete,
+    display 150ms allow-discrete;
+}
+.anchored-popover:popover-open {
+  opacity: 1;
+  translate: 0 0;
+  scale: 1;
+}
+@starting-style {
+  .anchored-popover:popover-open {
+    opacity: 0;
+    translate: 0 -0.25rem;
+    scale: 0.98;
   }
 }
 

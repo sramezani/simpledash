@@ -82,23 +82,31 @@ Each layer imports only from its own folder and the layers before it. ESLint (`n
 | `Container` | `container.tsx` | Page width (`max-w-6xl`) and side padding |
 | `CardShell` | `card-shell.tsx` | Every card: title, ⓘ help, actions, note, dimmed state. A size container (`@container`) |
 | `HelpTip`, `PopoverButton` | `help-tip.tsx`, `popover-button.tsx` | A button that opens a small panel: native `popover`, anchored with CSS where supported. No JavaScript |
-| `StatValue`, `Delta` | `stat-value.tsx`, `delta.tsx` | The big number, and its change with an arrow and a word (never colour alone) |
+| `Delta` | `delta.tsx` | A change with an arrow and a word (never colour alone); `size="compact"` is "12% ↑" under a number in the overview |
 | `Notice` | `notice.tsx` | Banners for states: info, warning, danger, with one action |
 | `EmptyState` | `empty-state.tsx` | What a card shows instead of a fake zero |
-| `SegmentedLinks` | `segmented-links.tsx` | A segmented control made of links (the date switch, `?range=`) |
-| `SegmentedRadio` | `segmented-radio.tsx` | Radio buttons styled as a segmented control; other parts react to it with `:has()` |
-| `ViewToggle` | `view-toggle.tsx` | Two views of a card ("Sources \| Channels"), CSS only |
-| `RankedList` | `ranked-list.tsx` | Sources, Pages, Countries, Devices: icon, label, values, share bar, "Show more" (CSS only) |
-| `Flag` | `flag.tsx` | A country flag from `public/flags` (48 × 36 PNGs, shown at 16 × 12) |
+| `SegmentedRadio` | `segmented-radio.tsx` | Radio buttons styled as a segmented control with a sliding pill (CSS only, `size` sm or md); other parts react to it with `:has()` |
+| `ViewToggle` | `view-toggle.tsx` | Two views of a card ("Sources \| Channels"), CSS only; the new view fades in |
+| `RankedList` | `ranked-list.tsx` | Sources, Pages, Countries, Devices, Actions, AI: icon, label, values, soft blue share bar that grows in. Fixed height of `initial` rows; "Show more" scrolls inside (CSS only); `empty` keeps the same height |
+| `SiteChip` | `site-chip.tsx` | The site's icon and address as a raised chip (`as="h1"` on public pages); `chipClass` styles the toolbar buttons |
+| `RangePicker` | `range-picker.tsx` | The date menu (client): links to `?range=` from `rangeMenu()`, instant label, spinner while loading |
+| `OverviewToolbar` | `overview-toolbar.tsx` | Site chip, date menu and the period, above the overview |
+| `CsvMenu` | `csv-menu.tsx` | Several CSV downloads behind one icon (the overview), plain links |
+| `RollingPrice`, `Swap`, `YearlyOnly` | `rolling-price.tsx` | Values that change with the Monthly / Yearly switch: rolling digits, a crossfade, a line that opens. CSS only, inside `group/billing` |
+| `Flag` | `flag.tsx` | A country flag from `public/flags` (3:2 SVGs from country-flag-icons, shown 16 px wide) |
 | `SiteIcon` | `site-icon.tsx` | A source's icon through `/api/icon/<domain>`, or a generic one |
 | `GoogleButton` | `google-button.tsx` | A submit button with Google's "G", for forms that start Google sign-in |
 | `BillingSwitch` | `billing-switch.tsx` | Monthly / Yearly radios named `interval`: the pricing section and the upgrade form. Prices switch with `group-has-[[data-option-index='1']:checked]/billing:` |
 | `CsvLink` | `csv-link.tsx` | "Download CSV" in a card's header, a plain link |
 
-Charts (`src/components/charts/`): `VisitorsChart` (Recharts, dashboard only, lazy) and `StaticLineChart` (server-rendered SVG with HTML labels, for the landing demo and public pages). Both use the tested data prep in `src/lib/charts/series.ts`.
+The overview (`src/components/cards/overview-card.tsx`): the numbers in a row with short dividers and the chart underneath, used by the dashboard, public pages and the demo.
+
+Charts (`src/components/charts/`): `VisitorsChart` (Recharts, dashboard only, lazy) and `StaticLineChart` (server-rendered SVG with HTML labels and CSS-only tooltips, for public pages and the demo). Both draw the same smooth light-blue curve and use the tested data prep in `src/lib/charts/series.ts` and `src/lib/charts/path.ts`.
+
+Landing page parts (`src/components/marketing/`): `DemoFrame` (the browser window around `/demo`), `LazyFrame` (an iframe that loads near the screen and fades in), `HandNote` (a handwritten note with an arrow), `AccountLink` and `HeroCta` ("Sign in" or "Dashboard", from the `signed-in:` variant).
 
 All of them are on `/ui-kit`, and `/ui-kit/dashboard?state=…` shows the dashboard in every state.
 
-**No JavaScript where it isn't needed.** Card toggles, "Show more", "View as table" and the help popovers are plain HTML and CSS (`:has()`, `popover`). The same cards therefore run on the landing demo and public pages without adding scripts. The dashboard's only client parts are the chart (Recharts, loaded in its own chunk), the site switcher, the signup picker form and the refresh-after-stale timer.
+**No JavaScript where it isn't needed.** Card toggles, "Show more", "View as table" and the help popovers are plain HTML and CSS (`:has()`, `popover`). The same cards therefore run on public pages and the demo without adding scripts. The client parts are the date menu, the chart on the dashboard (Recharts, loaded in its own chunk), the site switcher, the signup picker form, the refresh-after-stale timer and, on the landing page, the demo frame's loader.
 
 shadcn parts in `src/components/ui`: `button`, `badge`, `card`, `separator`, `skeleton`, `input`, `label`, `dropdown-menu`, `chart`. The button has a 44 px minimum height on touch screens (`pointer-coarse:min-h-11`); small icon buttons get the same target with an invisible `after:` overlay instead, so they don't push the layout.

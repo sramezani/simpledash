@@ -43,6 +43,7 @@ export function AiCard({ sources, pages, dimmed, actions }: AiCardProps) {
                 content: (
                   <RankedList
                     id="ai-list"
+                    initial={9}
                     itemLabel="Assistant"
                     columns={["Visitors"]}
                     rows={assistants.map((r) => ({
@@ -56,15 +57,15 @@ export function AiCard({ sources, pages, dimmed, actions }: AiCardProps) {
               {
                 value: "pages",
                 label: "Pages",
-                content: landed.length ? (
+                content: (
                   <RankedList
                     id="ai-pages-list"
+                    initial={9}
+                    empty={<EmptyState title="No landing pages recorded." />}
                     itemLabel="Landing page"
                     columns={["Visitors"]}
                     rows={landed.map((r) => ({ key: r.path, label: r.path, values: [r.visitors] }))}
                   />
-                ) : (
-                  <EmptyState title="No landing pages recorded." />
                 ),
               },
             ]}

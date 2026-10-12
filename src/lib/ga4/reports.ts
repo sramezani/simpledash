@@ -274,7 +274,13 @@ const parsers: { [R in ReportName]: (rows: Row[], window: RangeWindow) => Payloa
   series(rows, window) {
     const values = sumBy(rows, (r) => r.dims[window.granularity] ?? "", "activeUsers");
     // GA4 leaves out empty hours and days, so every expected point is filled in.
-    const points = seriesKeys(window).map((key) => ({ key, visitors: values.get(key) ?? 0 }));
+    let points = seriesKeys(window).map((key) => ({ key, visitors: values.get(key) ?? 0 }));
+    if (window.type === "today") {
+      // Google adds today's visits a few hours late. The latest hours it hasn't reported
+      // yet are left off rather than drawn as zeros.
+      const last = points.findLastIndex((p) => values.has(p.key));
+      points = points.slice(0, last + 1);
+    }
     return { granularity: window.granularity, points };
   },
 

@@ -29,25 +29,22 @@ export function DevicesCard({
   const total = rows.reduce((a, r) => a + r.visitors, 0);
   return (
     <CardShell id="devices" title={card.title} help={card.help} dimmed={dimmed} actions={actions}>
-      {rows.length ? (
-        <RankedList
-          id="devices-list"
-          itemLabel="Device"
-          columns={["Visitors", "Share"]}
-          rows={rows.map((r) => {
-            const Icon = icons[r.device];
-            return {
-              key: r.device,
-              label: r.label,
-              values: [r.visitors, r.visitors],
-              display: [null, formatShare(r.visitors, total)],
-              icon: <Icon className="size-3.5 text-muted-foreground" aria-hidden="true" />,
-            };
-          })}
-        />
-      ) : (
-        <EmptyState title="No visitors in this period." />
-      )}
+      <RankedList
+        id="devices-list"
+        empty={<EmptyState title="No visitors in this period." />}
+        itemLabel="Device"
+        columns={["Visitors", "Share"]}
+        rows={rows.map((r) => {
+          const Icon = icons[r.device];
+          return {
+            key: r.device,
+            label: r.label,
+            values: [r.visitors, r.visitors],
+            display: [null, formatShare(r.visitors, total)],
+            icon: <Icon className="size-3.5 text-muted-foreground" aria-hidden="true" />,
+          };
+        })}
+      />
     </CardShell>
   );
 }

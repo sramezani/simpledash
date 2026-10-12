@@ -162,6 +162,18 @@ What's done and what's next, in plain words.
   - The commands are in `docs/deploy.md` step 6 and `docs/backup.md`.
 - [ ] Review and publish the launch posts
 
+## UI polish (Siamak's list, 12 Oct)
+
+- [x] The landing page shows a real dashboard: a live demo at `/demo`, set to `meetline-me` in `src/config/demo.ts` (12 Oct)
+- [x] The demo sits in a Mac-style browser window with a fixed height, scrolling inside, with an "Interactive demo" note (12 Oct)
+- [x] New overview: site chip and date menu (Today, Yesterday, 7 days, 30 days, 12 months) above one card holding the numbers and a smooth light-blue chart (12 Oct)
+- [x] List cards have a fixed height, scroll inside after "Show more", and use the same soft blue (12 Oct)
+- [x] Signed in, the landing page shows "Dashboard" instead of "Sign in" (12 Oct)
+- [x] Segmented switches slide smoothly (12 Oct)
+- [x] Pricing: "2 months free" note with an arrow, rolling prices, "Save €18 / €38 a year", Growth's yearly price (12 Oct)
+- [ ] Siamak: add `/demo` to the Cloudflare cache rule, and change the demo slug in `src/config/demo.ts` when the real one is ready
+- [ ] Lighthouse on the landing page, `/demo` and a public page after deploy (not run locally this session)
+
 ## Ongoing (Siamak)
 
 - [ ] Build in public on X, at least 3 posts a week from Sprint 0

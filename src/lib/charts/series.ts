@@ -1,5 +1,5 @@
-import { formatDay, formatMonth, formatNumber } from "@/lib/format";
-import { keyToDate, type Granularity } from "@/lib/ga4/ranges";
+import { formatDay, formatDayRange, formatMonth, formatNumber } from "@/lib/format";
+import { keyToDate, keyToHour, type Granularity, type RangeWindow } from "@/lib/ga4/ranges";
 
 /**
  * Chart points from the `series` report, shared by the dashboard chart (Recharts)
@@ -25,12 +25,18 @@ function weekday(isoDate: string) {
   return WEEKDAYS[new Date(`${isoDate}T00:00:00Z`).getUTCDay()]!;
 }
 
+/** "14:00", the start of an hourly point. */
+const hourLabel = (key: string) => `${String(keyToHour(key)).padStart(2, "0")}:00`;
+
 export function pointLabel(key: string, granularity: Granularity): string {
+  if (granularity === "dateHour") return hourLabel(key);
   const date = keyToDate(key);
   return granularity === "yearMonth" ? formatMonth(date) : `${weekday(date)} ${formatDay(date)}`;
 }
 
 function tickLabel(key: string, granularity: Granularity, index: number, count: number): string {
+  // Hourly: every 4 hours from midnight.
+  if (granularity === "dateHour") return keyToHour(key) % 4 === 0 ? hourLabel(key) : "";
   const date = keyToDate(key);
   if (granularity === "yearMonth") return formatMonth(date).slice(0, 3);
   // Daily: every day for a week, otherwise about 6 ticks, always including the last day.
@@ -39,17 +45,17 @@ function tickLabel(key: string, granularity: Granularity, index: number, count: 
   return (count - 1 - index) % step === 0 ? formatDay(date) : "";
 }
 
-/** How many points at the end are still updating: yesterday, or the month that ended yesterday. */
-export function pendingCount(includesYesterday: boolean): number {
-  return includesYesterday ? 1 : 0;
+/** How many points at the end are still updating: yesterday, the month that ended yesterday, or this hour. */
+export function pendingCount(lastPointPending: boolean): number {
+  return lastPointPending ? 1 : 0;
 }
 
 export function chartPoints(
   points: { key: string; visitors: number }[],
   granularity: Granularity,
-  includesYesterday: boolean,
+  lastPointPending: boolean,
 ): ChartPoint[] {
-  const pending = Math.min(pendingCount(includesYesterday), points.length);
+  const pending = Math.min(pendingCount(lastPointPending), points.length);
   const firstPending = points.length - pending;
   return points.map((p, i) => ({
     key: p.key,
@@ -62,7 +68,15 @@ export function chartPoints(
   }));
 }
 
-const PER: Record<Granularity, string> = { date: "day", yearMonth: "month" };
+const PER: Record<Granularity, string> = { dateHour: "hour", date: "day", yearMonth: "month" };
+
+/** The period in words: "Mon 12 Oct", "4 Oct – 10 Oct" or "Oct 2025 – Sep 2026". */
+export function periodLabel(window: Pick<RangeWindow, "current" | "granularity">): string {
+  const { start, end } = window.current;
+  if (window.granularity === "yearMonth") return `${formatMonth(start)} – ${formatMonth(end)}`;
+  if (start === end) return `${weekday(start)} ${formatDay(start)}`;
+  return formatDayRange(start, end);
+}
 
 /** The chart's text alternative: "Visitors per day, 4 Oct – 10 Oct. Highest: 312 on Wed 7 Oct." */
 export function chartCaption(
@@ -77,9 +91,13 @@ export function chartCaption(
   return `${intro} Highest: ${formatNumber(top.visitors)} on ${top.label}.`;
 }
 
-/** The chart key a note sits on: its day, or its month on the 12-month chart. */
+/**
+ * The chart key a note sits on: its day, its month on the 12-month chart, or
+ * midnight on an hourly chart (notes are for a day, not an hour).
+ */
 export function noteKey(day: string, granularity: Granularity): string {
   const compact = day.replaceAll("-", "");
+  if (granularity === "dateHour") return `${compact}00`;
   return granularity === "yearMonth" ? compact.slice(0, 6) : compact;
 }
 

@@ -4,6 +4,8 @@ Oct 11, 2026 · Written by Claude Code from `docs/ROADMAP.md` · Status: approve
 
 **Updated Oct 11, 2026 (session 2):** a yearly price and Growth shown as "coming soon" (sections 16 and 17), one theme and brand file and a UI quality bar (section 18), and code structure and reuse rules (section 4).
 
+**Updated Oct 12, 2026 (session 5):** Today and Yesterday ranges with hourly charts (section 8), the overview card and toolbar, fixed-height lists (section 11), the live demo in a browser frame at `/demo` and the signed-in landing page (section 17), the pricing switch's animations and Growth's yearly price (section 17), and the motion rules (section 18).
+
 The roadmap says **what** to build and **why**. This spec says **how**.
 
 - To build something differently, change this file first and add a line to `docs/DECISIONS.md`.
@@ -38,7 +40,7 @@ Siamak's decisions on Oct 11, 2026 (also in `docs/DECISIONS.md`):
 
 Added later the same day:
 
-- **Pricing:** one plan, **Starter**, at €9 a month or €90 a year (2 months free). **Growth** (€19 a month) shows as "Coming soon". Pricing is a section on the landing page with a Monthly / Yearly switch (sections 16 and 17). This replaces the roadmap's "one plan at €9 a month" for V1.
+- **Pricing:** one plan, **Starter**, at €9 a month or €90 a year (2 months free). **Growth** (€19 a month or €190 a year) shows as "Coming soon". Pricing is a section on the landing page with a Monthly / Yearly switch (sections 16 and 17). This replaces the roadmap's "one plan at €9 a month" for V1.
 - **Theme and brand in one file:** `src/config/theme.ts`, and the code only uses its tokens (section 18).
 - **Light theme only** in V1, confirmed (section 18).
 - **UI bar:** the polish of the best tools in this space (Siamak named DataFast), with our own design (section 18).
@@ -210,7 +212,8 @@ More features come in V2 (several sites, alerts, revenue), so the code is built 
 
 | Route | Purpose | Who | Rendering |
 | --- | --- | --- | --- |
-| `/` | **Landing**: headline, demo dashboard on sample data, how it works in 3 steps, pricing section (`#pricing`, section 17), FAQ, sign-in button | public | static |
+| `/` | **Landing**: headline, the live demo in a browser frame, how it works in 3 steps, pricing section (`#pricing`, section 17), FAQ, sign-in or Dashboard button | public | static |
+| `/demo` | **Live demo** (section 17): a real public stats page, framed on the landing page with `?embed=1` | public | partly prerendered, cached about 10 minutes, plus Cloudflare |
 | `/signin` | **Sign in**: one screen saying what we read (read-only), then "Continue with Google" | public | static |
 | `/dashboard` | **Dashboard**: the cards (section 11) | signed in | dynamic, streamed per card, cache-first |
 | `/settings` | **Settings**: account, weekly email, public page, billing, disconnect Google, delete account | signed in | dynamic |
@@ -328,24 +331,30 @@ Stripe keeps its own payment records, because it is the merchant of record.
 - All dates are calendar dates in the site's GA4 time zone. "Today" means today in that time zone.
 - Dates are worked out with `Intl.DateTimeFormat` and plain date arithmetic, with no date library.
 
-| Date switch | Current period | Compared with | Chart points |
+| Date menu | Current period | Compared with | Chart points |
 | --- | --- | --- | --- |
-| **7 days** (default) | the 7 days ending yesterday | the 7 days before that | daily (`date`), 7 points. Hourly was tried in Sprint 2 and read as noise on small sites (see `docs/DECISIONS.md`) |
-| **30 days** | the 30 days ending yesterday | the 30 days before that | daily (`date`), 30 points |
-| **12 months** | the 12 full calendar months before this month | the 12 months before that | monthly (`yearMonth`), 12 points |
+| **Today** | today so far | not compared: today isn't over, so the cards say "Today isn't over yet" | hourly (`dateHour`), midnight to the latest hour Google has reported |
+| **Yesterday** | yesterday | the day before | hourly (`dateHour`), 24 points |
+| **Last 7 days** (default) | the 7 days ending yesterday | the 7 days before that | daily (`date`), 7 points. Hourly was tried in Sprint 2 and read as noise over a week on small sites (see `docs/DECISIONS.md`) |
+| **Last 30 days** | the 30 days ending yesterday | the 30 days before that | daily (`date`), 30 points |
+| **Last 12 months** | the 12 full calendar months before this month | the 12 months before that | monthly (`yearMonth`), 12 points |
 
 **Where ranges live:**
 
-- The range is in the URL (`?range=7d|30d|12m`), so links can be shared and nothing is stored.
+- The range is in the URL (`?range=today|yesterday|7d|30d|12m`), so links can be shared and nothing is stored. The menu is listed in `src/lib/ga4/ranges.ts` (`rangeMenu`).
 - The weekly email uses the 7-day range computed on a Monday, which is exactly last Monday to Sunday (section 14).
 
 **Still updating:**
 
 - Yesterday is "still updating", because GA4 can take 24–48 hours to finish a day.
-- When a chart includes yesterday, its last segment is dashed and labelled "Still updating".
-- The date switch has a short hint: "Ends yesterday. Google may still be adding to yesterday."
+- When a daily or monthly chart includes yesterday, its last segment is dashed and labelled "Still updating". On the hourly Yesterday chart every hour is solid, and the hint says it once.
+- The period next to the date menu has a short hint: "Google may still be adding to yesterday."
 
-**Today** shows only as "right now", in the live globe (section 11.10).
+**Today:**
+
+- Google adds today's visits a few hours late (standard properties). The latest hours it hasn't reported yet are left off the chart rather than drawn as zeros, and the latest reported hour is dashed.
+- The hint says "So far today. Google adds visits a few hours late."
+- "Right now" in the live globe (section 11.10) stays the place for the last 30 minutes.
 
 **% change:**
 
@@ -445,7 +454,7 @@ Every request sets `returnPropertyQuota: true`. The date ranges come from sectio
 | # | Report | Dimensions | Metrics | Filter | Periods | Order and limit | Used by |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `totals` | — | `activeUsers`, `screenPageViews`, `userEngagementDuration` | — | both | — | Visitors, Page views, Avg. time, summary, email |
-| 2 | `series` | `date` / `yearMonth` | `activeUsers` | — | current | by dimension | Visitors chart |
+| 2 | `series` | `dateHour` / `date` / `yearMonth` | `activeUsers` | — | current | by dimension | Visitors chart |
 | 3 | `sources` | `sessionSource` | `activeUsers` | — | both | visitors desc, 50 | Sources, summary, email |
 | 4 | `channels` | `sessionDefaultChannelGroup` | `activeUsers` | — | current | desc, 25 | Sources (Channels toggle) |
 | 5 | `pages` | `pagePath` | `screenPageViews`, `activeUsers` | — | current | views desc, 50 | Pages, email |
@@ -479,9 +488,10 @@ Channel names are mapped to plain words in section 11.4.
 
 1. **Read** the cache row for each property, report, range type and params. There is one row per report, always holding the newest fetch.
 2. **Decide if it's fresh.** A row is fresh when its window matches the current window and `fetched_at` is newer than:
-   - 3 hours for 7 days and 30 days
+   - 30 minutes for Today (1 hour on a public page), because today keeps changing
+   - 3 hours for Yesterday, 7 days and 30 days
    - 24 hours for 12 months
-   - 12 hours when the reader is a public page
+   - 12 hours when the reader is a public page (Today excepted)
 3. **Act on it:**
    - **Fresh:** return it.
    - **Stale** (old window or old fetch): return it right away and schedule a refresh with `after()`. A new day changes the window, so the first view after midnight shows yesterday's numbers while the new ones load.
@@ -517,11 +527,14 @@ Other limits:
 
 The dashboard is one scrolling page.
 
-- **Top bar:** dash logo, the "Showing: mysite.com ▾" switcher, the date switch (7 days · 30 days · 12 months) and a link to settings.
-- **Below it:** notices (weekly email notice, state banners from section 12), then the cards.
+- **Top bar:** the logo and a link to Settings.
+- **Toolbar** (`OverviewToolbar`, shared with public pages and the demo): the site chip with its icon (on the dashboard it opens the site switcher), the date menu (`RangePicker`: Today, Yesterday, Last 7 days, Last 30 days, Last 12 months; it opens with a short fade and zoom, the label changes at once and a spinner shows while the new numbers load), and the period in words with its hint (section 8).
+- **Below it:** notices (weekly email notice, state banners from section 12), the summary line, then the cards.
+- **The overview** (`OverviewCard`): one card with the four numbers in a row, short dividers between them (two by two on phones), and the visitors chart underneath. Downloads for the chart and the four numbers sit in one small CSV menu.
 - **Layout:** one column on phones, a grid on wider screens.
 - **On every card:** a title, a short help popover (ⓘ) in plain words, and "Download CSV" (section 13). The summary line has no CSV.
-- **Built from shared parts:** every card sits in the shared `CardShell` (title, help, CSV, and the loading, empty, error, stale and locked states). The card list, titles and help text come from `src/config/cards.ts` (section 4).
+- **Built from shared parts:** every list card sits in the shared `CardShell` (title, help, CSV, and the loading, empty, error, stale and locked states). The card list, titles and help text come from `src/config/cards.ts` (section 4).
+- **List cards have a fixed height** of 10 rows (`RankedList`), whatever their number of rows, so cards side by side line up and nothing moves. "Show more" turns the list into a scrolling list inside the card. Share bars are soft blue (`chart-1`) and grow in when a list appears.
 
 Help text for every count: "Visitors that Google Analytics counted. People who refuse cookies or block GA aren't included."
 
@@ -573,9 +586,10 @@ Each number shows its % change with an arrow and a word. Colour is never the onl
 
 ### 11.3 Visitors chart
 
-- A shadcn line chart (Recharts) drawn from the `series` points. Detail per range is in section 8.
-- X-axis labels use the site's time zone. The tooltip shows the date and the visitors.
-- The last segment is dashed and labelled "Still updating" when the window includes yesterday.
+- A shadcn area chart (Recharts) drawn from the `series` points. Detail per range is in section 8.
+- **Look:** a smooth light-blue line (monotone curve, so it never dips below zero or above the highest point) over a soft blue fill that fades out, dashed grid lines, and no dots until hovered. It draws in from the left when it appears. Public pages and the demo use a server-rendered SVG that looks the same (section 15).
+- X-axis labels use the site's time zone: hours (00:00, 04:00, …) for Today and Yesterday. The tooltip shows the hour, day or month and the visitors.
+- The last segment is dashed and labelled "Still updating" when it is still filling up (section 8).
 - **Chart notes** (section 13) are small markers on their day; on the monthly chart, on their month. The note text shows on hover or keyboard focus.
 - **Text alternative:**
   - A visually hidden caption, e.g. "Visitors per day, 4 Oct to 10 Oct, highest 312 on 7 Oct".
@@ -799,7 +813,8 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 
 **Page contents:**
 
-- The same three ranges as the dashboard, through `?range=`.
+- The same layout as the dashboard: the toolbar (the site chip is the page's `h1`), the summary line, the overview card and the list cards (section 11).
+- The same five ranges as the dashboard, through `?range=`.
 - A "Powered by SimpleDash" footer link to `https://simpledash.app`.
 - **No private data.** Nothing from settings, no email address, no notes, no user name and no property ID appears in the page or in what it loads.
 
@@ -811,8 +826,8 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 
 **No chart JavaScript:**
 
-- Charts are server-rendered SVG (`StaticLineChart`).
-- The Live card, if turned on, is the only client code. It loads lazily as on the dashboard and polls `/api/p/<slug>/live`, which shares the 60-second realtime cache.
+- Charts are server-rendered SVG (`StaticLineChart`): the same smooth line and fill as the dashboard. Hovering a point shows its tooltip with CSS only.
+- Client code: the date menu (a small Radix menu) and, if turned on, the Live card. The Live card loads lazily as on the dashboard and polls `/api/p/<slug>/live`, which shares the 60-second realtime cache.
 
 **Metadata:**
 
@@ -834,7 +849,7 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 | Plan | Price | What it includes | Status |
 | --- | --- | --- | --- |
 | **Starter** | €9 a month, or €90 a year (2 months free) | One GA4 site, no traffic limits, every V1 feature, and a 14-day free trial with no card | On sale |
-| **Growth** | €19 a month | Everything in Starter, plus the roadmap's V2 list: several sites, Search Console, traffic alerts, mentions on the chart, revenue next to traffic, and asking your data in plain English | "Coming soon" in the pricing section only. No button and no waitlist |
+| **Growth** | €19 a month or €190 a year | Everything in Starter, plus the roadmap's V2 list: several sites, Search Console, traffic alerts, mentions on the chart, revenue next to traffic, and asking your data in plain English | "Coming soon" in the pricing section only. No button and no waitlist |
 
 - "2 months free" is worked out from the prices (12 × €9 − €90 = €18, which is 2 months of €9). It is never typed in by hand.
 - Stripe has one product, Starter, with two prices. Their IDs are in `STRIPE_PRICE_MONTHLY` and `STRIPE_PRICE_YEARLY` (section 22).
@@ -898,10 +913,16 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 - The roadmap's subheadline.
 - Button "See my dashboard, free" → `/signin`.
 
-**Demo dashboard on sample data:**
+**Signed in:** the top bar shows "Dashboard →" instead of "Sign in", and the hero button reads "Open my dashboard →". The page stays static and cacheable: the proxy keeps a small `sd_signed_in=1` hint cookie (not HttpOnly, no secret) while the app is used, an inline script in `<head>` reads it before the first paint and marks `<html data-signed-in>`, and CSS (the `signed-in:` variant) shows the right buttons. Nothing moves. Signing out clears the cookie. It is only a hint: `/dashboard` still checks the session (`src/lib/auth/signed-in-hint.ts`).
 
-- Uses the real card components in their static mode: the server-rendered SVG chart, with **no Recharts on the landing page**.
-- The date switch works on precomputed sample data, through one tiny client island.
+**Live demo** (`DemoFrame`):
+
+- A real public stats page (`/demo?embed=1`) inside a browser window: three dots on the left, the page address in the middle (`simpledash.app/p/<slug>`), a soft outer frame, and a handwritten "Interactive demo" note with an arrow.
+- Fixed height: the page scrolls inside the window, and its date menu, tabs and tooltips work.
+- The frame starts loading only when it comes near the screen, then fades in over a placeholder of the same shape, so the landing page's first load stays light.
+- **Which page:** `src/config/demo.ts` holds the slug (now `meetline-me`) and the range the demo opens with. If that page is missing or paused, `/demo` shows sample data instead, so the landing page never breaks.
+- **`/demo` on its own** shows the same page with a "Live demo" banner and a trial button. It is `noindex` (the original is `/p/<slug>`), may be framed by our own site only (`frame-ancestors 'self'`), and is cached like a public page.
+- **No Recharts on the landing page:** the demo uses the server-rendered chart, and its JavaScript runs inside the frame.
 
 **How it works, in 3 steps:**
 
@@ -912,16 +933,17 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 **Pricing section** (`#pricing`, linked as "Pricing" from the landing page's top bar and footer). Everything on its cards comes from `src/config/plans.ts` (section 16).
 
 - **Monthly / Yearly switch** (the shared `BillingSwitch`):
-  - Two radio buttons styled as a segmented control, labelled "Monthly" and "Yearly · 2 months free".
-  - CSS `:has()` shows the price that matches the checked option, so it needs no JavaScript.
+  - Two radio buttons styled as a segmented control, labelled "Monthly" and "Yearly". A handwritten "2 months free" note with an arrow points at Yearly (screen readers hear "Yearly · 2 months free").
+  - The white pill slides to the checked option, and CSS `:has()` shows the matching prices, so it needs no JavaScript.
   - It starts on Monthly. Arrow keys move between the options, and focus is visible.
+- **Prices roll** like an odometer when the switch moves (`RollingPrice`, CSS only): "€9" ⇄ "€90", "€19" ⇄ "€190". "/ month" and "/ year" crossfade, and for Yearly a "Save €18 a year" line opens under the price (12 × the monthly price − the yearly price).
 - **Starter card:**
-  - "€9 / month", or "€90 / year" when Yearly is picked.
+  - "€9 / month", or "€90 / year" with "Save €18 a year" when Yearly is picked.
   - Its feature list: one GA4 site, no traffic limits, full history from day one, the weekly email, the public page.
-  - The button "Start free trial" → `/signin`, with "14 days free · no card" under it.
+  - The button "Start 14-day free trial →" → `/signin`, with "€0 due today · no card needed" under it.
   - Billing is only chosen at upgrade (section 16), because the trial needs no card.
 - **Growth card:**
-  - "€19 / month" whichever option is picked, with a "Coming soon" badge.
+  - "€19 / month", or "€190 / year" with "Save €38 a year", and a "Coming soon" badge.
   - "Everything in Starter, plus" its feature list (section 16).
   - No button and no waitlist.
 
@@ -966,7 +988,7 @@ Both are static, in plain English. Claude drafts them, Siamak reviews them (this
   - Blocks `/dashboard`, `/settings`, `/admin`, `/signin`, `/api/` and `/email/`.
   - Links to the sitemap.
 - **`sitemap.xml`:** landing, privacy and terms (Sprint 3), plus public pages (Sprint 4).
-- **`llms.txt`:** short plain text for AI assistants: what SimpleDash is, who it's for, features, prices (Starter at €9 a month or €90 a year; Growth at €19 a month, coming soon), what we store, and key links (including `/#pricing`).
+- **`llms.txt`:** short plain text for AI assistants: what SimpleDash is, who it's for, features, prices (Starter at €9 a month or €90 a year; Growth at €19 a month or €190 a year, coming soon), what we store, and key links (including `/#pricing` and `/demo`).
 
 ## 18. Design, performance and accessibility
 
@@ -980,7 +1002,7 @@ Siamak's rule: the whole look and the brand live in one file, and the code only 
 - **`colors.light`:** the tokens below, as hex values. Hex works everywhere the theme is needed: CSS, email clients and the Open Graph image renderer.
 - **`radius` and `shadows`.**
 - **Two settings at the top drive the rest:**
-  - `brandColor` feeds `primary`, `ring`, `brand` and `chart-1`, so changing the main colour is a one-line edit.
+  - `brandColor` feeds `primary`, `ring` and `brand`, so changing the main colour is a one-line edit. `chart-1` is its own light, clear blue (it still reaches 3:1 against the card).
   - The `neutral` scale feeds the surfaces, borders and quiet text.
 - **Plain data with no runtime imports,** so pages, emails, Open Graph images, tests and the globe can all import it.
 - **Light theme only in V1.** A `colors.dark` palette can be added later: the CSS then gets a `prefers-color-scheme: dark` block, and nothing else changes.
@@ -995,8 +1017,9 @@ Siamak's rule: the whole look and the brand live in one file, and the code only 
 | Brand | `brand` | The dash in the logo |
 | Changes | `positive`, `negative` | % change up and down, always with an arrow and a word |
 | Notes | `warning` | "Still updating" and quota notes |
-| Charts | `chart-1` to `chart-5` | Chart lines and series. `chart-1` is the visitors line |
+| Charts | `chart-1` to `chart-5` | Chart lines and series. `chart-1` is the visitors line, its fill and the share bars in lists |
 | Layers | `overlay` | The dim layer behind dialogs |
+| Decoration | `window-close`, `window-minimize`, `window-zoom` | The three dots of the browser frame around the landing demo |
 
 **How the values reach the page:**
 
@@ -1009,7 +1032,7 @@ Siamak's rule: the whole look and the brand live in one file, and the code only 
 
 - The weekly email, the Open Graph images, the live globe's colours and `viewport.themeColor` import `theme.ts` directly.
 - The favicons (`icon.tsx`, `apple-icon.tsx`) draw the dash with the `Logo` component in `brandColor`.
-- **Fonts are the one exception.** Next.js needs `next/font` calls in their own module, so `src/lib/theme/fonts.ts` loads Geist. Changing the font is one import line there.
+- **Fonts are the one exception.** Next.js needs `next/font` calls in their own module, so `src/lib/theme/fonts.ts` loads Geist, and Caveat for the two handwritten notes on the landing page (`font-hand`, not preloaded, placed absolutely so nothing moves when it arrives). Changing a font is one import line there.
 
 **Guards**, all part of `npm run check`:
 
@@ -1048,7 +1071,8 @@ The bar is the polish of the best tools in this space: everything clear, quick a
 
 - Every control has hover, active, disabled and visible focus states, all from tokens.
 - Touch targets are at least 44 × 44 px.
-- The date switch is a segmented control made of links to `?range=`, so it works without JavaScript.
+- The date menu is a small dropdown of the five ranges, each a link to `?range=` (section 11).
+- **Segmented controls** (Sources | Channels, Monthly | Yearly) are radio buttons with a white pill that slides to the checked option, with CSS only. Options share one width.
 
 **States:**
 
@@ -1058,11 +1082,15 @@ The bar is the polish of the best tools in this space: everything clear, quick a
 
 **Responsive:**
 
-- Mobile first. Cards use container queries (`@container`), so one card fits the dashboard grid, the public page and the landing demo.
+- Mobile first. Cards use container queries (`@container`), so one card fits the dashboard grid, the public page and the landing demo (a phone-width page inside the frame on phones).
 - No horizontal scrolling down to 320 px wide.
 - Every screen is checked at 320, 375, 768, 1024 and 1440 px at the end of each sprint.
 
-**Motion:** 150–200 ms ease-out, only for changes of state (hover, open, expand). Nothing animates on page load, and `prefers-reduced-motion` is respected.
+**Motion:** smooth and short, and `prefers-reduced-motion` turns all of it off.
+
+- 150–300 ms ease-out for changes of state: hover, menus and popovers opening, the segmented pill sliding, a tab's view fading in.
+- A few things move once when they appear, to feel alive without slowing anything down: the visitors line draws in from the left (0.9 s), list share bars grow in (0.7 s), and prices roll when Monthly / Yearly changes (0.7 s).
+- No animation hides content from the first paint for long, and nothing moves the layout.
 
 **Before a UI task is ticked:**
 
@@ -1137,7 +1165,7 @@ The bar is the polish of the best tools in this space: everything clear, quick a
 - `X-Content-Type-Options: nosniff`
 - `Referrer-Policy: strict-origin-when-cross-origin`
 - `Permissions-Policy`: no camera, microphone or geolocation
-- `Content-Security-Policy: frame-ancestors 'none'`
+- `Content-Security-Policy: frame-ancestors 'none'` and `X-Frame-Options: DENY`, except `/demo`: `frame-ancestors 'self'` and `SAMEORIGIN`, so only our own landing page can frame it.
 - HSTS is set at Cloudflare.
 
 A full CSP is a later improvement: script nonces would make the static pages dynamic.

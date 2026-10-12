@@ -31,9 +31,10 @@ export function SourcesCard({ sources, channels, dimmed, actions }: SourcesCardP
           {
             value: "sources",
             label: "Sources",
-            content: sourceRows.length ? (
+            content: (
               <RankedList
                 id="sources-list"
+                empty={empty}
                 itemLabel="Source"
                 columns={["Visitors"]}
                 rows={sourceRows.map((r) => ({
@@ -45,16 +46,15 @@ export function SourcesCard({ sources, channels, dimmed, actions }: SourcesCardP
                   ),
                 }))}
               />
-            ) : (
-              empty
             ),
           },
           {
             value: "channels",
             label: "Channels",
-            content: channelRows.length ? (
+            content: (
               <RankedList
                 id="channels-list"
+                empty={empty}
                 itemLabel="Channel"
                 columns={["Visitors"]}
                 rows={channelRows.map((r) => ({
@@ -63,8 +63,6 @@ export function SourcesCard({ sources, channels, dimmed, actions }: SourcesCardP
                   values: [r.visitors],
                 }))}
               />
-            ) : (
-              empty
             ),
           },
         ]}

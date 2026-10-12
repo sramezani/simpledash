@@ -60,7 +60,7 @@ The project exists. Its pooler host is `aws-0-eu-west-1.pooler.supabase.com`, so
      ```
    - Restart the proxy.
 7. **Rules** (they matter from Sprint 1 on, but they can be added now):
-   - **Cache rule:** cache everything for `/`, `/privacy`, `/terms`, `/p/*`, `/_next/static/*`, `/flags/*` and `/api/icon/*`, respecting the origin's cache headers. (Cloudflare doesn't cache paths like `/api/icon/google.com` unless a rule says so; the icons are sent with a 30-day cache header.)
+   - **Cache rule:** cache everything for `/`, `/privacy`, `/terms`, `/p/*`, `/demo`, `/_next/static/*`, `/flags/*` and `/api/icon/*`, respecting the origin's cache headers. (Cloudflare doesn't cache paths like `/api/icon/google.com` unless a rule says so; the icons are sent with a 30-day cache header.)
    - **WAF custom rule:** block requests where the URI path starts with `/api/internal/` (the scheduled tasks call it from inside the container).
    - **Rate limiting rule** (the free plan has one): for `/api/`, for example 100 requests per 10 seconds per IP, then block for 10 seconds.
 8. **Email Routing** (Sprint 3): `hello@simpledash.app` → your inbox.
@@ -132,7 +132,7 @@ Add `simpledash.app` in Resend and its DNS records in Cloudflare (`docs/email.md
 
 ## 11. Cloudflare rules for Sprint 4
 
-Nothing new to add. The cache rule from step 4 already covers `/p/*`: public pages send `Cache-Control: public, s-maxage=600`, so Cloudflare keeps each one about 10 minutes. The live numbers at `/api/p/<slug>/live` stay out of the cache rule; the server keeps them 60 seconds.
+Add `/demo` (the live demo on the landing page) to the cache rule from step 4 if it isn't there yet; it sends the same headers as a public page. The rule already covers `/p/*`: public pages send `Cache-Control: public, s-maxage=600`, so Cloudflare keeps each one about 10 minutes. The live numbers at `/api/p/<slug>/live` stay out of the cache rule; the server keeps them 60 seconds.
 
 ## Local production image
 

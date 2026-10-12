@@ -8,7 +8,7 @@ import { LiveCard } from "@/components/globe/live-card";
 import { PausedView, PublicView } from "@/components/public-page/public-view";
 import { defaultPublicCardIds, publicCardIds } from "@/config/cards";
 import { uiKitEnabled } from "@/lib/env";
-import { parseRange, rangeWindow } from "@/lib/ga4/ranges";
+import { comparisonGap, parseRange, rangeWindow } from "@/lib/ga4/ranges";
 import { REPORTS } from "@/lib/ga4/reports";
 import { sampleLive, sampleReports, SAMPLE_SIGNUP_EVENT } from "@/lib/ga4/sample/sample";
 
@@ -23,7 +23,7 @@ const STATES = ["default-cards", "all-cards", "paused"] as const;
 export default function PublicPreviewPage({ searchParams }: PageProps<"/ui-kit/public">) {
   if (!uiKitEnabled) notFound();
   return (
-    <Suspense fallback={<DashboardSkeleton />}>
+    <Suspense fallback={<DashboardSkeleton header={false} />}>
       <Preview searchParams={searchParams} />
     </Suspense>
   );
@@ -57,7 +57,8 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/public">, "sear
         <PausedView label="yoursite.com" />
       ) : (
         <PublicView
-          basePath={`/ui-kit/public?state=${state}`}
+          basePath="/ui-kit/public"
+          query={{ state }}
           live={<LiveCard data={sampleLive} endpoint={null} />}
           view={{
             kind: "live",
@@ -69,7 +70,7 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/public">, "sear
             window,
             reports: sampleReports(window, REPORTS),
             signupEvent: cards.includes("signups") ? SAMPLE_SIGNUP_EVENT : null,
-            comparable: true,
+            comparisonGap: comparisonGap(window, null),
           }}
         />
       )}

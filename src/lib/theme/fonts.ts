@@ -1,4 +1,4 @@
-import { Geist } from "next/font/google";
+import { Caveat, Geist } from "next/font/google";
 
 /**
  * Fonts are the one part of the look outside the theme file: Next.js needs
@@ -14,4 +14,17 @@ export const fontSans = Geist({
   display: "optional",
 });
 
-export const fontVariables = fontSans.variable;
+/**
+ * The handwritten notes on the landing page ("Interactive demo", "2 months free").
+ * Not preloaded: they are small, placed absolutely (so a late font moves nothing)
+ * and sit below the first screen.
+ */
+export const fontHand = Caveat({
+  subsets: ["latin"],
+  weight: "600",
+  variable: "--font-caveat",
+  display: "swap",
+  preload: false,
+});
+
+export const fontVariables = `${fontSans.variable} ${fontHand.variable}`;

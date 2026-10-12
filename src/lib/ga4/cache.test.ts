@@ -305,6 +305,10 @@ describe("freshness", () => {
     expect(maxAge("12m", "owner")).toBe(24 * HOUR);
     expect(maxAge("7d", "public")).toBe(12 * HOUR);
     expect(maxAge("12m", "public")).toBe(24 * HOUR);
+    // Today keeps changing: fresh for half an hour, an hour on public pages.
+    expect(maxAge("today", "owner")).toBe(HOUR / 2);
+    expect(maxAge("today", "public")).toBe(HOUR);
+    expect(maxAge("yesterday", "owner")).toBe(3 * HOUR);
   });
 
   it("lets a public page use a row a dashboard would refresh", async () => {

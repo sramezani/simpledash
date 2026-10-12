@@ -7,6 +7,7 @@ import {
   noteKey,
   noteMarks,
   pendingCount,
+  periodLabel,
   pointLabel,
 } from "./series";
 
@@ -17,9 +18,46 @@ const series = (range: "7d" | "30d" | "12m") => {
 };
 
 describe("pointLabel", () => {
-  it("labels days and months in plain words", () => {
+  it("labels hours, days and months in plain words", () => {
+    expect(pointLabel("2026100409", "dateHour")).toBe("09:00");
     expect(pointLabel("20261004", "date")).toBe("Sun 4 Oct");
     expect(pointLabel("202610", "yearMonth")).toBe("Oct 2026");
+  });
+});
+
+describe("hourly charts", () => {
+  it("ticks every 4 hours and dashes today's latest hour", () => {
+    const w = rangeWindow("today", "UTC", new Date("2026-10-11T14:30:00Z"));
+    const points = seriesKeys(w).map((key) => ({ key, visitors: 1 }));
+    const out = chartPoints(points, w.granularity, w.lastPointPending);
+    expect(out.filter((p) => p.tick).map((p) => p.tick)).toEqual([
+      "00:00",
+      "04:00",
+      "08:00",
+      "12:00",
+    ]);
+    expect(out.at(-1)?.solid).toBeNull();
+    expect(out.at(-1)?.pending).toBe(1);
+  });
+
+  it("draws yesterday's hours solid", () => {
+    const w = rangeWindow("yesterday", "UTC", now);
+    const points = seriesKeys(w).map((key) => ({ key, visitors: 1 }));
+    expect(chartPoints(points, w.granularity, w.lastPointPending).every((p) => p.solid === 1)).toBe(
+      true,
+    );
+  });
+
+  it("puts a day's note at midnight on an hourly chart", () => {
+    expect(noteKey("2026-10-10", "dateHour")).toBe("2026101000");
+  });
+});
+
+describe("periodLabel", () => {
+  it("names one day, a run of days or a run of months", () => {
+    expect(periodLabel(rangeWindow("yesterday", "UTC", now))).toBe("Sat 10 Oct");
+    expect(periodLabel(rangeWindow("7d", "UTC", now))).toBe("4 Oct – 10 Oct");
+    expect(periodLabel(rangeWindow("12m", "UTC", now))).toBe("Oct 2025 – Sep 2026");
   });
 });
 

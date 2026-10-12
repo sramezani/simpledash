@@ -2,11 +2,16 @@ import { describe, expect, it } from "vitest";
 import {
   addDays,
   addMonths,
+  comparisonGap,
   daysIn,
   endOfMonth,
+  freshnessNote,
+  hourIn,
   keyToDate,
+  keyToHour,
   lacksHistory,
   parseRange,
+  rangeMenu,
   rangeWindow,
   seriesKeys,
   todayIn,
@@ -116,11 +121,100 @@ describe("seriesKeys", () => {
 });
 
 describe("parseRange", () => {
-  it("accepts the three ranges and defaults to 7 days", () => {
+  it("accepts the five ranges and defaults to 7 days", () => {
     expect(parseRange("30d")).toBe("30d");
     expect(parseRange(["12m"])).toBe("12m");
+    expect(parseRange("today")).toBe("today");
+    expect(parseRange("yesterday")).toBe("yesterday");
     expect(parseRange("1y")).toBe("7d");
     expect(parseRange(undefined)).toBe("7d");
+  });
+
+  it("takes another default where a page has one (the demo)", () => {
+    expect(parseRange(undefined, "12m")).toBe("12m");
+    expect(parseRange("30d", "12m")).toBe("30d");
+  });
+});
+
+describe("today and yesterday", () => {
+  const now = new Date("2026-10-11T14:30:00Z");
+
+  it("today is today so far, hourly, compared with yesterday", () => {
+    const w = rangeWindow("today", "UTC", now);
+    expect(w.current).toEqual({ start: "2026-10-11", end: "2026-10-11" });
+    expect(w.previous).toEqual({ start: "2026-10-10", end: "2026-10-10" });
+    expect(w.granularity).toBe("dateHour");
+    expect(w.lastHour).toBe(14);
+    expect(w.lastPointPending).toBe(true);
+    expect(w.includesYesterday).toBe(false);
+  });
+
+  it("yesterday is one full day, hourly, compared with the day before", () => {
+    const w = rangeWindow("yesterday", "UTC", now);
+    expect(w.current).toEqual({ start: "2026-10-10", end: "2026-10-10" });
+    expect(w.previous).toEqual({ start: "2026-10-09", end: "2026-10-09" });
+    expect(w.lastHour).toBe(23);
+    expect(w.lastPointPending).toBe(false);
+    expect(w.includesYesterday).toBe(true);
+  });
+
+  it("uses the hour in the site's time zone", () => {
+    expect(hourIn("UTC", now)).toBe(14);
+    expect(hourIn("Europe/Amsterdam", now)).toBe(16);
+    expect(hourIn("UTC", new Date("2026-10-11T00:05:00Z"))).toBe(0);
+    expect(rangeWindow("today", "Europe/Amsterdam", now).lastHour).toBe(16);
+  });
+
+  it("makes one key per hour, up to now for today", () => {
+    const today = seriesKeys(rangeWindow("today", "UTC", now));
+    expect(today).toHaveLength(15);
+    expect(today[0]).toBe("2026101100");
+    expect(today.at(-1)).toBe("2026101114");
+    expect(seriesKeys(rangeWindow("yesterday", "UTC", now))).toHaveLength(24);
+    expect(keyToHour("2026101114")).toBe(14);
+    expect(keyToDate("2026101114")).toBe("2026-10-11");
+  });
+});
+
+describe("comparisonGap", () => {
+  const now = new Date("2026-10-11T12:00:00Z");
+  it("never compares today, which isn't over", () => {
+    expect(comparisonGap(rangeWindow("today", "UTC", now), null)).toBe("Today isn't over yet");
+  });
+  it("needs history for the period before", () => {
+    const w = rangeWindow("7d", "UTC", now);
+    expect(comparisonGap(w, new Date("2026-10-01T00:00:00Z"))).toBe(
+      "Not enough history to compare",
+    );
+    expect(comparisonGap(w, null)).toBeNull();
+    expect(comparisonGap(rangeWindow("yesterday", "UTC", now), null)).toBeNull();
+  });
+});
+
+describe("rangeMenu", () => {
+  it("links each range, leaving out ?range= for the default", () => {
+    const menu = rangeMenu("/dashboard");
+    expect(menu.map((o) => o.value)).toEqual(["today", "yesterday", "7d", "30d", "12m"]);
+    expect(menu.find((o) => o.value === "7d")?.href).toBe("/dashboard");
+    expect(menu.find((o) => o.value === "today")?.href).toBe("/dashboard?range=today");
+    expect(menu.filter((o) => o.separated).map((o) => o.value)).toEqual(["7d"]);
+  });
+
+  it("keeps other search params and a page's own default", () => {
+    const menu = rangeMenu("/demo", { embed: "1" }, "12m");
+    expect(menu.find((o) => o.value === "12m")?.href).toBe("/demo?embed=1");
+    expect(menu.find((o) => o.value === "7d")?.href).toBe("/demo?embed=1&range=7d");
+  });
+});
+
+describe("freshnessNote", () => {
+  const now = new Date("2026-10-11T12:00:00Z");
+  it("says what is still coming in", () => {
+    expect(freshnessNote(rangeWindow("today", "UTC", now))).toMatch(/^So far today/);
+    expect(freshnessNote(rangeWindow("7d", "UTC", now))).toBe(
+      "Google may still be adding to yesterday.",
+    );
+    expect(freshnessNote(rangeWindow("12m", "UTC", now))).toBeNull();
   });
 });
 

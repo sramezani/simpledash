@@ -32,7 +32,7 @@ import {
   RevokedNotice,
   UnavailableNotice,
 } from "@/components/dashboard/states";
-import { Badge } from "@/components/ui/badge";
+import { SampleSiteChip } from "@/components/dashboard/states";
 import { getGoogleAccount } from "@/lib/auth/google";
 import { hasAnalyticsScope } from "@/lib/auth/scopes";
 import { getActiveSite, requireUser } from "@/lib/auth/session";
@@ -42,7 +42,7 @@ import { getLive } from "@/lib/ga4/realtime";
 import { listNotes } from "@/lib/notes/notes";
 import { classifyError } from "@/lib/ga4/errors";
 import { chooseFirstSite, listKeyEventNames, stillHasAccess } from "@/lib/ga4/properties";
-import { lacksHistory, parseRange, rangeWindow, type RangeType } from "@/lib/ga4/ranges";
+import { comparisonGap, parseRange, rangeWindow, type RangeType } from "@/lib/ga4/ranges";
 import { REPORTS } from "@/lib/ga4/reports";
 import { sampleReports, SAMPLE_SIGNUP_EVENT } from "@/lib/ga4/sample/sample";
 import { reportError } from "@/lib/report-error";
@@ -109,6 +109,7 @@ function Switcher({ site }: { site: Site }) {
   return (
     <SiteSwitcher
       label={site.domain ?? site.displayName}
+      domain={site.domain}
       currentPropertyId={site.propertyId}
       listAction={listMyProperties}
       switchAction={switchSite}
@@ -179,7 +180,7 @@ async function SiteDashboard({
       window={result.window}
       reports={result.reports}
       signupEvent={site.signupEvent}
-      comparable={!lacksHistory(result.window, site.propertyCreatedAt)}
+      comparisonGap={comparisonGap(result.window, site.propertyCreatedAt)}
       site={switcher}
       notices={
         <>
@@ -253,8 +254,8 @@ function SampleDashboard({
       window={window}
       reports={sampleReports(window, REPORTS)}
       signupEvent={SAMPLE_SIGNUP_EVENT}
-      comparable
-      site={<Badge variant="outline">Sample data</Badge>}
+      comparisonGap={comparisonGap(window, null)}
+      site={<SampleSiteChip />}
       notices={notice}
       lockedPanel={locked ? <LockedPanel upgrade={upgrade} /> : undefined}
     />

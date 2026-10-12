@@ -22,22 +22,19 @@ export function CountriesCard({ countries, total, dimmed, actions }: CountriesCa
   const sum = total ?? rows.reduce((a, r) => a + r.visitors, 0);
   return (
     <CardShell id="countries" title={card.title} help={card.help} dimmed={dimmed} actions={actions}>
-      {rows.length ? (
-        <RankedList
-          id="countries-list"
-          itemLabel="Country"
-          columns={["Visitors", "Share"]}
-          rows={rows.map((r) => ({
-            key: r.code || r.name,
-            label: r.name,
-            values: [r.visitors, r.visitors],
-            display: [null, formatShare(r.visitors, sum)],
-            icon: <Flag code={r.code} />,
-          }))}
-        />
-      ) : (
-        <EmptyState title="No visitors in this period." />
-      )}
+      <RankedList
+        id="countries-list"
+        empty={<EmptyState title="No visitors in this period." />}
+        itemLabel="Country"
+        columns={["Visitors", "Share"]}
+        rows={rows.map((r) => ({
+          key: r.code || r.name,
+          label: r.name,
+          values: [r.visitors, r.visitors],
+          display: [null, formatShare(r.visitors, sum)],
+          icon: <Flag code={r.code} />,
+        }))}
+      />
     </CardShell>
   );
 }

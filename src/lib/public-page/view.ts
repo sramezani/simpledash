@@ -8,7 +8,7 @@ import { db } from "@/lib/db/client";
 import { billing, publicPage, site } from "@/lib/db/schema";
 import { getReports } from "@/lib/ga4/cache";
 import { cacheDeps } from "@/lib/ga4/data";
-import { lacksHistory, type RangeType, type RangeWindow } from "@/lib/ga4/ranges";
+import { comparisonGap, type RangeType, type RangeWindow } from "@/lib/ga4/ranges";
 import { REPORTS, type Payloads, type ReportName } from "@/lib/ga4/reports";
 import { reportError } from "@/lib/report-error";
 
@@ -34,7 +34,8 @@ export type PublicView =
       reports: PublicReports;
       /** Only when Signups is one of the chosen cards. */
       signupEvent: string | null;
-      comparable: boolean;
+      /** Why the numbers can't be compared with the period before, or null when they can. */
+      comparisonGap: string | null;
     };
 
 export const publicTag = (slug: string) => `public:${slug}`;
@@ -92,7 +93,7 @@ export async function getPublicView(slug: string, range: RangeType): Promise<Pub
       Object.entries(result.reports).map(([r, v]) => [r, { data: v.data }]),
     ),
     signupEvent: cards.includes("signups") ? owned.signupEvent : null,
-    comparable: !lacksHistory(result.window, owned.propertyCreatedAt),
+    comparisonGap: comparisonGap(result.window, owned.propertyCreatedAt),
   };
 }
 

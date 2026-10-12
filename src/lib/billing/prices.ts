@@ -16,8 +16,7 @@ export function priceInWords(interval: BillingInterval, prices = plans.starter.p
 
 /** "Yearly · 2 months free". */
 export function yearlyLabel(): string {
-  const free = monthsFreeOnYearly();
-  return `Yearly · ${free} ${free === 1 ? "month" : "months"} free`;
+  return `Yearly · ${monthsFreeLabel()}`;
 }
 
 /**
@@ -37,4 +36,17 @@ export function planInWords(state: PlanState): string {
     );
   }
   return parts.join(" · ");
+}
+
+/** "2 months free", for the note next to the Monthly / Yearly switch. */
+export function monthsFreeLabel(
+  prices: { month: number; year: number } = plans.starter.prices,
+): string {
+  const free = monthsFreeOnYearly(prices);
+  return `${free} ${free === 1 ? "month" : "months"} free`;
+}
+
+/** What paying yearly saves: 12 × €9 − €90 = €18. */
+export function yearlySaving(prices: { month: number; year: number }): number {
+  return 12 * prices.month - prices.year;
 }

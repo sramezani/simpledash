@@ -4,13 +4,39 @@ A dated log with one entry per session. **Newest entry first.**
 
 It is written for future Claude sessions: read the latest entry before starting work. Ideas that fall outside the roadmap go here too (Working rule 5).
 
-## 2026-10-12 · Session 5 · Sharper flags, better site icon coverage
+## 2026-10-12 · Session 5 · UI polish: live demo, overview, ranges, pricing; sharper flags
 
 ### Done
+
+- **Live demo:** `/demo` shows the public page set in `src/config/demo.ts` (`meetline-me`, opening on Last 12 months because that site has no recent visits), or sample data when that page is off. The landing page frames it (`?embed=1`) in a browser window (`DemoFrame`: three dots, the address, fixed height, a handwritten "Interactive demo" note), loaded only when near the screen. `/demo` may be framed by our own site only. The old sample-data demo (`DemoDashboard`, `DemoSwitch`) is gone.
+- **Today and Yesterday:** two new ranges with hourly charts (`dateHour`). Today is never compared ("Today isn't over yet") and leaves off the hours Google hasn't reported, so no fake zeros. Cache: Today is fresh for 30 minutes.
+- **Overview:** `OverviewToolbar` (site chip, `RangePicker` dropdown, period and hint) and `OverviewCard` (the numbers in one row with short dividers, two by two on phones, and the chart underneath, with one CSV menu). Shared by the dashboard, public pages and the demo. `StatCard`, `VisitorsCard`, `StatValue` and `SegmentedLinks` are gone; the top bar is now just the logo and Settings.
+- **Chart:** a smooth monotone curve (`smoothPath`, tested) in a lighter blue (`chart-1` #2F94E4, still 3:1 on the card) over a fading fill, drawing in from the left. The server-rendered chart got CSS-only hover tooltips with a guide line and dot.
+- **Lists:** fixed height of 10 rows, "Show more" scrolls inside, soft blue bars that grow in, empty states keep the same height.
+- **Signed in:** the landing page shows "Dashboard" and "Open my dashboard" from a `sd_signed_in` hint cookie (set by the proxy, read by a `<head>` script before paint). The page stays static.
+- **Switches:** the segmented pill slides (CSS only); tab views fade in; small popovers fade and drop in.
+- **Pricing:** Monthly | Yearly with a handwritten "2 months free" arrow, odometer-style rolling prices (CSS only), "Save €18 a year" / "Save €38 a year", Growth at €190 a year, "€0 due today".
+- Checked at 375 and 1440 px, keyboard on the date menu, production build (landing still static, CLS 0, no console errors), `/demo` framing headers. 267 tests pass; typecheck and lint are clean.
 
 - **Flags:** `public/flags` now holds 257 3:2 SVGs from country-flag-icons 1.6.20 (about 170 KB in total), copied by `scripts/copy-flags.mjs`. flag-icons and the PNGs are gone. `Flag` shows them at 16 × 10.7 px in the same 16 px slot. Codes lost against flag-icons: CP, DG, PC, UN, XX, none of which GA4 sends.
 - **Site icons:** `fetchSiteIcon` tries DuckDuckGo, then Google's favicon service (`t2.gstatic.com/faviconV2` with `fallback_opts`, which answers 404 on a miss), then the generic globe. Still server-side, so visitors never contact either service. 4 new tests.
 - Checked on `/ui-kit`: flags and icons load. 243 tests pass; typecheck and lint are clean.
+
+### Not done
+
+- Lighthouse wasn't run: it isn't installed here, and fetching it means downloading a package. Run it on the landing page, `/demo` and a public page after deploy.
+- Cloudflare: add `/demo` to the cache rule (`docs/deploy.md`).
+
+### Learned
+
+- Tailwind v4's `translate-*` utilities use the CSS `translate` property, and `transition-transform` covers it, so CSS-only slides work with plain classes.
+- A raw `<script>` in the root layout makes React warn on client renders; `next/script` with `beforeInteractive` puts the same inline script in `<head>` without the warning.
+- With Cache Components, a default parameter `now = new Date()` counts as reading the time even when it's not used; compute it only where needed, after `connection()`.
+
+### Ideas (outside the roadmap)
+
+- A "Right now" number in the overview row, like DataFast's "Online", reusing the live data.
+- Comparing Today with yesterday up to the same hour (needs an hour filter on both periods).
 
 ### Open questions from this session (for Siamak)
 

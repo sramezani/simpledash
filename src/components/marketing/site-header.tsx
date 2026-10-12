@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Container } from "@/components/shared/container";
 import { Logo } from "@/components/shared/logo";
-import { Button } from "@/components/ui/button";
+import { AccountLink } from "./account-link";
 
 /** Top bar for the landing and legal pages. */
 export function SiteHeader() {
@@ -18,9 +18,7 @@ export function SiteHeader() {
           >
             Pricing
           </Link>
-          <Button asChild variant="outline" className="h-9 px-3">
-            <Link href="/signin">Sign in</Link>
-          </Button>
+          <AccountLink />
         </nav>
       </Container>
     </header>

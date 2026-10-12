@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { brand, colors } from "@/config/theme";
+import { signedInHintScript } from "@/lib/auth/signed-in-hint";
 import { env } from "@/lib/env";
 import { fontVariables } from "@/lib/theme/fonts";
 import { ThemeStyle } from "@/lib/theme/theme-style";
@@ -21,9 +23,13 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={fontVariables}>
+    // The inline script below may add data-signed-in before React loads.
+    <html lang="en" className={fontVariables} suppressHydrationWarning>
       <head>
         <ThemeStyle />
+        <Script id="signed-in-hint" strategy="beforeInteractive">
+          {signedInHintScript}
+        </Script>
       </head>
       <body className="min-h-dvh">
         <a

@@ -4,6 +4,7 @@ import {
   daysIn,
   endOfMonth,
   keyToDate,
+  keyToHour,
   seriesKeys,
   type RangeWindow,
 } from "@/lib/ga4/ranges";
@@ -53,6 +54,24 @@ function uniqueVisitors(range: { start: string; end: string }): number {
   const days = daysIn(range);
   const overlap = days <= 7 ? 0.86 : days <= 31 ? 0.78 : 0.7;
   return Math.round(sum * overlap);
+}
+
+/** How a day's visitors spread over its hours: quiet at night, busiest in the afternoon. */
+const HOUR_WEIGHTS = [
+  2, 1.5, 1.2, 1, 1, 1.3, 2, 3, 4.2, 5.2, 5.8, 6.2, 6.4, 6.6, 6.8, 6.6, 6.2, 5.6, 5, 4.6, 4.2, 3.6,
+  3, 2.4,
+];
+const HOUR_TOTAL = HOUR_WEIGHTS.reduce((a, b) => a + b, 0);
+
+/** Visitors in one hour of a day. */
+function hourlyVisitors(isoDate: string, hour: number): number {
+  const share = (HOUR_WEIGHTS[hour] ?? 0) / HOUR_TOTAL;
+  return Math.round(dailyVisitors(isoDate) * share * (0.8 + noise(`${isoDate}h${hour}`) * 0.4));
+}
+
+/** The part of the day that has passed by the end of `lastHour`, for "Today" so far. */
+function dayShare(lastHour: number): number {
+  return HOUR_WEIGHTS.slice(0, lastHour + 1).reduce((a, b) => a + b, 0) / HOUR_TOTAL;
 }
 
 function split<T extends string>(total: number, shares: [T, number][]): [T, number][] {
@@ -118,7 +137,8 @@ const COUNTRIES: [string, string, number][] = [
 ];
 
 function samplePayload<R extends ReportName>(report: R, window: RangeWindow): Payloads[R] {
-  const current = uniqueVisitors(window.current);
+  const soFar = window.type === "today" ? dayShare(window.lastHour ?? 23) : 1;
+  const current = Math.round(uniqueVisitors(window.current) * soFar);
   const previous = uniqueVisitors(window.previous);
   const payloads: { [K in ReportName]: () => Payloads[K] } = {
     totals: () => ({
@@ -136,6 +156,9 @@ function samplePayload<R extends ReportName>(report: R, window: RangeWindow): Pa
     series: () => ({
       granularity: window.granularity,
       points: seriesKeys(window).map((key) => {
+        if (window.granularity === "dateHour") {
+          return { key, visitors: hourlyVisitors(keyToDate(key), keyToHour(key)) };
+        }
         if (window.granularity === "date") return { key, visitors: dailyVisitors(keyToDate(key)) };
         const start = keyToDate(key);
         const monthEnd = endOfMonth(start);

@@ -79,8 +79,9 @@ export type ReportsResult<R extends ReportName> = {
 
 const HOUR = 60 * 60 * 1000;
 
-/** How long a cached report counts as fresh. */
+/** How long a cached report counts as fresh. Today keeps changing, so it goes stale soonest. */
 export function maxAge(rangeType: RangeType, audience: Audience): number {
+  if (rangeType === "today") return audience === "public" ? HOUR : HOUR / 2;
   const base = rangeType === "12m" ? 24 * HOUR : 3 * HOUR;
   return audience === "public" ? Math.max(base, 12 * HOUR) : base;
 }

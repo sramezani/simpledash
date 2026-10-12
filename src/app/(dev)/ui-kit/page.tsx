@@ -11,10 +11,10 @@ import { Logo, LogoMark } from "@/components/shared/logo";
 import { Notice } from "@/components/shared/notice";
 import { PopoverButton } from "@/components/shared/popover-button";
 import { RankedList } from "@/components/shared/ranked-list";
-import { SegmentedLinks } from "@/components/shared/segmented-links";
+import { RangePicker } from "@/components/shared/range-picker";
 import { SegmentedRadio } from "@/components/shared/segmented-radio";
+import { SiteChip } from "@/components/shared/site-chip";
 import { SiteIcon } from "@/components/shared/site-icon";
-import { StatValue } from "@/components/shared/stat-value";
 import { ViewToggle } from "@/components/shared/view-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { brand, colors, radius, shadows, type ColorToken } from "@/config/theme";
 import { uiKitEnabled } from "@/lib/env";
+import { rangeMenu } from "@/lib/ga4/ranges";
 
 export const metadata: Metadata = { title: "UI kit", robots: { index: false, follow: false } };
 
@@ -185,14 +186,12 @@ export default function UiKitPage() {
             </Link>
           </p>
           <div className="grid gap-4 md:grid-cols-2">
-            <CardShell
-              id="kit-stat"
-              title="CardShell + StatValue + Delta"
-              help="The ⓘ is a native popover."
-            >
-              <StatValue value="1,234">
-                <Delta change={23} versus="vs the previous 7 days" />
-              </StatValue>
+            <CardShell id="kit-stat" title="CardShell + Delta" help="The ⓘ is a native popover.">
+              <p className="text-3xl font-semibold tracking-tight tabular-nums">1,234</p>
+              <div className="mt-2 flex flex-wrap gap-4">
+                <Delta change={23} versus="vs the previous 7 days" size="compact" />
+                <Delta change={-12} versus="vs the previous 7 days" size="compact" />
+              </div>
               <div className="mt-3 flex flex-wrap gap-4">
                 <Delta change={-12} versus="vs the previous 7 days" />
                 <Delta change={0} versus="vs the previous 7 days" />
@@ -200,9 +199,8 @@ export default function UiKitPage() {
               </div>
             </CardShell>
             <CardShell id="kit-dimmed" title="Dimmed (cached, can't refresh)" dimmed>
-              <StatValue value="1m 23s">
-                <Delta change={4} versus="vs the previous 7 days" />
-              </StatValue>
+              <p className="text-3xl font-semibold tracking-tight tabular-nums">1m 23s</p>
+              <Delta change={4} versus="vs the previous 7 days" size="compact" />
             </CardShell>
             <CardShell id="kit-ranked" title="RankedList (Flag, SiteIcon)">
               <RankedList
@@ -249,19 +247,23 @@ export default function UiKitPage() {
             </CardShell>
           </div>
           <div className="flex flex-wrap items-center gap-4">
-            <SegmentedLinks
-              label="Date range"
-              items={[
-                { label: "7 days", href: "/ui-kit", active: true },
-                { label: "30 days", href: "/ui-kit", active: false },
-              ]}
-            />
+            <SiteChip domain="github.com" label="github.com" />
+            <RangePicker value="7d" options={rangeMenu("/ui-kit")} />
             <SegmentedRadio
               name="kit-interval"
               label="Billing"
               options={[
                 { value: "month", label: "Monthly" },
-                { value: "year", label: "Yearly · 2 months free" },
+                { value: "year", label: "Yearly" },
+              ]}
+            />
+            <SegmentedRadio
+              name="kit-three"
+              label="Three options"
+              options={[
+                { value: "a", label: "Sources" },
+                { value: "b", label: "Channels" },
+                { value: "c", label: "Campaigns" },
               ]}
             />
             <PopoverButton

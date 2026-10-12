@@ -29,9 +29,10 @@ export function PagesCard({ pages, landing, dimmed, actions }: PagesCardProps) {
           {
             value: "top",
             label: "Top pages",
-            content: top.length ? (
+            content: (
               <RankedList
                 id="pages-list"
+                empty={empty}
                 itemLabel="Page"
                 columns={["Views", "Visitors"]}
                 rows={top.map((r) => ({
@@ -40,22 +41,19 @@ export function PagesCard({ pages, landing, dimmed, actions }: PagesCardProps) {
                   values: [r.views, r.visitors],
                 }))}
               />
-            ) : (
-              empty
             ),
           },
           {
             value: "landing",
             label: "Landing pages",
-            content: entries.length ? (
+            content: (
               <RankedList
                 id="landing-list"
+                empty={empty}
                 itemLabel="Landing page"
                 columns={["Visitors"]}
                 rows={entries.map((r) => ({ key: r.path, label: r.path, values: [r.visitors] }))}
               />
-            ) : (
-              empty
             ),
           },
         ]}

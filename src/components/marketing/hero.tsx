@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { Container } from "@/components/shared/container";
-import { Button } from "@/components/ui/button";
+import { HeroCta } from "./account-link";
 import { brand } from "@/config/theme";
 import { plans } from "@/config/plans";
 
@@ -20,10 +19,8 @@ export function Hero() {
         </h1>
         <p className="max-w-2xl text-lg text-pretty text-muted-foreground">{brand.description}</p>
         <div className="flex flex-col items-center gap-2">
-          <Button asChild size="lg" className="h-12 px-6 text-base">
-            <Link href="/signin">See my dashboard, free</Link>
-          </Button>
-          <p className="text-xs text-muted-foreground">
+          <HeroCta startLabel="See my dashboard, free" />
+          <p className="text-xs text-muted-foreground signed-in:hidden">
             {plans.starter.trialDays} days free · no card · read-only access
           </p>
         </div>

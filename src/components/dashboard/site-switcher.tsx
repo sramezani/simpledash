@@ -2,7 +2,8 @@
 
 import { CheckIcon, ChevronDownIcon, LoaderCircleIcon } from "lucide-react";
 import { useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
+import { chipButtonClass } from "@/components/shared/site-chip";
+import { SiteIcon } from "@/components/shared/site-icon";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,14 +16,17 @@ import type { PropertyList } from "@/lib/ga4/property-choice";
 
 type SiteSwitcherProps = {
   label: string;
+  /** The site's address, for its icon. */
+  domain: string | null;
   currentPropertyId: string | null;
   listAction: () => Promise<PropertyList>;
   switchAction: (propertyId: string) => Promise<{ error?: string }>;
 };
 
-/** "Showing: mysite.com ▾". Opening it fetches the user's sites live (docs/SPEC.md section 7). */
+/** The site chip with a menu of the user's sites. Opening it fetches them live (docs/SPEC.md section 7). */
 export function SiteSwitcher({
   label,
+  domain,
   currentPropertyId,
   listAction,
   switchAction,
@@ -46,18 +50,29 @@ export function SiteSwitcher({
   return (
     <div className="flex min-w-0 items-center gap-2">
       <DropdownMenu onOpenChange={onOpenChange}>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-9 min-w-0 gap-1.5 px-2 text-sm">
-            <span className="text-muted-foreground">Showing:</span>
-            <span className="truncate font-medium">{label}</span>
-            {pending ? (
-              <LoaderCircleIcon className="size-4 animate-spin" aria-hidden="true" />
-            ) : (
-              <ChevronDownIcon className="size-4" aria-hidden="true" />
-            )}
-          </Button>
+        <DropdownMenuTrigger className={`${chipButtonClass} group/site`}>
+          <SiteIcon domain={domain} />
+          <span className="truncate">
+            <span className="sr-only">Showing: </span>
+            {label}
+          </span>
+          {pending ? (
+            <LoaderCircleIcon
+              className="size-4 animate-spin text-muted-foreground"
+              aria-hidden="true"
+            />
+          ) : (
+            <ChevronDownIcon
+              className="size-4 text-muted-foreground transition-transform duration-200 ease-out group-data-[state=open]/site:rotate-180"
+              aria-hidden="true"
+            />
+          )}
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-72 max-w-[calc(100vw-2rem)]">
+        <DropdownMenuContent
+          align="start"
+          sideOffset={6}
+          className="w-72 max-w-[calc(100vw-2rem)] p-1.5 duration-150"
+        >
           <DropdownMenuLabel>Your Google Analytics sites</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {!list ? (
