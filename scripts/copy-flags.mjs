@@ -1,13 +1,12 @@
-// Turns the country flags from flag-icons (MIT) into small self-hosted PNGs in
-// public/flags (docs/SPEC.md section 11.7). Flags show at 16 × 12 px, so they are
-// rendered at 3× (48 × 36): a few hundred bytes each instead of up to 177 KB of SVG.
-// Uses sharp, which Next.js already installs. Run after upgrading flag-icons:
+// Copies the country flags from country-flag-icons (MIT) into public/flags as
+// self-hosted SVGs (docs/SPEC.md section 11.7). They are 3:2 and already small
+// (about 170 KB for all of them, under 6 KB for the largest), so they stay sharp
+// at any size and screen density. Run after upgrading country-flag-icons:
 //   node scripts/copy-flags.mjs
-import { copyFileSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import sharp from "sharp";
 
-const from = fileURLToPath(new URL("../node_modules/flag-icons/flags/4x3/", import.meta.url));
+const from = fileURLToPath(new URL("../node_modules/country-flag-icons/3x2/", import.meta.url));
 const to = fileURLToPath(new URL("../public/flags/", import.meta.url));
 rmSync(to, { recursive: true, force: true });
 mkdirSync(to, { recursive: true });
@@ -15,23 +14,22 @@ mkdirSync(to, { recursive: true });
 const codes = [];
 let bytes = 0;
 for (const file of readdirSync(from)) {
-  // Two-letter codes only (countries, plus a few regions such as "eu").
-  if (!/^[a-z]{2}\.svg$/.test(file)) continue;
+  // Two-letter codes only (countries, plus a few regions such as "EU").
+  if (!/^[A-Z]{2}\.svg$/.test(file)) continue;
   const code = file.slice(0, 2);
-  const png = await sharp(from + file, { density: 72 * 4 })
-    .resize(48, 36, { fit: "fill" })
-    .png({ palette: true, compressionLevel: 9, quality: 90 })
-    .toBuffer();
-  writeFileSync(`${to}${code}.png`, png);
-  bytes += png.length;
-  codes.push(code.toUpperCase());
+  copyFileSync(from + file, `${to}${code.toLowerCase()}.svg`);
+  bytes += statSync(from + file).size;
+  codes.push(code);
 }
-copyFileSync(fileURLToPath(new URL("../node_modules/flag-icons/LICENSE", import.meta.url)), to + "LICENSE");
+copyFileSync(
+  fileURLToPath(new URL("../node_modules/country-flag-icons/LICENSE", import.meta.url)),
+  to + "LICENSE",
+);
 
 writeFileSync(
   fileURLToPath(new URL("../src/config/flags.ts", import.meta.url)),
   `/**
- * Country codes with a self-hosted flag in public/flags (flag-icons, MIT).
+ * Country codes with a self-hosted flag in public/flags (country-flag-icons, MIT).
  * Written by scripts/copy-flags.mjs. A code that isn't here shows no flag.
  */
 export const flagCodes: ReadonlySet<string> = new Set(

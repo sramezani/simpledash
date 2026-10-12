@@ -643,7 +643,7 @@ The card shows visitors from AI assistants, split by assistant, plus the pages t
 ### 11.7 Countries
 
 - Each row shows a flag, the country name, visitors and share.
-  - The flag comes from `countryId`. It is a self-hosted SVG from flag-icons (MIT), because emoji flags don't show on Windows.
+  - The flag comes from `countryId`. It is a self-hosted 3:2 SVG from country-flag-icons (MIT), because emoji flags don't show on Windows.
   - The name comes from `country`.
 - Top 10, with "Show more" up to 50.
 
@@ -1127,7 +1127,8 @@ The bar is the polish of the best tools in this space: everything clear, quick a
 **Site icon proxy** (`/api/icon/<domain>`):
 
 - The hostname is checked with a strict regex.
-- Icons are fetched only from one fixed favicon service (DuckDuckGo's icon service), never from arbitrary URLs, so there is no SSRF.
+- Icons are fetched only from two fixed favicon services, never from arbitrary URLs, so there is no SSRF. DuckDuckGo's icon service is tried first, then Google's favicon service when DuckDuckGo has no icon.
+- The server fetches the icons, so visitors' browsers never contact DuckDuckGo or Google.
 - Responses are size-capped and cached for 30 days.
 - Unknown sites get a generic icon.
 

@@ -1,8 +1,8 @@
 import "server-only";
 
 /**
- * Site icons for Sources (docs/SPEC.md section 19). Icons come only from one fixed
- * service, never from arbitrary URLs, so there is no SSRF. Responses are size-capped,
+ * Site icons for Sources (docs/SPEC.md section 19). Icons come only from two fixed
+ * services, never from arbitrary URLs, so there is no SSRF. Responses are size-capped,
  * SVG is refused (it can carry scripts), and anything unexpected gets the generic icon.
  */
 
@@ -42,10 +42,32 @@ export async function getSiteIcon(domain: string, now: number = Date.now()): Pro
   return icon;
 }
 
+/**
+ * The fixed icon services, tried in order: DuckDuckGo, then Google, which knows more
+ * small sites. Google's public address (`www.google.com/s2/favicons`) redirects here;
+ * `fallback_opts` makes it answer 404 instead of a generic globe when it has no icon.
+ */
+export function iconSources(domain: string): string[] {
+  const site = encodeURIComponent(`https://${domain}`);
+  return [
+    `https://icons.duckduckgo.com/ip3/${domain}.ico`,
+    `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${site}&size=64`,
+  ];
+}
+
+/** The first icon any service has for a domain, or null when none has one. */
 export async function fetchSiteIcon(domain: string): Promise<Icon | null> {
   if (!isIconDomain(domain)) return null;
+  for (const url of iconSources(domain)) {
+    const icon = await fetchIcon(url);
+    if (icon) return icon;
+  }
+  return null;
+}
+
+async function fetchIcon(url: string): Promise<Icon | null> {
   try {
-    const response = await fetch(`https://icons.duckduckgo.com/ip3/${domain}.ico`, {
+    const response = await fetch(url, {
       signal: AbortSignal.timeout(4000),
       redirect: "error",
     });

@@ -4,6 +4,20 @@ A dated log with one entry per session. **Newest entry first.**
 
 It is written for future Claude sessions: read the latest entry before starting work. Ideas that fall outside the roadmap go here too (Working rule 5).
 
+## 2026-10-12 · Session 5 · Sharper flags, better site icon coverage
+
+### Done
+
+- **Flags:** `public/flags` now holds 257 3:2 SVGs from country-flag-icons 1.6.20 (about 170 KB in total), copied by `scripts/copy-flags.mjs`. flag-icons and the PNGs are gone. `Flag` shows them at 16 × 10.7 px in the same 16 px slot. Codes lost against flag-icons: CP, DG, PC, UN, XX, none of which GA4 sends.
+- **Site icons:** `fetchSiteIcon` tries DuckDuckGo, then Google's favicon service (`t2.gstatic.com/faviconV2` with `fallback_opts`, which answers 404 on a miss), then the generic globe. Still server-side, so visitors never contact either service. 4 new tests.
+- Checked on `/ui-kit`: flags and icons load. 243 tests pass; typecheck and lint are clean.
+
+### Open questions from this session (for Siamak)
+
+- **`warm-cache` cost:** every site whose owner signed in within 14 days is refreshed about every 3 hours, used or not (about 40,000 GA4 report calls a day at 1,000 active sites). Idea: only refresh sites whose dashboard was opened in the last day.
+- **Google access lapsing:** unused refresh tokens can expire, which silently stops the email and public page. Idea: tell the owner by email when access ends.
+- A public page whose owner is away more than 14 days refreshes only when someone visits it.
+
 ## 2026-10-12 · Session 4 · Sprint 4 built: V1 is complete in code
 
 ### Done
