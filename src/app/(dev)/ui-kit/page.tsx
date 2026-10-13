@@ -204,7 +204,6 @@ export default function UiKitPage() {
             </CardShell>
             <CardShell id="kit-ranked" title="RankedList (Flag, SiteIcon)">
               <RankedList
-                id="kit-ranked"
                 itemLabel="Country"
                 columns={["Visitors", "Share"]}
                 initial={3}

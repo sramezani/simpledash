@@ -1,4 +1,4 @@
-import { channelLabel, sourceLabel } from "@/lib/ga4/labels";
+import { browserLabel, channelLabel, sourceLabel, systemLabel } from "@/lib/ga4/labels";
 import {
   addDays,
   daysIn,
@@ -121,6 +121,42 @@ const LANDING: [string, number][] = [
   ["/blog/seo-for-small-sites", 0.04],
 ];
 
+const BROWSERS: [string, number][] = [
+  ["Chrome", 0.58],
+  ["Safari", 0.19],
+  ["Edge", 0.07],
+  ["Firefox", 0.06],
+  ["Safari (in-app)", 0.03],
+  ["Samsung Internet", 0.02],
+  ["Opera", 0.012],
+  ["Android Webview", 0.008],
+];
+
+const SYSTEMS: [string, number][] = [
+  ["Macintosh", 0.36],
+  ["Windows", 0.27],
+  ["iOS", 0.19],
+  ["Android", 0.12],
+  ["Linux", 0.04],
+  ["Chrome OS", 0.01],
+];
+
+const CITIES: [string, string, number][] = [
+  ["San Francisco", "US", 0.06],
+  ["New York", "US", 0.05],
+  ["London", "GB", 0.05],
+  ["Berlin", "DE", 0.04],
+  ["Bengaluru", "IN", 0.035],
+  ["Amsterdam", "NL", 0.03],
+  ["Paris", "FR", 0.028],
+  ["Toronto", "CA", 0.022],
+  ["Munich", "DE", 0.02],
+  ["São Paulo", "BR", 0.018],
+  ["Madrid", "ES", 0.015],
+  ["Sydney", "AU", 0.012],
+  ["Stockholm", "SE", 0.01],
+];
+
 const COUNTRIES: [string, string, number][] = [
   ["US", "United States", 0.34],
   ["DE", "Germany", 0.1],
@@ -234,6 +270,27 @@ function samplePayload<R extends ReportName>(report: R, window: RangeWindow): Pa
         { path: "/", visitors: Math.round(current * 0.019) },
         { path: "/docs/getting-started", visitors: Math.round(current * 0.009) },
       ],
+    }),
+    browsers: () => ({
+      rows: BROWSERS.map(([browser, share]) => ({
+        browser,
+        label: browserLabel(browser),
+        visitors: Math.round(current * share),
+      })),
+    }),
+    systems: () => ({
+      rows: SYSTEMS.map(([os, share]) => ({
+        os,
+        label: systemLabel(os),
+        visitors: Math.round(current * share),
+      })),
+    }),
+    cities: () => ({
+      rows: CITIES.map(([city, code, share]) => ({
+        city,
+        code,
+        visitors: Math.round(current * share),
+      })),
     }),
   };
   return payloads[report]() as Payloads[R];

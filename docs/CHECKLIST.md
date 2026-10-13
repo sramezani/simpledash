@@ -172,6 +172,10 @@ What's done and what's next, in plain words.
 - [x] Segmented switches slide smoothly (12 Oct)
 - [x] Pricing: "2 months free" note with an arrow, rolling prices, "Save €18 / €38 a year", Growth's yearly price (12 Oct)
 - [x] Custom date range: "Custom…" in the date menu opens a two-month calendar (one month on phones) with Start/End fields, Clear and Apply; menu keys like DataFast (12 Oct)
+- [x] No summary sentence on the pages; the period next to the date menu is smaller and lighter (12 Oct)
+- [x] List boxes without titles or CSV buttons; "Details" opens the full list in a modal with search and CSV (12 Oct)
+- [x] Devices: Browser | OS | Device tabs with icons; Countries: Country | City (12 Oct)
+- [ ] Siamak: open the dashboard and check the Devices card's Browser and OS tabs with live data (not tried from Claude's browser, which isn't signed in)
 - [ ] Siamak: add `/demo` to the Cloudflare cache rule, and change the demo slug in `src/config/demo.ts` when the real one is ready
 - [ ] Lighthouse on the landing page, `/demo` and a public page after deploy (not run locally this session)
 

@@ -1,11 +1,13 @@
 import type { protos } from "@google-analytics/data";
 import { AI_CHANNEL, AI_LIST_VERSION, AI_SOURCES, aiAssistantName } from "./ai-sources";
 import {
+  browserLabel,
   channelLabel,
   DEVICE_LABELS,
   deviceOf,
   plainValue,
   sourceLabel,
+  systemLabel,
   type Device,
 } from "./labels";
 import { seriesKeys, type Granularity, type RangeWindow } from "./ranges";
@@ -31,6 +33,9 @@ export const REPORTS = [
   "actions",
   "ai_sources",
   "ai_pages",
+  "browsers",
+  "systems",
+  "cities",
 ] as const;
 export type ReportName = (typeof REPORTS)[number];
 
@@ -54,6 +59,9 @@ export type Payloads = {
   actions: { current: Record<string, number>; previous: Record<string, number> };
   ai_sources: { rows: { assistant: string; visitors: number }[] };
   ai_pages: { rows: { path: string; visitors: number }[] };
+  browsers: { rows: { browser: string; label: string; visitors: number }[] };
+  systems: { rows: { os: string; label: string; visitors: number }[] };
+  cities: { rows: { city: string; code: string; visitors: number }[] };
 };
 export type Payload<R extends ReportName> = Payloads[R];
 
@@ -201,6 +209,30 @@ export function buildRequest(
         dimensionFilter: aiFilter,
         orderBys: [desc("activeUsers")],
         limit: 10,
+      };
+    case "browsers":
+      return {
+        dateRanges: dateRanges(window, "current"),
+        dimensions: [dimension("browser")],
+        metrics: [metric("activeUsers")],
+        orderBys: [desc("activeUsers")],
+        limit: 50,
+      };
+    case "systems":
+      return {
+        dateRanges: dateRanges(window, "current"),
+        dimensions: [dimension("operatingSystem")],
+        metrics: [metric("activeUsers")],
+        orderBys: [desc("activeUsers")],
+        limit: 25,
+      };
+    case "cities":
+      return {
+        dateRanges: dateRanges(window, "current"),
+        dimensions: [dimension("city"), dimension("countryId")],
+        metrics: [metric("activeUsers")],
+        orderBys: [desc("activeUsers")],
+        limit: 100,
       };
   }
 }
@@ -380,4 +412,67 @@ const parsers: { [R in ReportName]: (rows: Row[], window: RangeWindow) => Payloa
       rows: [...values].map(([path, visitors]) => ({ path, visitors })).sort(byVisitorsDesc),
     };
   },
+
+  browsers(rows) {
+    return {
+      rows: mergeByLabel(rows, "browser", browserLabel).map(([browser, label, visitors]) => ({
+        browser,
+        label,
+        visitors,
+      })),
+    };
+  },
+
+  systems(rows) {
+    return {
+      rows: mergeByLabel(rows, "operatingSystem", systemLabel).map(([os, label, visitors]) => ({
+        os,
+        label,
+        visitors,
+      })),
+    };
+  },
+
+  cities(rows) {
+    // A city name alone isn't unique (Paris, Texas), so it's kept with its country.
+    // Cities Google couldn't place are one "Unknown" row, whatever their country.
+    const values = sumBy(
+      rows,
+      (r) => {
+        const city = plainValue(r.dims.city);
+        return city === "Unknown"
+          ? "|Unknown"
+          : `${(r.dims.countryId ?? "").toUpperCase()}|${city}`;
+      },
+      "activeUsers",
+    );
+    return {
+      rows: [...values]
+        .map(([key, visitors]) => {
+          const [code, city] = key.split("|") as [string, string];
+          return { city, code, visitors };
+        })
+        .sort(byVisitorsDesc),
+    };
+  },
 };
+
+/**
+ * Rows of one dimension summed by their plain-words label (several GA4 values can
+ * read the same), biggest first: [first GA4 value, label, visitors].
+ */
+function mergeByLabel(
+  rows: Row[],
+  field: string,
+  label: (value: string) => string,
+): [string, string, number][] {
+  const byLabel = new Map<string, [string, string, number]>();
+  for (const row of rows) {
+    const value = row.dims[field] ?? "";
+    const name = label(value);
+    const entry = byLabel.get(name) ?? [value, name, 0];
+    entry[2] += row.metrics.activeUsers ?? 0;
+    byLabel.set(name, entry);
+  }
+  return [...byLabel.values()].sort((a, b) => b[2] - a[2]);
+}

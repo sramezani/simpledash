@@ -4,9 +4,20 @@ A dated log with one entry per session. **Newest entry first.**
 
 It is written for future Claude sessions: read the latest entry before starting work. Ideas that fall outside the roadmap go here too (Working rule 5).
 
-## 2026-10-12 · Session 6 · Custom date ranges
+## 2026-10-12 · Session 6 · Custom date ranges; DataFast-style list cards
 
 ### Done
+
+- **List cards** (`ListCard`): no visible title, ⓘ or CSV button. Tabs at the top left (one view shows as a single tab), the view's column names at the right (they wrap under the tabs on narrow cards), the top 10 rows at a fixed height, and "Details" at the bottom.
+- **Details** (`ListDetails`, shadcn `dialog`): the full list of the active view with search (accents and case ignored), zebra rows, a sticky header, the card's help, a row count, and a CSV of the rows shown, built in the browser (`listCsv`). Fixed height for long lists so searching doesn't make it jump; no keyboard pop-up on phones; focus returns to the button.
+- **Devices:** Browser | OS | Device, with logos (`TechIcon`, `public/icons/tech` from `scripts/copy-tech-icons.mjs`). **Countries:** Country | City. Three new reports: `browsers`, `systems`, `cities`.
+- **Summary line** taken off the pages (still in the email) and out of the public card picker; the period text is smaller and lighter. "Right now" hides its title but keeps the ⓘ (GeoNames credit).
+- 281 tests pass; typecheck and lint are clean. Checked at 1440 and 375 px.
+
+### Problem found
+
+- **meetline.me's site is marked `needs_reconnect`** (read-only check of the database), so `/p/meetline-me` shows "paused" and the demo falls back to sample data. It happened after the custom-range test that still used live data. Only a failed Google token refresh (`invalid_grant`), an undecryptable token or a 401 sets it; a rejected request (400) doesn't. Siamak reconnected it on 13 Oct and it's `ok` again. If the Google OAuth app is in "Testing", its refresh tokens expire after 7 days: worth publishing it before launch.
+- After reconnecting, `/p/meetline-me` loads live data with the new `cities` report. Cities Google couldn't place are now one "Unknown" row (they showed once per country). `browsers` and `systems` weren't tried live: meetline's public page doesn't show Devices, and the browser pane isn't signed in to the dashboard.
 
 - **Custom ranges** in the URL: `?range=2026-09-01..2026-09-30`. `parseRange` checks real days, puts them in order and starts no earlier than GA4's first day (14 Aug 2015); `rangeWindow` cuts them at today in the site's time zone and at 5 years. Compared with the same number of days just before. Hourly for one day, daily up to 92 days, monthly after. A range that ends today isn't compared; a finished one is cached for 24 hours. Summary: "145 visitors from 1 Oct 2025 to 28 Feb 2026", "Visitors up 4% vs the 30 days before".
 - **The date menu** (`RangePicker`): keys like DataFast's (T, Y, W, M, L, C), active only while the menu is open and hidden on touch screens; "Custom…" opens `CustomRangePanel` under the button: shadcn `calendar` (react-day-picker 9.14.0) with two months (one on phones), hover preview, future days greyed, Start/End date fields in step with it, Clear and Apply. It loads in its own chunk when Custom is first pointed at.

@@ -26,6 +26,7 @@
     "better-auth": "1.7.7",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
+    "cn": "^0.4.0",
     "cobe": "2.0.1",
     "drizzle-orm": "0.45.4",
     "google-auth-library": "11.2.0",
@@ -44,6 +45,8 @@
     "zod": "4.6.6"
   },
   "devDependencies": {
+    "@iconify-json/flat-color-icons": "1.2.3",
+    "@iconify-json/logos": "1.2.14",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "24.19.2",
     "@types/react": "19.3.0",

@@ -54,6 +54,30 @@ export const DEVICE_LABELS: Record<Device, string> = {
   other: "Other",
 };
 
+/** GA4 browser names that read better another way. */
+const BROWSER_NAMES: Record<string, string> = {
+  "Android Webview": "Android WebView",
+  "Safari (in-app)": "Safari (in an app)",
+  YaBrowser: "Yandex Browser",
+  "Mozilla Compatible Agent": "Other",
+};
+
+/** The `browser` dimension in plain words: "Chrome", "Safari (in an app)". */
+export function browserLabel(browser: string): string {
+  return BROWSER_NAMES[browser] ?? plainValue(browser);
+}
+
+/** GA4 operating system names that read better another way. */
+const SYSTEM_NAMES: Record<string, string> = {
+  Macintosh: "macOS",
+  "Chrome OS": "ChromeOS",
+};
+
+/** The `operatingSystem` dimension in plain words: "macOS", "Windows". */
+export function systemLabel(os: string): string {
+  return SYSTEM_NAMES[os] ?? plainValue(os);
+}
+
 /** Common source names that aren't domains, mapped to the site whose icon to show. */
 const SOURCE_DOMAINS: Record<string, string> = {
   google: "google.com",

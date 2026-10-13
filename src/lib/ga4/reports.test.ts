@@ -138,6 +138,68 @@ describe("parseReport", () => {
     ]);
   });
 
+  it("merges browsers and systems that read the same, in plain words", () => {
+    const browsers = parseReport(
+      "browsers",
+      response(
+        ["browser"],
+        ["activeUsers"],
+        [
+          ["Chrome", 50],
+          ["Safari (in-app)", 7],
+          ["(not set)", 2],
+          ["Mozilla Compatible Agent", 1],
+        ],
+      ),
+      window,
+    );
+    expect(browsers.rows).toEqual([
+      { browser: "Chrome", label: "Chrome", visitors: 50 },
+      { browser: "Safari (in-app)", label: "Safari (in an app)", visitors: 7 },
+      { browser: "(not set)", label: "Unknown", visitors: 2 },
+      { browser: "Mozilla Compatible Agent", label: "Other", visitors: 1 },
+    ]);
+    const systems = parseReport(
+      "systems",
+      response(
+        ["operatingSystem"],
+        ["activeUsers"],
+        [
+          ["Macintosh", 9],
+          ["Windows", 12],
+        ],
+      ),
+      window,
+    );
+    expect(systems.rows.map((r) => r.label)).toEqual(["Windows", "macOS"]);
+  });
+
+  it("keeps each city with its country", () => {
+    const { rows } = parseReport(
+      "cities",
+      response(
+        ["city", "countryId"],
+        ["activeUsers"],
+        [
+          ["Paris", "FR", 30],
+          ["Paris", "US", 2],
+          ["(not set)", "de", 4],
+          ["(not set)", "NL", 3],
+        ],
+      ),
+      window,
+    );
+    expect(rows).toEqual([
+      { city: "Paris", code: "FR", visitors: 30 },
+      { city: "Unknown", code: "", visitors: 7 },
+      { city: "Paris", code: "US", visitors: 2 },
+    ]);
+    expect(buildRequest("cities", window, params).dimensions).toEqual([
+      { name: "city" },
+      { name: "countryId" },
+    ]);
+  });
+
   it("joins sources across both periods", () => {
     const res = response(
       ["sessionSource", "dateRange"],

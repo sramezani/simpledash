@@ -86,19 +86,23 @@ Each layer imports only from its own folder and the layers before it. ESLint (`n
 | `Notice` | `notice.tsx` | Banners for states: info, warning, danger, with one action |
 | `EmptyState` | `empty-state.tsx` | What a card shows instead of a fake zero |
 | `SegmentedRadio` | `segmented-radio.tsx` | Radio buttons styled as a segmented control with a sliding pill (CSS only, `size` sm or md); other parts react to it with `:has()` |
-| `ViewToggle` | `view-toggle.tsx` | Two views of a card ("Sources \| Channels"), CSS only; the new view fades in |
-| `RankedList` | `ranked-list.tsx` | Sources, Pages, Countries, Devices, Actions, AI: icon, label, values, soft blue share bar that grows in. Fixed height of `initial` rows; "Show more" scrolls inside (CSS only); `empty` keeps the same height |
+| `ViewToggle` | `view-toggle.tsx` | Up to 4 views of a card behind tabs ("Browser \| OS \| Device"), CSS only, each with an `aside` at the right (its column names); the new view fades in; one view shows as a single tab |
+| `RankedList`, `ColumnNames` | `ranked-list.tsx` | The top rows of a list: icon, label, values, soft blue share bar that grows in. Fixed height of `initial` rows; `empty` keeps the same height. `ColumnNames` lines the column names up with the values |
+| `TechIcon` | `tech-icon.tsx` | A browser, OS or device icon from `public/icons/tech` (`src/config/tech-icons.ts`), or a globe / question mark |
 | `SiteChip` | `site-chip.tsx` | The site's icon and address as a raised chip (`as="h1"` on public pages); `chipClass` styles the toolbar buttons |
 | `RangePicker` | `range-picker.tsx` | The date menu (client): presets with their keys (T, Y, W, M, L, C while open), links to `?range=` from `rangeMenu()`, instant label, spinner while loading, and "Custom…" |
 | `CustomRangePanel` | `custom-range-panel.tsx` | The custom range calendar (lazy): two months (one on phones), Start/End fields, Clear and Apply |
 | `OverviewToolbar` | `overview-toolbar.tsx` | Site chip, date menu and the period, above the overview |
 | `CsvMenu` | `csv-menu.tsx` | Several CSV downloads behind one icon (the overview), plain links |
+| `CardShell` | `card-shell.tsx` | The overview-style card with a title and ⓘ (`hideTitle` keeps the title for screen readers only, as on "Right now") |
 | `RollingPrice`, `Swap`, `YearlyOnly` | `rolling-price.tsx` | Values that change with the Monthly / Yearly switch: rolling digits, a crossfade, a line that opens. CSS only, inside `group/billing` |
 | `Flag` | `flag.tsx` | A country flag from `public/flags` (3:2 SVGs from country-flag-icons, shown 16 px wide) |
 | `SiteIcon` | `site-icon.tsx` | A source's icon through `/api/icon/<domain>`, or a generic one |
 | `GoogleButton` | `google-button.tsx` | A submit button with Google's "G", for forms that start Google sign-in |
 | `BillingSwitch` | `billing-switch.tsx` | Monthly / Yearly radios named `interval`: the pricing section and the upgrade form. Prices switch with `group-has-[[data-option-index='1']:checked]/billing:` |
 | `CsvLink` | `csv-link.tsx` | "Download CSV" in a card's header, a plain link |
+
+List cards (`src/components/cards/list-card.tsx`): `ListCard` holds the tabs, the lists and "Details"; `ListDetails` is the modal (search, CSV via `listCsv`). Sources, Pages, Countries, Devices, AI traffic and Actions are thin wrappers that give it their views.
 
 The overview (`src/components/cards/overview-card.tsx`): the numbers in a row with short dividers and the chart underneath, used by the dashboard, public pages and the demo.
 
@@ -110,4 +114,4 @@ All of them are on `/ui-kit`, and `/ui-kit/dashboard?state=…` shows the dashbo
 
 **No JavaScript where it isn't needed.** Card toggles, "Show more", "View as table" and the help popovers are plain HTML and CSS (`:has()`, `popover`). The same cards therefore run on public pages and the demo without adding scripts. The client parts are the date menu, the chart on the dashboard (Recharts, loaded in its own chunk), the site switcher, the signup picker form, the refresh-after-stale timer and, on the landing page, the demo frame's loader.
 
-shadcn parts in `src/components/ui`: `button`, `badge`, `card`, `separator`, `skeleton`, `input`, `label`, `dropdown-menu`, `chart`, `calendar`, `popover`. `calendar` was changed after adding it: its parts are stable components (inline ones remount every day on each render and lose clicks), and the selected range uses `primary`. The button has a 44 px minimum height on touch screens (`pointer-coarse:min-h-11`); small icon buttons get the same target with an invisible `after:` overlay instead, so they don't push the layout.
+shadcn parts in `src/components/ui`: `button`, `badge`, `card`, `separator`, `skeleton`, `input`, `label`, `dropdown-menu`, `chart`, `calendar`, `popover`, `dialog` (its overlay uses the `overlay` token). `calendar` was changed after adding it: its parts are stable components (inline ones remount every day on each render and lose clicks), and the selected range uses `primary`. The button has a 44 px minimum height on touch screens (`pointer-coarse:min-h-11`); small icon buttons get the same target with an invisible `after:` overlay instead, so they don't push the layout.

@@ -44,7 +44,7 @@ import { classifyError } from "@/lib/ga4/errors";
 import { chooseFirstSite, listKeyEventNames, stillHasAccess } from "@/lib/ga4/properties";
 import { comparisonGap, parseRange, rangeWindow, type RangeType } from "@/lib/ga4/ranges";
 import { REPORTS } from "@/lib/ga4/reports";
-import { sampleReports, SAMPLE_SIGNUP_EVENT } from "@/lib/ga4/sample/sample";
+import { sampleReports, SAMPLE_DOMAIN, SAMPLE_SIGNUP_EVENT } from "@/lib/ga4/sample/sample";
 import { reportError } from "@/lib/report-error";
 import { markSiteOk } from "@/lib/sites";
 
@@ -182,6 +182,7 @@ async function SiteDashboard({
       signupEvent={site.signupEvent}
       comparisonGap={comparisonGap(result.window, site.propertyCreatedAt)}
       site={switcher}
+      siteName={label}
       notices={
         <>
           {extra}
@@ -256,6 +257,7 @@ function SampleDashboard({
       signupEvent={SAMPLE_SIGNUP_EVENT}
       comparisonGap={comparisonGap(window, null)}
       site={<SampleSiteChip />}
+      siteName={SAMPLE_DOMAIN}
       notices={notice}
       lockedPanel={locked ? <LockedPanel upgrade={upgrade} /> : undefined}
     />

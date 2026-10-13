@@ -18,7 +18,7 @@ export function LiveCard({
 }) {
   const card = cardById.live;
   return (
-    <CardShell id="live" title={card.title} help={card.help}>
+    <CardShell id="live" title={card.title} help={card.help} hideTitle>
       {loading ? (
         <LiveSkeleton />
       ) : data || (deferred && endpoint) ? (

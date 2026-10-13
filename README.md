@@ -84,6 +84,7 @@ node scripts/run-job.mjs cleanup        # daily at 03:30 UTC
 | `npm run db:generate` | Writes a SQL migration into `drizzle/` from changes in `src/lib/db/schema.ts` |
 | `npm run db:migrate` | Applies the migrations to `DATABASE_URL` |
 | `node scripts/copy-flags.mjs` | Rebuilds `public/flags` (SVG) from country-flag-icons, after upgrading it |
+| `node scripts/copy-tech-icons.mjs` | Rebuilds `public/icons/tech` (browser, OS and device icons) from the two Iconify sets, after changing the list or upgrading them |
 | `node scripts/build-places.mjs` | Rebuilds the globe's place table from GeoNames (all-the-cities) |
 | `scripts/backup/backup.sh --local <dir>` | Writes a database backup to a folder (needs `BACKUP_DATABASE_URL`, `pg_dump` 17) |
 | `docker compose up -d db` | Local Postgres 17 |

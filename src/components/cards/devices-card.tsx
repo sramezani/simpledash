@@ -1,50 +1,83 @@
-import { CircleHelpIcon, MonitorIcon, SmartphoneIcon, TabletIcon } from "lucide-react";
-import type { ReactNode } from "react";
-import { CardShell } from "@/components/shared/card-shell";
 import { EmptyState } from "@/components/shared/empty-state";
-import { RankedList } from "@/components/shared/ranked-list";
+import { TechIcon } from "@/components/shared/tech-icon";
 import { cardById } from "@/config/cards";
+import { browserIcons, deviceIcons, systemIcons } from "@/config/tech-icons";
 import { formatShare } from "@/lib/format";
 import type { Payloads } from "@/lib/ga4/reports";
+import { ListCard, type ListExport } from "./list-card";
 
-const icons = {
-  desktop: MonitorIcon,
-  mobile: SmartphoneIcon,
-  tablet: TabletIcon,
-  other: CircleHelpIcon,
+type DevicesCardProps = {
+  browsers: Payloads["browsers"] | null;
+  systems: Payloads["systems"] | null;
+  devices: Payloads["devices"] | null;
+  exportInfo: ListExport;
+  dimmed?: boolean;
 };
 
-/** Desktop, Mobile and Tablet, each with a share bar (docs/SPEC.md section 11.8). */
-export function DevicesCard({
-  devices,
-  dimmed,
-  actions,
-}: {
-  devices: Payloads["devices"] | null;
-  dimmed?: boolean;
-  actions?: ReactNode;
-}) {
+const empty = <EmptyState title="No visitors in this period." />;
+
+/** Rows with each one's share of the visitors in the list. */
+function withShare<T extends { visitors: number }>(
+  rows: T[] | undefined,
+  row: (r: T) => { key: string; label: string; icon: React.ReactNode },
+) {
+  const kept = (rows ?? []).filter((r) => r.visitors > 0);
+  const total = kept.reduce((a, r) => a + r.visitors, 0);
+  return kept.map((r) => ({
+    ...row(r),
+    values: [r.visitors, r.visitors],
+    display: [null, formatShare(r.visitors, total)],
+  }));
+}
+
+/** Browser | OS | Device, each with its icon and share (docs/SPEC.md section 11.8). */
+export function DevicesCard({ browsers, systems, devices, exportInfo, dimmed }: DevicesCardProps) {
   const card = cardById.devices;
-  const rows = (devices?.rows ?? []).filter((r) => r.visitors > 0);
-  const total = rows.reduce((a, r) => a + r.visitors, 0);
   return (
-    <CardShell id="devices" title={card.title} help={card.help} dimmed={dimmed} actions={actions}>
-      <RankedList
-        id="devices-list"
-        empty={<EmptyState title="No visitors in this period." />}
-        itemLabel="Device"
-        columns={["Visitors", "Share"]}
-        rows={rows.map((r) => {
-          const Icon = icons[r.device];
-          return {
+    <ListCard
+      id="devices"
+      title={card.title}
+      help={card.help}
+      exportInfo={exportInfo}
+      dimmed={dimmed}
+      views={[
+        {
+          value: "browser",
+          label: "Browser",
+          itemLabel: "Browser",
+          columns: ["Visitors", "Share"],
+          empty,
+          rows: withShare(browsers?.rows, (r) => ({
+            key: r.label,
+            label: r.label,
+            icon: <TechIcon name={browserIcons[r.browser]} fallback="globe" />,
+          })),
+        },
+        {
+          value: "os",
+          label: "OS",
+          itemLabel: "Operating system",
+          columns: ["Visitors", "Share"],
+          empty,
+          rows: withShare(systems?.rows, (r) => ({
+            key: r.label,
+            label: r.label,
+            icon: <TechIcon name={systemIcons[r.os]} />,
+          })),
+        },
+        {
+          value: "device",
+          label: "Device",
+          itemLabel: "Device",
+          columns: ["Visitors", "Share"],
+          empty,
+          rows: withShare(devices?.rows, (r) => ({
             key: r.device,
             label: r.label,
-            values: [r.visitors, r.visitors],
-            display: [null, formatShare(r.visitors, total)],
-            icon: <Icon className="size-3.5 text-muted-foreground" aria-hidden="true" />,
-          };
-        })}
-      />
-    </CardShell>
+            icon: <TechIcon name={deviceIcons[r.device]} />,
+          })),
+        },
+      ]}
+    />
   );
 }

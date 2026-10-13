@@ -47,14 +47,13 @@ export const publicTag = (slug: string) => `public:${slug}`;
 function reportsFor(cards: CardId[]): ReportName[] {
   const need = new Set<ReportName>(["totals"]);
   const map: Partial<Record<CardId, ReportName[]>> = {
-    summary: ["totals", "sources", "actions"],
     signups: ["actions"],
     chart: ["series"],
     sources: ["sources", "channels"],
     ai: ["ai_sources", "ai_pages"],
     pages: ["pages", "landing"],
-    countries: ["countries"],
-    devices: ["devices"],
+    countries: ["countries", "cities"],
+    devices: ["devices", "browsers", "systems"],
   };
   for (const c of cards) for (const r of map[c] ?? []) need.add(r);
   return REPORTS.filter((r) => need.has(r));

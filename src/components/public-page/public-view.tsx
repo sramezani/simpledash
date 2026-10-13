@@ -6,7 +6,6 @@ import { DevicesCard } from "@/components/cards/devices-card";
 import { OverviewCard, type OverviewMetric } from "@/components/cards/overview-card";
 import { PagesCard } from "@/components/cards/pages-card";
 import { SourcesCard } from "@/components/cards/sources-card";
-import { SummaryLine } from "@/components/cards/summary-line";
 import { StaticLineChart } from "@/components/charts/static-line-chart";
 import { LiveCard } from "@/components/globe/live-card";
 import { Container } from "@/components/shared/container";
@@ -26,7 +25,6 @@ import {
   type RangeType,
 } from "@/lib/ga4/ranges";
 import type { PublicView as View } from "@/lib/public-page/view";
-import { buildSummary } from "@/lib/summary/summary";
 
 type LiveViewData = Extract<View, { kind: "live" }>;
 
@@ -62,6 +60,7 @@ export function PublicView({
     : null;
   const period = periodLabel(window);
   const versus = `vs ${previousPeriodWords(range)}`;
+  const exportInfo = { site: view.label, ...window.current };
   const metrics = (
     [
       {
@@ -104,18 +103,6 @@ export function PublicView({
               Try again in an hour, or pick a range from the menu.
             </Notice>
           ) : null}
-          {has("summary") ? (
-            <SummaryLine
-              text={buildSummary({
-                range,
-                totals,
-                sources: reports.sources?.data ?? null,
-                actions: reports.actions?.data ?? null,
-                signupEvent,
-                comparable,
-              })}
-            />
-          ) : null}
           {metrics.length > 0 || showChart ? (
             <OverviewCard
               metrics={metrics}
@@ -136,25 +123,37 @@ export function PublicView({
                 <SourcesCard
                   sources={reports.sources?.data ?? null}
                   channels={reports.channels?.data ?? null}
+                  exportInfo={exportInfo}
                 />
               ) : null}
               {has("pages") ? (
                 <PagesCard
                   pages={reports.pages?.data ?? null}
                   landing={reports.landing?.data ?? null}
+                  exportInfo={exportInfo}
                 />
               ) : null}
               {has("countries") ? (
                 <CountriesCard
                   countries={reports.countries?.data ?? null}
+                  cities={reports.cities?.data ?? null}
                   total={totals?.current.visitors ?? null}
+                  exportInfo={exportInfo}
                 />
               ) : null}
-              {has("devices") ? <DevicesCard devices={reports.devices?.data ?? null} /> : null}
+              {has("devices") ? (
+                <DevicesCard
+                  browsers={reports.browsers?.data ?? null}
+                  systems={reports.systems?.data ?? null}
+                  devices={reports.devices?.data ?? null}
+                  exportInfo={exportInfo}
+                />
+              ) : null}
               {has("ai") ? (
                 <AiCard
                   sources={reports.ai_sources?.data ?? null}
                   pages={reports.ai_pages?.data ?? null}
+                  exportInfo={exportInfo}
                 />
               ) : null}
             </div>

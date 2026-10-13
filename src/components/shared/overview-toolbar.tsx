@@ -25,8 +25,8 @@ export function OverviewToolbar({
       <div className="flex max-w-full min-w-0 items-center">{site}</div>
       <RangePicker {...menu} />
       {period || note ? (
-        <p className="w-full text-sm text-pretty text-muted-foreground sm:ml-1 sm:w-auto">
-          {period ? <span className="font-medium text-foreground">{period}</span> : null}
+        <p className="w-full text-xs text-pretty text-muted-foreground sm:ml-1 sm:w-auto">
+          {period}
           {period && note ? " · " : null}
           {note}
         </p>

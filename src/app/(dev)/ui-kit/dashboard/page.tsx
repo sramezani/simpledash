@@ -192,6 +192,7 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
           />
         }
         site={site}
+        siteName="yoursite.com"
         notices={
           state === "normal" ? <EmailNotice turnOff={noop} dismiss={noop} /> : notices[state]
         }

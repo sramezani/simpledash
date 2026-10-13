@@ -9,12 +9,13 @@ const COUNT_HELP =
 
 export const cards = [
   {
+    // Shown only in the weekly email now; the pages show the numbers alone (Siamak, 12 Oct).
     id: "summary",
     title: "Summary",
     help: "What changed, worked out from the numbers. No guesses about why.",
     csv: false,
-    publicAllowed: true,
-    publicDefault: true,
+    publicAllowed: false,
+    publicDefault: false,
   },
   {
     id: "visitors",
@@ -83,7 +84,7 @@ export const cards = [
   {
     id: "countries",
     title: "Countries",
-    help: COUNT_HELP,
+    help: `${COUNT_HELP} Places come from the visitor's network, so a city can be a nearby one.`,
     csv: true,
     publicAllowed: true,
     publicDefault: true,
@@ -91,7 +92,7 @@ export const cards = [
   {
     id: "devices",
     title: "Devices",
-    help: COUNT_HELP,
+    help: `${COUNT_HELP} Browsers, systems and devices as Google Analytics names them; in-app browsers (like Instagram's) are listed on their own.`,
     csv: true,
     publicAllowed: true,
     publicDefault: false,

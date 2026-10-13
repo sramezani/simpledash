@@ -4,7 +4,7 @@ Oct 11, 2026 · Written by Claude Code from `docs/ROADMAP.md` · Status: approve
 
 **Updated Oct 11, 2026 (session 2):** a yearly price and Growth shown as "coming soon" (sections 16 and 17), one theme and brand file and a UI quality bar (section 18), and code structure and reuse rules (section 4).
 
-**Updated Oct 12, 2026 (session 6):** custom date ranges with a calendar, and keys in the date menu (sections 8 and 15).
+**Updated Oct 12, 2026 (session 6):** custom date ranges with a calendar, and keys in the date menu (sections 8 and 15); list cards without titles or CSV buttons, with "Details" (search and CSV in a modal), Browser and OS in Devices, City in Countries, and the summary line in the email only (sections 10.2, 11 and 13).
 
 **Updated Oct 12, 2026 (session 5):** Today and Yesterday ranges with hourly charts (section 8), the overview card and toolbar, fixed-height lists (section 11), the live demo in a browser frame at `/demo` and the signed-in landing page (section 17), the pricing switch's animations and Growth's yearly price (section 17), and the motion rules (section 18).
 
@@ -477,11 +477,14 @@ Every request sets `returnPropertyQuota: true`. The date ranges come from sectio
 | 9 | `actions` | `eventName` | `eventCount` | `eventName` in [`file_download`, `click`, `form_submit`, signup event] | both | — | Actions, Signups, summary, email |
 | 10 | `ai_sources` | `sessionSource` | `activeUsers` | AI filter (section 11.5) | current | desc, 20 | AI traffic, email |
 | 11 | `ai_pages` | `landingPage` | `activeUsers` | AI filter (section 11.5) | current | desc, 10 | AI traffic |
+| 12 | `browsers` | `browser` | `activeUsers` | — | current | desc, 50 | Devices (Browser tab) |
+| 13 | `systems` | `operatingSystem` | `activeUsers` | — | current | desc, 25 | Devices (OS tab) |
+| 14 | `cities` | `city`, `countryId` | `activeUsers` | — | current | desc, 100 | Countries (City tab) |
 
 **Batching:**
 
 - Reports are sent with `batchRunReports`. That allows up to 5 requests per batch, all for the same property.
-- Batch A is reports 1–5, batch B is 6–10, and batch C is 11.
+- Batch A is reports 1–5, batch B is 6–10, and batch C is 11–14.
 - Only stale or missing reports are fetched.
 
 **Plain-word labels** (`labels.ts`):
@@ -542,12 +545,13 @@ The dashboard is one scrolling page.
 
 - **Top bar:** the logo and a link to Settings.
 - **Toolbar** (`OverviewToolbar`, shared with public pages and the demo): the site chip with its icon (on the dashboard it opens the site switcher), the date menu (`RangePicker`: Today, Yesterday, Last 7 days, Last 30 days, Last 12 months; it opens with a short fade and zoom, the label changes at once and a spinner shows while the new numbers load), and the period in words with its hint (section 8).
-- **Below it:** notices (weekly email notice, state banners from section 12), the summary line, then the cards.
+- **Below it:** notices (weekly email notice, state banners from section 12), then the cards. The period next to the date menu is small and light.
 - **The overview** (`OverviewCard`): one card with the four numbers in a row, short dividers between them (two by two on phones), and the visitors chart underneath. Downloads for the chart and the four numbers sit in one small CSV menu.
 - **Layout:** one column on phones, a grid on wider screens.
-- **On every card:** a title, a short help popover (ⓘ) in plain words, and "Download CSV" (section 13). The summary line has no CSV.
+- **List cards** (`ListCard`: Sources, Pages, Countries, Devices, AI traffic, Actions) have no visible title and no CSV button, like DataFast: tabs at the top left name the view ("Country | City"), the view's column names sit at the right, and "Details" at the bottom opens the whole list (section 13). The title stays for screen readers; the plain-words help moved into Details. A card with one view shows its name as a single tab.
+- **The overview and "Right now"** keep their ⓘ help; "Right now" shows no visible title either (its ⓘ carries the GeoNames credit).
 - **Built from shared parts:** every list card sits in the shared `CardShell` (title, help, CSV, and the loading, empty, error, stale and locked states). The card list, titles and help text come from `src/config/cards.ts` (section 4).
-- **List cards have a fixed height** of 10 rows (`RankedList`), whatever their number of rows, so cards side by side line up and nothing moves. "Show more" turns the list into a scrolling list inside the card. Share bars are soft blue (`chart-1`) and grow in when a list appears.
+- **List cards have a fixed height** of 10 rows (`RankedList`), whatever their number of rows, so cards side by side line up and nothing moves. The rest of a list is in Details. Share bars are soft blue (`chart-1`) and grow in when a list appears.
 
 Help text for every count: "Visitors that Google Analytics counted. People who refuse cookies or block GA aren't included."
 
@@ -564,6 +568,8 @@ Help text for every count: "Visitors that Google Analytics counted. People who r
 | Devices | Tech details by device category |
 
 ### 11.1 Summary line (built from the numbers, no AI)
+
+**Since 12 Oct 2026 the summary line is in the weekly email only** (Siamak asked to take it off the pages; the numbers speak for themselves there). The rules stay as they are.
 
 `buildSummary()` in `src/lib/summary/` uses `totals`, `sources` (both periods) and `actions`. The rules:
 
@@ -665,18 +671,25 @@ The card shows visitors from AI assistants, split by assistant, plus the pages t
 - **Two tabs:**
   - "Top pages" (`pagePath`, showing Views and Visitors).
   - "Landing pages" (`landingPage`, showing Visitors).
-- Each tab shows the top 10, with "Show more" up to 50. Paths are shown as they are.
+- Each tab shows the top 10; Details has up to 50. Paths are shown as they are.
 
 ### 11.7 Countries
 
-- Each row shows a flag, the country name, visitors and share.
+Two tabs: **Country | City**.
+
+- **Country:** a flag, the country name, visitors and share.
   - The flag comes from `countryId`. It is a self-hosted 3:2 SVG from country-flag-icons (MIT), because emoji flags don't show on Windows.
   - The name comes from `country`.
-- Top 10, with "Show more" up to 50.
+- **City** (report `cities`: `city` and `countryId`, top 100): the city with its country's flag, and visitors. A city is kept with its country (Paris, France is not Paris, Texas). Cities Google couldn't place are one "Unknown" row, without a flag. Cities come from the visitor's network, so one can be a nearby city; the help says so.
+- Top 10 in the card; Details has the rest.
 
 ### 11.8 Devices
 
-Desktop, Mobile and Tablet, each with a share bar. Any other category is shown as "Other".
+Three tabs: **Browser | OS | Device**, each with visitors, share and an icon.
+
+- **Browser** (report `browsers`: `browser`, top 50) and **OS** (report `systems`: `operatingSystem`, top 25). Names in plain words: "Macintosh" reads "macOS", "Safari (in-app)" reads "Safari (in an app)", "(not set)" reads "Unknown". Values that read the same are merged.
+- **Device** (`deviceCategory`): Desktop, Mobile and Tablet. Any other category is shown as "Other".
+- **Icons** are self-hosted SVGs in `public/icons/tech`, copied by `scripts/copy-tech-icons.mjs`: brand logos from SVG Logos (CC0) and device pictures from Icons8's Flat Color Icons (MIT). `src/config/tech-icons.ts` says which GA4 name gets which file; anything else gets a plain globe (browsers) or question mark.
 
 ### 11.9 Actions
 
@@ -753,10 +766,12 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 - **Ownership:** server actions check that the note's site belongs to the signed-in user.
 - **Storage:** stored in `chart_note`, never sent to GA4. Notes are hidden on public pages.
 
-### CSV
+### Details and CSV
 
-- **Where:** every dashboard card has "Download CSV", which calls `/api/csv/<card>?range=30d`.
-- **Data:** built from the same cached reports, so there are no extra GA4 calls unless a report is missing.
+- **Details** (`ListDetails`, at the bottom of every list card, on the dashboard, public pages and the demo): a modal with every row of the view shown in the card ("City", "Browser"), a search box (accents and case don't matter), and a CSV button.
+  - Centred on wide screens, nearly full height on phones; it fades and zooms in, and Escape, the X or a click outside close it. A long list keeps its height while searching, so the modal doesn't jump. On touch screens the keyboard doesn't open by itself.
+  - The CSV is built in the browser from the rows shown (all of them, or the ones found), with the same header, quoting and formula safety as below (`listCsv`). No extra request.
+- **The overview's CSV menu** (dashboard only) downloads the chart and the four numbers from `/api/csv/<card>?range=…`, built from the same cached reports, so there are no extra GA4 calls unless a report is missing.
 - **File name:** `simpledash-<domain>-<card>-<start>-<end>.csv`.
 - **Format:** a plain-word header row, UTF-8, and RFC 4180 quoting.
 - **Safety:** a cell that starts with `=`, `+`, `-`, `@`, a tab or a carriage return gets a leading `'`. Page titles and sources come from the open internet and could carry spreadsheet formulas.
@@ -818,15 +833,14 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 
 **Cards:**
 
-- **Can be shown:** summary line, Visitors, Page views, Avg. time, Visitors chart, Sources, Pages, Countries, Devices, AI traffic, Signups, Live.
-- **On by default:** summary line, Visitors, Page views, Visitors chart, Sources, Pages, Countries.
+- **Can be shown:** Visitors, Page views, Avg. time, Visitors chart, Sources, Pages, Countries (with cities), Devices (with browsers and systems), AI traffic, Signups, Live.
+- **On by default:** Visitors, Page views, Visitors chart, Sources, Pages, Countries.
 - **Off by default:** Signups and Live.
-- If Signups is hidden, the summary line leaves out the signups sentence.
 - **Chart notes are never shown.**
 
 **Page contents:**
 
-- The same layout as the dashboard: the toolbar (the site chip is the page's `h1`), the summary line, the overview card and the list cards (section 11).
+- The same layout as the dashboard: the toolbar (the site chip is the page's `h1`), the overview card and the list cards with their Details (section 11).
 - The same ranges as the dashboard, custom ones included, through `?range=`.
 - **Custom ranges are capped:** anyone can type one into a public page's address, and each new one costs the owner's GA4 quota. A public page may fetch at most 20 new custom ranges per site per hour (`allowPublicCustomRange` in `src/lib/ga4/limiter.ts`); a range asked for in the last hour is always allowed again. Past the cap, the page shows only cached numbers and says "This page can't load more custom ranges right now."
 - A "Powered by SimpleDash" footer link to `https://simpledash.app`.
@@ -1074,12 +1088,12 @@ The bar is the polish of the best tools in this space: everything clear, quick a
 **Numbers and lists:**
 
 - **Numbers** use `tabular-nums` and are always formatted by `src/lib/format.ts`. A change shows an arrow, the % and a word; colour is never the only signal.
-- **Ranked lists** (Sources, Pages, Countries, AI traffic) share one `RankedList` block:
+- **Ranked lists** (Sources, Pages, Countries, Devices, AI traffic, Actions) share one `RankedList` block inside `ListCard`:
   - each row has an icon or flag, a label and a value
-  - a soft share bar sits behind the row (`bg-primary/10`)
+  - a soft blue share bar sits behind the row (`bg-chart-1/12`) and grows in
   - the whole row highlights on hover
   - long labels are cut short, and the full text stays available on hover and to screen readers
-  - "Show more" expands in place, with no jump
+  - the card shows the top rows at a fixed height; "Details" opens the rest in a modal
 
 **Interaction:**
 

@@ -6,10 +6,8 @@ import { DevicesCard } from "@/components/cards/devices-card";
 import { OverviewCard, type OverviewMetric } from "@/components/cards/overview-card";
 import { PagesCard } from "@/components/cards/pages-card";
 import { SourcesCard } from "@/components/cards/sources-card";
-import { SummaryLine } from "@/components/cards/summary-line";
 import { VisitorsChartLazy } from "@/components/charts/visitors-chart-lazy";
 import { Container } from "@/components/shared/container";
-import { CsvLink } from "@/components/shared/csv-link";
 import { CsvMenu } from "@/components/shared/csv-menu";
 import { OverviewToolbar } from "@/components/shared/overview-toolbar";
 import { PopoverButton } from "@/components/shared/popover-button";
@@ -26,7 +24,6 @@ import {
   type RangeWindow,
 } from "@/lib/ga4/ranges";
 import type { Payload, ReportName } from "@/lib/ga4/reports";
-import { buildSummary } from "@/lib/summary/summary";
 import { RefreshSoon } from "./refresh-soon";
 import { TopBar } from "./top-bar";
 
@@ -41,6 +38,8 @@ type DashboardViewProps = {
   comparisonGap: string | null;
   /** The site switcher, or the sample site's chip. */
   site: ReactNode;
+  /** The site's address or name, for download file names. */
+  siteName: string;
   /** State banners and notices, shown above the cards. */
   notices?: ReactNode;
   /** The Signups picker: behind "Choose an event", or behind "Change" once one is chosen. */
@@ -72,14 +71,6 @@ export function DashboardView(props: DashboardViewProps) {
   const comparable = comparisonGap === null;
   const totals = reports.totals?.data ?? null;
   const stats = deriveStats(totals, reports.actions?.data ?? null, signupEvent, comparable);
-  const summary = buildSummary({
-    range,
-    totals,
-    sources: reports.sources?.data ?? null,
-    actions: reports.actions?.data ?? null,
-    signupEvent,
-    comparable,
-  });
   const series = reports.series?.data ?? null;
   const points = series
     ? chartPoints(series.points, series.granularity, window.lastPointPending)
@@ -87,8 +78,7 @@ export function DashboardView(props: DashboardViewProps) {
   const period = periodLabel(window);
   const versus = `vs ${previousPeriodWords(range)}`;
   const csvHref = (id: CardId) => `/api/csv/${id}?range=${encodeURIComponent(range)}`;
-  const csvLink = (id: CardId) =>
-    props.csv ? <CsvLink href={csvHref(id)} label={cardById[id].title} /> : undefined;
+  const exportInfo = { site: props.siteName, ...window.current };
   const marks = points && props.notes ? noteMarks(props.notes, points, window.granularity) : [];
 
   const metrics: OverviewMetric[] = [
@@ -132,7 +122,6 @@ export function DashboardView(props: DashboardViewProps) {
 
   const cards = (
     <>
-      <SummaryLine text={summary} />
       <OverviewCard
         metrics={metrics}
         versus={versus}
@@ -158,37 +147,40 @@ export function DashboardView(props: DashboardViewProps) {
         <SourcesCard
           sources={reports.sources?.data ?? null}
           channels={reports.channels?.data ?? null}
+          exportInfo={exportInfo}
           dimmed={dimmed}
-          actions={csvLink("sources")}
         />
         <PagesCard
           pages={reports.pages?.data ?? null}
           landing={reports.landing?.data ?? null}
+          exportInfo={exportInfo}
           dimmed={dimmed}
-          actions={csvLink("pages")}
         />
         <CountriesCard
           countries={reports.countries?.data ?? null}
+          cities={reports.cities?.data ?? null}
           total={totals?.current.visitors ?? null}
+          exportInfo={exportInfo}
           dimmed={dimmed}
-          actions={csvLink("countries")}
         />
         <DevicesCard
+          browsers={reports.browsers?.data ?? null}
+          systems={reports.systems?.data ?? null}
           devices={reports.devices?.data ?? null}
+          exportInfo={exportInfo}
           dimmed={dimmed}
-          actions={csvLink("devices")}
         />
         <AiCard
           sources={reports.ai_sources?.data ?? null}
           pages={reports.ai_pages?.data ?? null}
+          exportInfo={exportInfo}
           dimmed={dimmed}
-          actions={csvLink("ai")}
         />
         <ActionsCard
           counts={reports.actions?.data ?? null}
           signupEvent={signupEvent}
+          exportInfo={exportInfo}
           dimmed={dimmed}
-          actions={csvLink("actions")}
         />
       </div>
     </>

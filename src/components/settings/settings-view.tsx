@@ -81,7 +81,7 @@ export function SettingsView(props: SettingsViewProps) {
             .filter((c) => c.publicAllowed)
             .map((c) => ({
               id: c.id,
-              title: c.id === "summary" ? "Summary line" : c.title,
+              title: c.title,
               note:
                 c.id === "signups" && !props.hasSignupEvent
                   ? "Pick a signup action on the dashboard first"
