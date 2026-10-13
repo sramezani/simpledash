@@ -13,6 +13,7 @@ export function VisitorsChartLazy(props: {
   points: ChartPoint[];
   notes?: ChartNoteMark[];
   canAddNotes?: boolean;
+  revenueCurrency?: string;
 }) {
   return <VisitorsChart {...props} />;
 }

@@ -179,6 +179,62 @@ What's done and what's next, in plain words.
 - [ ] Siamak: add `/demo` to the Cloudflare cache rule, and change the demo slug in `src/config/demo.ts` when the real one is ready
 - [ ] Lighthouse on the landing page, `/demo` and a public page after deploy (not run locally this session)
 
+## V2: the Growth plan (planned 13 Oct; details in `docs/SPEC.md` section 28)
+
+**Before starting (Siamak decides)**
+
+- [x] Growth's site limit: 10 sites (13 Oct)
+- [x] The trial is Starter only; Growth starts when paid for (13 Oct)
+- [x] Revenue connection: a pasted restricted read-only Stripe key (13 Oct)
+- [ ] Siamak: run `npm run db:migrate` once, for migrations `0004` (Growth and several sites), `0005` (Search Console) and `0006` (revenue and sales). Until then the app errors on the new columns, the running dev server included.
+
+### Sprint 5: Growth plan and several sites
+
+- [x] Growth in `plans.ts` (€19 / €190) with its new feature list, and the pricing card on sale (13 Oct)
+- [x] Stripe: the Growth product and two prices, `billing.plan`, Checkout with `plan`, plan switching in the Portal (13 Oct)
+  - Test mode: product and prices made by Claude; Checkout for Growth yearly checked (keeps the trial days). Plan switching for paying customers uses the Portal's confirm flow, which needs the Portal setting below.
+- [x] Limits enforced on the server, and an "Upgrade to Growth" panel where Starter hits one (13 Oct)
+- [x] `warm-cache` refreshes only sites opened in the last 24 hours (13 Oct)
+- [x] Add sites (Growth), the site in the dashboard address, and the All sites page (`/sites`) (13 Oct)
+  - Checked on a local copy of the database with a test account and cached sample numbers: site menu, switching, All sites, the picker (search, Added), Settings → Sites, Starter after Growth (paused sites, "Show … instead"). The picker's live Google list needs a real sign-in.
+- [x] One public page per site (migration) (13 Oct)
+  - Migration `0004_growth_and_sites.sql`, tested on a local Postgres with old rows. **Siamak runs `npm run db:migrate`** (until then the app errors on the new columns).
+- [x] The Monday email with one block per site (13 Oct)
+  - Preview: `/ui-kit/email?sites=3`.
+- [ ] Siamak: create the Growth product and prices in Stripe (test and live)
+  - Test mode done by Claude (13 Oct). Live: the product "SimpleDash Growth" (SaaS tax code, tax-inclusive €19 and €190), then its IDs in Coolify (`STRIPE_PRICE_GROWTH_MONTHLY`, `STRIPE_PRICE_GROWTH_YEARLY`).
+- [ ] Siamak: Customer Portal → "Customers can switch plans" with all four prices (test and live)
+- [ ] **Done when:** a Growth test user pays in test mode, adds three sites, switches between them and sees all three on `/sites`; a Starter user sees the upgrade panel.
+
+### Sprint 6: Google search insights
+
+- [x] Connect Search Console from Settings (extra read-only scope, asked only then), matched to the site's domain (13 Oct)
+  - Also from the dashboard's "Connect Search Console" card. The live connection needs a real sign-in and the API turned on (below).
+- [x] Close to page 1, What changed, Your name vs new people, Seen but not clicked, Searches that lead to signups (13 Oct)
+  - Checked on sample data at 1280 and 375 px (`/ui-kit/dashboard?state=growth`), and the data layer once against a local database with Google faked (12 calls, then all from cache).
+- [x] Honest notes on screen: 2–3 days behind, rare searches hidden (13 Oct)
+- [ ] Siamak: add `webmasters.readonly` to the Google consent screen and get it verified (start on day one)
+  - The scope justification and the demo video addition are in `docs/google-verification.md`.
+- [ ] Siamak: turn on the **Google Search Console API** in the Google Cloud project (APIs & Services → Library)
+- [ ] **Done when:** a Growth test user connects Search Console on a real site and the five views match Search Console's own report for the same days.
+
+### Sprint 7: revenue and sales by source
+
+- [x] Stripe connection in Settings: paste a restricted read-only key (steps shown, checked before saving, write keys refused, stored encrypted), daily totals only (revenue, refunds, new customers, MRR) (13 Oct)
+  - Checked once against the Stripe test account (the four reads, paging, the sync into a local database and reading it back). That account has no charges yet, so the totals were zero; the sums are covered by unit tests.
+- [x] Revenue and Customers in the overview, revenue bars under the chart, visitors per customer (13 Oct)
+- [x] "What counts as a sale?" in Settings, and sales and signups by source and landing page (13 Oct)
+- [x] Revenue per source only from GA4 `purchase` values, never estimated (13 Oct)
+- [x] The Stripe Checkout warning in Sources (every plan) (13 Oct)
+  - Dashboard only; public pages never show it. Preview: `/ui-kit/dashboard?state=growth`.
+- [ ] Siamak: add the `revenue-sync` scheduled task in Coolify (`docs/deploy.md` step 6)
+- [ ] **Done when:** Siamak's test Stripe account shows the same daily revenue as Stripe's dashboard, and a test purchase event in GA4 shows under its source.
+
+## V3: later (postponed 13 Oct; `docs/SPEC.md` section 29)
+
+- X mentions on the chart · Ask your data in plain English · Milestone images · Hacker News and Product Hunt markers · "Tracking looks broken" alert
+- Not decided yet: traffic-drop alert, "new site linked to you", signup funnel
+
 ## Ongoing (Siamak)
 
 - [ ] Build in public on X, at least 3 posts a week from Sprint 0

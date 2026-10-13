@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isSendTime, localTime } from "./week";
+import { isLastSendHour, isSendTime, localTime } from "./week";
 
 describe("isSendTime", () => {
   it("is Monday from 13:00 to 17:59 in the site's time zone", () => {
@@ -23,5 +23,12 @@ describe("isSendTime", () => {
       weekday: 1,
       hour: 13,
     });
+  });
+});
+
+describe("isLastSendHour", () => {
+  it("is the 17:00 hour in the site's time zone", () => {
+    expect(isLastSendHour(new Date("2026-10-12T15:30:00Z"), "Europe/Amsterdam")).toBe(true); // 17:30
+    expect(isLastSendHour(new Date("2026-10-12T14:30:00Z"), "Europe/Amsterdam")).toBe(false); // 16:30
   });
 });

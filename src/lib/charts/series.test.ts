@@ -3,6 +3,7 @@ import { rangeWindow, seriesKeys } from "@/lib/ga4/ranges";
 import {
   chartCaption,
   chartPoints,
+  withRevenue,
   niceTicks,
   noteKey,
   noteMarks,
@@ -153,5 +154,30 @@ describe("niceTicks", () => {
 
   it("handles an empty chart", () => {
     expect(niceTicks(0)).toEqual([0, 1]);
+  });
+});
+
+describe("withRevenue", () => {
+  const points = chartPoints(
+    [
+      { key: "20261005", visitors: 10 },
+      { key: "20261006", visitors: 12 },
+    ],
+    "date",
+    false,
+  );
+  const byDay = new Map([
+    ["2026-10-05", 1900],
+    ["2026-10-07", 900],
+  ]);
+
+  it("puts each day's revenue on its point, 0 on days without", () => {
+    expect(withRevenue(points, "date", byDay).map((p) => p.revenue)).toEqual([1900, 0]);
+  });
+
+  it("adds a month's days together, and leaves hourly charts alone", () => {
+    const months = chartPoints([{ key: "202610", visitors: 100 }], "yearMonth", false);
+    expect(withRevenue(months, "yearMonth", byDay)[0]!.revenue).toBe(2800);
+    expect(withRevenue(points, "dateHour", byDay)[0]!.revenue).toBeUndefined();
   });
 });

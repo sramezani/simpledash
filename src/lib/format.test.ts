@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatAgo,
   formatCompact,
+  formatMoney,
+  formatPosition,
+  formatRate,
   formatDate,
   formatDay,
   formatDayRange,
@@ -92,5 +96,40 @@ describe("formatPrice", () => {
     expect(formatPrice(9)).toBe("€9");
     expect(formatPrice(90)).toBe("€90");
     expect(formatPrice(7.5)).toBe("€7.50");
+  });
+});
+
+describe("search numbers", () => {
+  it("writes click rates with sensible precision", () => {
+    expect(formatRate(0.0213)).toBe("2.1%");
+    expect(formatRate(0.153)).toBe("15%");
+    expect(formatRate(0.0004)).toBe("0.04%");
+    expect(formatRate(0)).toBe("0%");
+  });
+
+  it("writes positions like Search Console", () => {
+    expect(formatPosition(11.23)).toBe("11.2");
+    expect(formatPosition(1)).toBe("1");
+    expect(formatPosition(7.96)).toBe("8");
+  });
+});
+
+describe("formatMoney", () => {
+  it("shows amounts from the smallest unit, cents only when they matter", () => {
+    expect(formatMoney(123456, "EUR")).toBe("€1,235");
+    expect(formatMoney(1990, "EUR")).toBe("€19.90");
+    expect(formatMoney(1900, "EUR")).toBe("€19");
+    expect(formatMoney(500, "JPY")).toBe("JP¥500");
+    expect(formatMoney(-900, "USD")).toBe("-US$9");
+  });
+});
+
+describe("formatAgo", () => {
+  const now = new Date("2026-10-13T12:00:00Z");
+  it("says how long ago in plain words", () => {
+    expect(formatAgo(new Date("2026-10-13T11:59:40Z"), now)).toBe("just now");
+    expect(formatAgo(new Date("2026-10-13T11:48:00Z"), now)).toBe("12 minutes ago");
+    expect(formatAgo(new Date("2026-10-13T09:00:00Z"), now)).toBe("3 hours ago");
+    expect(formatAgo(new Date("2026-10-10T09:00:00Z"), now)).toBe("on 10 Oct 2026");
   });
 });

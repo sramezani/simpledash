@@ -103,3 +103,60 @@ export function formatTime(date: Date, timeZone = "UTC"): string {
     timeZone,
   }).format(date);
 }
+
+/** A click rate, 0–1: 0.0213 → "2.1%", 0.153 → "15%", 0.0004 → "0.04%". */
+export function formatRate(rate: number): string {
+  const pct = Math.max(0, rate) * 100;
+  if (pct === 0) return "0%";
+  if (pct < 0.1) return `${pct.toFixed(2)}%`;
+  if (pct < 10) return `${pct.toFixed(1)}%`;
+  return `${integer.format(pct)}%`;
+}
+
+/** A Google search position, as Search Console shows it: 11.23 → "11.2", 1 → "1". */
+export function formatPosition(position: number): string {
+  const rounded = Math.round(position * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+}
+
+/** How many decimals a currency has (EUR 2, JPY 0), from Intl. */
+export function currencyDigits(currency: string): number {
+  try {
+    return (
+      new Intl.NumberFormat(LOCALE, { style: "currency", currency }).resolvedOptions()
+        .maximumFractionDigits ?? 2
+    );
+  } catch {
+    return 2;
+  }
+}
+
+/**
+ * An amount in a currency's smallest unit (cents) for people: 123456 EUR → "€1,235",
+ * 1990 EUR → "€19.90", 500 JPY → "¥500". Round amounts from 1,000 up drop the cents.
+ */
+export function formatMoney(minor: number, currency: string): string {
+  const digits = currencyDigits(currency);
+  const major = minor / 10 ** digits;
+  const whole = Math.abs(major) >= 1000 || Number.isInteger(major);
+  try {
+    return new Intl.NumberFormat(LOCALE, {
+      style: "currency",
+      currency,
+      minimumFractionDigits: whole ? 0 : digits,
+      maximumFractionDigits: whole ? 0 : digits,
+    }).format(major);
+  } catch {
+    return `${formatNumber(major)} ${currency}`;
+  }
+}
+
+/** How long ago, for "Synced 12 minutes ago": just now, minutes, hours, then the date. */
+export function formatAgo(date: Date, now: Date = new Date()): string {
+  const minutes = Math.floor((now.getTime() - date.getTime()) / 60_000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} ${minutes === 1 ? "minute" : "minutes"} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} ${hours === 1 ? "hour" : "hours"} ago`;
+  return `on ${formatDate(date)}`;
+}

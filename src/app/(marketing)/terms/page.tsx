@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   const starter = plans.starter;
+const growth = plans.growth;
   const email = legal.contactEmail;
   return (
     <LegalPage
@@ -35,17 +36,24 @@ export default function TermsPage() {
 
       <LegalSection title="The free trial">
         <p>
-          New accounts get a {starter.trialDays}-day free trial with every feature. No card is
-          needed. When the trial ends, the dashboard locks and the weekly email and public page
-          pause until you subscribe. Your settings and notes are kept.
+          New accounts get a {starter.trialDays}-day free trial with every {starter.name} feature.
+          No card is needed. When the trial ends, the dashboard locks and the weekly email and
+          public page pause until you subscribe. Your settings and notes are kept.
         </p>
       </LegalSection>
 
       <LegalSection title="Prices and billing">
         <ul>
           <li>
-            The {starter.name} plan costs {priceInWords("month")} or {priceInWords("year")}. Prices
-            include VAT.
+            The {starter.name} plan costs {priceInWords("month")} or {priceInWords("year")}, for one
+            site. The {growth.name} plan costs {priceInWords("month", growth.prices)} or{" "}
+            {priceInWords("year", growth.prices)}, for up to {growth.limits.sites} sites, with Google
+            search insights and revenue from Stripe. Prices include VAT.
+          </li>
+          <li>
+            You can switch between plans in Settings → Billing. Stripe shows the exact amount for
+            the rest of your period before you confirm. Moving to {starter.name} keeps your other
+            sites and their settings, paused, until you move back.
           </li>
           <li>
             Payments are handled by Stripe, which acts as the merchant of record: Stripe sells the

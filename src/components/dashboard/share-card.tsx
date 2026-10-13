@@ -1,6 +1,7 @@
 "use client";
 
 import { GlobeIcon } from "lucide-react";
+import type { Route } from "next";
 import Link from "next/link";
 import { useActionState } from "react";
 import { CopyButton } from "@/components/shared/copy-button";
@@ -12,7 +13,14 @@ type ShareState = { url?: string; error?: string };
  * "Share your stats publicly?" (docs/SPEC.md section 12): one click creates the page
  * with a slug from the domain and the default cards, then shows the link.
  */
-export function ShareCard({ action }: { action: () => Promise<ShareState> }) {
+export function ShareCard({
+  action,
+  settingsHref = "/settings#public",
+}: {
+  action: () => Promise<ShareState>;
+  /** This site's public page settings. */
+  settingsHref?: string;
+}) {
   const [state, turnOn, pending] = useActionState<ShareState>(action, {});
   return (
     <section
@@ -42,7 +50,7 @@ export function ShareCard({ action }: { action: () => Promise<ShareState> }) {
           </a>
           <CopyButton text={state.url} />
           <Button asChild variant="ghost" className="h-9 pointer-coarse:h-11">
-            <Link href="/settings#public">Settings</Link>
+            <Link href={settingsHref as Route}>Settings</Link>
           </Button>
         </div>
       ) : (

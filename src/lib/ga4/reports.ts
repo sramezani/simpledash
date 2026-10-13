@@ -37,12 +37,39 @@ export const REPORTS = [
   "systems",
   "cities",
 ] as const;
-export type ReportName = (typeof REPORTS)[number];
+
+/**
+ * Reports only some views ask for, never part of the dashboard's load: visits from
+ * Google search by landing page, for the Google search card (docs/SPEC.md section 28.2).
+ */
+export const EXTRA_REPORTS = [
+  "search_landing",
+  "search_signups",
+  // Sales and signups by source (docs/SPEC.md section 28.3).
+  "goals_sources",
+  "goals_landing",
+  "sale_page_sources",
+  "sale_page_landing",
+  "purchase_sources",
+  "purchase_landing",
+] as const;
+export const ALL_REPORTS = [...REPORTS, ...EXTRA_REPORTS] as const;
+export type ReportName = (typeof ALL_REPORTS)[number];
+
+/** The most landing pages asked for from Google search; a list this long may be cut off. */
+export const SEARCH_LANDING_LIMIT = 250;
+/** The most rows asked for in the sales reports. */
+export const SALES_LIMIT = 250;
 
 /** Events counted by the Actions card. The signup event is added when one is chosen. */
 export const ACTION_EVENTS = ["file_download", "click", "form_submit"] as const;
 
-export type ReportParams = { signupEvent: string | null };
+export type ReportParams = {
+  signupEvent: string | null;
+  /** What counts as a sale (Growth): a key event or a thank-you page path. */
+  saleEvent?: string | null;
+  salePage?: string | null;
+};
 
 // ── Payloads: aggregated rows only, never visitor-level data ──────────────
 
@@ -62,6 +89,17 @@ export type Payloads = {
   browsers: { rows: { browser: string; label: string; visitors: number }[] };
   systems: { rows: { os: string; label: string; visitors: number }[] };
   cities: { rows: { city: string; code: string; visitors: number }[] };
+  search_landing: { rows: { path: string; visitors: number }[]; complete: boolean };
+  search_signups: { rows: { path: string; signups: number }[]; complete: boolean };
+  /** Counts of the signup and sale events, per source and landing page. */
+  goals_sources: { rows: { source: string; label: string; events: Record<string, number> }[] };
+  goals_landing: { rows: { path: string; events: Record<string, number> }[] };
+  /** Views of the thank-you page, per source and landing page. */
+  sale_page_sources: { rows: { source: string; label: string; views: number }[] };
+  sale_page_landing: { rows: { path: string; views: number }[] };
+  /** GA4's own purchase revenue (in the property's currency, major units). */
+  purchase_sources: { rows: { source: string; label: string; revenue: number }[]; total: number };
+  purchase_landing: { rows: { path: string; revenue: number }[]; total: number };
 };
 export type Payload<R extends ReportName> = Payloads[R];
 
@@ -79,6 +117,18 @@ function dateRanges(window: RangeWindow, periods: "both" | "current") {
     { startDate: window.previous.start, endDate: window.previous.end, name: "previous" },
   ];
 }
+
+/** Visits from Google search: source "google", medium "organic" (GA4's own attribution). */
+export const googleSearchFilter: FilterExpression = {
+  andGroup: {
+    expressions: [
+      { filter: { fieldName: "sessionSource", stringFilter: { matchType: "EXACT", value: "google" } } },
+      {
+        filter: { fieldName: "sessionMedium", stringFilter: { matchType: "EXACT", value: "organic" } },
+      },
+    ],
+  },
+};
 
 /** The AI filter: GA4's AI channel, or a source from our list (docs/SPEC.md section 11.5). */
 export const aiFilter: FilterExpression = {
@@ -107,8 +157,15 @@ export function actionEvents(params: ReportParams): string[] {
 }
 
 /** The cache key part for a report's extra inputs (docs/SPEC.md section 9). */
+/** The events the sales reports count: the signup event and the sale event. */
+export function goalEvents(params: ReportParams): string[] {
+  return [...new Set([params.signupEvent, params.saleEvent].filter((e): e is string => !!e))];
+}
+
 export function paramsKey(report: ReportName, params: ReportParams): string {
-  if (report === "actions") return `signup=${params.signupEvent ?? ""}`;
+  if (report === "actions" || report === "search_signups") return `signup=${params.signupEvent ?? ""}`;
+  if (report === "goals_sources" || report === "goals_landing") return `goals=${goalEvents(params).join(",")}`;
+  if (report === "sale_page_sources" || report === "sale_page_landing") return `page=${params.salePage ?? ""}`;
   if (report === "ai_sources" || report === "ai_pages") return `ai=v${AI_LIST_VERSION}`;
   return "-";
 }
@@ -233,6 +290,75 @@ export function buildRequest(
         metrics: [metric("activeUsers")],
         orderBys: [desc("activeUsers")],
         limit: 100,
+      };
+    case "search_landing":
+      return {
+        dateRanges: dateRanges(window, "current"),
+        dimensions: [dimension("landingPage")],
+        metrics: [metric("activeUsers")],
+        dimensionFilter: googleSearchFilter,
+        orderBys: [desc("activeUsers")],
+        limit: SEARCH_LANDING_LIMIT,
+      };
+    case "search_signups":
+      return {
+        dateRanges: dateRanges(window, "current"),
+        dimensions: [dimension("landingPage")],
+        metrics: [metric("eventCount")],
+        dimensionFilter: {
+          andGroup: {
+            expressions: [
+              googleSearchFilter,
+              {
+                filter: {
+                  fieldName: "eventName",
+                  stringFilter: { matchType: "EXACT", value: params.signupEvent ?? "" },
+                },
+              },
+            ],
+          },
+        },
+        orderBys: [desc("eventCount")],
+        limit: SEARCH_LANDING_LIMIT,
+      };
+    case "goals_sources":
+    case "goals_landing":
+      return {
+        dateRanges: dateRanges(window, "current"),
+        dimensions: [
+          dimension(report === "goals_sources" ? "sessionSource" : "landingPage"),
+          dimension("eventName"),
+        ],
+        metrics: [metric("eventCount")],
+        dimensionFilter: {
+          filter: { fieldName: "eventName", inListFilter: { values: goalEvents(params) } },
+        },
+        orderBys: [desc("eventCount")],
+        limit: SALES_LIMIT,
+      };
+    case "sale_page_sources":
+    case "sale_page_landing":
+      return {
+        dateRanges: dateRanges(window, "current"),
+        dimensions: [dimension(report === "sale_page_sources" ? "sessionSource" : "landingPage")],
+        metrics: [metric("screenPageViews")],
+        dimensionFilter: {
+          filter: {
+            fieldName: "pagePath",
+            stringFilter: { matchType: "EXACT", value: params.salePage ?? "" },
+          },
+        },
+        orderBys: [desc("screenPageViews")],
+        limit: SALES_LIMIT,
+      };
+    case "purchase_sources":
+    case "purchase_landing":
+      return {
+        dateRanges: dateRanges(window, "current"),
+        dimensions: [dimension(report === "purchase_sources" ? "sessionSource" : "landingPage")],
+        metrics: [metric("purchaseRevenue")],
+        orderBys: [desc("purchaseRevenue")],
+        limit: SALES_LIMIT,
       };
   }
 }
@@ -431,6 +557,86 @@ const parsers: { [R in ReportName]: (rows: Row[], window: RangeWindow) => Payloa
         visitors,
       })),
     };
+  },
+
+  search_landing(rows) {
+    const values = sumBy(rows, (r) => r.dims.landingPage ?? "", "activeUsers");
+    values.delete("(not set)");
+    return {
+      rows: [...values].map(([path, visitors]) => ({ path, visitors })).sort(byVisitorsDesc),
+      complete: rows.length < SEARCH_LANDING_LIMIT,
+    };
+  },
+
+  search_signups(rows) {
+    const values = sumBy(rows, (r) => r.dims.landingPage ?? "", "eventCount");
+    values.delete("(not set)");
+    return {
+      rows: [...values]
+        .map(([path, signups]) => ({ path, signups }))
+        .sort((a, b) => b.signups - a.signups),
+      complete: rows.length < SEARCH_LANDING_LIMIT,
+    };
+  },
+
+  goals_sources(rows) {
+    const bySource = new Map<string, Record<string, number>>();
+    for (const r of rows) {
+      const source = r.dims.sessionSource ?? "";
+      const events = bySource.get(source) ?? {};
+      const name = r.dims.eventName ?? "";
+      events[name] = (events[name] ?? 0) + (r.metrics.eventCount ?? 0);
+      bySource.set(source, events);
+    }
+    return {
+      rows: [...bySource].map(([source, events]) => ({ source, label: sourceLabel(source), events })),
+    };
+  },
+
+  goals_landing(rows) {
+    const byPath = new Map<string, Record<string, number>>();
+    for (const r of rows) {
+      const path = plainValue(r.dims.landingPage);
+      const events = byPath.get(path) ?? {};
+      const name = r.dims.eventName ?? "";
+      events[name] = (events[name] ?? 0) + (r.metrics.eventCount ?? 0);
+      byPath.set(path, events);
+    }
+    return { rows: [...byPath].map(([path, events]) => ({ path, events })) };
+  },
+
+  sale_page_sources(rows) {
+    const values = sumBy(rows, (r) => r.dims.sessionSource ?? "", "screenPageViews");
+    return {
+      rows: [...values]
+        .map(([source, views]) => ({ source, label: sourceLabel(source), views }))
+        .sort((a, b) => b.views - a.views),
+    };
+  },
+
+  sale_page_landing(rows) {
+    const values = sumBy(rows, (r) => plainValue(r.dims.landingPage), "screenPageViews");
+    return {
+      rows: [...values].map(([path, views]) => ({ path, views })).sort((a, b) => b.views - a.views),
+    };
+  },
+
+  purchase_sources(rows) {
+    const values = sumBy(rows, (r) => r.dims.sessionSource ?? "", "purchaseRevenue");
+    const list = [...values]
+      .filter(([, revenue]) => revenue > 0)
+      .map(([source, revenue]) => ({ source, label: sourceLabel(source), revenue }))
+      .sort((a, b) => b.revenue - a.revenue);
+    return { rows: list, total: list.reduce((a, r) => a + r.revenue, 0) };
+  },
+
+  purchase_landing(rows) {
+    const values = sumBy(rows, (r) => plainValue(r.dims.landingPage), "purchaseRevenue");
+    const list = [...values]
+      .filter(([, revenue]) => revenue > 0)
+      .map(([path, revenue]) => ({ path, revenue }))
+      .sort((a, b) => b.revenue - a.revenue);
+    return { rows: list, total: list.reduce((a, r) => a + r.revenue, 0) };
   },
 
   cities(rows) {

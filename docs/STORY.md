@@ -4,6 +4,66 @@ A dated log with one entry per session. **Newest entry first.**
 
 It is written for future Claude sessions: read the latest entry before starting work. Ideas that fall outside the roadmap go here too (Working rule 5).
 
+## 2026-10-13 · Session 8 · V2 built: Growth, several sites, Google search insights, revenue
+
+### Done
+
+- **Sprint 5, Growth and several sites.** Growth on sale in `plans.ts` with `limits`; one function decides what a plan allows (`entitlements`). Stripe test product "SimpleDash Growth" with €19 / €190 (made with Siamak's OK); `billing.plan` from the price in the webhook (an unknown price never unlocks Growth); Checkout with `plan`; paying customers change plan through the Portal's confirm flow. Plan choice (`UpgradeForm` over the shared `PlanCard`), the "Upgrade to Growth" panel, the locked panel with both plans. Sites: `site.added_at` (in the list) next to `is_active` (opened last), `siteAccess` rules (tested), `requireSite(siteId)` everywhere a site is used, `?site=` on the dashboard, CSV and live. The site menu and the site picker dialog (live GA4 list, grouped by account, search); `/sites` with a card per site; Settings → Sites (remove); one public page per site; the Monday email with a block per site; `warm-cache` only for sites opened in 24 hours. Going back to Starter keeps everything, paused.
+- **Sprint 6, Google search insights.** Search Console connected per site with Better Auth's link flow (`webmasters.readonly` asked only then), the property picked by domain (parent domain properties get a page filter), five views worked out from Search Console's rows at fetch time: close to page 1 (grouped by page), what changed (pages up and down with the searches behind each, clicks and position then and now), your name vs others (stacked bars, Google's own regex filters), seen but not clicked (compared with the site's own pages at the same position), and Google clicks next to GA4 visitors and signups per landing page. Honest notes: its own dates, 2–3 days behind, 16 months, hidden rare searches. Settings card (connect, property, name spellings, disconnect).
+- **Sprint 7, revenue and sales.** A pasted restricted Stripe key (refuses `sk_`/`pk_`, four reads name the missing permission, encrypted, last 4 shown), daily totals per currency (charged, refunded, new customers, MRR snapshots), 25-month backfill and the hourly `revenue-sync` job. Revenue and New customers in the overview ("1 per 412 visitors", MRR), revenue bars under the visitors line. "What counts as a sale?" (key event or thank-you page) and the Sales and signups by source card (GA4 counts; revenue only from GA4's `purchaseRevenue`). The payment-page warning in Sources (dashboard only).
+- **Also:** "Allow access" now uses the link flow (a plain sign-in never updated the stored scope, so that state could loop). Privacy policy and terms cover Growth, Search Console and Stripe (`legal.lastUpdated` 13 Oct). A stale credit line fixed (flags are country-flag-icons). `llms.txt`, structured data (Growth offers), README, SPEC (sections 9, 16, 17, 20, 22, 28), DECISIONS, `docs/search-console.md`, `docs/revenue.md`, `docs/auth.md`, `docs/billing.md`, `docs/public-page.md`, `docs/email.md`, `docs/ga4.md`, `docs/ui.md`, `docs/google-verification.md` (the new scope's justification).
+- Migrations `0004`, `0005`, `0006`, tested on a throwaway local Postgres 17 with old rows (backfills included). **Not run on Supabase**: Siamak runs `npm run db:migrate`.
+- 368 tests pass (87 new); typecheck and lint are clean; the production build passes and the landing page is still static.
+
+### How it was checked
+
+- A throwaway local Postgres (`initdb` in the scratchpad, port 54329), seeded with a Growth test account, three sites and cached sample reports; the dev server ran from a synced copy of the repo (Siamak's own dev server was on :3000 in the repo, and Next won't start a second one there) on :3200 with `DATABASE_URL` pointing at the local database, signed in with a seeded session cookie. Checked: the site menu, switching, "last opened", All sites, the picker, Settings → Sites and the public page per site, Starter after Growth (paused sites, "Show … instead"), Growth Checkout in Stripe's sandbox (it keeps the trial days).
+- Headless Chrome screenshots through a small DevTools script (the browser pane was hidden) for every tab of the Google search card, the revenue overview, the sales card and the Settings cards, at 1280 and 375 px.
+- Once against real systems, with Google faked where a sign-in is needed: the Search Console data layer (12 calls, then all from cache), add / limit / replace / remove sites (the advisory lock, `coalesce` on re-adding), and the Stripe reads plus the sync against Siamak's Stripe test account (no charges there yet, so the totals were zero; the sums have unit tests).
+
+### Problems found
+
+- Better Auth never updates `account.scope` on sign-in, only through `linkSocial`: the V1 "Allow access" button couldn't have worked. Fixed with the link flow.
+- An exported "link any scope" server action would have let the browser ask Google for any scope. The helper is server-only with a fixed list.
+- I ran `git mv` once and it staged a rename; I restored the index straight away (`git restore --staged`). Nothing else touched git.
+
+### Learned
+
+- Turbopack refuses a symlinked `node_modules` outside the project; an APFS clone (`cp -cR`) works and costs no space.
+- Headless Chrome screenshots freeze CSS entry animations at their first frame: `--force-prefers-reduced-motion` shows the real page (our CSS turns motion off then).
+- `vi.mock` only hoists for a literal `vitest` import, so one-off integration checks live in the git-ignored `.vitest/` folder, run with their own config, then get deleted.
+- Search Console: query-filtered totals drop anonymized searches, so "your name" + "others" < all clicks; the API sorts by clicks only, so impressions-heavy views need the full 25,000 rows.
+
+### Next (Siamak's part, see the checklist)
+
+1. `npm run db:migrate` (0004–0006). Then sign in on localhost: the dashboard, `/sites`, Settings.
+2. Stripe: Customer Portal "switch plans" with all four prices (test and live); the live Growth product and prices.
+3. Google Cloud: turn on the **Search Console API**; add `webmasters.readonly` to the consent screen and the verification request.
+4. Coolify: the `revenue-sync` scheduled task.
+5. The three "Done when" checks for Sprints 5–7.
+
+### Ideas (outside the roadmap, not built)
+
+- "What changed" could also list a rising page's searches that fell (they're in the data; only same-direction ones are shown now).
+- A CSV of daily revenue from the overview's CSV menu.
+- Lighthouse wasn't run (not installed here); run it on the landing page, `/demo` and a public page after deploy (only the pricing card changed on public pages).
+
+## 2026-10-13 · Session 7 · V2 planned
+
+### Done
+
+- No code changed. Brainstormed features with Siamak, compared them with the roadmap's V2, and wrote the agreed plan: `docs/SPEC.md` section 28 (V2) and section 29 (V3), the V2 and V3 lists in `docs/CHECKLIST.md`, and six lines in `docs/DECISIONS.md`.
+- **V2 = the Growth plan:** Sprint 5 Growth plan and several sites (with `warm-cache` refreshing only opened sites first), Sprint 6 Google search insights (Search Console, five views), Sprint 7 revenue from Stripe (read-only, daily totals) and sales by source from GA4.
+- **The rule for V2:** exact numbers only. Dropped for good: the checkout snippet, the Measurement Protocol (it writes into the user's GA4), and estimated revenue per source or per search.
+- `docs/ROADMAP.md` is Siamak's brief and wasn't edited; section 28 says it replaces the roadmap's V2 list.
+
+- Siamak answered the open questions (section 28.4): Growth allows 10 sites, the trial is Starter only, and the Stripe connection is a pasted restricted read-only key.
+
+### Next
+
+- Sprint 5, when Siamak says go.
+- Start Google's verification for `webmasters.readonly` early (Sprint 6 depends on it).
+
 ## 2026-10-12 · Session 6 · Custom date ranges; DataFast-style list cards
 
 ### Done

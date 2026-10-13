@@ -10,22 +10,34 @@ import type { RangeWindow } from "@/lib/ga4/ranges";
 import type { Payloads } from "@/lib/ga4/reports";
 import { buildSummary } from "@/lib/summary/summary";
 
-/** What the Monday email says (docs/SPEC.md section 14). Pure, so it is tested. */
+/**
+ * What the Monday email says (docs/SPEC.md sections 14 and 28.1): one email per
+ * account, one block per site. Pure, so it is tested.
+ */
 
-export type WeeklyEmailData = {
+export type SiteBlock = {
   siteLabel: string;
-  subject: string;
-  preview: string;
   period: string;
   summary: string | null;
   stats: { label: string; value: string; change: number | null }[];
   sources: { label: string; value: string }[];
   pages: { label: string; value: string }[];
   aiVisitors: string | null;
-  links: { dashboard: string; settings: string; unsubscribe: string };
+  /** This site's dashboard. */
+  dashboard: string;
+  /** For the subject: last week's visitors and the change, when it can be compared. */
+  visitors: number;
+  change: number | null;
 };
 
-export type WeeklyEmailInput = {
+export type WeeklyEmailData = {
+  subject: string;
+  preview: string;
+  blocks: SiteBlock[];
+  links: { settings: string; unsubscribe: string };
+};
+
+export type SiteWeekInput = {
   siteLabel: string;
   window: RangeWindow;
   totals: Payloads["totals"] | null;
@@ -35,23 +47,21 @@ export type WeeklyEmailInput = {
   aiSources: Payloads["ai_sources"] | null;
   signupEvent: string | null;
   comparable: boolean;
+  dashboard: string;
+};
+
+export type WeeklyEmailInput = {
+  /** The account's sites, the main one first. */
+  sites: SiteWeekInput[];
   links: WeeklyEmailData["links"];
 };
 
-/** The email, or null when there were no visitors in either week (then nothing is sent). */
-export function buildWeeklyEmail(input: WeeklyEmailInput): WeeklyEmailData | null {
+/** One site's block, or null when it had no visitors in either week (it is left out). */
+export function buildSiteBlock(input: SiteWeekInput): SiteBlock | null {
   const { totals } = input;
   if (!totals || (totals.current.visitors === 0 && totals.previous.visitors === 0)) return null;
   const stats = deriveStats(totals, input.actions, input.signupEvent, input.comparable)!;
   const visitors = totals.current.visitors;
-  const change = input.comparable ? percentChange(visitors, totals.previous.visitors) : null;
-  const changeWords =
-    change === null
-      ? ""
-      : change === 0
-        ? " (no change)"
-        : ` (${change > 0 ? "up" : "down"} ${formatPercent(change)})`;
-  const subject = `${input.siteLabel}: ${formatNumber(visitors)} ${visitors === 1 ? "visitor" : "visitors"} last week${changeWords}`;
   const summary = buildSummary({
     range: "7d",
     totals,
@@ -65,8 +75,6 @@ export function buildWeeklyEmail(input: WeeklyEmailInput): WeeklyEmailData | nul
 
   return {
     siteLabel: input.siteLabel,
-    subject,
-    preview: summary ?? subject,
     period: formatDayRange(input.window.current.start, input.window.current.end),
     summary,
     stats: [
@@ -104,6 +112,40 @@ export function buildWeeklyEmail(input: WeeklyEmailInput): WeeklyEmailData | nul
       .slice(0, 3)
       .map((r) => ({ label: r.path, value: formatNumber(r.views) })),
     aiVisitors: ai > 0 ? formatNumber(ai) : null,
-    links: input.links,
+    dashboard: input.dashboard,
+    visitors,
+    change: input.comparable ? percentChange(visitors, totals.previous.visitors) : null,
   };
+}
+
+/** " (up 23%)", " (no change)", or nothing when it can't be compared. */
+function changeWords(change: number | null): string {
+  if (change === null) return "";
+  if (change === 0) return " (no change)";
+  return ` (${change > 0 ? "up" : "down"} ${formatPercent(change)})`;
+}
+
+const visitorWord = (n: number) => (n === 1 ? "visitor" : "visitors");
+
+/**
+ * The subject: "mysite.com: 1,234 visitors last week (up 23%)" for one site;
+ * "Last week: mysite.com 1,234 visitors (up 23%), and 2 more sites" for several.
+ */
+export function weeklySubject(blocks: SiteBlock[]): string {
+  const [first] = blocks;
+  if (!first) return "";
+  const count = `${formatNumber(first.visitors)} ${visitorWord(first.visitors)}`;
+  if (blocks.length === 1) {
+    return `${first.siteLabel}: ${count} last week${changeWords(first.change)}`;
+  }
+  const more = blocks.length - 1;
+  return `Last week: ${first.siteLabel} ${count}${changeWords(first.change)}, and ${more} more ${more === 1 ? "site" : "sites"}`;
+}
+
+/** The email, or null when no site had visitors in either week (then nothing is sent). */
+export function buildWeeklyEmail(input: WeeklyEmailInput): WeeklyEmailData | null {
+  const blocks = input.sites.map(buildSiteBlock).filter((b): b is SiteBlock => b !== null);
+  if (blocks.length === 0) return null;
+  const subject = weeklySubject(blocks);
+  return { subject, preview: blocks[0]!.summary ?? subject, blocks, links: input.links };
 }

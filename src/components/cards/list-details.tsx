@@ -1,8 +1,9 @@
 "use client";
 
-import { DownloadIcon, ScanIcon, SearchIcon, XIcon } from "lucide-react";
+import { DownloadIcon, ScanIcon, XIcon } from "lucide-react";
 import { useDeferredValue, useId, useMemo, useState } from "react";
 import { cellText, type RankedRow } from "@/components/shared/ranked-list";
+import { SearchInput } from "@/components/shared/search-input";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,6 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { formatNumber } from "@/lib/format";
+import { matchesSearch } from "@/lib/text";
 import { cn } from "@/lib/utils";
 import { listCsv } from "./list-csv";
 
@@ -27,14 +29,11 @@ type ListDetailsProps = {
   rows: RankedRow[];
   /** "simpledash-mysite-com-cities-2026-10-05-2026-10-11.csv". */
   fileName: string;
+  /** The second line's column in the CSV, e.g. "Page" (rows show it under the label). */
+  sublabelHeader?: string;
+  /** The trigger's words. */
+  triggerLabel?: string;
 };
-
-/** Accents and case don't matter when searching: "sao" finds "São Paulo". */
-const fold = (text: string) =>
-  text
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase();
 
 /**
  * A list card's "Details" (DataFast-style): a modal with every row of the view,
@@ -48,17 +47,19 @@ export function ListDetails({
   columns,
   rows,
   fileName,
+  sublabelHeader,
+  triggerLabel = "Details",
 }: ListDetailsProps) {
   const id = useId();
   const [query, setQuery] = useState("");
   const deferred = useDeferredValue(query);
-  const shown = useMemo(() => {
-    const q = fold(deferred.trim());
-    return q ? rows.filter((r) => fold(r.label).includes(q)) : rows;
-  }, [rows, deferred]);
+  const shown = useMemo(
+    () => rows.filter((r) => matchesSearch(deferred, r.label, r.sublabel)),
+    [rows, deferred],
+  );
 
   function download() {
-    const csv = listCsv(itemLabel, columns, shown);
+    const csv = listCsv(itemLabel, columns, shown, sublabelHeader);
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
     const link = document.createElement("a");
     link.href = url;
@@ -77,7 +78,7 @@ export function ListDetails({
           className="mx-auto inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase transition-colors duration-150 ease-out hover:bg-muted hover:text-foreground data-[state=open]:bg-muted pointer-coarse:h-11"
         >
           <ScanIcon className="size-3.5" aria-hidden="true" />
-          Details
+          {triggerLabel}
           <span className="sr-only">: every {itemLabel.toLowerCase()}</span>
         </button>
       </DialogTrigger>
@@ -98,24 +99,13 @@ export function ListDetails({
       >
         <div className="flex flex-wrap items-center gap-x-3 gap-y-3 border-b px-4 py-3.5 sm:flex-nowrap sm:px-5">
           <DialogTitle className="text-lg font-semibold tracking-tight">{title}</DialogTitle>
-          <div className="relative order-last w-full sm:order-none sm:w-60">
-            <SearchIcon
-              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <label htmlFor={`${id}-search`} className="sr-only">
-              Search {title.toLowerCase()}
-            </label>
-            <input
-              id={`${id}-search`}
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search…"
-              autoComplete="off"
-              className="h-9 w-full rounded-lg border bg-background pr-3 pl-9 text-sm transition-[border-color,box-shadow] duration-150 outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 pointer-coarse:h-11"
-            />
-          </div>
+          <SearchInput
+            id={`${id}-search`}
+            label={`Search ${title.toLowerCase()}`}
+            value={query}
+            onChange={setQuery}
+            className="order-last w-full sm:order-none sm:w-60"
+          />
           <div className="ml-auto flex items-center gap-1">
             <Button
               type="button"
@@ -172,8 +162,18 @@ export function ListDetails({
                           {row.icon}
                         </span>
                       ) : null}
-                      <span className="truncate" title={row.label}>
-                        {row.label}
+                      <span className="flex min-w-0 flex-col">
+                        <span className="truncate" title={row.label}>
+                          {row.label}
+                        </span>
+                        {row.sublabel ? (
+                          <span
+                            className="truncate text-xs text-muted-foreground"
+                            title={row.sublabel}
+                          >
+                            {row.sublabel}
+                          </span>
+                        ) : null}
                       </span>
                     </span>
                   </td>

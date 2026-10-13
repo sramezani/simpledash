@@ -10,11 +10,13 @@ SimpleDash ([simpledash.app](https://simpledash.app)) takes the Google Analytics
 
 There is no new tracking script. Visitor data comes from the user's own GA4 property through Google's read-only APIs.
 
-**Price:** the Starter plan costs €9 a month or €90 a year (VAT included), with a 14-day free trial and no card. A Growth plan (€19 a month) is coming soon.
+**Price:** Starter costs €9 a month or €90 a year (VAT included), with a 14-day free trial and no card. Growth costs €19 a month or €190 a year and adds up to 10 sites, Google search insights, revenue from Stripe and sales by source (the trial is on Starter; Growth starts when paid for).
 
 ## Status
 
-All of V1 (Sprints 0–4) is built: the project setup, Google sign-in with read-only Analytics, the automatic site choice, the GA4 data layer with its cache, the full dashboard (summary line, the 4 numbers, the visitors chart with notes, Sources, Pages, Countries, Devices, AI traffic, Actions, the live globe, CSV on every card, every state), the landing page with a live demo and pricing, the legal pages and SEO files, the Monday email, public stats pages, Stripe billing with the 14-day trial, settings (disconnect Google, delete account), usage counts, Sentry and nightly backups. What's left before launch is mostly accounts and settings on Siamak's side (see Sprint 4 in the checklist). Progress is tracked in [docs/CHECKLIST.md](docs/CHECKLIST.md), and the session log is in [docs/STORY.md](docs/STORY.md).
+All of V1 (Sprints 0–4) is built: the project setup, Google sign-in with read-only Analytics, the automatic site choice, the GA4 data layer with its cache, the full dashboard (summary line, the 4 numbers, the visitors chart with notes, Sources, Pages, Countries, Devices, AI traffic, Actions, the live globe, CSV on every card, every state), the landing page with a live demo and pricing, the legal pages and SEO files, the Monday email, public stats pages, Stripe billing with the 14-day trial, settings (disconnect Google, delete account), usage counts, Sentry and nightly backups. What's left before launch is mostly accounts and settings on Siamak's side (see Sprint 4 in the checklist).
+
+V2 (the Growth plan, `docs/SPEC.md` section 28) is being built: Sprint 5 (Growth in Stripe, plan limits, several sites with `/sites`, a public page per site, the Monday email with one block per site) Sprint 6 (Google search insights from Search Console: five views on the dashboard, connected per site in Settings) and Sprint 7 (revenue from a read-only Stripe key as daily totals, sales and signups by source, the payment-page warning) are done in code. Progress is tracked in [docs/CHECKLIST.md](docs/CHECKLIST.md), and the session log is in [docs/STORY.md](docs/STORY.md).
 
 ## Requirements
 
@@ -39,8 +41,9 @@ Pages:
 | `/` | Landing page: the live demo in a browser frame, how it works, pricing (`/#pricing`), FAQ. Shows "Dashboard" instead of "Sign in" when you're signed in |
 | `/demo` | The live demo: a real public stats page, set in `src/config/demo.ts` (sample data if that page is off) |
 | `/signin` | "Continue with Google" (needs `GOOGLE_CLIENT_ID` and the redirect URI on the Google client) |
-| `/dashboard` | The dashboard (signed in). `?range=today`, `yesterday`, `7d` (default), `30d`, `12m`, or a custom range like `?range=2026-09-01..2026-09-30` |
-| `/settings` | Account, weekly email, public page, billing, disconnect Google, delete account (signed in) |
+| `/dashboard` | The dashboard (signed in). `?site=<id>` names the site (default: the one opened last). `?range=today`, `yesterday`, `7d` (default), `30d`, `12m`, or a custom range like `?range=2026-09-01..2026-09-30` |
+| `/sites` | All sites (Growth): each site's last 7 days. Starter sees the upgrade panel (signed in) |
+| `/settings` | Account, weekly email, billing, sites, then the site settings for `?site=<id>` (public page), disconnect Google, delete account (signed in) |
 | `/admin` | Usage counts (only for `ADMIN_EMAILS`; a 404 for everyone else) |
 | `/p/<slug>` | A public stats page |
 | `/email/unsubscribe?token=…` | One-click unsubscribe from the weekly email |
@@ -49,13 +52,15 @@ Pages:
 | `/ui-kit` | Every theme token and shared component (development only) |
 | `/ui-kit/dashboard?state=…` | The dashboard on sample data, in every state (development only) |
 | `/ui-kit/settings?state=…`, `/ui-kit/public?state=…` | Settings and a public page on sample data (development only) |
-| `/ui-kit/email` | The weekly email on sample data (`?text=1` for the plain-text version; development only) |
+| `/ui-kit/sites?state=…` | All sites on sample data: `growth`, `full`, `starter`, `loading` (development only) |
+| `/ui-kit/email` | The weekly email on sample data (`?text=1` for the plain-text version, `?sites=3` for several sites; development only) |
 | `/api/health` | `{"status":"ok"}` when the database answers |
 | `/robots.txt`, `/sitemap.xml`, `/llms.txt` | SEO files |
-| `/api/csv/<card>?range=` | "Download CSV" for a card (signed in) |
-| `/api/live` | Live data for the globe (signed in) |
+| `/api/csv/<card>?site=&range=` | "Download CSV" for a card (signed in, own sites only) |
+| `/api/live?site=` | Live data for the globe (signed in, own sites only) |
 | `/api/p/<slug>/live` | Live data for a public page with "Right now" turned on |
 | `/api/stripe/webhook` | Stripe events (signature checked) |
+| `/api/search-console/connected?site=` | Where Google returns after granting Search Console access; picks the property (signed in) |
 | `/api/email/unsubscribe` | One-click unsubscribe for mail apps (`List-Unsubscribe-Post`) |
 | `/api/icon/<domain>` | Cached site icons for Sources |
 
@@ -67,6 +72,7 @@ Jobs are `POST /api/internal/jobs/<job>` with `Authorization: Bearer $CRON_SECRE
 node scripts/run-job.mjs warm-cache     # hourly at :05
 node scripts/run-job.mjs weekly-email   # hourly at :00 (sends on Mondays, 13:00–17:59 local time)
 node scripts/run-job.mjs cleanup        # daily at 03:30 UTC
+node scripts/run-job.mjs revenue-sync   # hourly at :20 (Growth sites with Stripe connected)
 ```
 
 ## Scripts
@@ -105,6 +111,7 @@ All of them are listed with comments in [.env.example](.env.example). `src/lib/e
 | `EMAIL_TOKEN_SECRET` | Signs unsubscribe links | Sprint 4 |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Stripe API and webhook signatures | Sprint 4 |
 | `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY` | The two Starter prices (€9 a month, €90 a year) | Sprint 4 |
+| `STRIPE_PRICE_GROWTH_MONTHLY`, `STRIPE_PRICE_GROWTH_YEARLY` | The two Growth prices (€19 a month, €190 a year) | Sprint 5 |
 | `STRIPE_MANAGED_PAYMENTS` | `true` (default): Stripe is the merchant of record in Checkout | Sprint 4 |
 | `STRIPE_PUBLISHABLE_KEY` | Not used by the server; kept for reference | — |
 | `SENTRY_DSN` | Server error reports (optional) | Sprint 4 |
@@ -129,7 +136,7 @@ One Docker image (`Dockerfile`, Next.js standalone on Node 24), deployed by Cool
 | File | What's in it |
 | --- | --- |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Product brief: what to build and why |
-| [docs/SPEC.md](docs/SPEC.md) | Technical spec for V1: how it's built |
+| [docs/SPEC.md](docs/SPEC.md) | Technical spec: how V1 is built, and the V2 plan (section 28) |
 | [docs/CHECKLIST.md](docs/CHECKLIST.md) | Sprint tasks, ticked with the date as they finish |
 | [docs/STORY.md](docs/STORY.md) | Session log: what was done and learned, and what's next |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Technical decisions, one line each with the reason |
@@ -139,6 +146,8 @@ One Docker image (`Dockerfile`, Next.js standalone on Node 24), deployed by Cool
 | [docs/auth.md](docs/auth.md) | Sign-in, sessions, Google tokens and access checks |
 | [docs/google-verification.md](docs/google-verification.md) | Google's OAuth app verification: what to set up, the scope justification, the demo video script |
 | [docs/billing.md](docs/billing.md) | Trial, plan states, Checkout, the Portal, the webhook and Stripe setup |
+| [docs/search-console.md](docs/search-console.md) | Google search insights: connecting Search Console, the window, the five views, errors |
+| [docs/revenue.md](docs/revenue.md) | Revenue from Stripe (the pasted key, daily totals, MRR, the sync) and sales by source |
 | [docs/email.md](docs/email.md) | The Monday email: when it's sent, content, unsubscribe, Resend setup |
 | [docs/public-page.md](docs/public-page.md) | Public stats pages: settings, caching, what's shown and what never is |
 | [docs/backup.md](docs/backup.md) | Nightly backups to R2 and how to restore one |

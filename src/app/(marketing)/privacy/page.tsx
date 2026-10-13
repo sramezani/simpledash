@@ -6,7 +6,7 @@ import { brand } from "@/config/theme";
 export const metadata: Metadata = {
   title: "Privacy policy",
   description:
-    "What SimpleDash stores, what it reads from Google Analytics (read-only), who processes it, and how to delete it.",
+    "What SimpleDash stores, what it reads from Google Analytics and Search Console (read-only), who processes it, and how to delete it.",
   alternates: { canonical: "/privacy" },
 };
 
@@ -33,8 +33,8 @@ export default function PrivacyPage() {
             addresses.
           </li>
           <li>
-            Your settings: the site you picked, your signup event, the weekly email switch and your
-            public page choices.
+            Your settings: the sites you added, each site&apos;s signup event, public page choices,
+            Search Console property and name spellings, and the weekly email switch.
           </li>
           <li>
             Your Google access tokens, encrypted, so we can read your reports when you aren&apos;t
@@ -43,10 +43,17 @@ export default function PrivacyPage() {
           <li>Chart notes you write.</li>
           <li>
             Short-lived report caches: aggregated numbers such as total visitors, top pages and top
-            countries. They are deleted after 7 days without use.
+            countries, and, if you connect Search Console, totals and the top searches and pages
+            from it. They are deleted after 7 days without use.
           </li>
           <li>
             Your billing status (trial, plan and renewal date). Card details stay with Stripe.
+          </li>
+          <li>
+            If you connect your own Stripe account (Growth): the restricted read-only key you paste,
+            encrypted, and daily totals per site: money charged, refunds, the number of new
+            customers and monthly recurring revenue. Never your customers&apos; names, emails, card
+            details or IDs. Removing Stripe in Settings deletes the key and the totals.
           </li>
         </ul>
         <p>
@@ -66,6 +73,12 @@ export default function PrivacyPage() {
             weekly email and, if you turn it on, on your public page. We can&apos;t change anything
             in your Google account.
           </li>
+          <li>
+            <strong>Search Console, read-only</strong> (the <code>webmasters.readonly</code> scope),
+            only if you connect it on a Growth plan: to list your Search Console properties and
+            fetch the search reports shown in the Google search card. It is asked for only when you
+            connect it, and we can&apos;t change anything in Search Console.
+          </li>
         </ul>
         <p>
           {brand.name}&apos;s use and transfer to any other app of information received from Google
@@ -77,6 +90,16 @@ export default function PrivacyPage() {
           provide the features you see; we don&apos;t sell it, use it for ads or to train AI models,
           and no person reads it unless you ask us to for support, it&apos;s needed for security, or
           the law requires it.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="Your own Stripe account">
+        <p>
+          On Growth you can paste a restricted Stripe key with read access, to see revenue next to
+          your visitors. {brand.name} uses it only to read charges, refunds, customers&apos;
+          creation dates and subscription prices, adds them up per day, and keeps only those
+          totals. It can&apos;t change anything in your Stripe account, and we refuse keys that
+          could.
         </p>
       </LegalSection>
 
@@ -141,7 +164,7 @@ export default function PrivacyPage() {
           The live globe places visitors using city data from{" "}
           <a href="https://www.geonames.org/">GeoNames</a>, licensed under{" "}
           <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Country flags come
-          from flag-icons (MIT).
+          from country-flag-icons (MIT).
         </p>
       </LegalSection>
 

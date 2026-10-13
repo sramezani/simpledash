@@ -93,6 +93,7 @@ Coolify → the application → **Scheduled tasks**. Each one runs a command ins
 | warm-cache | `node scripts/run-job.mjs warm-cache` | `5 * * * *` |
 | weekly-email | `node scripts/run-job.mjs weekly-email` | `0 * * * *` |
 | cleanup | `node scripts/run-job.mjs cleanup` | `30 3 * * *` |
+| revenue-sync | `node scripts/run-job.mjs revenue-sync` | `20 * * * *` |
 
 The nightly backup runs in its own small container with its own scheduled task; its setup is in `docs/backup.md`.
 

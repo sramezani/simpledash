@@ -106,6 +106,31 @@ export const cards = [
     publicDefault: false,
   },
   {
+    // Growth with Stripe connected (docs/SPEC.md section 28.3). Private: never on public pages.
+    id: "revenue",
+    title: "Revenue",
+    help: "What customers paid through Stripe minus refunds, before Stripe's fees, in your main currency. Read from your Stripe account (read-only) and counted in your site's time zone. MRR is the monthly price of active and past-due subscriptions, before discounts, at the last sync.",
+    csv: false,
+    publicAllowed: false,
+    publicDefault: false,
+  },
+  {
+    id: "customers",
+    title: "New customers",
+    help: "Customers Stripe created in this period. “1 per 412 visitors” is visitors divided by new customers, for the same days.",
+    csv: false,
+    publicAllowed: false,
+    publicDefault: false,
+  },
+  {
+    id: "sales",
+    title: "Sales and signups by source",
+    help: "Signups and sales that Google Analytics recorded, by where the visit came from and the page it started on. Revenue per source is GA4's own purchase value, shown only when GA4 has one.",
+    csv: false,
+    publicAllowed: false,
+    publicDefault: false,
+  },
+  {
     id: "live",
     title: "Right now",
     help: "Visitors in the last 30 minutes, by place, and the pages they're on (shown by page title). Places on the globe: GeoNames, CC BY 4.0.",

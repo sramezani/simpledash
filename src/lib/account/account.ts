@@ -27,13 +27,13 @@ async function propertyIdsOf(userId: string) {
   return [...new Set(rows.map((r) => r.propertyId))];
 }
 
-/** The public page's slug, so its cached copy can be dropped. */
-export async function publicSlugOf(userId: string): Promise<string | null> {
-  const row = await db.query.publicPage.findFirst({
-    where: eq(publicPage.userId, userId),
-    columns: { slug: true },
-  });
-  return row?.slug ?? null;
+/** The user's public pages' slugs (one per site), so their cached copies can be dropped. */
+export async function publicSlugsOf(userId: string): Promise<string[]> {
+  const rows = await db
+    .select({ slug: publicPage.slug })
+    .from(publicPage)
+    .where(eq(publicPage.userId, userId));
+  return rows.map((r) => r.slug);
 }
 
 /**

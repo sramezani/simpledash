@@ -2,13 +2,15 @@ import { describe, expect, it } from "vitest";
 import { jsonLd, softwareApplication } from "./structured-data";
 
 describe("softwareApplication", () => {
-  it("lists the two Starter prices from plans.ts", () => {
+  it("lists the prices of every plan on sale from plans.ts", () => {
     const data = softwareApplication("https://simpledash.app");
     expect(data["@type"]).toBe("SoftwareApplication");
     expect(data.applicationCategory).toBe("BusinessApplication");
     expect(data.offers.map((o) => [o.price, o.priceSpecification.unitCode])).toEqual([
       ["9", "MON"],
       ["90", "ANN"],
+      ["19", "MON"],
+      ["190", "ANN"],
     ]);
   });
 

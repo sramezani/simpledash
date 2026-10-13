@@ -20,14 +20,30 @@ import { LiveCard } from "@/components/globe/live-card";
 import { SignupPicker } from "@/components/cards/signup-picker";
 import { EmailNotice } from "@/components/dashboard/email-notice";
 import { LockedPanel } from "@/components/dashboard/locked-panel";
+import { OpenInsteadForm, PausedSiteView } from "@/components/dashboard/paused-site";
 import { ShareCard } from "@/components/dashboard/share-card";
+import { SiteSwitcher } from "@/components/dashboard/site-switcher";
+import { SearchCard } from "@/components/search/search-card";
+import { SearchConnect, SearchProblemCard, SearchTeaser } from "@/components/search/search-states";
+import { sampleSearchCard } from "@/lib/search-console/sample";
+import { UpgradePanel } from "@/components/dashboard/upgrade-panel";
+import type { PlanState } from "@/lib/billing/plan";
+import type { PropertyList } from "@/lib/ga4/property-choice";
 import { SiteChip } from "@/components/shared/site-chip";
 import { Badge } from "@/components/ui/badge";
 import { uiKitEnabled } from "@/lib/env";
 import { comparisonGap, parseRange, rangeWindow } from "@/lib/ga4/ranges";
 import { REPORTS } from "@/lib/ga4/reports";
 import { addDays } from "@/lib/ga4/ranges";
-import { sampleLive, sampleReports, SAMPLE_SIGNUP_EVENT } from "@/lib/ga4/sample/sample";
+import {
+  sampleLive,
+  sampleReports,
+  SAMPLE_SALE_EVENT,
+  SAMPLE_SIGNUP_EVENT,
+} from "@/lib/ga4/sample/sample";
+import { SalesCard } from "@/components/cards/sales-card";
+import { revenueMetrics } from "@/components/dashboard/revenue-metrics";
+import { sampleRevenue } from "@/lib/revenue/sample";
 
 export const metadata: Metadata = {
   title: "Dashboard preview",
@@ -50,6 +66,11 @@ const STATES = [
   "not-granted",
   "locked",
   "loading",
+  "growth",
+  "starter-menu",
+  "paused-site",
+  "search-connect",
+  "search-error",
 ] as const;
 
 /** Dev only: the real dashboard on sample data, in every state, without signing in. */
@@ -82,6 +103,60 @@ async function sampleShare() {
   return { url: "http://localhost:3000/p/yoursite-com" };
 }
 
+/** The site picker's list in the preview: a Google account with two Analytics accounts. */
+async function sampleProperties(): Promise<PropertyList> {
+  "use server";
+  await new Promise((r) => setTimeout(r, 400));
+  return {
+    properties: [
+      { propertyId: "properties/101", displayName: "yoursite.com", account: "Your company" },
+      { propertyId: "properties/102", displayName: "Blog", account: "Your company" },
+      { propertyId: "properties/103", displayName: "Docs", account: "Your company" },
+      { propertyId: "properties/104", displayName: "Landing page test", account: "Your company" },
+      { propertyId: "properties/201", displayName: "Side project", account: "Personal" },
+      { propertyId: "properties/202", displayName: "São Paulo café", account: "Personal" },
+    ],
+  };
+}
+
+async function previewPick() {
+  "use server";
+  return { error: "This is a preview: nothing was added." };
+}
+
+const PREVIEW_SITES = [
+  { id: "00000000-0000-4000-8000-000000000001", label: "yoursite.com", domain: null },
+  { id: "00000000-0000-4000-8000-000000000002", label: "blog.yoursite.com", domain: null },
+  { id: "00000000-0000-4000-8000-000000000003", label: "docs.yoursite.com", domain: null },
+];
+
+/** The real site menu, on sample sites: Growth with three, or Starter with paused ones. */
+function PreviewSwitcher({ growth, range }: { growth: boolean; range: string }) {
+  const sites = PREVIEW_SITES.map((s, i) => ({
+    ...s,
+    openable: growth || i === 0,
+    problem: i === 2 && growth ? "Google access ended" : null,
+  }));
+  return (
+    <SiteSwitcher
+      current={sites[0]!}
+      sites={sites}
+      listedProperties={["properties/101", "properties/102", "properties/103"]}
+      currentProperty="properties/101"
+      growth={growth}
+      limit={growth ? 10 : 1}
+      range={range === "7d" ? null : range}
+      listAction={sampleProperties}
+      switchAction={previewPick}
+      addAction={previewPick}
+    />
+  );
+}
+
+function trialPlan(): PlanState {
+  return { kind: "trial", endsAt: new Date(Date.now() + 9 * 86_400_000), daysLeft: 9 };
+}
+
 async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "searchParams">) {
   await connection(); // dates depend on the current time
   const params = await searchParams;
@@ -89,6 +164,21 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
   const state = STATES.find((s) => s === params.state) ?? "normal";
   const window = rangeWindow(range, "Europe/Amsterdam");
   const reports = sampleReports(window, REPORTS);
+  const extra = sampleReports(window, [
+    "goals_sources",
+    "goals_landing",
+    "purchase_sources",
+    "purchase_landing",
+  ]);
+  // A payment page among the sources, to show the owner's warning.
+  if (state === "growth") {
+    reports.sources.data = {
+      rows: [
+        ...reports.sources.data.rows,
+        { source: "checkout.stripe.com", label: "checkout.stripe.com", visitors: 14, previous: 9 },
+      ],
+    };
+  }
   const site = (
     <SiteChip domain={null} label="yoursite.com">
       <Badge variant="secondary">Preview</Badge>
@@ -97,6 +187,25 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
   const quotaUntil = new Date(`${window.today}T15:00:00Z`);
 
   if (state === "not-granted") return <AccessNotGranted signIn={noop} />;
+  if (state === "paused-site") {
+    return (
+      <>
+        <PreviewNav state={state} range={range} />
+        <PausedSiteView
+          switcher={<PreviewSwitcher growth={false} range={range} />}
+          label="blog.yoursite.com"
+        >
+          <UpgradePanel feature="sites" plan={trialPlan()} upgrade={noop}>
+            <OpenInsteadForm
+              label="blog.yoursite.com"
+              siteId={PREVIEW_SITES[1]!.id}
+              action={noop}
+            />
+          </UpgradePanel>
+        </PausedSiteView>
+      </>
+    );
+  }
   if (state === "loading")
     return <DashboardSkeleton message="Finding your Google Analytics site…" />;
 
@@ -138,21 +247,7 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
 
   return (
     <>
-      <nav
-        aria-label="Preview states"
-        className="flex flex-wrap gap-1 border-b bg-muted px-4 py-2 text-xs"
-      >
-        {STATES.map((s) => (
-          <Link
-            key={s}
-            href={{ pathname: "/ui-kit/dashboard", query: { state: s, range } }}
-            aria-current={s === state ? "page" : undefined}
-            className="rounded-md px-2 py-1 aria-[current=page]:bg-card aria-[current=page]:font-medium"
-          >
-            {s}
-          </Link>
-        ))}
-      </nav>
+      <PreviewNav state={state} range={range} />
       <DashboardView
         basePath="/ui-kit/dashboard"
         range={range}
@@ -191,17 +286,104 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
             endpoint={null}
           />
         }
-        site={site}
+        site={
+          state === "growth" || state === "starter-menu" ? (
+            <PreviewSwitcher growth={state === "growth"} range={range} />
+          ) : (
+            site
+          )
+        }
         siteName="yoursite.com"
         notices={
           state === "normal" ? <EmailNotice turnOff={noop} dismiss={noop} /> : notices[state]
         }
         footer={state === "normal" ? <ShareCard action={sampleShare} /> : null}
+        ownerTips
+        extraMetrics={
+          state === "growth"
+            ? revenueMetrics({
+                view: sampleRevenue(window),
+                visitors: reports.totals.data.current.visitors,
+                comparable: true,
+                settingsHref: "/ui-kit/settings?state=growth#revenue",
+              })
+            : undefined
+        }
+        revenueByDay={state === "growth" ? growthRevenue(window).byDay : undefined}
+        revenueCurrency={state === "growth" ? "EUR" : undefined}
+        sales={
+          state === "growth" ? (
+            <SalesCard
+              data={{
+                sources: reports.sources.data,
+                landing: reports.landing.data,
+                goalsSources: extra.goals_sources.data,
+                goalsLanding: extra.goals_landing.data,
+                pageSources: null,
+                pageLanding: null,
+                purchaseSources: extra.purchase_sources.data,
+                purchaseLanding: extra.purchase_landing.data,
+              }}
+              signupEvent={SAMPLE_SIGNUP_EVENT}
+              saleEvent={SAMPLE_SALE_EVENT}
+              salePage={null}
+              currency="EUR"
+              exportInfo={{ site: "yoursite.com", ...window.current }}
+              settingsHref="/ui-kit/settings?state=growth#sales"
+            />
+          ) : null
+        }
+        search={
+          state === "growth" ? (
+            <SearchCard
+              data={sampleSearchCard(window.current, { signupEvent })}
+              siteName="yoursite.com"
+              signupEvent={signupEvent}
+              settingsHref="/ui-kit/settings?state=growth#search"
+            />
+          ) : state === "search-connect" ? (
+            <SearchConnect connect={noop} />
+          ) : state === "search-error" ? (
+            <SearchProblemCard problem="scope" connect={noop} settingsHref="/ui-kit/settings" />
+          ) : state === "normal" || state === "starter-menu" ? (
+            <SearchTeaser href="/ui-kit/settings?state=trial#search" />
+          ) : null
+        }
         dimmed={state === "revoked" || state === "no-access"}
         lockedPanel={state === "locked" ? <LockedPanel upgrade={noop} /> : undefined}
       />
     </>
   );
+}
+
+function PreviewNav({ state, range }: { state: string; range: string }) {
+  return (
+    <nav
+      aria-label="Preview states"
+      className="flex flex-wrap gap-1 border-b bg-muted px-4 py-2 text-xs"
+    >
+      {STATES.map((s) => (
+        <Link
+          key={s}
+          href={{ pathname: "/ui-kit/dashboard", query: { state: s, range } }}
+          aria-current={s === state ? "page" : undefined}
+          className="rounded-md px-2 py-1 aria-[current=page]:bg-card aria-[current=page]:font-medium"
+        >
+          {s}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+/** The sample revenue's current period, for the bars. */
+function growthRevenue(window: {
+  current: { start: string; end: string };
+  previous: { start: string; end: string };
+}) {
+  const view = sampleRevenue(window);
+  if (view.kind !== "ready") throw new Error("sample revenue is always ready");
+  return view.current;
 }
 
 /** The sample site at about 1/40 of its size, to see how the chart reads on a small site. */

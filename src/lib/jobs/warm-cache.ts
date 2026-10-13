@@ -1,7 +1,7 @@
 import "server-only";
-import { and, eq, gt, inArray, isNull, lt, or } from "drizzle-orm";
+import { and, eq, gt, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { session, site } from "@/lib/db/schema";
+import { site } from "@/lib/db/schema";
 import { unlockedUserIds } from "@/lib/billing/billing";
 import { warm } from "@/lib/ga4/data";
 import { mapLimit } from "@/lib/ga4/property-choice";
@@ -10,25 +10,22 @@ import { REPORTS } from "@/lib/ga4/reports";
 const DAY = 24 * 60 * 60 * 1000;
 
 /**
- * Hourly at :05 (docs/SPEC.md section 20). For active, working sites whose owner
- * signed in during the last 14 days, refresh the 7-day reports when they're stale
- * or the day has turned in the site's time zone. Quota-blocked sites are skipped.
+ * Hourly at :05 (docs/SPEC.md sections 20 and 28.1). For working sites whose dashboard
+ * was opened in the last 24 hours, refresh the 7-day reports when they're stale or the
+ * day has turned in the site's time zone. Locked accounts and quota-blocked sites are
+ * skipped. GA4 calls grow with sites, so sites nobody looks at aren't refreshed: the
+ * Monday email and public pages fetch what they need themselves.
  */
 export async function warmCacheJob(now: Date = new Date()) {
-  const recentUsers = db
-    .selectDistinct({ userId: session.userId })
-    .from(session)
-    .where(gt(session.updatedAt, new Date(now.getTime() - 14 * DAY)));
-
   const sites = await db
     .select()
     .from(site)
     .where(
       and(
-        eq(site.isActive, true),
+        gt(site.lastViewedAt, new Date(now.getTime() - DAY)),
+        isNotNull(site.addedAt),
         eq(site.status, "ok"),
         or(isNull(site.quotaBlockedUntil), lt(site.quotaBlockedUntil, now)),
-        inArray(site.userId, recentUsers),
         inArray(site.userId, unlockedUserIds(now)),
       ),
     );

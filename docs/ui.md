@@ -101,8 +101,16 @@ Each layer imports only from its own folder and the layers before it. ESLint (`n
 | `GoogleButton` | `google-button.tsx` | A submit button with Google's "G", for forms that start Google sign-in |
 | `BillingSwitch` | `billing-switch.tsx` | Monthly / Yearly radios named `interval`: the pricing section and the upgrade form. Prices switch with `group-has-[[data-option-index='1']:checked]/billing:` |
 | `CsvLink` | `csv-link.tsx` | "Download CSV" in a card's header, a plain link |
+| `SearchInput` | `search-input.tsx` | The search box of Details and the site picker: magnifier, hidden label, 44 px on touch. Filtering (accents and case ignored) is `matchesSearch` in `src/lib/text.ts` |
+| `PlanCard` | `plan-card.tsx` | A plan with its price (following the Monthly / Yearly switch), features and action. `size="compact"` inside the app (plan choice, "Upgrade to Growth") |
 
 List cards (`src/components/cards/list-card.tsx`): `ListCard` holds the tabs, the lists and "Details"; `ListDetails` is the modal (search, CSV via `listCsv`). Sources, Pages, Countries, Devices, AI traffic and Actions are thin wrappers that give it their views.
+
+Several sites (`src/components/dashboard/`, Sprint 5): `SiteSwitcher` (the site menu: the sites as links, "All sites" and "Add a site…" on Growth, "Switch site…" on Starter), `SitePickerDialog` (the user's GA4 properties, fetched live, grouped by account, with search; Add or Switch), `SiteCard`, `AddSiteCard` and `SitesView` (All sites), `PausedSiteView` (a listed site the plan doesn't open), `UpgradePanel` ("… is part of Growth" with the price and one button) and `UpgradeForm` (the plan choice). `Sparkline` (`src/components/charts/`) is the cards' small server-rendered line. Previews: `/ui-kit/dashboard?state=growth|starter-menu|paused-site|locked` and `/ui-kit/sites`.
+
+Google search (`src/components/search/`, Sprint 6): `SearchCard` (a `ListCard` with a visible heading, four numbers and five tabs; "Close to page 1" and "What changed" use their own row layouts via a view's `content`), `SearchConnect`, `SearchTeaser`, `SearchProblemCard`, `SearchSkeleton`. `StackedBars` (`src/components/charts/`) is the server-rendered two-colour bar chart (`chart-3` and `chart-1`) with CSS-only tooltips. `ListCard` views can now have an `intro` line, their own `initial` rows, `cardColumns` (fewer than Details), `hideColumns`, `sublabelHeader` (two-line rows, `RankedList size="tall"`, and a CSV column).
+
+Revenue and sales (Sprint 7): `SalesCard` (`src/components/cards/`), `revenueMetrics` (Revenue and New customers for the overview, `src/components/dashboard/`), revenue bars in `VisitorsChart` (`chart-4`, a hidden second axis keeps them in the lower quarter), the payment-page warning in `SourcesCard` (`ownerTips`, dashboard only), and the Settings cards `RevenueSettings` and `SaleSettings`.
 
 The overview (`src/components/cards/overview-card.tsx`): the numbers in a row with short dividers and the chart underneath, used by the dashboard, public pages and the demo.
 

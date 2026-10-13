@@ -1,10 +1,9 @@
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { connection } from "next/server";
-import { getBilling } from "@/lib/billing/billing";
-import { planState } from "@/lib/billing/plan";
 import { db } from "@/lib/db/client";
-import { publicPage, site, type Site } from "@/lib/db/schema";
+import { publicPage, type Site } from "@/lib/db/schema";
 import { getLive } from "@/lib/ga4/realtime";
+import { publicSiteOf } from "@/lib/public-page/view";
 
 // Which site a slug's live card shows, kept 60 seconds like the live numbers, so a
 // busy public page doesn't send every visitor's poll to the database.
@@ -17,12 +16,8 @@ async function liveSiteFor(slug: string): Promise<Site | null> {
   let found: Site | null = null;
   const page = await db.query.publicPage.findFirst({ where: eq(publicPage.slug, slug) });
   if (page?.enabled && page.cards.includes("live")) {
-    const owned = await db.query.site.findFirst({
-      where: and(eq(site.userId, page.userId), eq(site.isActive, true)),
-    });
-    if (owned?.status === "ok" && planState(await getBilling(page.userId)).kind !== "locked") {
-      found = owned;
-    }
+    const resolved = await publicSiteOf(page);
+    if (resolved && !resolved.paused) found = resolved.site;
   }
   if (lookups.size > 1000) lookups.clear();
   lookups.set(slug, { site: found, until: Date.now() + LOOKUP_MS });

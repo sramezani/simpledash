@@ -4,11 +4,11 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { HelpTip } from "@/components/shared/help-tip";
 import { cardById, type CardId } from "@/config/cards";
 import type { ChartPoint } from "@/lib/charts/series";
-import { formatNumber } from "@/lib/format";
+import { formatMoney, formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export type OverviewMetric = {
-  id: Extract<CardId, "visitors" | "page-views" | "avg-time" | "signups">;
+  id: Extract<CardId, "visitors" | "page-views" | "avg-time" | "signups" | "revenue" | "customers">;
   /** The formatted value, or null for "—". */
   value: string | null;
   change: number | null;
@@ -16,6 +16,10 @@ export type OverviewMetric = {
   action?: ReactNode;
   /** Replaces the number, e.g. the button that picks a signup event. */
   children?: ReactNode;
+  /** This number's own reason there's no % change (e.g. "Stripe totals start 1 Sep"). */
+  missing?: string;
+  /** A quiet line under the change, e.g. "1 per 412 visitors". */
+  note?: ReactNode;
 };
 
 type OverviewCardProps = {
@@ -40,6 +44,8 @@ type OverviewCardProps = {
   footer?: ReactNode;
   /** Shown inside the chart area: "Add a note, like …" (dashboard only). */
   hint?: string;
+  /** When the points carry revenue (Growth): its currency, for the table. */
+  revenueCurrency?: string;
 };
 
 /**
@@ -59,7 +65,9 @@ export function OverviewCard({
   actions,
   footer,
   hint,
+  revenueCurrency,
 }: OverviewCardProps) {
+  const showRevenue = !!revenueCurrency && !!points?.some((p) => p.revenue !== undefined);
   const chartCard = cardById.chart;
   const hasPending = points?.some((p) => p.pending !== null && p.solid === null) ?? false;
   return (
@@ -92,6 +100,12 @@ export function OverviewCard({
                 <HelpTip id="chart" label={chartCard.title}>
                   {chartCard.help}
                 </HelpTip>
+                {showRevenue ? (
+                  <span className="ml-2 flex items-center gap-1.5">
+                    <span aria-hidden="true" className="size-2 rounded-sm bg-chart-4/60" />
+                    Revenue
+                  </span>
+                ) : null}
               </h2>
               <div className="flex items-center gap-1">
                 {actions}
@@ -131,6 +145,11 @@ export function OverviewCard({
                         <th scope="col" className="px-3 py-2 text-right font-medium">
                           Visitors
                         </th>
+                        {showRevenue ? (
+                          <th scope="col" className="px-3 py-2 text-right font-medium">
+                            Revenue
+                          </th>
+                        ) : null}
                       </tr>
                     </thead>
                     <tbody>
@@ -145,6 +164,11 @@ export function OverviewCard({
                           <td className="px-3 py-1.5 text-right tabular-nums">
                             {formatNumber(p.visitors)}
                           </td>
+                          {showRevenue ? (
+                            <td className="px-3 py-1.5 text-right tabular-nums">
+                              {formatMoney(p.revenue ?? 0, revenueCurrency!)}
+                            </td>
+                          ) : null}
                         </tr>
                       ))}
                     </tbody>
@@ -226,12 +250,13 @@ function Metric({
           ) : (
             <Delta
               change={metric.change}
-              missing={missing}
+              missing={metric.missing ?? missing}
               versus={versus}
               size="compact"
               className="min-h-4"
             />
           )}
+          {metric.note ? <p className="text-xs text-muted-foreground">{metric.note}</p> : null}
         </>
       )}
     </div>

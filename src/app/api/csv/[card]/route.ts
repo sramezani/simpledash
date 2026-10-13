@@ -1,15 +1,16 @@
 import { connection } from "next/server";
 import { isUserLocked } from "@/lib/billing/billing";
 import { csvCardIds, type CardId } from "@/config/cards";
-import { getActiveSite, getApiUser } from "@/lib/auth/session";
+import { findOpenSite, getApiUser } from "@/lib/auth/session";
 import { csvFilename, toCsv } from "@/lib/csv";
 import { csvReports, csvTable } from "@/lib/csv-cards";
 import { loadReports } from "@/lib/ga4/data";
 import { parseRange } from "@/lib/ga4/ranges";
 
 /**
- * "Download CSV" for a card (docs/SPEC.md section 13): /api/csv/<card>?range=30d.
- * Built from the same cached reports as the dashboard; only the user's own site.
+ * "Download CSV" for a card (docs/SPEC.md section 13): /api/csv/<card>?site=<id>&range=30d.
+ * Built from the same cached reports as the dashboard; only the user's own sites
+ * that their plan opens.
  */
 export async function GET(request: Request, ctx: RouteContext<"/api/csv/[card]">) {
   await connection();
@@ -20,11 +21,12 @@ export async function GET(request: Request, ctx: RouteContext<"/api/csv/[card]">
   const { card } = await ctx.params;
   if (!(csvCardIds as readonly string[]).includes(card))
     return new Response("Not found", { status: 404 });
-  const site = await getActiveSite(user.id);
+  const search = new URL(request.url).searchParams;
+  const site = await findOpenSite(user.id, search.get("site"));
   if (!site) return new Response("Connect a Google Analytics site first.", { status: 404 });
 
   const id = card as CardId;
-  const range = parseRange(new URL(request.url).searchParams.get("range"));
+  const range = parseRange(search.get("range"));
   const result = await loadReports(site, range, csvReports[id] ?? []);
   const data = Object.fromEntries(Object.entries(result.reports).map(([r, v]) => [r, v.data]));
   const table = csvTable(id, data, result.window, site.signupEvent);

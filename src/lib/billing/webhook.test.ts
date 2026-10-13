@@ -7,7 +7,10 @@ import {
   type WebhookDeps,
 } from "./webhook";
 
-const prices = { month: "price_month", year: "price_year" };
+const prices = {
+  starter: { month: "price_month", year: "price_year" },
+  growth: { month: "price_growth_month", year: "price_growth_year" },
+};
 const NOW = new Date("2026-10-12T12:00:00Z");
 
 function subscription(
@@ -26,7 +29,7 @@ function subscription(
         {
           price: {
             id: priceId,
-            recurring: { interval: priceId === "price_year" ? "year" : "month" },
+            recurring: { interval: priceId.endsWith("year") ? "year" : "month" },
           },
           current_period_end: periodEnd,
         },
@@ -105,20 +108,34 @@ describe("signature check", () => {
 });
 
 describe("subscriptionFacts", () => {
-  it("turns the price into the plan interval", () => {
+  it("turns the price into the plan and interval", () => {
     expect(subscriptionFacts(subscription({ priceId: "price_month" }), prices)).toMatchObject({
+      plan: "starter",
       interval: "month",
       unknownPrice: false,
     });
     expect(subscriptionFacts(subscription({ priceId: "price_year" }), prices)).toMatchObject({
+      plan: "starter",
       interval: "year",
       unknownPrice: false,
     });
+    expect(
+      subscriptionFacts(subscription({ priceId: "price_growth_month" }), prices),
+    ).toMatchObject({ plan: "growth", interval: "month", unknownPrice: false });
+    expect(subscriptionFacts(subscription({ priceId: "price_growth_year" }), prices)).toMatchObject(
+      { plan: "growth", interval: "year", unknownPrice: false },
+    );
   });
 
-  it("flags a price that isn't one of the two Starter prices", () => {
+  it("flags a price that isn't one of the four, and never gives it Growth", () => {
     expect(subscriptionFacts(subscription({ priceId: "price_other" }), prices)).toMatchObject({
+      plan: "starter",
       interval: "month",
+      unknownPrice: true,
+    });
+    expect(subscriptionFacts(subscription({ priceId: "price_other_year" }), prices)).toMatchObject({
+      plan: "starter",
+      interval: "year",
       unknownPrice: true,
     });
   });
@@ -168,6 +185,21 @@ describe("handleStripeEvent", () => {
       );
       expect(deps.applied.at(-1)?.facts.status).toBe(status);
     }
+  });
+
+  it("stores the plan from the price when someone switches to Growth and back", async () => {
+    await handleStripeEvent(
+      event("customer.subscription.updated", subscription({ priceId: "price_growth_year" }), 1),
+      deps,
+      prices,
+    );
+    expect(deps.applied.at(-1)?.facts).toMatchObject({ plan: "growth", interval: "year" });
+    await handleStripeEvent(
+      event("customer.subscription.updated", subscription({ priceId: "price_month" }), 2),
+      deps,
+      prices,
+    );
+    expect(deps.applied.at(-1)?.facts).toMatchObject({ plan: "starter", interval: "month" });
   });
 
   it("refreshes from Stripe on invoice events", async () => {

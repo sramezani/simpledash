@@ -3,10 +3,11 @@ import { brand } from "@/config/theme";
 
 /**
  * SoftwareApplication JSON-LD for the landing page (docs/SPEC.md section 17).
- * Offers come from plans.ts. Growth is left out until it can be bought.
+ * Offers come from plans.ts: every plan that is on sale, monthly and yearly.
  */
 export function softwareApplication(appUrl: string) {
   const { starter } = plans;
+  const onSale = Object.values(plans).filter((p) => p.status === "on_sale");
   const offer = (price: number, unitCode: "MON" | "ANN", name: string) => ({
     "@type": "Offer",
     name,
@@ -29,10 +30,10 @@ export function softwareApplication(appUrl: string) {
     url: appUrl,
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
-    offers: [
-      offer(starter.prices.month, "MON", `${starter.name}, monthly`),
-      offer(starter.prices.year, "ANN", `${starter.name}, yearly`),
-    ],
+    offers: onSale.flatMap((p) => [
+      offer(p.prices.month, "MON", `${p.name}, monthly`),
+      offer(p.prices.year, "ANN", `${p.name}, yearly`),
+    ]),
   };
 }
 

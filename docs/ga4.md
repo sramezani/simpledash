@@ -60,6 +60,15 @@ How states clear on their own:
 - `no_access` → `ok` when the dashboard sees the property in the user's list again.
 - A quota block simply ends at its time.
 
+## Several sites (Sprint 5)
+
+A user's sites are `site` rows; `added_at` set means the site is in their list and `is_active` marks the one the dashboard opens with (the one opened last). `src/lib/sites/` holds the rules:
+
+- `access.ts` (pure, tested): the list in the order added, which sites the plan opens (Growth: every listed site up to 10; Starter and trials: the active one), the site a page shows (`chooseSite`: the one in `?site=`, or the active one; an unlisted or unknown ID is "missing"), and whether one more can be added.
+- `sites.ts`: `getSiteContext(userId, requested)` (plan, list and choice, once per request), `markSiteOpened` (the dashboard calls it after the response), `removeSite`.
+- `requireSite(siteId)` (`src/lib/auth/session.ts`) uses them: every action and route handler that takes a site ID checks it is the user's own, listed and open on their plan.
+- Adding and switching go through `connectProperty(userId, propertyId, mode)` in `properties.ts`: `replace` (Starter, the first site) takes the active site's place in the list; `add` (Growth) joins it, with the limit checked under a per-user advisory lock so two quick clicks can't pass it. Both check the property is in the user's own Google list first.
+
 ## Property choice
 
 `chooseFirstSite(userId)` runs on the first dashboard visit when the user has no site:
@@ -76,7 +85,7 @@ The switcher (`switchSite` server action) checks the property against the user's
 
 | Job | Code | What it does |
 | --- | --- | --- |
-| `warm-cache` | `src/lib/jobs/warm-cache.ts` | Hourly: for active, `ok`, unblocked sites whose owner signed in during the last 14 days, fetch stale or missing 7-day reports, 3 sites at a time |
+| `warm-cache` | `src/lib/jobs/warm-cache.ts` | Hourly: for `ok`, unblocked sites in a list whose dashboard was opened in the last 24 hours (`site.last_viewed_at`, stamped at most hourly when a dashboard opens), fetch stale or missing 7-day reports, 3 sites at a time. Sites nobody opens aren't refreshed (Sprint 5: GA4 calls grow with sites) |
 | `cleanup` | `src/lib/jobs/cleanup.ts` | Daily: report caches not fetched for 7 days, expired sessions and sign-in leftovers |
 
 They run through `POST /api/internal/jobs/<job>` with `Authorization: Bearer <CRON_SECRET>`. Coolify calls them with `node scripts/run-job.mjs <job>` (see `docs/deploy.md`).

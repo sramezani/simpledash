@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { rangeWindow } from "@/lib/ga4/ranges";
-import { buildWeeklyEmail, type WeeklyEmailInput } from "./content";
+import { buildWeeklyEmail, type SiteWeekInput } from "./content";
 
 const window = rangeWindow("7d", "UTC", new Date("2026-10-12T13:00:00Z")); // a Monday
 const totals = (c: number, p: number) => ({
   current: { visitors: c, pageViews: c * 2, engagementSeconds: c * 60 },
   previous: { visitors: p, pageViews: p * 2, engagementSeconds: p * 60 },
 });
-const input: WeeklyEmailInput = {
+const site: SiteWeekInput = {
   siteLabel: "mysite.com",
   window,
   totals: totals(1234, 1003),
@@ -22,29 +22,32 @@ const input: WeeklyEmailInput = {
   aiSources: { rows: [{ assistant: "ChatGPT", visitors: 40 }] },
   signupEvent: "sign_up",
   comparable: true,
-  links: { dashboard: "d", settings: "s", unsubscribe: "u" },
+  dashboard: "d",
 };
+const links = { settings: "s", unsubscribe: "u" };
+/** The email for one site, with some of its inputs changed. */
+const one = (over: Partial<SiteWeekInput> = {}) =>
+  buildWeeklyEmail({ sites: [{ ...site, ...over }], links });
+const input = site;
 
 describe("buildWeeklyEmail", () => {
   it("writes the subject from the numbers", () => {
-    expect(buildWeeklyEmail(input)?.subject).toBe("mysite.com: 1,234 visitors last week (up 23%)");
-    expect(buildWeeklyEmail({ ...input, totals: totals(900, 1000) })?.subject).toBe(
+    expect(one()?.subject).toBe("mysite.com: 1,234 visitors last week (up 23%)");
+    expect(one({ totals: totals(900, 1000) })?.subject).toBe(
       "mysite.com: 900 visitors last week (down 10%)",
     );
-    expect(buildWeeklyEmail({ ...input, comparable: false })?.subject).toBe(
-      "mysite.com: 1,234 visitors last week",
-    );
+    expect(one({ comparable: false })?.subject).toBe("mysite.com: 1,234 visitors last week");
   });
 
   it("covers last Monday to Sunday, and says 'the week before'", () => {
-    const email = buildWeeklyEmail(input)!;
+    const email = one()!.blocks[0]!;
     expect(email.period).toBe("5 Oct – 11 Oct");
     expect(email.summary).toContain("vs the week before");
     expect(email.summary).toContain("12 signups, up from 8.");
   });
 
   it("lists the 4 numbers, top sources and pages, and AI visitors when there are any", () => {
-    const email = buildWeeklyEmail(input)!;
+    const email = one()!.blocks[0]!;
     expect(email.stats.map((s) => s.label)).toEqual([
       "Visitors",
       "Page views",
@@ -53,15 +56,47 @@ describe("buildWeeklyEmail", () => {
     ]);
     expect(email.pages.map((p) => p.label)).toEqual(["/", "/pricing"]);
     expect(email.aiVisitors).toBe("40");
-    expect(buildWeeklyEmail({ ...input, aiSources: { rows: [] } })!.aiVisitors).toBeNull();
+    expect(one({ aiSources: { rows: [] } })!.blocks[0]!.aiVisitors).toBeNull();
   });
 
   it("leaves Signups out when no event is chosen", () => {
-    expect(buildWeeklyEmail({ ...input, signupEvent: null })!.stats).toHaveLength(3);
+    expect(one({ signupEvent: null })!.blocks[0]!.stats).toHaveLength(3);
   });
 
   it("sends nothing when there were no visitors in either week", () => {
-    expect(buildWeeklyEmail({ ...input, totals: totals(0, 0) })).toBeNull();
-    expect(buildWeeklyEmail({ ...input, totals: null })).toBeNull();
+    expect(one({ totals: totals(0, 0) })).toBeNull();
+    expect(one({ totals: null })).toBeNull();
+  });
+});
+
+describe("several sites", () => {
+  const blog = { ...input, siteLabel: "blog.mysite.com", totals: totals(300, 300), dashboard: "b" };
+  const shop = { ...input, siteLabel: "shop.mysite.com", totals: totals(5, 0), dashboard: "c" };
+
+  it("has one block per site, the main one first, each with its own dashboard link", () => {
+    const email = buildWeeklyEmail({ sites: [site, blog, shop], links })!;
+    expect(email.blocks.map((b) => [b.siteLabel, b.dashboard])).toEqual([
+      ["mysite.com", "d"],
+      ["blog.mysite.com", "b"],
+      ["shop.mysite.com", "c"],
+    ]);
+  });
+
+  it("names the main site and counts the others in the subject", () => {
+    expect(buildWeeklyEmail({ sites: [site, blog, shop], links })!.subject).toBe(
+      "Last week: mysite.com 1,234 visitors (up 23%), and 2 more sites",
+    );
+    expect(buildWeeklyEmail({ sites: [blog, shop], links })!.subject).toBe(
+      "Last week: blog.mysite.com 300 visitors (no change), and 1 more site",
+    );
+  });
+
+  it("leaves out sites without visits, and sends nothing when none had any", () => {
+    const quiet = { ...blog, totals: totals(0, 0) };
+    const email = buildWeeklyEmail({ sites: [quiet, site], links })!;
+    expect(email.blocks.map((b) => b.siteLabel)).toEqual(["mysite.com"]);
+    expect(email.subject).toBe("mysite.com: 1,234 visitors last week (up 23%)");
+    expect(buildWeeklyEmail({ sites: [quiet], links })).toBeNull();
+    expect(buildWeeklyEmail({ sites: [], links })).toBeNull();
   });
 });

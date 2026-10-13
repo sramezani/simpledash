@@ -1,3 +1,4 @@
+import type { Route } from "next";
 import type { ReactNode } from "react";
 import { ActionsCard } from "@/components/cards/actions-card";
 import { AiCard } from "@/components/cards/ai-card";
@@ -12,7 +13,13 @@ import { CsvMenu } from "@/components/shared/csv-menu";
 import { OverviewToolbar } from "@/components/shared/overview-toolbar";
 import { PopoverButton } from "@/components/shared/popover-button";
 import { cardById, type CardId } from "@/config/cards";
-import { chartCaption, chartPoints, noteMarks, periodLabel } from "@/lib/charts/series";
+import {
+  chartCaption,
+  chartPoints,
+  noteMarks,
+  periodLabel,
+  withRevenue,
+} from "@/lib/charts/series";
 import { formatDuration, formatNumber } from "@/lib/format";
 import { deriveStats } from "@/lib/ga4/derive";
 import {
@@ -52,6 +59,8 @@ type DashboardViewProps = {
   basePath?: "/dashboard" | "/ui-kit/dashboard";
   /** Other search params the date menu keeps (dev preview). */
   query?: Record<string, string>;
+  /** The site shown, kept in the date menu's links, downloads and Settings link. */
+  siteId?: string;
   /** Chart notes in this range, and the panel to add and edit them. */
   notes?: { id: string; day: string; text: string }[];
   notesPanel?: ReactNode;
@@ -63,6 +72,17 @@ type DashboardViewProps = {
   lockedPanel?: ReactNode;
   /** Below the cards, e.g. "Share your stats publicly?". */
   footer?: ReactNode;
+  /** The Google search card (Growth), or its teaser, under the list cards. */
+  search?: ReactNode;
+  /** Sales and signups by source (Growth), under the list cards. */
+  sales?: ReactNode;
+  /** Revenue and New customers (Growth), after the four numbers. */
+  extraMetrics?: OverviewMetric[];
+  /** Revenue per day in `revenueCurrency`'s smallest unit, as bars under the line. */
+  revenueByDay?: Map<string, number>;
+  revenueCurrency?: string;
+  /** Owner-only hints in the cards, e.g. the payment-page warning in Sources. */
+  ownerTips?: boolean;
 };
 
 /** The dashboard page body, shared by real sites and sample data (docs/SPEC.md section 11). */
@@ -72,12 +92,19 @@ export function DashboardView(props: DashboardViewProps) {
   const totals = reports.totals?.data ?? null;
   const stats = deriveStats(totals, reports.actions?.data ?? null, signupEvent, comparable);
   const series = reports.series?.data ?? null;
-  const points = series
+  const basePoints = series
     ? chartPoints(series.points, series.granularity, window.lastPointPending)
     : null;
+  const points =
+    basePoints && props.revenueByDay
+      ? withRevenue(basePoints, series!.granularity, props.revenueByDay)
+      : basePoints;
+  const revenueCurrency = props.revenueByDay ? props.revenueCurrency : undefined;
   const period = periodLabel(window);
   const versus = `vs ${previousPeriodWords(range)}`;
-  const csvHref = (id: CardId) => `/api/csv/${id}?range=${encodeURIComponent(range)}`;
+  const siteParam = props.siteId ? `&site=${props.siteId}` : "";
+  const csvHref = (id: CardId) => `/api/csv/${id}?range=${encodeURIComponent(range)}${siteParam}`;
+  const query = props.siteId ? { site: props.siteId, ...props.query } : props.query;
   const exportInfo = { site: props.siteName, ...window.current };
   const marks = points && props.notes ? noteMarks(props.notes, points, window.granularity) : [];
 
@@ -114,6 +141,7 @@ export function DashboardView(props: DashboardViewProps) {
           </PopoverButton>
         ),
     },
+    ...(props.extraMetrics ?? []),
   ];
 
   const csvCards: CardId[] = ["chart", "visitors", "page-views", "avg-time"];
@@ -130,10 +158,16 @@ export function DashboardView(props: DashboardViewProps) {
         caption={points ? chartCaption(points, window.granularity, period) : ""}
         chart={
           points ? (
-            <VisitorsChartLazy points={points} notes={marks} canAddNotes={!!props.notesPanel} />
+            <VisitorsChartLazy
+              points={points}
+              notes={marks}
+              canAddNotes={!!props.notesPanel}
+              revenueCurrency={revenueCurrency}
+            />
           ) : null
         }
         dimmed={dimmed}
+        revenueCurrency={revenueCurrency}
         actions={props.csv ? <CsvMenu id="overview" items={csvItems} /> : undefined}
         footer={props.notesPanel}
         hint={
@@ -149,6 +183,7 @@ export function DashboardView(props: DashboardViewProps) {
           channels={reports.channels?.data ?? null}
           exportInfo={exportInfo}
           dimmed={dimmed}
+          ownerTips={props.ownerTips}
         />
         <PagesCard
           pages={reports.pages?.data ?? null}
@@ -183,18 +218,23 @@ export function DashboardView(props: DashboardViewProps) {
           dimmed={dimmed}
         />
       </div>
+      {props.sales}
+      {props.search}
     </>
   );
 
   return (
     <>
-      <TopBar basePath={props.basePath} />
+      <TopBar
+        basePath={props.basePath}
+        settingsHref={props.siteId ? (`/settings?site=${props.siteId}` as Route) : undefined}
+      />
       <main id="main" className="pb-16">
         <Container className="flex flex-col gap-4 pt-5">
           <h1 className="sr-only">Dashboard</h1>
           <OverviewToolbar
             site={props.site}
-            menu={rangeMenu(range, window, props.basePath ?? "/dashboard", props.query)}
+            menu={rangeMenu(range, window, props.basePath ?? "/dashboard", query)}
             period={isPreset(range) ? period : null}
             note={freshnessNote(window)}
           />

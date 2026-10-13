@@ -31,6 +31,7 @@ export async function getPlan(userId: string, now: Date = new Date()): Promise<P
 export async function applySubscription(userId: string, facts: SubscriptionFacts, stateAt: Date) {
   const values = {
     status: facts.status,
+    plan: facts.plan,
     stripeCustomerId: facts.customerId,
     stripeSubscriptionId: facts.subscriptionId,
     planInterval: facts.interval,

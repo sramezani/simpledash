@@ -1,4 +1,5 @@
 import type Stripe from "stripe";
+import { planIds, type PlanId } from "@/config/plans";
 import { PAID_STATUSES } from "./plan";
 
 /**
@@ -13,41 +14,53 @@ export type SubscriptionFacts = {
   /** Set at checkout in the subscription's metadata. */
   userId: string | null;
   status: string;
+  /** From the price: one of our four, or Starter for an unknown one (reported). */
+  plan: PlanId;
   interval: "month" | "year" | null;
   priceId: string | null;
   currentPeriodEnd: Date | null;
   cancelAtPeriodEnd: boolean;
 };
 
-export type StarterPrices = { month: string; year: string };
+/** The four price IDs, two per plan. */
+export type PlanPrices = Record<PlanId, Record<"month" | "year", string>>;
+
+/** Which plan and interval a price ID is, or null when it isn't one of ours. */
+export function priceInfo(
+  priceId: string | null,
+  prices: PlanPrices,
+): { plan: PlanId; interval: "month" | "year" } | null {
+  if (!priceId) return null;
+  for (const plan of planIds) {
+    for (const interval of ["month", "year"] as const) {
+      if (prices[plan][interval] === priceId) return { plan, interval };
+    }
+  }
+  return null;
+}
 
 export function subscriptionFacts(
   sub: Stripe.Subscription,
-  prices: StarterPrices,
+  prices: PlanPrices,
 ): SubscriptionFacts & { unknownPrice: boolean } {
   const item = sub.items?.data?.[0];
   const priceId = item?.price?.id ?? null;
   const recurring = item?.price?.recurring?.interval;
+  const known = priceInfo(priceId, prices);
   const interval: "month" | "year" | null =
-    priceId === prices.month
-      ? "month"
-      : priceId === prices.year
-        ? "year"
-        : recurring === "month"
-          ? "month"
-          : recurring === "year"
-            ? "year"
-            : null;
+    known?.interval ?? (recurring === "month" ? "month" : recurring === "year" ? "year" : null);
   return {
     subscriptionId: sub.id,
     customerId: typeof sub.customer === "string" ? sub.customer : sub.customer.id,
     userId: sub.metadata?.userId ?? null,
     status: sub.status,
+    // An unknown price never unlocks Growth: it counts as Starter and is reported.
+    plan: known?.plan ?? "starter",
     interval,
     priceId,
     currentPeriodEnd: item?.current_period_end ? new Date(item.current_period_end * 1000) : null,
     cancelAtPeriodEnd: sub.cancel_at_period_end ?? false,
-    unknownPrice: priceId !== prices.month && priceId !== prices.year,
+    unknownPrice: known === null,
   };
 }
 
@@ -85,7 +98,7 @@ const idOf = (value: string | { id: string } | null | undefined) =>
 export async function handleStripeEvent(
   event: Stripe.Event,
   deps: WebhookDeps,
-  prices: StarterPrices,
+  prices: PlanPrices,
 ): Promise<WebhookResult> {
   if (!HANDLED.has(event.type)) return "ignored";
   if (!(await deps.rememberEvent(event.id, event.type))) return "duplicate";
@@ -100,7 +113,7 @@ export async function handleStripeEvent(
 async function process(
   event: Stripe.Event,
   deps: WebhookDeps,
-  prices: StarterPrices,
+  prices: PlanPrices,
 ): Promise<WebhookResult> {
   let sub: Stripe.Subscription;
   let stateAt: Date;

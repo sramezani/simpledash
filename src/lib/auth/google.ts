@@ -1,5 +1,4 @@
 import "server-only";
-import { symmetricDecrypt } from "better-auth/crypto";
 import { and, eq } from "drizzle-orm";
 import { OAuth2Client } from "google-auth-library";
 import { db } from "@/lib/db/client";
@@ -7,6 +6,8 @@ import { account } from "@/lib/db/schema";
 import { env } from "@/lib/env";
 import { auth } from "./auth";
 import { GoogleAccessError, isRevokedGrant } from "./google-errors";
+import { decryptSecret } from "./secrets";
+import { cachedToken, forgetGoogleToken, rememberToken } from "./token-cache";
 
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const REVOKE_URL = "https://oauth2.googleapis.com/revoke";
@@ -18,24 +19,9 @@ export function getGoogleAccount(userId: string) {
 }
 
 /** Decrypts a stored token with Better Auth's key. Null when it can't (e.g. the secret changed). */
-async function decrypt(value: string): Promise<string | null> {
-  const ctx = await auth.$context;
-  try {
-    return await symmetricDecrypt({ key: ctx.secretConfig, data: value });
-  } catch {
-    return null;
-  }
-}
+const decrypt = decryptSecret;
 
-// Access tokens live about an hour. Reusing one per user (and sharing an in-flight
-// lookup) means a dashboard's parallel batches don't each fetch or refresh it.
-const tokens = new Map<string, { token: Promise<string>; until: number }>();
-const REUSE_MS = 10 * 60 * 1000;
-
-/** Forget a user's cached token, e.g. after Google says it's no longer valid. */
-export function forgetGoogleToken(userId: string) {
-  tokens.delete(userId);
-}
+export { forgetGoogleToken };
 
 /**
  * A valid Google access token for a user (docs/SPEC.md section 6). Better Auth
@@ -43,11 +29,10 @@ export function forgetGoogleToken(userId: string) {
  * Throws GoogleAccessError: "revoked" when Google says the grant is gone.
  */
 export function getGoogleAccessToken(userId: string): Promise<string> {
-  const cached = tokens.get(userId);
-  if (cached && cached.until > Date.now()) return cached.token;
+  const cached = cachedToken(userId);
+  if (cached) return cached;
   const token = fetchAccessToken(userId);
-  tokens.set(userId, { token, until: Date.now() + REUSE_MS });
-  token.catch(() => tokens.delete(userId));
+  rememberToken(userId, token);
   return token;
 }
 

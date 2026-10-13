@@ -17,6 +17,7 @@ import type { Payloads, ReportName } from "@/lib/ga4/reports";
  */
 
 export const SAMPLE_SIGNUP_EVENT = "sign_up";
+export const SAMPLE_SALE_EVENT = "purchase";
 export const SAMPLE_DOMAIN = "yoursite.com";
 
 /** A stable pseudo-random number in [0, 1) for a string. */
@@ -93,6 +94,17 @@ const SOURCES: [string, number][] = [
   ["claude.ai", 0.008],
 ];
 
+/** Signups and sales per visitor, by source, for the sample's sales by source. */
+const GOALS: [string, number, number][] = [
+  ["google", 0.03, 0.006],
+  ["(direct)", 0.045, 0.011],
+  ["news.ycombinator.com", 0.012, 0.001],
+  ["t.co", 0.02, 0.003],
+  ["reddit.com", 0.015, 0.002],
+  ["chatgpt.com", 0.06, 0.014],
+  ["producthunt.com", 0.05, 0.008],
+];
+
 const CHANNELS: [string, number][] = [
   ["Organic Search", 0.45],
   ["Direct", 0.24],
@@ -119,6 +131,17 @@ const LANDING: [string, number][] = [
   ["/blog/indie-launch-checklist", 0.08],
   ["/docs/getting-started", 0.06],
   ["/blog/seo-for-small-sites", 0.04],
+];
+
+/** Landing pages of visits from Google search: share of them, and signups per visitor. */
+const SEARCH_LANDING: [string, number, number][] = [
+  ["/blog/ga4-without-the-confusion", 0.34, 0.012],
+  ["/", 0.22, 0.05],
+  ["/pricing", 0.12, 0.09],
+  ["/blog/seo-for-small-sites", 0.1, 0.008],
+  ["/docs/getting-started", 0.08, 0.03],
+  ["/blog/indie-launch-checklist", 0.07, 0.01],
+  ["/changelog", 0.03, 0],
 ];
 
 const BROWSERS: [string, number][] = [
@@ -292,6 +315,60 @@ function samplePayload<R extends ReportName>(report: R, window: RangeWindow): Pa
         visitors: Math.round(current * share),
       })),
     }),
+    // Visits from Google search (41% of visitors), by landing page.
+    search_landing: () => ({
+      rows: SEARCH_LANDING.map(([path, share]) => ({
+        path,
+        visitors: Math.round(current * 0.41 * share),
+      })),
+      complete: true,
+    }),
+    search_signups: () => ({
+      rows: SEARCH_LANDING.map(([path, share, rate]) => ({
+        path,
+        signups: Math.round(current * 0.41 * share * rate),
+      })).filter((r) => r.signups > 0),
+      complete: true,
+    }),
+    // Signups and sales by source: [source, signups per visitor, sales per visitor].
+    goals_sources: () => ({
+      rows: GOALS.map(([source, signupRate, saleRate]) => {
+        const visitors = current * (SOURCES.find(([s]) => s === source)?.[1] ?? 0);
+        return {
+          source,
+          label: sourceLabel(source),
+          events: {
+            [SAMPLE_SIGNUP_EVENT]: Math.round(visitors * signupRate),
+            [SAMPLE_SALE_EVENT]: Math.round(visitors * saleRate),
+          },
+        };
+      }),
+    }),
+    goals_landing: () => ({
+      rows: SEARCH_LANDING.map(([path, share, rate]) => ({
+        path,
+        events: {
+          [SAMPLE_SIGNUP_EVENT]: Math.round(current * share * rate * 1.6),
+          [SAMPLE_SALE_EVENT]: Math.round(current * share * rate * 0.35),
+        },
+      })),
+    }),
+    sale_page_sources: () => ({ rows: [] }),
+    sale_page_landing: () => ({ rows: [] }),
+    purchase_sources: () => {
+      const rows = GOALS.map(([source, , saleRate]) => {
+        const visitors = current * (SOURCES.find(([s]) => s === source)?.[1] ?? 0);
+        return { source, label: sourceLabel(source), revenue: Math.round(visitors * saleRate) * 19 };
+      }).filter((r) => r.revenue > 0);
+      return { rows, total: rows.reduce((a, r) => a + r.revenue, 0) };
+    },
+    purchase_landing: () => {
+      const rows = SEARCH_LANDING.map(([path, share, rate]) => ({
+        path,
+        revenue: Math.round(current * share * rate * 0.35) * 19,
+      })).filter((r) => r.revenue > 0);
+      return { rows, total: rows.reduce((a, r) => a + r.revenue, 0) };
+    },
   };
   return payloads[report]() as Payloads[R];
 }

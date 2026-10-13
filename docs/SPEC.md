@@ -4,6 +4,10 @@ Oct 11, 2026 · Written by Claude Code from `docs/ROADMAP.md` · Status: approve
 
 **Updated Oct 11, 2026 (session 2):** a yearly price and Growth shown as "coming soon" (sections 16 and 17), one theme and brand file and a UI quality bar (section 18), and code structure and reuse rules (section 4).
 
+**Updated Oct 13, 2026 (session 8):** Sprint 7 built: revenue from Stripe and sales by source (section 28.3, "How it's built"), with `revenue_source`, `revenue_day` and the sale columns (section 9) and the `revenue-sync` job (section 20). Sprint 6 built: Google search insights (section 28.2, "How it's built"), with the two new site columns (section 9). Sprint 5 built: how the Growth plan, several sites, per-site public pages and the multi-site Monday email work (section 28.1, "How it's built"), with the data model, billing, jobs and env vars updated (sections 9, 16, 20 and 22).
+
+**Updated Oct 13, 2026 (session 7):** the V2 plan (section 28) and the V3 list (section 29), as decided by Siamak.
+
 **Updated Oct 12, 2026 (session 6):** custom date ranges with a calendar, and keys in the date menu (sections 8 and 15); list cards without titles or CSV buttons, with "Details" (search and CSV in a modal), Browser and OS in Devices, City in Countries, and the summary line in the email only (sections 10.2, 11 and 13).
 
 **Updated Oct 12, 2026 (session 5):** Today and Yesterday ranges with hourly charts (section 8), the overview card and toolbar, fixed-height lists (section 11), the live demo in a browser frame at `/demo` and the signed-in landing page (section 17), the pricing switch's animations and Growth's yearly price (section 17), and the motion rules (section 18).
@@ -217,7 +221,8 @@ More features come in V2 (several sites, alerts, revenue), so the code is built 
 | `/` | **Landing**: headline, the live demo in a browser frame, how it works in 3 steps, pricing section (`#pricing`, section 17), FAQ, sign-in or Dashboard button | public | static |
 | `/demo` | **Live demo** (section 17): a real public stats page, framed on the landing page with `?embed=1` | public | partly prerendered, cached about 10 minutes, plus Cloudflare |
 | `/signin` | **Sign in**: one screen saying what we read (read-only), then "Continue with Google" | public | static |
-| `/dashboard` | **Dashboard**: the cards (section 11) | signed in | dynamic, streamed per card, cache-first |
+| `/dashboard` | **Dashboard**: the cards (section 11); `?site=<id>` names the site (section 28.1) | signed in | dynamic, streamed per card, cache-first |
+| `/sites` | **All sites** (Growth): one card per site; Starter sees the upgrade panel (section 28.1) | signed in | dynamic, streamed per site |
 | `/settings` | **Settings**: account, weekly email, public page, billing, disconnect Google, delete account | signed in | dynamic |
 | `/p/[slug]` | **Public page** (section 15) | public | cached about 10 minutes, plus Cloudflare |
 | `/privacy`, `/terms` | **Legal** | public | static |
@@ -401,7 +406,7 @@ The Drizzle schema lives in `src/lib/db/schema.ts`.
 | `id` | text pk | |
 | `user_id` | text fk → user | |
 | `property_id` | text | e.g. `properties/123456` |
-| `is_active` | boolean | Exactly one active per user (partial unique index) |
+| `is_active` | boolean | Exactly one active per user (partial unique index): the site the dashboard opens with, the one opened most recently |
 | `display_name` | text | From GA4 |
 | `domain` | text null | From the web stream, e.g. `mysite.com` |
 | `time_zone` | text | e.g. `Europe/Amsterdam` |
@@ -411,6 +416,11 @@ The Drizzle schema lives in `src/lib/db/schema.ts`.
 | `signup_event` | text null | The key event the user chose |
 | `status` | text | `ok` · `needs_reconnect` · `no_access` |
 | `quota_blocked_until` | timestamptz null | Set after a 429 |
+| `added_at` | timestamptz null | In the user's list since (Sprint 5). Null: switched away from or removed, kept for its notes and settings |
+| `last_viewed_at` | timestamptz null | When its dashboard was last opened, stamped at most hourly; `warm-cache` uses it (Sprint 5) |
+| `search_console_url` | text null | The Search Console property for Google search insights, e.g. `sc-domain:example.com` (Sprint 6) |
+| `brand_terms` | text[] | Extra spellings of the site's name, at most 10 (Sprint 6) |
+| `sale_event`, `sale_page` | text null | What counts as a sale: a GA4 key event or a "thank you" page path (Sprint 7) |
 | `created_at`, `updated_at` | timestamptz | |
 
 Unique on (`user_id`, `property_id`).
@@ -434,13 +444,15 @@ Primary key (`property_id`, `report`, `range_type`, `params_hash`).
 ### Other tables
 
 - **`chart_note`**: `id`, `site_id` fk → site (cascade), `day` date, `text` varchar(80), `created_at`, `updated_at`.
-- **`public_page`**: `user_id` pk fk, `slug` unique, `enabled` boolean (default false), `cards` text[], `indexable` boolean (default true), `updated_at`.
+- **`public_page`**: `site_id` pk fk → site (cascade), `user_id` fk (for clean-up), `slug` unique, `enabled` boolean (default false), `cards` text[], `indexable` boolean (default true), `updated_at`.
   - A slug is 3–40 characters of `[a-z0-9-]`. Reserved words are blocked.
-  - The page shows the user's active site.
+  - One page per site since Sprint 5 (it was one per user, showing the active site).
 - **`user_settings`**: `user_id` pk fk, `weekly_email` boolean (default true), `email_notice_dismissed` boolean (default false), `created_at`, `updated_at`.
-- **`billing`**: `user_id` pk fk, `trial_ends_at` (sign-up + 14 days), `status` (Stripe subscription status or null), `stripe_customer_id`, `stripe_subscription_id`, `plan_interval` (`month` or `year`, null until the first payment), `current_period_end`, `updated_at`.
+- **`billing`**: `user_id` pk fk, `trial_ends_at` (sign-up + 14 days), `status` (Stripe subscription status or null), `plan` (`starter` or `growth`, from the price; null until the first payment), `stripe_customer_id`, `stripe_subscription_id`, `plan_interval` (`month` or `year`, null until the first payment), `current_period_end`, `cancel_at_period_end`, `state_at`, `updated_at`.
 - **`email_send`**: `user_id` fk, `week_start` date, `sent_at`, `provider_message_id`. The primary key is (`user_id`, `week_start`), so a week's email can only go out once.
 - **`stripe_event`**: `event_id` pk, `type`, `received_at`. The webhook skips events it has already stored.
+- **`revenue_source`** (Sprint 7): `site_id` pk fk → site (cascade), `user_id` fk, `secret` (the restricted Stripe key, encrypted), `key_hint` (last 4), `livemode`, `status` (`ok` · `invalid`), `covers_from` (first day of the totals), `last_sync_at`, `last_error`, `mrr_left_out`, `connected_at`.
+- **`revenue_day`** (Sprint 7): `site_id` fk (cascade), `day` (the site's time zone), `money` jsonb (per currency: `charged`, `refunded`, smallest unit), `new_customers`, `mrr` jsonb null (per currency, on the days recorded). Primary key (`site_id`, `day`). Aggregate only: no customer data.
 
 **Migrations:**
 
@@ -877,11 +889,11 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 | Plan | Price | What it includes | Status |
 | --- | --- | --- | --- |
 | **Starter** | €9 a month, or €90 a year (2 months free) | One GA4 site, no traffic limits, every V1 feature, and a 14-day free trial with no card | On sale |
-| **Growth** | €19 a month or €190 a year | Everything in Starter, plus the roadmap's V2 list: several sites, Search Console, traffic alerts, mentions on the chart, revenue next to traffic, and asking your data in plain English | "Coming soon" in the pricing section only. No button and no waitlist |
+| **Growth** | €19 a month or €190 a year | Everything in Starter, plus the V2 list (section 28): up to 10 sites, Google search insights, revenue from Stripe, sales by source | On sale since Sprint 5. The free trial is Starter only; Growth starts when paid for |
 
 - "2 months free" is worked out from the prices (12 × €9 − €90 = €18, which is 2 months of €9). It is never typed in by hand.
-- Stripe has one product, Starter, with two prices. Their IDs are in `STRIPE_PRICE_MONTHLY` and `STRIPE_PRICE_YEARLY` (section 22).
-- Growth arrives with V2 (roadmap Sprint 5), together with its Stripe price and its limits.
+- Stripe has two products, Starter and Growth, with two prices each. Their IDs are in `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_GROWTH_MONTHLY` and `STRIPE_PRICE_GROWTH_YEARLY` (section 22).
+- Growth went on sale with V2 (section 28.1), with its limits in `plans.ts`.
 
 **Trial:**
 
@@ -970,10 +982,11 @@ There is no setup screen. Every state below is a card or banner on the dashboard
   - Its feature list: one GA4 site, no traffic limits, full history from day one, the weekly email, the public page.
   - The button "Start 14-day free trial →" → `/signin`, with "€0 due today · no card needed" under it.
   - Billing is only chosen at upgrade (section 16), because the trial needs no card.
-- **Growth card:**
-  - "€19 / month", or "€190 / year" with "Save €38 a year", and a "Coming soon" badge.
+- **Growth card** (on sale since Sprint 5):
+  - "€19 / month", or "€190 / year" with "Save €38 a year".
   - "Everything in Starter, plus" its feature list (section 16).
-  - No button and no waitlist.
+  - The button "Start free, upgrade later →" → `/signin`, with "The 14-day trial is on Starter. Growth starts when you upgrade." under it (the trial is Starter only, section 28.1).
+- Both cards are the shared `PlanCard` (`components/shared`), which the in-app plan choice also uses in a compact size.
 
 **FAQ:** "Do I need GA4?" and "What do you store?".
 
@@ -1010,13 +1023,13 @@ Both are static, in plain English. Claude drafts them, Siamak reviews them (this
 - **Open Graph images:** one for the landing page (`opengraph-image.tsx`, generated at build time) and one per public page.
 - **Structured data:** `SoftwareApplication` JSON-LD on the landing page: name, description, `applicationCategory` "BusinessApplication", `operatingSystem` "Web", and `offers`.
   - Two `Offer`s, each with a `UnitPriceSpecification`: €9 a month (`unitCode` "MON") and €90 a year (`unitCode` "ANN"), priceCurrency "EUR", both from `plans.ts`.
-  - Growth is left out until it can be bought.
+  - Every plan on sale gets its two offers: Growth's €19 and €190 joined in Sprint 5.
 - **`robots.txt`:**
   - Allows `/`, `/privacy`, `/terms` and `/p/`.
   - Blocks `/dashboard`, `/settings`, `/admin`, `/signin`, `/api/` and `/email/`.
   - Links to the sitemap.
 - **`sitemap.xml`:** landing, privacy and terms (Sprint 3), plus public pages (Sprint 4).
-- **`llms.txt`:** short plain text for AI assistants: what SimpleDash is, who it's for, features, prices (Starter at €9 a month or €90 a year; Growth at €19 a month or €190 a year, coming soon), what we store, and key links (including `/#pricing` and `/demo`).
+- **`llms.txt`:** short plain text for AI assistants: what SimpleDash is, who it's for, features, prices (Starter at €9 a month or €90 a year; Growth at €19 a month or €190 a year), what we store, and key links (including `/#pricing` and `/demo`).
 
 ## 18. Design, performance and accessibility
 
@@ -1210,8 +1223,9 @@ Jobs run as Coolify scheduled tasks. Each one runs `node scripts/run-job.mjs <jo
 
 | Job | When | What it does |
 | --- | --- | --- |
-| `warm-cache` | hourly at :05 | For sites that are active, unlocked and `ok`, whose owner signed in during the last 14 days: refresh the 7-day reports when they're stale or the day has turned in the site's time zone. Skips quota-blocked sites |
+| `warm-cache` | hourly at :05 | For listed, unlocked, `ok` sites whose dashboard was opened in the last 24 hours (`last_viewed_at`, since Sprint 5): refresh the 7-day reports when they're stale or the day has turned in the site's time zone. Skips quota-blocked sites |
 | `weekly-email` | hourly at :00 | Section 14 |
+| `revenue-sync` | hourly at :20 | Brings Growth sites' Stripe totals up to date (section 28.3) |
 | `cleanup` | daily at 03:30 UTC | Deletes `report_cache` rows not fetched for 7 days, and expired sessions and verification rows |
 | backup | nightly at 02:00 UTC | Runs in a separate small container with a Postgres client and rclone. `pg_dump` (custom format) of our `public` and `drizzle` schemas (not Supabase's own), without the rows of `report_cache`, `session` and `verification`, then gzip, then the R2 bucket. An R2 lifecycle rule deletes copies after 30 days. Restore one into local Postgres once, to prove it works. Setup and restore: `docs/backup.md` |
 
@@ -1318,6 +1332,8 @@ These become `.env.example` in Sprint 0. Each variable is added in the sprint sh
 | `STRIPE_WEBHOOK_SECRET` | Webhook signatures | | Sprint 4 |
 | `STRIPE_PRICE_MONTHLY` | Starter, €9 a month | `price_…` | Sprint 4 |
 | `STRIPE_PRICE_YEARLY` | Starter, €90 a year | `price_…` | Sprint 4 |
+| `STRIPE_PRICE_GROWTH_MONTHLY` | Growth, €19 a month | `price_…` | Sprint 5 |
+| `STRIPE_PRICE_GROWTH_YEARLY` | Growth, €190 a year | `price_…` | Sprint 5 |
 | `STRIPE_MANAGED_PAYMENTS` | Turns Managed Payments on in Checkout | `true` (default) | Sprint 4 |
 | `SENTRY_DSN` | Server error reports (optional) | | Sprint 4 |
 | `ADMIN_EMAILS` | Who can open `/admin` | comma-separated | Sprint 4 |
@@ -1414,3 +1430,137 @@ Vitest unit tests only. The roadmap rules out end-to-end tests.
 | ~~Are the prices shown with VAT included?~~ Yes, VAT included (Siamak, Oct 11, 2026) | Sprint 3 (pricing section) |
 | ~~What is the refund rule for yearly plans?~~ A full refund within 14 days of a yearly payment (Siamak, Oct 11, 2026) | Sprint 3 |
 | Support address: `hello@simpledash.app` forwarded to your inbox with Cloudflare Email Routing? | Sprint 3 |
+
+## 28. V2 plan: the Growth plan (Siamak, Oct 13, 2026)
+
+Siamak's decisions on Oct 13, 2026 replace the roadmap's V2 list (`docs/ROADMAP.md` itself is unchanged). V2 starts now, by Siamak's choice, before the roadmap's 3-paying-users gate.
+
+**The rule for every V2 feature:** exact numbers only. No estimates, no guessed matches, nothing a user can't rely on. When a number can't be known, the screen says what's missing instead.
+
+**In V2:** the Growth plan, several sites, Search Console, and revenue from Stripe with sales by source. **Not in V2** (section 29): X mentions, AI questions, milestone images, Hacker News and Product Hunt markers, alerts, the "new site linked to you" heads-up and the signup funnel. **Dropped for good:** the checkout snippet that stores the GA visitor ID in Stripe, sending purchases into GA4 with the Measurement Protocol (it needs write access to the user's GA4), and estimated revenue per source or per search.
+
+### 28.1 Sprint 5: Growth plan and several sites
+
+**Growth plan:**
+
+- €19 a month or €190 a year, VAT included, in `src/config/plans.ts`. Its feature list becomes: several sites, Google search insights, revenue from Stripe, sales by source. (Alerts, mentions and AI questions leave the list: they're V3.)
+- Stripe: a second product, "SimpleDash Growth", with a monthly and a yearly price (`STRIPE_PRICE_GROWTH_MONTHLY`, `STRIPE_PRICE_GROWTH_YEARLY`), Managed Payments and the SaaS tax code like Starter.
+- `billing.plan` (`starter` | `growth`), set by the webhook from the price ID. Switching plans goes through the Customer Portal (all four prices allowed).
+- The pricing section's Growth card loses "Coming soon" and gets its own trial button. Checkout takes a `plan` field next to `interval`, checked with Zod on the server.
+- **Limits** in `plans.ts` and enforced on the server: Starter 1 site; Growth up to 10 sites (Siamak, Oct 13, 2026). Search Console and Stripe are Growth only; Starter sees them with an "Upgrade to Growth" panel, never an error.
+- **The trial stays Starter:** the 14-day trial gives Starter's features only. Growth features show the "Upgrade to Growth" panel during the trial too, and Growth starts when someone pays for it (Siamak, Oct 13, 2026).
+
+**Several sites:**
+
+- A Growth user adds GA4 sites from the site menu ("Add a site") up to the limit; each added site keeps its own signup event, notes, Search Console link and public page. Starter keeps today's behaviour: one site, switchable.
+- **All sites** (`/sites`, Growth): one card per site with its visitors for the last 7 days, the change, and a small chart; a click opens that site's dashboard.
+- The dashboard address names the site (`/dashboard?site=<id>`, checked with `requireSite()` like today), so a shared link opens the right one.
+- `public_page` moves from one per user to one per site (a migration keyed on `site_id`).
+- **The Monday email** stays one email per account, with one block per added site.
+- **Cost:** GA4 calls grow with sites. Before several sites ship, `warm-cache` refreshes only sites whose dashboard was opened in the last 24 hours (`site.last_viewed_at`); the Monday email and public pages fetch what they need themselves.
+
+**Done when:** a Growth test user pays in test mode, adds three sites, switches between them and sees all three on `/sites`; a Starter user sees the upgrade panel.
+
+**How it's built (Sprint 5, session 8):**
+
+- **What a plan allows** comes from `limits` in `plans.ts` (`sites`, `searchConsole`, `revenue`) through one function, `entitlements(planState)` in `src/lib/billing/plan.ts`. Paid Growth gets Growth's limits; a trial, paid Starter, an unknown price and a locked account get Starter's. Every server check reads it; nothing else decides.
+- **`billing.plan`** (`starter` | `growth`, null before the first payment) is set by the webhook from the subscription's price: the two Starter prices mean Starter, the two Growth prices mean Growth. Any other price is reported to Sentry and counts as Starter. The migration sets `starter` for rows that already have a subscription.
+- **Checkout** (`startCheckout`): the form sends `plan` and `interval`, both checked with Zod; the price ID is picked on the server from the four env vars. The success URL says which plan (`/dashboard?upgraded=growth`), so the thank-you notice names it.
+- **Starter → Growth for someone already paying:** a Customer Portal session with the "confirm a subscription update" flow, preset to the matching Growth price (monthly stays monthly), so it is one confirm screen at Stripe with Stripe's own proration. If the Portal isn't set up for plan switching, a plain Portal session opens instead.
+- **Choosing a plan** (the locked panel, Settings → Billing): one Monthly / Yearly switch above two compact plan cards, each with its own submit button (`name="plan"`), so it still needs no JavaScript. The cards are the pricing section's `PlanCard`, moved to `components/shared` with a `compact` look.
+- **"Upgrade to Growth"** (`UpgradePanel`): a card saying what the feature is, Growth's price with the Monthly / Yearly switch, and one button. It replaces the feature where Starter (or a trial) reaches a Growth-only part: adding a second site, `/sites`, and later Search Console and revenue. Never an error page.
+- **Sites in the account:** a new column `site.added_at`. A site with `added_at` set is in the user's list (Growth: up to 10, in the order added); `is_active` stays "the site the dashboard opens with", now the one opened most recently. The migration sets `added_at` for every user's active site. Starter's switcher works as before: the new site replaces the old one in the list (the old row keeps its notes and settings for later).
+- **Which sites can be opened** (`siteAccess` in `src/lib/sites/access.ts`, pure and tested): Growth, every added site; Starter and trials, only the active one. `requireSite(siteId?)` checks the ID belongs to the user, is added, and is allowed; anything else is a 404 for actions and route handlers. The dashboard itself shows the upgrade panel for an added site the plan doesn't allow (an old link after going back to Starter), with "Switch to this site instead".
+- **The site in the address:** `/dashboard?site=<id>` (no `site` means the active site). The date menu, Settings link, CSV and live endpoints, chart notes and the signup picker carry the site's ID, and the server checks it every time. Opening a site makes it the active one and stamps `last_viewed_at` (at most once an hour, after the response).
+- **Going back to Starter** (Siamak, Oct 13, 2026): nothing is deleted. Added sites stay in the list but only the active one opens; the Monday email covers only that one; the others' public pages say "paused". Upgrading again brings everything back.
+- **The site menu** (`SiteSwitcher`): the added sites as links (with "n of 10 sites"), then "All sites" (`/sites`) and "Add a site…" for Growth; for Starter, "Switch site…" and "Add another site" (which opens the upgrade panel on `/sites`). "Add a site…" and "Switch site…" open one dialog (`SitePickerDialog`): the user's GA4 properties fetched live, a search box, and Add or Switch on each row. Growth sites can be removed from Settings (the last one can't), which keeps their notes and settings.
+- **All sites** (`/sites`): one card per added site, streamed one by one: icon and address, visitors for the last 7 days with the change, and a small server-rendered line (`Sparkline`, the same smooth curve as the chart). Status words where the numbers can't be fresh ("Google access ended", "No access"). A dashed "Add a site" card at the end, until the limit.
+- **Public page per site:** `public_page` is keyed on `site_id` (migration `0004`: the column, a backfill from each user's active site, the new primary key; `user_id` stays for clean-up). Settings → Public page edits the page of the site being shown. A page whose site was removed, or isn't allowed on the owner's plan, is paused.
+- **Settings per site:** `/settings?site=<id>`. Account parts (account, weekly email, billing, Google, delete) stay at the top; the site parts (public page, sites list, and later Search Console and Stripe) sit under "Site settings · mysite.com", with a site menu for Growth.
+- **The Monday email:** one email per account, sent on Monday afternoon in the active site's time zone. One block per allowed site with visits (the summary, the four numbers, top sources and pages, AI traffic, its own dates and an "Open dashboard" link to that site). Subject: one site as before; several sites: "Last week: mysite.com 1,234 visitors (up 23%), and 2 more sites". Sites with no visits in either week are left out; with none left, nothing is sent.
+- **`warm-cache`:** only added sites whose dashboard was opened in the last 24 hours (`last_viewed_at`), still skipping locked, broken and quota-blocked ones. It replaces the "signed in during the last 14 days" rule.
+- **Usage counts** (`/admin`): paying is split into Starter and Growth.
+
+### 28.2 Sprint 6: Google search insights (Search Console)
+
+**Connecting** (Settings → a "Google Search Console" card, Growth): "Connect Search Console" asks Google for one more read-only scope, `webmasters.readonly`, only then. We list the user's Search Console sites (`sites.list`) and pick the one that matches the site's domain (`sc-domain:example.com` first, then `https://example.com/`); the user can change it. If none matches, the card says how to add the site in Search Console. Disconnecting drops the scope's use and the link.
+
+**Data:** `searchanalytics.query` with the `query`, `page` and `date` dimensions, cached in `report_cache` like GA4 reports (new report names starting with `search_`). Aggregated rows only.
+
+**What the user sees** (a "Google search" card with tabs, each list with Details like the other cards):
+
+1. **Close to page 1:** searches where the site ranks 8 to 15 with the most impressions, grouped by page. "/pricing is on page 2 for 'ga4 dashboard', seen 3,200 times this month."
+2. **What changed:** for the pages whose Google clicks fell or rose most against the period before, the searches behind it, with their clicks and position then and now. Facts only, never a reason.
+3. **Your name vs new people:** clicks from searches that contain the site's name (worked out from the domain; the user can add spellings in Settings) against all other searches, over time.
+4. **Seen but not clicked:** pages with many impressions whose click rate is well below the site's own average click rate at that position. Compared with the site itself, never with an industry number.
+5. **Searches that lead to signups:** Google clicks per landing page next to that page's visitors and signups from GA4 (joined by page, which is exact; never "revenue per search").
+
+**Honest on screen:** Search Console data is 2–3 days behind (the period says so), and Google leaves out rare searches ("Google hides searches made by very few people"). Search Console keeps 16 months.
+
+**Google's side (Siamak):** add `webmasters.readonly` to the OAuth consent screen and get it verified (a sensitive scope); start this when the sprint starts, because review takes time.
+
+**Done when:** a Growth test user connects Search Console on a real site and the five views match Search Console's own report for the same days.
+
+**How it's built (Sprint 6, session 8):**
+
+- **Asking for the scope:** "Connect Search Console" runs Better Auth's `linkSocial` for Google with `webmasters.readonly` added. Google shows one more consent screen (with `include_granted_scopes`), and Better Auth merges the new scope into the stored `account.scope` with the new tokens. (A plain sign-in never updates the stored scope; the "Allow access" button for Analytics uses the same link flow since this sprint, so that state can't loop.) The cached access token is dropped whenever Google's tokens change, so the next call carries the new scope.
+- **The Search Console API** is called with `fetch` and the user's access token (`src/lib/search-console/client.ts`): `GET /webmasters/v3/sites` and `POST /webmasters/v3/sites/{site}/searchAnalytics/query`, 20-second timeout, errors mapped like GA4's (401 access ended, 403 no access or a missing scope, 429 Google's limit, 5xx not answering). Only `src/lib/search-console/` calls it. No new dependency.
+- **Which Search Console property** (`match.ts`, pure, tested): from the verified ones in `sites.list`, the domain property for the site's own domain (`sc-domain:example.com`) first, then a URL-prefix property for it (`https://example.com/`, then `https://www.example.com/`, then `http://`). A domain property of a parent domain (`sc-domain:example.com` for `blog.example.com`) is offered too; when it is used, every query gets a page filter for the site's own host, so other subdomains never mix in. Picked automatically right after connecting (`/api/search-console/connected`, which then returns to Settings); the user can change it in Settings, and the server checks the choice is in their own list.
+- **Stored per site** (migration `0005`): `site.search_console_url` (the property, or null) and `site.brand_terms` (extra spellings of the site's name, at most 10). Search reports are cached in `report_cache` like GA4's: aggregated rows only, keyed on the GA4 property (so clean-up stays the same), the Search Console window as the range, and the property, host filter and name spellings in `params_hash`.
+- **The window** (`window.ts`, pure, tested): Search Console counts days in California time and is usually 2–3 days behind. A cheap query by date over the last 10 days finds the newest finished day (cached 6 hours). The dashboard's period is moved back so it ends on that day, keeping its length (Last 7 days → the 7 days ending on Google's newest day); the period before is the same length just before. The card always prints its own dates.
+- **Reports** (each one cache row, fetched together, 9 Search Console calls for a new window):
+  - `search_overview`: clicks, impressions, click rate and position for both periods, and clicks and impressions per day.
+  - `search_insights`: searches by page for both periods, and pages for both periods (`rowLimit` 25,000, the API's maximum), worked into the four lists below at fetch time, so only the top rows are stored.
+  - `search_brand`: clicks per day for searches matching the site's name, and for all other searches (Search Console's own `includingRegex` / `excludingRegex` filters), both periods.
+  - Two GA4 reports for the same days (`search_landing`, `search_signups`): visitors and signup events by landing page for visits from Google search (`sessionSource` = google, `sessionMedium` = organic).
+- **The five views** (`insights.ts`, pure, tested), each from Google's own numbers, compared only with the site itself:
+  1. **Close to page 1:** searches whose average position rounds to 8–15, most seen first, grouped by page (25 pages, 10 searches each in the card; all in Details).
+  2. **What changed:** the 5 pages whose Google clicks rose most and the 5 that fell most (at least 3 clicks of change), each with the searches behind it: clicks and position then and now. No reasons.
+  3. **Your name vs others:** clicks per day from searches with the site's name against all other searches, with each total's change. The name comes from the domain (`meetline.me` → "meetline", "meet line" for a hyphen) plus the spellings from Settings. A note says the two add up to less than all Google clicks because Google hides rare searches.
+  4. **Seen, not clicked:** pages seen at least 100 times whose click rate is under half of what the site's own pages get at about the same position (positions grouped 1, 2, 3, 4–5, 6–10, 11–20, 21+, needing 3 pages and 200 views in the group to compare with). Shows both rates.
+  5. **Searches that lead to signups:** Google clicks per landing page (Search Console) next to that page's visitors from Google search and their signups (GA4, the chosen signup event), joined on the page path. With no signup event, it asks for one, like the Signups number.
+- **The card** ("Google search", dashboard, Growth with Search Console connected): its own dates and the "2–3 days behind" note, four numbers (Clicks, Seen, Click rate, Position) with changes, then the five views as tabs (CSS only, scrolling sideways on phones). Every list has Details (search and CSV), like the other cards. It streams on its own, so it never holds up the page. Starter and trials see a small "Google search insights are part of Growth" card instead; Growth without Search Console sees "Connect Search Console".
+- **Words on screen:** Clicks, Seen (impressions), Click rate (CTR), Position (average position), searches (queries). "Page 2" only next to the position it comes from (positions 11–20).
+- **Settings → Google Search Console** (site settings, Growth): Connect; the property in use with a menu to change it; "Your name in searches" (the spellings); Disconnect (stops using it for this site; Google access itself stays, for the other sites).
+
+### 28.3 Sprint 7: revenue and sales by source
+
+Three layers, each exact, never multiplied together:
+
+1. **Revenue from Stripe** (Growth). A read-only connection in Settings: the user pastes a **restricted read-only key** (Siamak, Oct 13, 2026). Settings shows short steps (Stripe → Developers → API keys → "Create restricted key", read access to the resources we need, nothing else) and a "Check and save" button that tries one read call. We refuse keys that can write (`sk_` secret keys) and say why. The key is stored encrypted like Google tokens, never shown again (only its last 4 characters), and can be removed in one click. We read balance transactions and subscriptions and keep **daily totals only**: revenue, refunds, new customers and MRR, in the account's currency. Never customer names, emails or card data. The overview gets Revenue and Customers numbers and revenue bars under the visitors line, plus visitors per customer for the period.
+2. **Sales and signups by source** (Growth), from GA4: counts per source and per landing page of the user's chosen events. Settings gets "What counts as a sale?": a GA4 key event (like `purchase`), or a "thank you" page path. Where GA4 already has `purchase` events with a value, revenue per source shows too, from GA4's own numbers. If it doesn't, the card says so and how to send it; we never estimate it.
+3. **Stripe Checkout warning** (every plan): when `checkout.stripe.com` (or another payment page) shows up in Sources, a notice says GA4 is giving sales to the payment page instead of their real source, and links to the GA4 setting that fixes it ("List unwanted referrals").
+
+**Stored data:** the Stripe credential (encrypted) and daily revenue totals are new kinds of stored data. Both are aggregate or secret-at-rest, never visitor- or customer-level (principle 3); Siamak approved them with this plan.
+
+**Done when:** Siamak's test Stripe account shows the same daily revenue as Stripe's dashboard, and a test purchase event in GA4 shows under its source.
+
+**How it's built (Sprint 7, session 8):**
+
+- **The key** (Settings → "Revenue from Stripe", per site, Growth): the steps in plain words, a password field, and "Check and save". `rk_live_…` and `rk_test_…` are accepted (a test key says so on screen); `sk_…` is refused ("this key can change your Stripe account"), and so are `pk_…` and anything else. The check makes four reads, one at a time (charges, refunds, customers, subscriptions), and names the one the key can't do, so the user knows what to tick in Stripe. The key is stored encrypted with the same method as Google tokens (Better Auth's `symmetricEncrypt`); only its last 4 characters are shown again. Remove deletes the key and every stored total for the site.
+- **What is read** (with the user's key, through the `stripe` package already installed): succeeded charges (amount, currency, time), refunds (amount, currency, time), customers (time created only), and active or past-due subscriptions with their prices. Nothing else is kept: no names, emails, card or customer IDs.
+- **Daily totals** (`revenue_day`: site, day in the site's time zone, currency, charged, refunded, new customers, and MRR on the days it was recorded). Pure, tested functions bucket the reads by day. **Revenue** on screen = charged minus refunded that day, before Stripe's fees and in the account's main currency (the one with the most charged); other currencies are named, never converted. **MRR** = the monthly list price of every active and past-due subscription (yearly ÷ 12, weekly × 52 ÷ 12), before discounts; trials aren't counted, and usage-based prices can't be, so the card says how many were left out. MRR history starts on the day Stripe was connected.
+- **Syncing:** right after connecting, the last 25 months (enough for 12 months against the 12 before), after the response. Then the hourly `revenue-sync` job re-reads from 2 days before the last sync, so late refunds land on their own day. Locked accounts and Starter are skipped.
+- **On the dashboard** (Growth, connected): two more numbers in the overview, **Revenue** and **New customers** (with "1 per 412 visitors" under it, visitors ÷ new customers for the same days), with the period before; and revenue as soft bars under the visitors line (per day, or per month on 12 months; hourly charts show none). The chart's tooltip and "View as table" include it.
+- **What counts as a sale** (Settings, per site, Growth): a GA4 key event (the same picker as signups) or a "thank you" page path, or nothing (`site.sale_event`, `site.sale_page`).
+- **Sales and signups by source** (a list card, Growth): Sources | Landing pages, with Visitors, Signups and Sales (GA4's event counts, or views of the thank-you page), and **Revenue** only when GA4 itself has `purchaseRevenue` for the period (GA4's own sums, in the property's currency). Without it the card says GA4 has no purchase values and links to how to send them. Never estimated.
+- **The payment-page warning** (every plan, dashboard only): when `checkout.stripe.com` or another payment page (PayPal, Paddle, Lemon Squeezy) is a source, the Sources card says GA4 gives those sales to the payment page, and how to add it to "List unwanted referrals" in GA4.
+
+### 28.4 Decided before V2 (Siamak, Oct 13, 2026)
+
+| Question | Answer |
+| --- | --- |
+| Growth's site limit | 10 sites |
+| Does the 14-day trial include Growth features? | No: the trial is Starter only, so there are never extra sites to handle when it ends |
+| Stripe App or a pasted key for the revenue connection | A pasted restricted read-only key |
+
+## 29. V3: later (postponed by Siamak, Oct 13, 2026)
+
+Not planned yet; Siamak picks from this list after V2.
+
+- **X mentions on the chart.** Design notes kept for later: search the domain (`url:example.com`, plus an exact brand phrase the user gives), no retweets, once a day per site, only posts newer than the last one stored; keep only the post ID, author, date and link (and drop posts deleted on X); a hard cap per site (for example 200 posts a month, about $1); next to each mention, the visits from X (`t.co`) that day. Check X's current pricing first.
+- **Ask your data in plain English** (an AI over the cached reports; answers must cite the numbers).
+- **Milestone images** to share on X.
+- **Hacker News and Product Hunt launches** marked on the chart.
+- **"Tracking looks broken" alert** (all events at zero).
+- **Not decided yet:** an alert email when traffic drops sharply, a "new site linked to you" heads-up when a new source appears, and a signup funnel built from the key-event counts we already fetch (not GA4's v1alpha funnel API).

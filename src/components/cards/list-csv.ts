@@ -6,9 +6,19 @@ import { toCsv } from "@/lib/csv";
  * Numbers stay numbers; shown text (like "34%") is kept as text. Made safe for
  * spreadsheets by toCsv.
  */
-export function listCsv(itemLabel: string, columns: string[], rows: RankedRow[]): string {
+export function listCsv(
+  itemLabel: string,
+  columns: string[],
+  rows: RankedRow[],
+  /** The second line's column, e.g. "Page" for a list of searches. */
+  sublabelHeader?: string,
+): string {
   return toCsv(
-    [itemLabel, ...columns],
-    rows.map((r) => [r.label, ...columns.map((_, i) => r.display?.[i] ?? r.values[i] ?? 0)]),
+    [itemLabel, ...(sublabelHeader ? [sublabelHeader] : []), ...columns],
+    rows.map((r) => [
+      r.label,
+      ...(sublabelHeader ? [r.sublabel ?? ""] : []),
+      ...columns.map((_, i) => r.display?.[i] ?? r.values[i] ?? 0),
+    ]),
   );
 }

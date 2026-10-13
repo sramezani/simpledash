@@ -1,10 +1,10 @@
 import "server-only";
-import { and, eq } from "drizzle-orm";
 import { cookies, headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
-import { db } from "@/lib/db/client";
-import { site, type Site } from "@/lib/db/schema";
+import type { Site } from "@/lib/db/schema";
+import { readSiteId } from "@/lib/sites/access";
+import { getSiteContext } from "@/lib/sites/sites";
 import { auth } from "./auth";
 import { SIGNED_IN_HINT } from "./signed-in-hint";
 
@@ -20,23 +20,27 @@ export async function requireUser(): Promise<SessionUser> {
   return session.user;
 }
 
-/** The user's one active site, or null when no GA4 property is connected. */
-export const getActiveSite = cache(async (userId: string): Promise<Site | null> => {
-  const row = await db.query.site.findFirst({
-    where: and(eq(site.userId, userId), eq(site.isActive, true)),
-  });
-  return row ?? null;
-});
-
 /**
- * The signed-in user and their own active site. Never trusts a property ID from the browser.
+ * The signed-in user and one of their own sites that the plan lets them open: the one
+ * named by `siteId` (a form field or `?site=`), or the active one. Never trusts a
+ * property ID from the browser, and a site ID only after checking it is theirs.
  * For pages and actions that need a site; anything else is a 404.
  */
-export async function requireSite(): Promise<{ user: SessionUser; site: Site }> {
+export async function requireSite(siteId?: unknown): Promise<{ user: SessionUser; site: Site }> {
   const user = await requireUser();
-  const active = await getActiveSite(user.id);
-  if (!active) notFound();
-  return { user, site: active };
+  const found = await findOpenSite(user.id, siteId);
+  if (!found) notFound();
+  return { user, site: found };
+}
+
+/** One of the user's sites they may open now, or null (route handlers answer 404). */
+export async function findOpenSite(userId: string, siteId?: unknown): Promise<Site | null> {
+  const given = siteId !== undefined && siteId !== null && siteId !== "";
+  const requested = given ? readSiteId(siteId) : null;
+  // A malformed ID is never "the active site": it's simply not found.
+  if (given && !requested) return null;
+  const { choice } = await getSiteContext(userId, requested);
+  return choice.kind === "open" ? choice.site : null;
 }
 
 /** For route handlers: the user, or null (the handler answers 401). */

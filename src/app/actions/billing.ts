@@ -3,27 +3,31 @@
 import type { Route } from "next";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { planIds } from "@/config/plans";
 import { requireUser } from "@/lib/auth/session";
-import { createCheckout, createPortal, isPaying } from "@/lib/billing/checkout";
+import { createCheckout, createPlanChange, createPortal, isPaying } from "@/lib/billing/checkout";
 import { reportError } from "@/lib/report-error";
 
 const intervalSchema = z.enum(["month", "year"]);
+const planSchema = z.enum(planIds);
 
 /**
- * "Upgrade": a form post with `interval` (month or year), so it needs no JavaScript.
- * The price ID is chosen on the server. Someone already paying goes to the portal.
+ * "Upgrade": a form post with `plan` (starter or growth) and `interval` (month or
+ * year), so it needs no JavaScript. The price ID is chosen on the server. Someone
+ * already paying changes plan in the Customer Portal.
  */
 export async function upgrade(formData: FormData) {
   const user = await requireUser();
-  const interval = intervalSchema.safeParse(formData.get("interval"));
+  const interval = intervalSchema.catch("month").parse(formData.get("interval"));
+  const plan = planSchema.catch("starter").parse(formData.get("plan"));
   let url: string | null;
   try {
     url = (await isPaying(user.id))
-      ? await createPortal(user.id)
-      : await createCheckout(user, interval.success ? interval.data : "month");
+      ? await createPlanChange(user.id, plan, interval)
+      : await createCheckout(user, plan, interval);
   } catch (error) {
-    reportError("Checkout failed", error, { userId: user.id });
-    redirect("/settings?billing=error");
+    reportError("Checkout failed", error, { userId: user.id, plan });
+    redirect("/settings?billing=error#billing");
   }
   redirect((url ?? "/settings") as Route);
 }
@@ -36,7 +40,7 @@ export async function manageBilling() {
     url = await createPortal(user.id);
   } catch (error) {
     reportError("Billing portal failed", error, { userId: user.id });
-    redirect("/settings?billing=error");
+    redirect("/settings?billing=error#billing");
   }
   redirect((url ?? "/settings") as Route);
 }

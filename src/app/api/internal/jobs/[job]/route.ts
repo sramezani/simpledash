@@ -1,6 +1,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { connection } from "next/server";
 import { cleanupJob } from "@/lib/jobs/cleanup";
+import { revenueSyncJob } from "@/lib/jobs/revenue-sync";
 import { isJobRequestAllowed } from "@/lib/jobs/auth";
 import { warmCacheJob } from "@/lib/jobs/warm-cache";
 import { weeklyEmailJob } from "@/lib/jobs/weekly-email";
@@ -9,6 +10,7 @@ import { reportError } from "@/lib/report-error";
 const jobs: Record<string, () => Promise<Record<string, number>>> = {
   "warm-cache": () => warmCacheJob(),
   cleanup: () => cleanupJob(),
+  "revenue-sync": () => revenueSyncJob(),
   // Sentry's cron monitor notices when the Monday email job stops running or fails.
   "weekly-email": () =>
     Sentry.withMonitor("weekly-email", () => weeklyEmailJob(), {

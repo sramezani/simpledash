@@ -27,3 +27,8 @@ export function isSendTime(now: Date, timeZone: string): boolean {
   const { weekday, hour } = localTime(now, timeZone);
   return weekday === 1 && hour >= SEND_FROM_HOUR && hour <= SEND_UNTIL_HOUR;
 }
+
+/** The last hour the email is tried in: after it, a site Google couldn't answer for is left out. */
+export function isLastSendHour(now: Date, timeZone: string): boolean {
+  return localTime(now, timeZone).hour === SEND_UNTIL_HOUR;
+}

@@ -1,5 +1,6 @@
 import { LockKeyholeIcon } from "lucide-react";
 import Link from "next/link";
+import { plans } from "@/config/plans";
 import { priceInWords } from "@/lib/billing/prices";
 import { UpgradeForm } from "./upgrade-form";
 
@@ -8,7 +9,7 @@ export function LockedPanel({ upgrade }: { upgrade: (formData: FormData) => Prom
   return (
     <section
       aria-labelledby="locked-title"
-      className="flex w-full max-w-lg flex-col gap-4 rounded-2xl border bg-card p-6 shadow-lg"
+      className="flex w-full max-w-2xl flex-col gap-4 rounded-2xl border bg-card p-6 shadow-lg"
     >
       <LockKeyholeIcon className="size-6 text-primary" aria-hidden="true" />
       <div className="flex flex-col gap-1.5">
@@ -16,8 +17,9 @@ export function LockedPanel({ upgrade }: { upgrade: (formData: FormData) => Prom
           Your free trial has ended.
         </h2>
         <p className="text-sm text-pretty text-muted-foreground">
-          Keep SimpleDash for {priceInWords("month")} or {priceInWords("year")}. Your settings,
-          notes and history are all still here.
+          Keep SimpleDash from {priceInWords("month")}, or{" "}
+          {priceInWords("month", plans.growth.prices)} for several sites and Google search insights.
+          Your settings, notes and history are all still here.
         </p>
       </div>
       <UpgradeForm action={upgrade} />

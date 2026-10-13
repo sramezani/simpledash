@@ -5,7 +5,7 @@ type SegmentedRadioProps = {
   /** Form field name; also groups the radios, so it must be unique on the page. */
   name: string;
   label: string;
-  /** Two to four options. `srLabel` adds words for screen readers only. */
+  /** Two to five options. `srLabel` adds words for screen readers only. */
   options: { value: string; label: string; srLabel?: string }[];
   /** The value checked at first. Defaults to the first option. */
   defaultValue?: string;
@@ -20,6 +20,7 @@ const slide = [
   "group-has-[[data-option-index='1']:checked]/segmented:translate-x-full",
   "group-has-[[data-option-index='2']:checked]/segmented:translate-x-[200%]",
   "group-has-[[data-option-index='3']:checked]/segmented:translate-x-[300%]",
+  "group-has-[[data-option-index='4']:checked]/segmented:translate-x-[400%]",
 ].join(" ");
 
 /**

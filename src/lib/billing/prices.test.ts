@@ -27,6 +27,7 @@ describe("prices", () => {
   it("states prices in words from plans.ts", () => {
     expect(priceInWords("month")).toBe("€9 a month");
     expect(priceInWords("year")).toBe("€90 a year");
+    expect(priceInWords("year", plans.growth.prices)).toBe("€190 a year");
     expect(plans.growth.prices.month).toBe(19);
   });
 
@@ -43,6 +44,7 @@ describe("prices", () => {
     );
     const paid = {
       kind: "paid",
+      plan: "starter",
       interval: "year",
       renewsAt: end,
       cancelAtPeriodEnd: false,
@@ -53,5 +55,8 @@ describe("prices", () => {
       "Starter · €90 a year · ends on 11 Oct 2027",
     );
     expect(planInWords({ ...paid, interval: null, renewsAt: null })).toBe("Starter");
+    expect(planInWords({ ...paid, plan: "growth", interval: "month" })).toBe(
+      "Growth · €19 a month · renews on 11 Oct 2027",
+    );
   });
 });

@@ -73,7 +73,7 @@ docker compose up -d db   # local Postgres
 
 ## Conventions
 
-- **Google Analytics:** only `src/lib/ga4/` calls GA4. Pages, the email and jobs use its typed functions. Components never call Google directly.
+- **Google Analytics:** only `src/lib/ga4/` calls GA4, and only `src/lib/search-console/` calls Search Console. Pages, the email and jobs use their typed functions. Components never call Google directly.
 - **Access checks:** every signed-in page, route handler and server action starts with `requireUser()` or `requireSite()`. Never trust a property ID sent from the browser.
 - **Env vars:** read them only through `src/lib/env.ts` (checked with Zod at startup).
 - **Components:** use server components by default. Use client components only for interaction: date switch, chart tooltips, globe and forms.
@@ -105,6 +105,9 @@ docker compose up -d db   # local Postgres
 | Devices | `deviceCategory` |
 | Actions | `eventCount` by `eventName` |
 | Right now | Realtime `activeUsers` (last 30 minutes) |
+| Clicks / Seen (Google search card) | Search Console `clicks` / `impressions` |
+| Click rate / Position | Search Console `ctr` / `position` (average position) |
+| Searches | Search Console `query` |
 
 ## Working rules (copied from the roadmap)
 

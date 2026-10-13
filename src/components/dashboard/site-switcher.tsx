@@ -1,9 +1,19 @@
 "use client";
 
-import { CheckIcon, ChevronDownIcon, LoaderCircleIcon } from "lucide-react";
-import { useState, useTransition } from "react";
+import {
+  ArrowLeftRightIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  LayoutGridIcon,
+  LockIcon,
+  PlusIcon,
+} from "lucide-react";
+import type { Route } from "next";
+import Link from "next/link";
+import { useRef, useState } from "react";
 import { chipButtonClass } from "@/components/shared/site-chip";
 import { SiteIcon } from "@/components/shared/site-icon";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,100 +23,192 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { PropertyList } from "@/lib/ga4/property-choice";
+import { cn } from "@/lib/utils";
+import { SitePickerDialog } from "./site-picker-dialog";
 
-type SiteSwitcherProps = {
+export type SwitcherSite = {
+  id: string;
   label: string;
-  /** The site's address, for its icon. */
   domain: string | null;
-  currentPropertyId: string | null;
-  listAction: () => Promise<PropertyList>;
-  switchAction: (propertyId: string) => Promise<{ error?: string }>;
+  /** False for a site the plan doesn't open now (added on Growth, now on Starter). */
+  openable: boolean;
+  /** "Google access ended", "No access": shown next to the site. */
+  problem: string | null;
 };
 
-/** The site chip with a menu of the user's sites. Opening it fetches them live (docs/SPEC.md section 7). */
+type SiteSwitcherProps = {
+  current: SwitcherSite;
+  /** The user's list, in the order the sites were added. */
+  sites: SwitcherSite[];
+  /** Property IDs already in the list, so the picker can say "Added". */
+  listedProperties: string[];
+  /** The property shown now (Starter's switcher marks it). */
+  currentProperty: string;
+  /** Growth: several sites, up to `limit`. */
+  growth: boolean;
+  limit: number;
+  /** The date range in the address, kept when moving between sites. */
+  range: string | null;
+  listAction: () => Promise<PropertyList>;
+  switchAction: (propertyId: string) => Promise<{ error?: string; siteId?: string }>;
+  addAction: (propertyId: string) => Promise<{ error?: string; siteId?: string }>;
+  /** Starts Google sign-in again, when Google access ended. */
+  reconnect?: () => Promise<void>;
+};
+
+/**
+ * The site chip with the site menu (docs/SPEC.md section 28.1). Growth: the sites in
+ * the list as links, "All sites" and "Add a site…". Starter: its one site, "Switch
+ * site…" and "Add another site" (the upgrade panel on /sites).
+ */
 export function SiteSwitcher({
-  label,
-  domain,
-  currentPropertyId,
+  current,
+  sites,
+  listedProperties,
+  currentProperty,
+  growth,
+  limit,
+  range,
   listAction,
   switchAction,
+  addAction,
+  reconnect,
 }: SiteSwitcherProps) {
-  const [list, setList] = useState<PropertyList | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [picker, setPicker] = useState(false);
+  // Set while the menu closes to open the picker: it opens once the menu has finished
+  // closing, so the menu's focus handling doesn't close it again.
+  const toPicker = useRef(false);
+  const href = (id: string) =>
+    `/dashboard?site=${id}${range ? `&range=${encodeURIComponent(range)}` : ""}` as Route;
+  const listed = sites.length;
 
-  function onOpenChange(open: boolean) {
-    if (open && !list) startTransition(async () => setList(await listAction()));
-  }
-
-  function choose(propertyId: string) {
-    if (propertyId === currentPropertyId) return;
-    startTransition(async () => {
-      const result = await switchAction(propertyId);
-      setMessage(result.error ?? null);
-    });
+  function openPicker() {
+    toPicker.current = true;
+    setMenuOpen(false);
   }
 
   return (
     <div className="flex min-w-0 items-center gap-2">
-      <DropdownMenu onOpenChange={onOpenChange}>
-        <DropdownMenuTrigger className={`${chipButtonClass} group/site`}>
-          <SiteIcon domain={domain} />
+      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
+        <DropdownMenuTrigger className={cn(chipButtonClass, "group/site", picker && "bg-muted/60")}>
+          <SiteIcon domain={current.domain} />
           <span className="truncate">
             <span className="sr-only">Showing: </span>
-            {label}
+            {current.label}
           </span>
-          {pending ? (
-            <LoaderCircleIcon
-              className="size-4 animate-spin text-muted-foreground"
-              aria-hidden="true"
-            />
-          ) : (
-            <ChevronDownIcon
-              className="size-4 text-muted-foreground transition-transform duration-200 ease-out group-data-[state=open]/site:rotate-180"
-              aria-hidden="true"
-            />
-          )}
+          <ChevronDownIcon
+            className="size-4 text-muted-foreground transition-transform duration-200 ease-out group-data-[state=open]/site:rotate-180"
+            aria-hidden="true"
+          />
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="start"
           sideOffset={6}
           className="w-72 max-w-[calc(100vw-2rem)] p-1.5 duration-150"
+          onCloseAutoFocus={(event) => {
+            if (toPicker.current) {
+              event.preventDefault();
+              toPicker.current = false;
+              setPicker(true);
+            }
+          }}
         >
-          <DropdownMenuLabel>Your Google Analytics sites</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {!list ? (
-            <DropdownMenuItem disabled>Loading…</DropdownMenuItem>
-          ) : "error" in list ? (
-            <DropdownMenuItem disabled>{list.error}</DropdownMenuItem>
-          ) : list.properties.length === 0 ? (
-            <DropdownMenuItem disabled>No Google Analytics sites found</DropdownMenuItem>
-          ) : (
-            list.properties.map((p) => (
+          <DropdownMenuLabel className="flex items-baseline justify-between gap-2">
+            <span>{growth || listed > 1 ? "Your sites" : "Your site"}</span>
+            {growth ? (
+              <span className="text-xs font-normal text-muted-foreground tabular-nums">
+                {listed} of {limit}
+              </span>
+            ) : null}
+          </DropdownMenuLabel>
+          <div className="max-h-[min(20rem,50dvh)] overflow-y-auto">
+            {sites.map((s) => (
               <DropdownMenuItem
-                key={p.propertyId}
-                onSelect={() => choose(p.propertyId)}
-                className="gap-2"
+                key={s.id}
+                asChild
+                className="h-11 cursor-pointer gap-2.5 rounded-md"
               >
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate">{p.displayName}</span>
-                  {p.account ? (
-                    <span className="truncate text-xs text-muted-foreground">{p.account}</span>
+                <Link href={href(s.id)} aria-current={s.id === current.id ? "page" : undefined}>
+                  <SiteIcon domain={s.domain} />
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate">{s.label}</span>
+                    {s.problem ? (
+                      <span className="truncate text-xs text-warning">{s.problem}</span>
+                    ) : !s.openable ? (
+                      <span className="truncate text-xs text-muted-foreground">
+                        Paused · part of Growth
+                      </span>
+                    ) : null}
+                  </span>
+                  {s.id === current.id ? (
+                    <CheckIcon className="size-4 text-primary" aria-label="Showing now" />
+                  ) : !s.openable ? (
+                    <LockIcon className="size-3.5 text-muted-foreground" aria-hidden="true" />
                   ) : null}
-                </span>
-                {p.propertyId === currentPropertyId ? (
-                  <CheckIcon className="size-4 text-primary" aria-label="Showing now" />
-                ) : null}
+                </Link>
               </DropdownMenuItem>
-            ))
+            ))}
+          </div>
+          <DropdownMenuSeparator />
+          {growth ? (
+            <>
+              <DropdownMenuItem
+                asChild
+                className="h-9 cursor-pointer gap-2.5 rounded-md pointer-coarse:h-11"
+              >
+                <Link href={"/sites" as Route}>
+                  <LayoutGridIcon className="size-4 text-muted-foreground" aria-hidden="true" />
+                  All sites
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="h-9 cursor-pointer gap-2.5 rounded-md pointer-coarse:h-11"
+                onSelect={(event) => {
+                  event.preventDefault();
+                  openPicker();
+                }}
+              >
+                <PlusIcon className="size-4 text-muted-foreground" aria-hidden="true" />
+                Add a site…
+              </DropdownMenuItem>
+            </>
+          ) : (
+            <>
+              <DropdownMenuItem
+                className="h-9 cursor-pointer gap-2.5 rounded-md pointer-coarse:h-11"
+                onSelect={(event) => {
+                  event.preventDefault();
+                  openPicker();
+                }}
+              >
+                <ArrowLeftRightIcon className="size-4 text-muted-foreground" aria-hidden="true" />
+                Switch site…
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                asChild
+                className="h-9 cursor-pointer gap-2.5 rounded-md pointer-coarse:h-11"
+              >
+                <Link href={"/sites" as Route}>
+                  <PlusIcon className="size-4 text-muted-foreground" aria-hidden="true" />
+                  <span className="flex-1">Add another site</span>
+                  <Badge variant="secondary">Growth</Badge>
+                </Link>
+              </DropdownMenuItem>
+            </>
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-      {message ? (
-        <span role="alert" className="text-xs text-destructive">
-          {message}
-        </span>
-      ) : null}
+      <SitePickerDialog
+        open={picker}
+        onOpenChange={setPicker}
+        mode={growth ? "add" : "switch"}
+        listAction={listAction}
+        pickAction={growth ? addAction : switchAction}
+        inList={growth ? listedProperties : [currentProperty]}
+        usage={growth ? { used: listed, limit } : undefined}
+        reconnect={reconnect}
+      />
     </div>
   );
 }

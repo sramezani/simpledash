@@ -9,6 +9,7 @@ export function BillingSwitch({
   yearlyLabel,
   yearlyNote,
   name = "interval",
+  defaultValue,
   size,
   className,
 }: {
@@ -17,6 +18,8 @@ export function BillingSwitch({
   /** Said after "Yearly" to screen readers, when the page shows it elsewhere ("2 months free"). */
   yearlyNote?: string;
   name?: string;
+  /** "month" (the default) or "year". */
+  defaultValue?: "month" | "year";
   size?: "sm" | "md";
   className?: string;
 }) {
@@ -25,6 +28,7 @@ export function BillingSwitch({
       name={name}
       label="Billing period"
       size={size}
+      defaultValue={defaultValue}
       className={className}
       options={[
         { value: "month", label: "Monthly" },

@@ -1,6 +1,9 @@
+import { revalidateTag } from "next/cache";
 import { connection } from "next/server";
+import { publicSlugsOf } from "@/lib/account/account";
+import { publicTag } from "@/lib/public-page/view";
 import { applySubscription, findUserByCustomer, userExists } from "@/lib/billing/billing";
-import { starterPrices, stripe } from "@/lib/billing/stripe";
+import { planPrices, stripe } from "@/lib/billing/stripe";
 import { handleStripeEvent } from "@/lib/billing/webhook";
 import { db } from "@/lib/db/client";
 import { stripeEvent } from "@/lib/db/schema";
@@ -43,14 +46,23 @@ export async function POST(request: Request) {
             { subscriptionId, userId },
           );
         },
-        applySubscription,
+        applySubscription: async (userId, facts, stateAt) => {
+          const saved = await applySubscription(userId, facts, stateAt);
+          // A new plan state can pause or reopen public pages: show it now, not in 10 minutes.
+          if (saved) {
+            for (const slug of await publicSlugsOf(userId)) {
+              revalidateTag(publicTag(slug), { expire: 0 });
+            }
+          }
+          return saved;
+        },
         reportUnknownPrice: (priceId, subscriptionId) =>
           reportError("Stripe subscription with an unknown price", new Error(String(priceId)), {
             subscriptionId,
           }),
         now: () => new Date(),
       },
-      starterPrices(),
+      planPrices(),
     );
     return Response.json({ received: true, result });
   } catch (error) {

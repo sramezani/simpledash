@@ -8,8 +8,9 @@ import * as schema from "@/lib/db/schema";
 import { env } from "@/lib/env";
 import { lazyObject } from "@/lib/lazy";
 import { createUserRows } from "@/lib/billing/billing";
-import { reactivateSites } from "@/lib/sites";
+import { reactivateSites } from "@/lib/sites/status";
 import { ANALYTICS_SCOPE } from "./scopes";
+import { forgetGoogleToken } from "./token-cache";
 
 const DAY = 60 * 60 * 24;
 
@@ -61,8 +62,10 @@ const createAuth = () =>
   });
 
 async function reactivateFor(row: { userId?: unknown; providerId?: unknown }) {
-  if (row.providerId === "google" && typeof row.userId === "string")
-    await reactivateSites(row.userId);
+  if (row.providerId !== "google" || typeof row.userId !== "string") return;
+  // New tokens, maybe with a new scope (Search Console): the next call fetches a fresh one.
+  forgetGoogleToken(row.userId);
+  await reactivateSites(row.userId);
 }
 
 /** The Better Auth instance, created on first use. */

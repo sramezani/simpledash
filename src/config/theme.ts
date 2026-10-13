@@ -130,6 +130,10 @@ export const uiPairs: ReadonlyArray<readonly [ColorToken, ColorToken]> = [
   ["ring", "background"],
   ["chart-1", "card"],
   ["chart-2", "card"],
+  // Searches with the site's name, next to chart-1 in the Google search card.
+  ["chart-3", "card"],
+  // Revenue bars under the visitors line (Growth).
+  ["chart-4", "card"],
 ];
 
 export const theme = { brand, brandColor, colors, radius, shadows } as const;

@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq } from "drizzle-orm";
+import { and, count, eq, isNotNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { site, type Site } from "@/lib/db/schema";
 import { adminClient, runSingleReport } from "./clients";
@@ -78,8 +78,27 @@ export async function chooseProperty(userId: string): Promise<Site | null> {
   return connectProperty(userId, chosen.propertyId);
 }
 
-/** Fetches the property's details and makes it the user's one active site. */
-export async function connectProperty(userId: string, propertyId: string): Promise<Site> {
+/**
+ * How a property joins the account (docs/SPEC.md section 28.1):
+ * - "replace" (Starter, and the first site): it takes the current site's place in the list.
+ * - "add" (Growth): it joins the list, up to `limit` sites.
+ * Either way it becomes the active site. A site already in the list just becomes active.
+ */
+export type ConnectMode = { kind: "replace" } | { kind: "add"; limit: number };
+
+export class SiteLimitError extends Error {
+  constructor(readonly limit: number) {
+    super(`At most ${limit} sites`);
+    this.name = "SiteLimitError";
+  }
+}
+
+/** Fetches the property's details and makes it the user's active site. */
+export async function connectProperty(
+  userId: string,
+  propertyId: string,
+  mode: ConnectMode = { kind: "replace" },
+): Promise<Site> {
   const client = await adminClient(userId);
   const [[property], [streams]] = await Promise.all([
     client.getProperty({ name: propertyId }, ADMIN_TIMEOUT),
@@ -101,6 +120,27 @@ export async function connectProperty(userId: string, propertyId: string): Promi
   };
 
   return db.transaction(async (tx) => {
+    // One change to a user's list at a time, so two quick clicks can't pass the limit.
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`sites:${userId}`}))`);
+    const existing = await tx.query.site.findFirst({
+      where: and(eq(site.userId, userId), eq(site.propertyId, propertyId)),
+    });
+    const listed = !!existing?.addedAt;
+    if (!listed && mode.kind === "replace") {
+      // Starter: the new site takes the current one's place. Other sites still in the
+      // list (added on Growth) stay there, paused, for when they upgrade again.
+      await tx
+        .update(site)
+        .set({ addedAt: null })
+        .where(and(eq(site.userId, userId), eq(site.isActive, true)));
+    }
+    if (!listed && mode.kind === "add") {
+      const [listedCount] = await tx
+        .select({ value: count() })
+        .from(site)
+        .where(and(eq(site.userId, userId), isNotNull(site.addedAt)));
+      if ((listedCount?.value ?? 0) >= mode.limit) throw new SiteLimitError(mode.limit);
+    }
     await tx
       .update(site)
       .set({ isActive: false })
@@ -113,25 +153,45 @@ export async function connectProperty(userId: string, propertyId: string): Promi
         propertyId,
         isActive: true,
         status: "ok",
+        addedAt: new Date(),
         ...values,
       })
-      // Switching back keeps the site's notes and signup event.
+      // Coming back keeps the site's notes, signup event and settings.
       .onConflictDoUpdate({
         target: [site.userId, site.propertyId],
-        set: { ...values, isActive: true, status: "ok" },
+        set: {
+          ...values,
+          isActive: true,
+          status: "ok",
+          addedAt: sql`coalesce(${site.addedAt}, excluded.added_at)`,
+        },
       })
       .returning();
     return row!;
   });
 }
 
-/** The switcher: checks the property is in the user's own list before switching. */
+/** Starter's switcher: the property must be in the user's own Google list. */
 export async function switchProperty(userId: string, propertyId: string): Promise<Site> {
+  await assertInGoogleList(userId, propertyId);
+  return connectProperty(userId, propertyId, { kind: "replace" });
+}
+
+/** Growth's "Add a site": the property must be in the user's own Google list. */
+export async function addProperty(
+  userId: string,
+  propertyId: string,
+  limit: number,
+): Promise<Site> {
+  await assertInGoogleList(userId, propertyId);
+  return connectProperty(userId, propertyId, { kind: "add", limit });
+}
+
+async function assertInGoogleList(userId: string, propertyId: string) {
   const properties = await listProperties(userId);
   if (!properties.some((p) => p.propertyId === propertyId)) {
     throw new Error("That property isn't in your Google account");
   }
-  return connectProperty(userId, propertyId);
 }
 
 const accessCheckedAt = new Map<string, number>();

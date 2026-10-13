@@ -1,19 +1,23 @@
 # Public page
 
-The optional public stats page at `/p/<slug>`. The plan is in `docs/SPEC.md` section 15.
+The optional public stats page at `/p/<slug>`, one per site. The plan is in `docs/SPEC.md` sections 15 and 28.1.
 
 ## Files
 
 | File | What it does | Tested |
 | --- | --- | --- |
 | `src/lib/public-page/slug.ts` | Slug rules (3–40 lowercase letters, numbers and dashes; reserved words), a slug from the domain, numbered fallbacks | yes |
-| `src/lib/public-page/public-page.ts` | The user's settings: read, one-click turn on, save | |
-| `src/lib/public-page/view.ts` | What a page shows, cached (`"use cache"`, about 10 minutes, tag `public:<slug>`), and the sitemap list | |
+| `src/lib/public-page/public-page.ts` | A site's page settings: read, one-click turn on, save | |
+| `src/lib/public-page/view.ts` | What a page shows, cached (`"use cache"`, about 10 minutes, tag `public:<slug>`); `publicSiteOf()`, the one rule for "live or paused"; the sitemap list | |
 | `src/components/public-page/public-view.tsx` | The page body, the paused page and the "Powered by SimpleDash" footer | |
 | `src/components/dashboard/share-card.tsx` | "Share your stats publicly?" on the dashboard | |
 | `src/components/settings/public-page-form.tsx` | Settings → Public page | |
 | `src/app/p/[slug]/page.tsx`, `opengraph-image.tsx` | The page, its metadata and its social image | |
 | `src/app/api/p/[slug]/live/route.ts` | Live numbers for the "Right now" card | |
+
+## One page per site
+
+`public_page` is keyed on `site_id` (since Sprint 5; migration `0004` moved each page to its owner's active site). Each site has its own address, cards and indexing. Settings → Public page edits the page of the site shown under "Site settings" (`/settings?site=<id>`), and the dashboard's "Share your stats publicly?" card turns on the page of the site being viewed.
 
 ## Turning it on
 
@@ -29,7 +33,8 @@ The optional public stats page at `/p/<slug>`. The plan is in `docs/SPEC.md` sec
 
 ## When it isn't live
 
-- **Paused** ("This page is paused."): the owner's trial ended unpaid, or the site lost Google access. `noindex`, and out of the sitemap.
+- **Paused** ("This page is paused."): the owner's trial ended unpaid, the site lost Google access, the site was removed from the owner's list, or the plan doesn't open it any more (a Growth account back on Starter: only the site Starter shows stays live). `noindex`, and out of the sitemap. The Right now endpoint follows the same rule (`publicSiteOf`).
+- A plan change from the Stripe webhook refreshes the owner's pages at once; removing a site refreshes its page.
 - **Off or unknown slug:** "Page not found" with `noindex`. The status is 200 because the page streams (see `docs/DECISIONS.md`).
 
 ## Caching

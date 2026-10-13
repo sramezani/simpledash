@@ -1,17 +1,25 @@
 "use client";
 
-import { Area, AreaChart, CartesianGrid, ReferenceLine, XAxis, YAxis } from "recharts";
+import { Area, Bar, CartesianGrid, ComposedChart, ReferenceLine, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltip, type ChartConfig } from "@/components/ui/chart";
-import { formatCompact, formatNumber } from "@/lib/format";
+import { formatCompact, formatMoney, formatNumber } from "@/lib/format";
 import type { ChartNoteMark, ChartPoint } from "@/lib/charts/series";
 import { editNote, pickDay } from "./chart-events";
 
-const config = { visitors: { label: "Visitors", color: "var(--chart-1)" } } satisfies ChartConfig;
+const config = {
+  visitors: { label: "Visitors", color: "var(--chart-1)" },
+  revenue: { label: "Revenue", color: "var(--chart-4)" },
+} satisfies ChartConfig;
 
-type TooltipProps = { active?: boolean; payload?: { payload?: ChartPoint }[] };
+type TooltipProps = {
+  active?: boolean;
+  payload?: { payload?: ChartPoint }[];
+  /** The revenue's currency, when the points carry revenue. */
+  currency?: string;
+};
 
-/** The same tooltip as the server-rendered chart's (StaticLineChart). */
-function VisitorsTooltip({ active, payload }: TooltipProps) {
+/** The same tooltip as the server-rendered chart's (StaticLineChart), plus revenue on Growth. */
+function VisitorsTooltip({ active, payload, currency }: TooltipProps) {
   const point = payload?.[0]?.payload;
   if (!active || !point) return null;
   return (
@@ -20,6 +28,12 @@ function VisitorsTooltip({ active, payload }: TooltipProps) {
       <p className="font-medium tabular-nums">
         {formatNumber(point.visitors)} {point.visitors === 1 ? "visitor" : "visitors"}
       </p>
+      {currency && point.revenue !== undefined ? (
+        <p className="flex items-center gap-1.5 tabular-nums">
+          <span aria-hidden="true" className="size-2 rounded-sm bg-chart-4/60" />
+          {formatMoney(point.revenue, currency)} revenue
+        </p>
+      ) : null}
       {point.pending !== null && point.solid === null ? (
         <p className="text-warning">Still updating</p>
       ) : null}
@@ -38,6 +52,8 @@ type VisitorsChartProps = {
   notes?: ChartNoteMark[];
   /** Clicking a day starts a note on it (dashboard only). */
   canAddNotes?: boolean;
+  /** Revenue's currency: the points' `revenue` shows as bars under the line (Growth). */
+  revenueCurrency?: string;
 };
 
 /** A note marker: a small dot at the top of a dashed line, with the note as its tooltip. */
@@ -63,7 +79,9 @@ export default function VisitorsChart({
   points,
   notes = [],
   canAddNotes = false,
+  revenueCurrency,
 }: VisitorsChartProps) {
+  const revenue = !!revenueCurrency && points.some((p) => p.revenue !== undefined);
   const ticks = points.filter((p) => p.tick).map((p) => p.key);
   const tickLabel = new Map(points.map((p) => [p.key, p.tick]));
   const activeDot = { r: 5, strokeWidth: 2.5, className: "fill-card stroke-chart-1" };
@@ -72,7 +90,7 @@ export default function VisitorsChart({
       config={config}
       className="aspect-auto h-56 w-full animate-chart-reveal @2xl:h-64 [&_.recharts-cartesian-grid_line]:stroke-border"
     >
-      <AreaChart
+      <ComposedChart
         data={points}
         margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
         accessibilityLayer
@@ -109,10 +127,29 @@ export default function VisitorsChart({
           allowDecimals={false}
           tickFormatter={(v: number) => formatCompact(v)}
         />
+        {revenue ? (
+          // Revenue keeps to the lower quarter, under the line, on its own hidden scale.
+          <YAxis
+            yAxisId="revenue"
+            hide
+            domain={[0, (max: number) => Math.max(max, 1) * 4]}
+          />
+        ) : null}
         <ChartTooltip
           cursor={{ stroke: "var(--color-visitors)", strokeOpacity: 0.5, strokeDasharray: "3 3" }}
-          content={<VisitorsTooltip />}
+          content={<VisitorsTooltip currency={revenue ? revenueCurrency : undefined} />}
         />
+        {revenue ? (
+          <Bar
+            dataKey="revenue"
+            yAxisId="revenue"
+            fill="var(--color-revenue)"
+            fillOpacity={0.35}
+            radius={[3, 3, 0, 0]}
+            maxBarSize={18}
+            isAnimationActive={false}
+          />
+        ) : null}
         {notes.map((note) => (
           <ReferenceLine
             key={note.id}
@@ -156,7 +193,7 @@ export default function VisitorsChart({
           dot={false}
           activeDot={activeDot}
         />
-      </AreaChart>
+      </ComposedChart>
     </ChartContainer>
   );
 }

@@ -18,4 +18,14 @@ describe("listCsv", () => {
     const csv = listCsv("Page", ["Views"], [{ key: "x", label: "=HYPERLINK(1)", values: [3] }]);
     expect(csv).toContain("'=HYPERLINK(1),3");
   });
+
+  it("adds the second line as its own column when asked", () => {
+    const csv = listCsv(
+      "Search",
+      ["Seen"],
+      [{ key: "a", label: "ga4 dashboard", sublabel: "/pricing", values: [3200] }],
+      "Page",
+    );
+    expect(csv).toBe("Search,Page,Seen\r\nga4 dashboard,/pricing,3200\r\n");
+  });
 });

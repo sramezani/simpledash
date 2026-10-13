@@ -73,3 +73,13 @@ Google lets people untick the Analytics box. The dashboard reads the Google `acc
   - `http://localhost:3000/api/auth/callback/google`
   - `https://simpledash.app/api/auth/callback/google`
 - Publish the app **"In production"** (unverified) so refresh tokens don't expire after 7 days.
+
+## More scopes later (V2)
+
+Better Auth only updates `account.scope` through its **link flow** (`linkSocial`), never on a plain sign-in. So an extra read-only scope is asked for with `linkGoogleScope` (`src/lib/auth/link-scope.ts`): server code only, never a server action, with a fixed list of our two scopes (`analytics.readonly`, `webmasters.readonly`). Google shows one consent screen (`include_granted_scopes`), Better Auth merges the new scope and saves the new tokens, and the account hook in `auth.ts` drops the cached access token (`src/lib/auth/token-cache.ts`) so the next call carries it.
+
+- **Search Console** (Growth): "Connect Search Console" (`docs/search-console.md`).
+- **"Allow access"** (Analytics unticked at sign-in) uses the same flow since Sprint 6. Before, a second sign-in left the old scope in place and the state could loop.
+- The user must pick the same Google account on Google's screen: Better Auth refuses to link a different email, and we show "access wasn't granted".
+
+Pasted Stripe keys (Growth, `docs/revenue.md`) are encrypted with the same key as the Google tokens (`src/lib/auth/secrets.ts`).

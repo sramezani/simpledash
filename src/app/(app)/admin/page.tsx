@@ -61,8 +61,10 @@ async function Counts() {
       title: "Plans",
       rows: [
         ["On trial", formatNumber(u.plans.trial)],
-        ["Paying monthly", formatNumber(u.plans.monthly)],
-        ["Paying yearly", formatNumber(u.plans.yearly)],
+        ["Starter, monthly", formatNumber(u.plans.starterMonthly)],
+        ["Starter, yearly", formatNumber(u.plans.starterYearly)],
+        ["Growth, monthly", formatNumber(u.plans.growthMonthly)],
+        ["Growth, yearly", formatNumber(u.plans.growthYearly)],
         ...(u.plans.otherPaid > 0
           ? [["Paying, another price", formatNumber(u.plans.otherPaid)] as [string, string]]
           : []),

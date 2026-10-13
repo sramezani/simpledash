@@ -28,6 +28,12 @@ const site: Site = {
   signupEvent: null,
   status: "ok",
   quotaBlockedUntil: null,
+  addedAt: NOW,
+  lastViewedAt: null,
+  searchConsoleUrl: null,
+  brandTerms: [],
+  saleEvent: null,
+  salePage: null,
   createdAt: NOW,
   updatedAt: NOW,
 };

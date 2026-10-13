@@ -17,6 +17,8 @@ export type ChartPoint = {
   solid: number | null;
   /** The last part, still updating: drawn dashed. Overlaps `solid` by one point. */
   pending: number | null;
+  /** Revenue from Stripe for this day or month, in the currency's smallest unit (Growth). */
+  revenue?: number;
 };
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -66,6 +68,24 @@ export function chartPoints(
     // Starts one point early so the dashed part joins the solid line.
     pending: pending > 0 && i >= firstPending - 1 ? p.visitors : null,
   }));
+}
+
+/**
+ * Adds each day's (or month's) revenue to the chart's points (docs/SPEC.md section
+ * 28.3). Stripe totals are daily, so hourly charts get none. Days without revenue are 0.
+ */
+export function withRevenue(
+  points: ChartPoint[],
+  granularity: Granularity,
+  byDay: Map<string, number>,
+): ChartPoint[] {
+  if (granularity === "dateHour") return points;
+  const sums = new Map<string, number>();
+  for (const [day, amount] of byDay) {
+    const key = granularity === "yearMonth" ? day.slice(0, 7).replace("-", "") : day.replaceAll("-", "");
+    sums.set(key, (sums.get(key) ?? 0) + amount);
+  }
+  return points.map((p) => ({ ...p, revenue: sums.get(p.key) ?? 0 }));
 }
 
 const PER: Record<Granularity, string> = { dateHour: "hour", date: "day", yearMonth: "month" };

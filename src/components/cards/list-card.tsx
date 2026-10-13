@@ -18,12 +18,26 @@ export type ListView = {
   rows: RankedRow[];
   /** Shown in the list's place when there are no rows. */
   empty: ReactNode;
+  /** Two-line rows (with a `sublabel`), and the second line's column in the CSV. */
+  sublabelHeader?: string;
+  /** Replaces the ranked list in the card (the rows still feed Details). */
+  content?: ReactNode;
+  /** A line of plain words above the list. */
+  intro?: ReactNode;
+  /** Rows in the card for this view (the card's `initial` otherwise). */
+  initial?: number;
+  /** Leave the column names out of the tab row (the view says them itself). */
+  hideColumns?: boolean;
+  /** The columns the card shows, when Details and its CSV have more (the first ones of `columns`). */
+  cardColumns?: string[];
 };
 
 type ListCardProps = {
   id: string;
   /** Read by screen readers only; the tabs name the card on screen. */
   title: string;
+  /** A visible heading instead (the Google search card): it replaces the hidden title. */
+  heading?: ReactNode;
   /** What the card counts, in plain words: shown in Details. */
   help: string;
   views: ListView[];
@@ -48,6 +62,7 @@ type ListCardProps = {
 export function ListCard({
   id,
   title,
+  heading,
   help,
   views,
   exportInfo,
@@ -62,15 +77,18 @@ export function ListCard({
       aria-labelledby={`${id}-title`}
       className="@container flex min-w-0 flex-col rounded-2xl border bg-card text-card-foreground shadow-xs"
     >
-      <h2 id={`${id}-title`} className="sr-only">
-        {title}
-      </h2>
+      {heading ? null : (
+        <h2 id={`${id}-title`} className="sr-only">
+          {title}
+        </h2>
+      )}
       <div
         className={cn(
           "flex flex-1 flex-col gap-3 px-3 pt-3 pb-2 @sm:px-4 @sm:pt-4",
           dimmed && "opacity-55 grayscale",
         )}
       >
+        {heading}
         {children ?? (
           <>
             {intro}
@@ -80,16 +98,23 @@ export function ListCard({
               views={views.map((view) => ({
                 value: view.value,
                 label: view.label,
-                aside: view.rows.length ? <ColumnNames columns={view.columns} /> : null,
+                aside:
+                  view.rows.length && !view.hideColumns ? (
+                    <ColumnNames columns={view.cardColumns ?? view.columns} />
+                  ) : null,
                 content: (
                   <div className="flex flex-1 flex-col gap-2">
-                    <RankedList
-                      itemLabel={view.itemLabel}
-                      columns={view.columns}
-                      rows={view.rows}
-                      empty={view.empty}
-                      initial={initial}
-                    />
+                    {view.intro && view.rows.length ? view.intro : null}
+                    {view.content ?? (
+                      <RankedList
+                        itemLabel={view.itemLabel}
+                        columns={view.cardColumns ?? view.columns}
+                        rows={view.rows}
+                        empty={view.empty}
+                        initial={view.initial ?? initial}
+                        size={view.sublabelHeader ? "tall" : "default"}
+                      />
+                    )}
                     <div className="flex h-8 items-center justify-center pointer-coarse:h-11">
                       {view.rows.length ? (
                         <ListDetails
@@ -98,6 +123,7 @@ export function ListCard({
                           itemLabel={view.itemLabel}
                           columns={view.columns}
                           rows={view.rows}
+                          sublabelHeader={view.sublabelHeader}
                           fileName={csvFilename(
                             exportInfo.site,
                             `${id}-${view.value}`,

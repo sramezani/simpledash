@@ -6,7 +6,8 @@ describe("llmsText", () => {
 
   it("states the prices from plans.ts", () => {
     expect(text).toContain("€9 a month or €90 a year (2 months free), VAT included");
-    expect(text).toContain("€19 a month or €190 a year, coming soon");
+    expect(text).toContain("€19 a month or €190 a year, VAT included");
+    expect(text).not.toContain("coming soon");
   });
 
   it("links the key pages, including pricing", () => {

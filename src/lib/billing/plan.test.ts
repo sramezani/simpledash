@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { keepTrialUntil, planState, trialEnd } from "./plan";
+import { entitlements, keepTrialUntil, planState, trialEnd } from "./plan";
 
 const now = new Date("2026-10-12T12:00:00Z");
 const base = {
@@ -43,6 +43,39 @@ describe("planState", () => {
       );
       expect(s).toMatchObject({ kind: "paid", interval: "year", pastDue: status === "past_due" });
     }
+  });
+
+  it("is Starter when paid before Growth existed, and Growth when the webhook says so", () => {
+    const paid = { ...base, status: "active", planInterval: "month" as const };
+    expect(planState(paid, now)).toMatchObject({ kind: "paid", plan: "starter" });
+    expect(planState({ ...paid, plan: null }, now)).toMatchObject({ plan: "starter" });
+    expect(planState({ ...paid, plan: "growth" }, now)).toMatchObject({ plan: "growth" });
+  });
+});
+
+describe("entitlements", () => {
+  const ended = new Date("2026-10-01T00:00:00Z");
+  it("gives Growth's limits only to a paid Growth plan", () => {
+    const growth = planState({ ...base, status: "active", plan: "growth" }, now);
+    expect(entitlements(growth)).toEqual({
+      plan: "growth",
+      sites: 10,
+      searchConsole: true,
+      revenue: true,
+    });
+  });
+
+  it("keeps the trial, paid Starter and locked accounts on Starter's limits", () => {
+    const starter = { plan: "starter", sites: 1, searchConsole: false, revenue: false };
+    expect(entitlements(planState(base, now))).toEqual(starter);
+    expect(entitlements(planState({ ...base, status: "active" }, now))).toEqual(starter);
+    expect(entitlements(planState({ ...base, trialEndsAt: ended }, now))).toEqual(starter);
+    // A Growth subscription that stopped: back to Starter's limits (and locked).
+    expect(
+      entitlements(
+        planState({ ...base, trialEndsAt: ended, status: "canceled", plan: "growth" }, now),
+      ),
+    ).toEqual(starter);
   });
 });
 

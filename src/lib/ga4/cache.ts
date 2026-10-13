@@ -7,7 +7,7 @@ import {
   buildRequest,
   paramsKey,
   parseReport,
-  REPORTS,
+  ALL_REPORTS,
   type Payload,
   type ReportName,
   type ReportParams,
@@ -79,6 +79,13 @@ export type ReportsResult<R extends ReportName> = {
 
 const HOUR = 60 * 60 * 1000;
 
+/** A site's report inputs: the signup event, and what counts as a sale. */
+export const paramsFor = (site: Site): ReportParams => ({
+  signupEvent: site.signupEvent,
+  saleEvent: site.saleEvent,
+  salePage: site.salePage,
+});
+
 /**
  * How long a cached report counts as fresh. A period that ends today keeps changing,
  * so it goes stale soonest; one that ended before yesterday won't change any more.
@@ -110,7 +117,7 @@ export function blockedProblem(site: Site, now: Date): Ga4Problem | null {
   return null;
 }
 
-const inReportOrder = (names: ReportName[]) => REPORTS.filter((r) => names.includes(r));
+const inReportOrder = (names: ReportName[]) => ALL_REPORTS.filter((r) => names.includes(r));
 
 function chunk<T>(list: T[], size: number): T[][] {
   const out: T[][] = [];
@@ -189,7 +196,7 @@ export async function getReports<R extends ReportName>(
   const audience = options.audience ?? "owner";
   const now = options.now ?? new Date();
   const window = rangeWindow(rangeType, site.timeZone, now);
-  const params: ReportParams = { signupEvent: site.signupEvent };
+  const params = paramsFor(site);
   const keys: CacheKey[] = names.map((report) => ({
     report,
     paramsHash: paramsKey(report, params),
@@ -265,7 +272,7 @@ export async function refreshInBackground(
     const leased = await deps.store.lease(site.propertyId, rangeType, keys);
     if (leased.length === 0) return;
     const window = rangeWindow(rangeType, site.timeZone, now);
-    const params: ReportParams = { signupEvent: site.signupEvent };
+    const params = paramsFor(site);
     const { rows, error } = await fetchAndStore(
       deps,
       site,
@@ -297,7 +304,7 @@ export async function warmReports(
   const blocked = blockedProblem(site, now);
   if (blocked) return blocked;
   const window = rangeWindow(rangeType, site.timeZone, now);
-  const params: ReportParams = { signupEvent: site.signupEvent };
+  const params = paramsFor(site);
   const keys = names.map((report) => ({ report, paramsHash: paramsKey(report, params) }));
   const rows = await deps.store.read(site.propertyId, rangeType, keys);
   const fresh = new Set(rows.filter((r) => isFresh(r, window, "owner", now)).map((r) => r.report));

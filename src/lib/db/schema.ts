@@ -10,6 +10,7 @@ import {
   boolean,
   date,
   index,
+  integer,
   jsonb,
   pgTable,
   primaryKey,
@@ -113,7 +114,11 @@ export const accountRelations = relations(account, ({ one }) => ({
 
 // ── Sites and the report cache (Sprint 1) ──────────────────────────────
 
-/** A GA4 property connected by a user. V1 allows one active site per user. */
+/**
+ * A GA4 property connected by a user. `added_at` set means the site is in the user's
+ * list (Starter: one, Growth: up to 10); `is_active` is the one the dashboard opens with.
+ * Rows that left the list keep their notes and settings, so adding the site again restores them.
+ */
 export const site = pgTable(
   "site",
   {
@@ -134,6 +139,17 @@ export const site = pgTable(
       .default("ok")
       .notNull(),
     quotaBlockedUntil: timestamp("quota_blocked_until", { withTimezone: true }),
+    /** In the user's list since; null when it isn't (switched away from, or removed). */
+    addedAt: timestamp("added_at", { withTimezone: true }),
+    /** When its dashboard was last opened (stamped at most hourly), for warm-cache. */
+    lastViewedAt: timestamp("last_viewed_at", { withTimezone: true }),
+    /** The Search Console property for Google search insights (Growth), e.g. sc-domain:example.com. */
+    searchConsoleUrl: text("search_console_url"),
+    /** Extra spellings of the site's name, for "Your name vs others" (at most 10). */
+    brandTerms: text("brand_terms").array().default(sql`'{}'::text[]`).notNull(),
+    /** What counts as a sale (Growth): a GA4 key event, or a "thank you" page path. */
+    saleEvent: text("sale_event"),
+    salePage: text("sale_page"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
@@ -146,6 +162,9 @@ export const site = pgTable(
       .on(table.userId)
       .where(sql`${table.isActive}`),
     index("site_property_idx").on(table.propertyId),
+    index("site_added_idx")
+      .on(table.userId, table.addedAt)
+      .where(sql`${table.addedAt} is not null`),
   ],
 );
 
@@ -219,20 +238,28 @@ export const userSettings = pgTable("user_settings", {
     .notNull(),
 });
 
-/** The optional public stats page, /p/<slug>. It shows the owner's active site. */
-export const publicPage = pgTable("public_page", {
-  userId: text("user_id")
-    .primaryKey()
-    .references(() => user.id, { onDelete: "cascade" }),
-  slug: text("slug").notNull().unique(),
-  enabled: boolean("enabled").default(false).notNull(),
-  cards: text("cards").array().notNull(),
-  indexable: boolean("indexable").default(true).notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull(),
-});
+/** The optional public stats page of one site, /p/<slug>. */
+export const publicPage = pgTable(
+  "public_page",
+  {
+    siteId: text("site_id")
+      .primaryKey()
+      .references(() => site.id, { onDelete: "cascade" }),
+    /** The site's owner, kept for clean-up (disconnect, delete account). */
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    slug: text("slug").notNull().unique(),
+    enabled: boolean("enabled").default(false).notNull(),
+    cards: text("cards").array().notNull(),
+    indexable: boolean("indexable").default(true).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [index("public_page_user_idx").on(table.userId)],
+);
 
 /** The trial lives here; Stripe is only involved once someone upgrades. */
 export const billing = pgTable("billing", {
@@ -242,6 +269,8 @@ export const billing = pgTable("billing", {
   trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }).notNull(),
   /** The Stripe subscription status, or null before the first upgrade. */
   status: text("status"),
+  /** Which plan the subscription is for, from its price (the webhook). Null before the first payment. */
+  plan: text("plan", { enum: ["starter", "growth"] }),
   stripeCustomerId: text("stripe_customer_id").unique(),
   stripeSubscriptionId: text("stripe_subscription_id"),
   planInterval: text("plan_interval", { enum: ["month", "year"] }),
@@ -275,6 +304,59 @@ export const stripeEvent = pgTable("stripe_event", {
   type: text("type").notNull(),
   receivedAt: timestamp("received_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+// ── Revenue from Stripe (Sprint 7) ──────────────────────────────────────
+
+/**
+ * A site's read-only Stripe connection: a pasted restricted key, encrypted like the
+ * Google tokens. Only its last 4 characters are ever shown again.
+ */
+export const revenueSource = pgTable("revenue_source", {
+  siteId: text("site_id")
+    .primaryKey()
+    .references(() => site.id, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  /** The key, encrypted. */
+  secret: text("secret").notNull(),
+  /** Its last 4 characters, to recognise it. */
+  keyHint: text("key_hint").notNull(),
+  livemode: boolean("livemode").notNull(),
+  status: text("status", { enum: ["ok", "invalid"] })
+    .default("ok")
+    .notNull(),
+  /** The first day the totals cover (the backfill reaches back to it). */
+  coversFrom: date("covers_from"),
+  lastSyncAt: timestamp("last_sync_at", { withTimezone: true }),
+  lastError: text("last_error"),
+  /** Subscriptions with usage-based prices, which MRR can't count. */
+  mrrLeftOut: integer("mrr_left_out").default(0).notNull(),
+  connectedAt: timestamp("connected_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+/**
+ * Daily totals from Stripe for one site, in the site's time zone. Amounts are in each
+ * currency's smallest unit. Never customer names, emails, card or customer IDs.
+ */
+export const revenueDay = pgTable(
+  "revenue_day",
+  {
+    siteId: text("site_id")
+      .notNull()
+      .references(() => site.id, { onDelete: "cascade" }),
+    day: date("day").notNull(),
+    /** { EUR: { charged, refunded } }: money that day, per currency. */
+    money: jsonb("money").$type<Record<string, { charged: number; refunded: number }>>().notNull(),
+    newCustomers: integer("new_customers").default(0).notNull(),
+    /** Monthly recurring revenue per currency, on the days it was recorded. */
+    mrr: jsonb("mrr").$type<Record<string, number>>(),
+  },
+  (table) => [primaryKey({ columns: [table.siteId, table.day] })],
+);
+
+export type RevenueSource = typeof revenueSource.$inferSelect;
+export type RevenueDay = typeof revenueDay.$inferSelect;
 
 export type Billing = typeof billing.$inferSelect;
 export type PublicPage = typeof publicPage.$inferSelect;

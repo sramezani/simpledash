@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 export type RankedRow = {
   key: string;
   label: string;
+  /** A second, quieter line: the page a search led to, a position. */
+  sublabel?: string;
   /** The first value sets the order and the share bar. */
   values: number[];
   /** Shown instead of formatNumber(values[i]) when set, e.g. "25%". */
@@ -22,6 +24,8 @@ type RankedListProps = {
   empty?: ReactNode;
   /** Rows shown. The list is always this tall; the rest are in the card's Details. */
   initial?: number;
+  /** `tall`: two-line rows, for rows with a second line (`sublabel`). */
+  size?: "default" | "tall";
 };
 
 /** A row's value as shown: its display text, or the number. */
@@ -53,12 +57,25 @@ export function ColumnNames({ columns }: { columns: string[] }) {
  * It shows the top `initial` rows at a fixed height, whatever the number of rows,
  * so the cards line up and nothing moves. The full list is in the card's Details.
  */
-export function RankedList({ itemLabel, columns, rows, empty, initial = 10 }: RankedListProps) {
+export function RankedList({
+  itemLabel,
+  columns,
+  rows,
+  empty,
+  initial = 10,
+  size = "default",
+}: RankedListProps) {
   const max = Math.max(1, ...rows.map((r) => r.values[0] ?? 0));
   const viewport = { "--rows": initial } as CSSProperties;
+  const tall = size === "tall";
 
   return (
-    <div style={viewport} className="h-[calc(var(--rows)*2.375rem-0.125rem)]">
+    <div
+      style={viewport}
+      className={
+        tall ? "h-[calc(var(--rows)*3.125rem-0.125rem)]" : "h-[calc(var(--rows)*2.375rem-0.125rem)]"
+      }
+    >
       {rows.length === 0 ? (
         <div className="flex h-full flex-col justify-center">{empty}</div>
       ) : (
@@ -69,7 +86,10 @@ export function RankedList({ itemLabel, columns, rows, empty, initial = 10 }: Ra
             return (
               <li
                 key={row.key}
-                className="relative flex h-9 shrink-0 items-center gap-2 rounded-md px-2 text-sm transition-colors duration-150 ease-out hover:bg-muted"
+                className={cn(
+                  "relative flex shrink-0 items-center gap-2 rounded-md px-2 text-sm transition-colors duration-150 ease-out hover:bg-muted",
+                  tall ? "h-12" : "h-9",
+                )}
               >
                 <span
                   aria-hidden="true"
@@ -81,9 +101,21 @@ export function RankedList({ itemLabel, columns, rows, empty, initial = 10 }: Ra
                     {row.icon}
                   </span>
                 ) : null}
-                <span className="relative min-w-0 flex-1 truncate" title={row.label}>
-                  {row.label}
-                  <span className="sr-only">, {spoken}</span>
+                <span className="relative flex min-w-0 flex-1 flex-col">
+                  <span className="truncate" title={row.label}>
+                    {row.label}
+                    <span className="sr-only">
+                      {row.sublabel ? `, ${row.sublabel}` : ""}, {spoken}
+                    </span>
+                  </span>
+                  {row.sublabel ? (
+                    <span
+                      className="truncate text-xs leading-tight text-muted-foreground"
+                      aria-hidden="true"
+                    >
+                      {row.sublabel}
+                    </span>
+                  ) : null}
                 </span>
                 <span
                   className="relative flex shrink-0 gap-2 tabular-nums @sm:gap-4"

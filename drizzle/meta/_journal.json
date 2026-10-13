@@ -29,6 +29,27 @@
       "when": 1791750152801,
       "tag": "0003_email_public_page_billing",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791899057648,
+      "tag": "0004_growth_and_sites",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791909944402,
+      "tag": "0005_search_console",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791917139386,
+      "tag": "0006_revenue_and_sales",
+      "breakpoints": true
     }
   ]
 }
