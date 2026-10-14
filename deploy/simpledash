@@ -133,7 +133,7 @@ cmd_setup() {
   say "Updating the system"
   apt-get update -q
   apt-get upgrade -yq -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold
-  apt-get install -yq ca-certificates curl ufw unattended-upgrades
+  apt-get install -yq ca-certificates curl ufw unattended-upgrades fail2ban
   cat > /etc/apt/apt.conf.d/20auto-upgrades <<'CONF'
 APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "1";
@@ -200,6 +200,34 @@ CONF
   install -m 600 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$src/origin.pem" "$PROXY_DIR/certs/$NAME/origin.pem"
   install -m 600 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$src/origin-key.pem" "$PROXY_DIR/certs/$NAME/origin-key.pem"
 
+  # SSH is open to the internet, so: keys only, and fail2ban blocks an IP for an hour after
+  # 5 failed logins. Passwords go off only when the admin who runs setup logs in with a key.
+  say "Locking down SSH (keys only, fail2ban)"
+  local admin_home
+  admin_home=$(getent passwd "${SUDO_USER:-root}" | cut -d: -f6)
+  if [[ -s $admin_home/.ssh/authorized_keys ]]; then
+    printf 'PasswordAuthentication no\nKbdInteractiveAuthentication no\nPermitRootLogin prohibit-password\n' \
+      > /etc/ssh/sshd_config.d/10-simpledash.conf
+    if sshd -t; then
+      systemctl reload ssh 2>/dev/null || systemctl reload sshd 2>/dev/null || true
+    else
+      rm -f /etc/ssh/sshd_config.d/10-simpledash.conf
+      say "sshd didn't accept the keys-only setting; left SSH as it was"
+    fi
+  else
+    say "No SSH key found for ${SUDO_USER:-root}: password login left as it was"
+  fi
+  cat > /etc/fail2ban/jail.d/simpledash.local <<'CONF'
+[sshd]
+enabled = true
+backend = systemd
+maxretry = 5
+findtime = 10m
+bantime = 1h
+CONF
+  systemctl enable --now fail2ban >/dev/null 2>&1 || true
+  systemctl restart fail2ban || say "fail2ban didn't start; check: sudo systemctl status fail2ban"
+
   say "Turning on the firewall (SSH, 80 and 443)"
   local port
   for port in $(sshd -T 2>/dev/null | awk '$1 == "port" { print $2 }'); do ufw allow "$port/tcp" >/dev/null; done
@@ -252,7 +280,8 @@ cmd_deploy() {
   say "Starting it (the app runs database migrations first)"
   compose up -d --build --remove-orphans
   if ! wait_healthy; then
-    compose logs --tail=60 app >&2 || true
+    # The repo is public, and so are its GitHub Actions logs: the app's own log stays on the server.
+    say "The app's log is on the server: sudo simpledash logs app"
     if has_image previous; then
       say "The new version isn't healthy: going back to the previous one"
       docker tag "$IMAGE:previous" "$IMAGE:current"

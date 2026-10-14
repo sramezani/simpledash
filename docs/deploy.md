@@ -42,7 +42,7 @@ Any provider works (today: Azure). What it needs:
 - **Ubuntu 24.04 LTS** (or Debian 12), x86 or ARM.
 - **2 vCPU and 2–4 GB RAM.** Builds happen on GitHub, so the server only runs the app; setup adds 2 GB of swap.
 - **Your SSH key** for an admin user that can use `sudo` (on Azure that's `azureuser`).
-- **Inbound ports** in the provider's firewall: **22** (from your IP if you can), **80** and **443**.
+- **Inbound ports** in the provider's firewall: **22, 80 and 443, from Any**. GitHub Actions deploys over SSH from addresses that change all the time, so port 22 can't be limited to your IP. It's protected instead by keys only (setup turns password login off) and fail2ban (5 failed logins block that IP for an hour). GitHub's key can only run `simpledash deploy`.
   - Azure: the VM → **Networking** → **Add inbound port rule** for 80 and 443 (the network security group). The server's own firewall (`ufw`) is set up by `setup.sh`, but Azure's comes first.
   - Hetzner: **Firewalls**.
 

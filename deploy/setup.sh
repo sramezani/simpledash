@@ -218,6 +218,20 @@ for part in origin.pem:CERTIFICATE:certificate origin-key.pem:PRIVATE\ KEY:"priv
   ok "Saved deploy/secrets/$file"
 done
 $first_run && warn "Keep deploy/secrets/ in your password manager: a new server needs it to read the stored tokens."
+r2_id=$(env_get R2_ACCOUNT_ID "$APP_ENV")
+if [[ -n $r2_id && ! $r2_id =~ ^[0-9a-f]{32}$ ]]; then
+  # A pasted endpoint (https://<id>.r2.cloudflarestorage.com) keeps only the ID.
+  fixed=$(printf '%s' "$r2_id" | sed -E 's#^https?://##; s#\.r2\.cloudflarestorage\.com.*##')
+  if [[ $fixed =~ ^[0-9a-f]{32}$ ]]; then
+    env_set R2_ACCOUNT_ID "$fixed" "$APP_ENV"
+    ok "R2_ACCOUNT_ID was the full address; kept only the account ID"
+  else
+    die "R2_ACCOUNT_ID should be the 32-character account ID (Cloudflare → R2 → Overview), not \"$r2_id\""
+  fi
+fi
+for key in R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_BUCKET; do
+  [[ -z $r2_id || -n $(env_get "$key" "$APP_ENV") ]] || die "R2_ACCOUNT_ID is set but $key is empty in deploy/secrets/app.env"
+done
 if [[ -z $(env_get R2_ACCOUNT_ID "$APP_ENV") ]]; then
   warn "R2 isn't set in app.env: no nightly backups, and nothing to restore (docs/backup.md)"
 else
