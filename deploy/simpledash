@@ -120,9 +120,13 @@ wait_healthy() {
 cmd_setup() {
   local src=${1:?usage: simpledash setup <dir>}
   [[ $EUID -eq 0 ]] || die "setup needs root (sudo)"
+  # Read in a subshell: /etc/os-release sets NAME (and more), which would overwrite ours.
+  local os_id os_codename
   # shellcheck disable=SC1091
-  . /etc/os-release
-  [[ $ID == ubuntu || $ID == debian ]] || die "setup supports Ubuntu and Debian, not $ID"
+  os_id=$(. /etc/os-release && echo "$ID")
+  # shellcheck disable=SC1091
+  os_codename=$(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+  [[ $os_id == ubuntu || $os_id == debian ]] || die "setup supports Ubuntu and Debian, not $os_id"
   # No questions from apt or from needrestart (Ubuntu) while updating.
   export DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a
 
@@ -149,9 +153,9 @@ CONF
   if ! command -v docker >/dev/null || ! docker compose version >/dev/null 2>&1; then
     say "Installing Docker"
     install -m 0755 -d /etc/apt/keyrings
-    curl -fsSL "https://download.docker.com/linux/$ID/gpg" -o /etc/apt/keyrings/docker.asc
+    curl -fsSL "https://download.docker.com/linux/$os_id/gpg" -o /etc/apt/keyrings/docker.asc
     chmod a+r /etc/apt/keyrings/docker.asc
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/$ID ${UBUNTU_CODENAME:-$VERSION_CODENAME} stable" \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/$os_id $os_codename stable" \
       > /etc/apt/sources.list.d/docker.list
     apt-get update -q
     apt-get install -yq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
@@ -188,6 +192,10 @@ CONF
   install -d -m 2775 -g docker "$PROXY_DIR/etc/sites"
   [[ -f $PROXY_DIR/compose.yaml ]] || install -m 644 "$src/proxy/compose.yaml" "$PROXY_DIR/compose.yaml"
   [[ -f $PROXY_DIR/etc/Caddyfile ]] || install -m 644 "$src/proxy/Caddyfile" "$PROXY_DIR/etc/Caddyfile"
+  # Left by an earlier version of this script, which named the folder after the OS by mistake.
+  if [[ -d $PROXY_DIR/certs/Ubuntu && $(stat -c %U "$PROXY_DIR/certs/Ubuntu") == "$DEPLOY_USER" ]]; then
+    rm -rf "$PROXY_DIR/certs/Ubuntu"
+  fi
   install -d -m 700 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$PROXY_DIR/certs/$NAME"
   install -m 600 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$src/origin.pem" "$PROXY_DIR/certs/$NAME/origin.pem"
   install -m 600 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$src/origin-key.pem" "$PROXY_DIR/certs/$NAME/origin-key.pem"
