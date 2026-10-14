@@ -61,19 +61,34 @@ install_release_files() {
 
 proxy() { docker compose --project-directory "$PROXY_DIR" -f "$PROXY_DIR/compose.yaml" "$@"; }
 
-# Makes the proxy read its config again. `docker exec` sometimes answers "No such exec instance"
-# for a command that has already finished (a Docker race), so it is tried a few times.
-reload_proxy() {
-  local try
-  for try in 1 2 3 4; do
-    docker exec proxy-caddy caddy reload --config /etc/caddy/Caddyfile --force >/dev/null 2>&1 && return 0
-    sleep 2
-  done
-  return 1
+# Checks the proxy's whole config (every site's block) in a one-off Caddy container, without
+# touching the running proxy. Prints Caddy's own error when it fails.
+validate_proxy() {
+  local out
+  if ! out=$(docker run --rm -v "$PROXY_DIR/etc:/etc/caddy:ro" -v "$PROXY_DIR/certs:/certs:ro" \
+    caddy:2-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile 2>&1); then
+    printf '%s\n' "$out" | tail -n 15 >&2
+    return 1
+  fi
 }
 
-# Our site block in the shared proxy, for APP_URL's host. A block the proxy rejects is put back
-# the way it was, so a mistake here never takes the other sites down.
+# Makes the running proxy read its (already checked) config again. `docker exec` can fail with
+# "No such exec instance" (a Docker race), so after a few tries the proxy is restarted instead,
+# which takes about a second for every site on the server.
+reload_proxy() {
+  local try out=""
+  for try in 1 2 3; do
+    out=$(docker exec proxy-caddy caddy reload --config /etc/caddy/Caddyfile --force 2>&1) && return 0
+    sleep 2
+  done
+  say "The proxy didn't take a reload ($(printf '%s' "$out" | tail -n 1)); restarting it"
+  docker restart proxy-caddy >/dev/null
+}
+
+proxy_running() { [[ -n $(docker ps -q -f name='^proxy-caddy$') ]]; }
+
+# Our site block in the shared proxy, for APP_URL's host. It is checked before the proxy sees
+# it, and a block that doesn't pass is put back the way it was, so the other sites never notice.
 install_site() {
   local domain
   domain=$(sed -n 's#^APP_URL=https\{0,1\}://\([^/:]*\).*#\1#p' "$APP_DIR/.env" | tail -n 1)
@@ -82,13 +97,12 @@ install_site() {
   [[ -f $SITE_FILE ]] && cp "$SITE_FILE" "$SITE_FILE.previous"
   sed "s/SITE_DOMAIN/$domain/g" "$APP_DIR/caddy/site.caddy" > "$SITE_FILE.new"
   mv -f "$SITE_FILE.new" "$SITE_FILE"
-  [[ -n $(docker ps -q -f name='^proxy-caddy$') ]] || return 0
-  if ! reload_proxy; then
+  if ! validate_proxy; then
     if [[ -f $SITE_FILE.previous ]]; then mv -f "$SITE_FILE.previous" "$SITE_FILE"; else rm -f "$SITE_FILE"; fi
-    reload_proxy || true
-    die "the proxy didn't accept $SITE_FILE; the previous one is back"
+    die "the proxy's config didn't pass Caddy's check (above); the previous $SITE_FILE is back"
   fi
   rm -f "$SITE_FILE.previous"
+  if proxy_running; then reload_proxy; fi
 }
 
 # Waits until the app container reports healthy (its HEALTHCHECK calls /api/health).
@@ -188,13 +202,10 @@ CONF
 
   say "Starting Postgres, the backup helper and the proxy"
   compose up -d --build --wait db backup
+  # A running proxy reloads in install_site (that also picks up a new certificate); a proxy
+  # that isn't running yet starts with the files already in place.
   install_site
   proxy up -d --wait
-  # Picks up a new certificate or site block when setup runs again; a restart is the fallback.
-  reload_proxy || {
-    say "The proxy didn't answer a reload; restarting it"
-    docker restart proxy-caddy >/dev/null
-  }
   if has_image current; then
     say "Starting the app"
     compose up -d --wait app
