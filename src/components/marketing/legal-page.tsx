@@ -37,9 +37,18 @@ export function LegalPage({
   );
 }
 
-export function LegalSection({ title, children }: { title: string; children: ReactNode }) {
+export function LegalSection({
+  id,
+  title,
+  children,
+}: {
+  /** For links to this section, e.g. /privacy#analytics. */
+  id?: string;
+  title: string;
+  children: ReactNode;
+}) {
   return (
-    <section className="flex flex-col gap-3 pt-4">
+    <section id={id} className="flex scroll-mt-20 flex-col gap-3 pt-4">
       <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
       <div className="flex flex-col gap-3 leading-relaxed [&_li]:pl-1 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5">
         {children}

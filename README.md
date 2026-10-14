@@ -141,6 +141,7 @@ All of them are listed with comments in [.env.example](.env.example). `src/lib/e
 | `STRIPE_MANAGED_PAYMENTS` | `true` (default): Stripe is the merchant of record in Checkout | Sprint 4 |
 | `STRIPE_PUBLISHABLE_KEY` | Not used by the server; kept for reference | — |
 | `SENTRY_DSN` | Server error reports (optional) | Sprint 4 |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | SimpleDash's own Google Analytics (`G-…`), loaded only after consent. Public, written in at build time; on the server `deploy/setup.sh` passes it to GitHub. Empty: no banner, no analytics | Oct 14 |
 | `ADMIN_EMAILS` | Who can open `/admin` | Sprint 4 |
 | `BACKUP_DATABASE_URL`, `R2_*` | The backup helper on the server, not the app ([docs/backup.md](docs/backup.md)). Compose sets `BACKUP_DATABASE_URL` | Sprint 4 |
 | `SHOW_UI_KIT` | `1` turns the dev previews on in a **local** production build (for Lighthouse). Never set it on the server | — |

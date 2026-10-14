@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
+import { ConsentBanner } from "@/components/shared/consent";
 import { brand, colors } from "@/config/theme";
 import { signedInHintScript } from "@/lib/auth/signed-in-hint";
 import { env } from "@/lib/env";
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         {children}
+        <ConsentBanner />
       </body>
     </html>
   );

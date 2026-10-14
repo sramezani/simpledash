@@ -61,6 +61,9 @@ jobs:
           context: .
           platforms: ${{ vars.DEPLOY_PLATFORM }}
           tags: simpledash-app:${{ github.sha }}
+          # Public values the browser code needs, set by deploy/setup.sh from app.env.
+          build-args: |
+            NEXT_PUBLIC_GA_MEASUREMENT_ID=${{ vars.GA_MEASUREMENT_ID }}
           outputs: type=docker,dest=${{ runner.temp }}/release/app.tar
           cache-from: type=gha
           cache-to: type=gha,mode=max

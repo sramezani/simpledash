@@ -280,6 +280,15 @@ if gh auth status >/dev/null 2>&1; then
   gh secret set DEPLOY_SSH_KEY < "$SECRETS/deploy-key" >/dev/null
   gh secret set DEPLOY_KNOWN_HOSTS --body "$known_hosts" >/dev/null
   gh variable set DEPLOY_PLATFORM --body "$platform" >/dev/null
+  # Public build values (the browser needs them, so they're written in when GitHub builds).
+  ga_id=$(env_get NEXT_PUBLIC_GA_MEASUREMENT_ID "$APP_ENV")
+  if [[ -n $ga_id ]]; then
+    [[ $ga_id =~ ^G-[A-Z0-9]+$ ]] || die "NEXT_PUBLIC_GA_MEASUREMENT_ID should look like G-ABC123XYZ"
+    if [[ $(gh variable get GA_MEASUREMENT_ID 2>/dev/null || true) != "$ga_id" ]]; then
+      gh variable set GA_MEASUREMENT_ID --body "$ga_id" >/dev/null
+      warn "Google Analytics ID set for builds: it goes live with the next deploy (push to main)"
+    fi
+  fi
   ok "Secrets DEPLOY_HOST, DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS and variable DEPLOY_PLATFORM ($platform) set"
 
   if run "$target" 'sudo docker image inspect simpledash-app:current >/dev/null 2>&1'; then

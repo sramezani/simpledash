@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CookieSettingsButton } from "@/components/shared/consent";
 import { Container } from "@/components/shared/container";
 import { Logo } from "@/components/shared/logo";
 import { brand } from "@/config/theme";
@@ -22,6 +23,7 @@ export function SiteFooter() {
           <Link href="/terms" className="text-muted-foreground hover:text-foreground">
             Terms
           </Link>
+          <CookieSettingsButton className="text-muted-foreground hover:text-foreground" />
           <a
             href={`mailto:${brand.supportEmail}`}
             className="text-muted-foreground hover:text-foreground"

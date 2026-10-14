@@ -1008,7 +1008,13 @@ Both are static, in plain English. Claude drafts them, Siamak reviews them (this
 - **Google's rules:** compliance with the Google API Services User Data Policy, including the Limited Use requirements. Google verification needs this.
 - **Processors:** the server host (Microsoft Azure today; it also holds the database), Cloudflare (with R2 for backups), Resend, Stripe (as merchant of record) and Sentry.
 - **Retention and deletion:** deleting the account removes everything; disconnecting revokes Google access.
-- **Cookies:** only necessary ones (session and sign-in state).
+- **Cookies:** the necessary ones (session and sign-in state), plus Google Analytics' (`_ga`, `_ga_…`, 13 months) only after consent.
+- **Our own analytics** (Siamak, Oct 14, 2026): Google Analytics 4 on all of simpledash.app (website, dashboard, public pages), behind a consent banner (`ConsentBanner`, `src/components/shared/consent.tsx`, in the root layout):
+  - Nothing loads before "Accept"; "Decline" means Google's script is never loaded. "This website uses cookies", with Decline (outline) and Accept (brand colour) the same size side by side.
+  - The choice is saved in the browser with its date and asked again after 13 months (Accept) or 6 months (Decline). "Cookie settings" in the footer and on the privacy page reopens it; taking back an Allow deletes the `_ga` cookies and reloads.
+  - Never inside a frame (the landing page's demo) or on `/email/*` (the unsubscribe address holds a token).
+  - Ads features off: ad storage and personalisation denied, no Google signals.
+  - The ID is `NEXT_PUBLIC_GA_MEASUREMENT_ID` (public, written in at build time; `deploy/setup.sh` copies it to the GitHub variable `GA_MEASUREMENT_ID`, passed as a build argument). Empty means no banner and no analytics. Google loads only on the live host, never in development.
 - **Contact.**
 
 **The terms cover:**
@@ -1330,6 +1336,7 @@ These become `.env.example` in Sprint 0. Each variable is added in the sprint sh
 | `STRIPE_PRICE_YEARLY` | Pro, $90 a year (tax included) | `price_…` | Sprint 4 |
 | `STRIPE_MANAGED_PAYMENTS` | Turns Managed Payments on in Checkout | `true` (default) | Sprint 4 |
 | `SENTRY_DSN` | Server error reports (optional) | | Sprint 4 |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | SimpleDash's own Google Analytics ID, behind the consent banner (section 17). Public; build time, via the GitHub variable `GA_MEASUREMENT_ID` | `G-…` (empty: off) | Oct 14 |
 | `ADMIN_EMAILS` | Who can open `/admin` | comma-separated | Sprint 4 |
 | `BACKUP_DATABASE_URL` | Backup container: database to dump and restore into. Set by `deploy/compose.yaml` | `postgres://…` | Sprint 4 |
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | Backup container: where dumps go | | Sprint 4 |

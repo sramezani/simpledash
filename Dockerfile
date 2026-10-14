@@ -14,7 +14,10 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # APP_URL is read at build time for canonical URLs and metadata on static pages.
 ARG APP_URL=https://simpledash.app
+# Public, written into the browser code: SimpleDash's own Google Analytics ID (empty: none).
+ARG NEXT_PUBLIC_GA_MEASUREMENT_ID=""
 ENV APP_URL=$APP_URL \
+    NEXT_PUBLIC_GA_MEASUREMENT_ID=$NEXT_PUBLIC_GA_MEASUREMENT_ID \
     NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 

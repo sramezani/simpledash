@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { LegalPage, LegalSection } from "@/components/marketing/legal-page";
+import { CookieSettingsButton } from "@/components/shared/consent";
 import { legal } from "@/config/legal";
 import { plans } from "@/config/plans";
 import { brand } from "@/config/theme";
@@ -97,6 +98,39 @@ export default function PrivacyPage() {
         </p>
       </LegalSection>
 
+      <LegalSection id="analytics" title="How we count visits to simpledash.app">
+        <p>
+          If you accept cookies in the banner, {brand.name} uses Google Analytics 4 on all of
+          simpledash.app (the website, the dashboard and public stats pages) to count visits. If you
+          decline, Google Analytics isn&apos;t loaded at all, and nothing is sent to Google.
+        </p>
+        <ul>
+          <li>
+            <strong>What it records:</strong> the pages you open, where you came from, your browser
+            and device type, and your approximate location (city or country). Google uses your IP
+            address to work out the location and doesn&apos;t store it.
+          </li>
+          <li>
+            <strong>Cookies:</strong> <code>_ga</code> and <code>_ga_…</code>, which tell your
+            visits apart, kept for up to 13 months.
+          </li>
+          <li>
+            <strong>What we do with it:</strong> we look at the totals to see what people use and
+            improve {brand.name}. No ads, no Google signals or ad personalisation, nothing sold, and
+            nothing linked to your account.
+          </li>
+          <li>
+            <strong>Google</strong> processes this for us and may do so in the United States, under
+            the EU–US Data Privacy Framework.
+          </li>
+          <li>
+            Your choice is kept in your browser. Change it any time:{" "}
+            <CookieSettingsButton className="font-medium text-primary underline-offset-2 hover:underline" />
+            .
+          </li>
+        </ul>
+      </LegalSection>
+
       <LegalSection title="Your own Stripe account">
         <p>
           On {plans.pro.name} you can paste a restricted Stripe key with read access, to see revenue
@@ -110,7 +144,9 @@ export default function PrivacyPage() {
         <p>
           A public page is off until you turn it on. When it&apos;s on, anyone with the link can see
           the cards you chose. It never shows your notes, email address, name or property ID. You
-          can turn it off at any time.
+          can turn it off at any time. Its visitors get the same analytics choice as everyone on
+          simpledash.app (above): if they allow it, their visit is counted in {brand.name}&apos;s
+          own Google Analytics, not in yours.
         </p>
       </LegalSection>
 
@@ -127,6 +163,7 @@ export default function PrivacyPage() {
             and handles tax under its own privacy policy.
           </li>
           <li>Sentry: error reports from our server. They don&apos;t include your Google data.</li>
+          <li>Google: Google Analytics, only if you allow it (above).</li>
         </ul>
       </LegalSection>
 
@@ -151,8 +188,11 @@ export default function PrivacyPage() {
 
       <LegalSection title="Cookies">
         <p>
-          We only use the cookies needed to keep you signed in and to finish the Google sign-in
-          safely. There are no analytics or advertising cookies, so there is no cookie banner.
+          Two kinds, and no advertising cookies at all. The cookies needed to keep you signed in and
+          to finish the Google sign-in safely are always used. Google Analytics&apos; cookies are
+          set only if you allow them (above);{" "}
+          <CookieSettingsButton className="font-medium text-primary underline-offset-2 hover:underline" />{" "}
+          lets you change that.
         </p>
       </LegalSection>
 

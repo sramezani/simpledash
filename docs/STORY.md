@@ -4,6 +4,47 @@ A dated log with one entry per session. **Newest entry first.**
 
 It is written for future Claude sessions: read the latest entry before starting work. Ideas that fall outside the roadmap go here too (Working rule 5).
 
+## 2026-10-14 · Session 12 · Our own Google Analytics, with consent
+
+### Done
+
+- **Consent banner and GA4:** `ConsentBanner` (`src/components/shared/consent.tsx`) sits in the root layout, so it covers every page. "This website uses cookies", with Decline and Accept the same size (Accept in the brand colour).
+  - Google's script loads only after "Allow". Ads features are off.
+  - The choice is saved with its date and asked again after 13 months (Accept) or 6 months (Decline).
+  - "Cookie settings" is in the footer and on the privacy page. Taking back an Allow deletes the `_ga` cookies and reloads.
+  - Off inside frames (the demo) and on `/email/*`.
+  - Google loads only on the live host.
+- **The ID:** `NEXT_PUBLIC_GA_MEASUREMENT_ID` goes in app.env. setup.sh copies it to the GitHub variable `GA_MEASUREMENT_ID`, and the workflow passes it to the Docker build as an argument.
+- **Privacy page:** a new "How we count visits" section (what, cookies, purpose, Google in the US under the Data Privacy Framework), Google in the processors, the cookies section rewritten, and a line on public page visitors.
+- **Checked in the browser:** Allow, then reload; a recent "No thanks"; 200- and 300-day-old choices; Cookie settings; no banner inside the demo frame; 375 px.
+
+### Next (Siamak)
+
+- Run `deploy/setup.sh` (it sets the GitHub variable), then push: the banner goes live with that deploy.
+- In GA4 admin: data retention at 14 months, Google signals off.
+
+## 2026-10-14 · Session 11 · First deploy: simpledash.app is live
+
+### Done
+
+- First real run of `deploy/setup.sh` on the Azure VM. Bugs found on the way, all fixed:
+  - **The certificate went to `/opt/proxy/certs/Ubuntu/`.** `. /etc/os-release` overwrote the script's `NAME`, so Caddy crash-looped (seen as "No such exec instance"). The file is now read in a subshell, and the stray folder is removed.
+  - **Reloading the proxy:** the config is now checked first in a one-off Caddy container (Caddy's own error is shown), then a reload with retries, then a restart as the fallback.
+  - **Certificate prompts:** each file must have its own PEM header, so a certificate pasted as the key is refused and asked again.
+  - **Restore:** rclone's notice was read as a backup file name. Now only real backup names count, rclone logs errors only, and it fails within about a minute.
+  - **`R2_ACCOUNT_ID`:** a pasted full endpoint is cut down to the ID, and a half-filled R2 set stops setup.
+  - **`setup.sh -i <key>`** added, like `ssh -i`.
+  - **GitHub couldn't reach port 22**, because the Azure rule allowed only Siamak's IP. Siamak chose SSH from Any, with keys only (password login off) and fail2ban (5 tries, 1 hour ban).
+  - **A failed deploy no longer prints the app's log into the public Actions log.**
+- The deploy from `main` went green, and https://simpledash.app is live (Stripe in test mode).
+
+### Next (Siamak)
+
+- Run `deploy/setup.sh -i … azureuser@…` once more to apply keys-only and fail2ban (the push deploy doesn't), then `sudo reboot` for the pending updates.
+- `sudo simpledash backup`, and check that a file appears in R2.
+- Google OAuth redirect URI for simpledash.app, Resend domain, Sentry DSN, the Search Console API.
+- Live Stripe at launch; the Azure region for the privacy page; Lighthouse on the real domain.
+
 ## 2026-10-14 · Session 10 · Free and Pro, no trial, and open source
 
 ### Done
