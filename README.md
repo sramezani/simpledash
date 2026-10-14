@@ -158,7 +158,7 @@ The look of the whole site and the brand facts live in one file, `src/config/the
 One server behind Cloudflare runs `deploy/compose.yaml`: the app image (`Dockerfile`, Next.js standalone on Node 24), Postgres 17, Caddy for HTTPS and a backup helper. The app applies database migrations when it starts. Step by step: [docs/deploy.md](docs/deploy.md).
 
 ```bash
-deploy/setup.sh azureuser@<server-ip>                        # a fresh server, one command (run it twice the first time)
+deploy/setup.sh azureuser@<server-ip>                        # a fresh server, one command
 deploy/setup.sh azureuser@<new-ip> --from azureuser@<old-ip>  # move to a new server with the data
 ```
 

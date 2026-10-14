@@ -137,7 +137,7 @@ Versions were checked on npm on Oct 11, 2026. Pin exact versions in `package.jso
 ├── deploy/                          the production server (section 21)
 │   ├── setup.sh                     one command per server, run on the Mac
 │   ├── simpledash                   the command on the server: setup, deploy, status, logs, backup…
-│   ├── compose.yaml · caddy/ · crontab
+│   ├── compose.yaml · caddy/site.caddy · proxy/ (the shared HTTPS proxy) · crontab
 │   └── secrets/                     app.env, certificate, deploy key (git-ignored)
 ├── next.config.ts · drizzle.config.ts · vitest.config.ts · eslint.config.mjs · .prettierrc
 ├── drizzle/                         SQL migrations (generated, committed)
@@ -1223,7 +1223,7 @@ A full CSP is a later improvement: script nonces would make the static pages dyn
 
 ## 20. Jobs and operations
 
-Jobs run from cron on the server (`deploy/crontab`, as the `deploy` user, times in UTC). Each one runs `simpledash job <job>`, which runs `node scripts/run-job.mjs <job>` inside the app container. That POSTs to `http://localhost:3000/api/internal/jobs/<job>` with the bearer secret. Output goes to the journal (`simpledash logs jobs`).
+Jobs run from cron on the server (`deploy/crontab`, as the `simpledash` user, times in UTC). Each one runs `simpledash job <job>`, which runs `node scripts/run-job.mjs <job>` inside the app container. That POSTs to `http://localhost:3000/api/internal/jobs/<job>` with the bearer secret. Output goes to the journal (`simpledash logs jobs`).
 
 | Job | When | What it does |
 | --- | --- | --- |
@@ -1283,17 +1283,18 @@ Next.js runs on the Mac and Postgres runs in Docker. This needs Docker Desktop o
 
 No Coolify and no Supabase in production. Step by step for Siamak: `docs/deploy.md`.
 
-**`deploy/compose.yaml`** runs four containers in `/opt/simpledash`:
+**`deploy/compose.yaml`** runs three containers in `/opt/simpledash`:
 
-- **`app`:** the image `simpledash-app:current`, never pulled from a registry. `DATABASE_URL` comes from `POSTGRES_PASSWORD`; everything else from `.env` (a copy of `deploy/secrets/app.env`). No published port.
-- **`db`:** `postgres:17-alpine` with a named volume. No published port.
-- **`caddy`:** ports 80 and 443. Serves the Cloudflare Origin Certificate (Cloudflare SSL mode Full (strict), 15-year certificate, no Let's Encrypt), redirects `www` to the bare domain and HTTP to HTTPS, refuses `/api/internal/*` and proxies the rest to `app:3000`.
+- **`app`:** the image `simpledash-app:current`, never pulled from a registry. `DATABASE_URL` comes from `POSTGRES_PASSWORD`; everything else from `.env` (a copy of `deploy/secrets/app.env`). No published port; it joins the shared `web` network as `simpledash-app`.
+- **`db`:** `postgres:17-alpine` with a named volume. No published port, not on `web`.
 - **`backup`:** built from `scripts/backup/`; waits for cron's nightly `backup.sh` and setup's `restore.sh` (section 20, `docs/backup.md`).
+
+**The shared proxy** (`deploy/proxy`, in `/opt/proxy`): one Caddy (`proxy-caddy`) on ports 80 and 443 for every site on the server, whose Caddyfile only imports `etc/sites/*.caddy`. SimpleDash's block (`deploy/caddy/site.caddy`, written as `sites/simpledash.caddy` with the domain from `APP_URL`) serves the Cloudflare Origin Certificate from `/opt/proxy/certs/simpledash/` (SSL mode Full (strict), 15 years, no Let's Encrypt), redirects `www` to the bare domain, refuses `/api/internal/*` and proxies the rest to `simpledash-app:3000`. Setup creates the proxy and the `web` network only if they're missing, and a block the proxy rejects is put back, so other sites on the server are never touched (`docs/deploy.md`, "Several sites on one server").
 
 **`deploy/setup.sh <user@server> [--from <user@old-server>]`**, run on the Mac:
 
-1. The first run builds `deploy/secrets/app.env` from `.env.example` (new random secrets, service keys copied from `.env`), makes the deploy key and stops until the certificate files and every required value are there.
-2. Sends the release files and secrets over SSH and runs `simpledash setup` as root: system updates and automatic security updates, UTC clock, 2 GB swap, Docker from Docker's apt repository with the rotating `local` log driver, `ufw` (SSH, 80, 443), the `deploy` user and the files. Then it starts `db`, `caddy` and `backup`.
+1. Installs and signs in the GitHub CLI if needed. Builds `deploy/secrets/app.env` from `.env.example` the first time (new random secrets, service keys copied from `.env`), adds variables new to `.env.example` later, makes the deploy key, and asks in the terminal for any missing required value and the certificate, so one run is enough.
+2. Sends the release files and secrets over SSH and runs `simpledash setup` as root: system updates and automatic security updates, UTC clock, 2 GB swap, Docker from Docker's apt repository with the rotating `local` log driver, `ufw` (SSH, 80, 443), the `simpledash` user and the files. Then it starts `db` and `backup`, and the shared proxy with this site's block.
 3. With `--from`: stops the old server's app and backs it up.
 4. `simpledash restore --if-empty`: the newest R2 backup, only into an empty database and before the app's first start.
 5. Sets the GitHub secrets (`DEPLOY_HOST`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, from the server's own host keys over the same SSH session) and the variable `DEPLOY_PLATFORM` (from the server's CPU), then runs the first deploy and waits for it.
@@ -1302,10 +1303,10 @@ No Coolify and no Supabase in production. Step by step for Siamak: `docs/deploy.
 **`.github/workflows/deploy.yml`:**
 
 - Every pull request and push: `npm ci` and `npm run check` on Node from `.nvmrc`.
-- On `main` (or by hand), once `DEPLOY_PLATFORM` is set: builds the `Dockerfile` for that platform with the GitHub Actions cache, then streams the image (`docker save`) with `deploy/` and `scripts/backup/` to `deploy@server` over SSH. One deploy at a time.
+- On `main` (or by hand), once `DEPLOY_PLATFORM` is set: builds the `Dockerfile` for that platform with the GitHub Actions cache, then streams the image (`docker save`) with `deploy/` and `scripts/backup/` to `simpledash@server` over SSH. One deploy at a time.
 - The deploy key is restricted on the server to `command="simpledash deploy"`: no shell, no forwarding.
 
-**`simpledash deploy`** (on the server): loads the image as `simpledash-app:<commit>`, updates the release files, tags the old `current` as `previous`, starts the new one (migrations run first) and waits up to 3 minutes for a healthy `/api/health`. If it isn't healthy, it goes back to `previous` and fails the run. It reloads Caddy and removes older images. Migrations stay additive, so going back never meets a schema it can't read.
+**`simpledash deploy`** (on the server): loads the image as `simpledash-app:<commit>`, updates the release files, tags the old `current` as `previous`, starts the new one (migrations run first) and waits up to 3 minutes for a healthy `/api/health`. If it isn't healthy, it goes back to `previous` and fails the run. It updates its block in the shared proxy and removes older images. Migrations stay additive, so going back never meets a schema it can't read.
 
 ## 22. Environment variables
 

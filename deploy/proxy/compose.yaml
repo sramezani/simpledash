@@ -1,0 +1,31 @@
+# The HTTPS proxy shared by every site on this server (docs/deploy.md, "Several sites on one
+# server"). It lives in /opt/proxy and belongs to no single project: setup creates it only if it
+# isn't there yet. Each site adds:
+#   /opt/proxy/etc/sites/<name>.caddy     its site block (its own domains only)
+#   /opt/proxy/certs/<name>/              its Cloudflare Origin Certificate
+# and puts its app on the "web" network under a name nobody else uses (simpledash-app here).
+name: proxy
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: proxy-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./etc:/etc/caddy:ro
+      - ./certs:/certs:ro
+      - data:/data
+      - config:/config
+    networks:
+      - web
+
+networks:
+  web:
+    external: true
+
+volumes:
+  data:
+  config:

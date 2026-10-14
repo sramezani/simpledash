@@ -1,4 +1,4 @@
-# SimpleDash scheduled jobs (docs/SPEC.md section 20), installed for the deploy user by
+# SimpleDash scheduled jobs (docs/SPEC.md section 20), installed for the simpledash user by
 # `simpledash setup` and every deploy. Times are UTC. Output goes to the journal:
 # `simpledash logs jobs`.
 5 * * * * /usr/local/bin/simpledash job warm-cache 2>&1 | logger -t simpledash

@@ -248,7 +248,7 @@ What's done and what's next, in plain words.
 - [ ] Cloudflare: the Origin Certificate, saved as `deploy/secrets/origin.pem` and `origin-key.pem` (`docs/deploy.md` step 1)
 - [ ] Cloudflare R2: the bucket and token, into `deploy/secrets/app.env` (`docs/backup.md`)
 - [ ] Azure: open ports 80 and 443 in the VM's network security group
-- [ ] Push to GitHub (with `.github/workflows/deploy.yml`), then run `deploy/setup.sh azureuser@<server-ip>` twice: the first run creates `deploy/secrets/app.env`, the second sets everything up
+- [ ] Push to GitHub (with `.github/workflows/deploy.yml`), then run `deploy/setup.sh azureuser@<server-ip>` once: it asks for anything missing on the way
 - [ ] Keep a copy of `deploy/secrets/` in a password manager
 - [ ] Tell Claude the Azure region, for the privacy page (it now says "Microsoft Azure" without a place)
 - [ ] **Done when:** `https://simpledash.app/api/health` answers over HTTPS, a merge to `main` deploys on its own, and `sudo simpledash backup` puts a file in R2.

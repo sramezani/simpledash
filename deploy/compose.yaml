@@ -1,4 +1,5 @@
-# Production on one server (docs/deploy.md): the app, Postgres, Caddy and the backup helper.
+# Production on one server (docs/deploy.md): the app, Postgres and the backup helper. HTTPS comes
+# from the shared proxy in /opt/proxy (deploy/proxy), which reaches the app on the "web" network.
 # It lives in /opt/simpledash next to `.env` (a copy of deploy/secrets/app.env, which compose also
 # reads for the ${…} values below). Run it through the `simpledash` command (deploy/simpledash).
 name: simpledash
@@ -15,6 +16,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      default:
+      # Shared with the proxy and other sites' apps, so the name must be ours alone.
+      web:
+        aliases:
+          - simpledash-app
 
   db:
     image: postgres:17-alpine
@@ -31,19 +38,6 @@ services:
       timeout: 3s
       retries: 10
 
-  # HTTPS with the Cloudflare Origin Certificate; Cloudflare's SSL mode is Full (strict).
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./caddy:/etc/caddy:ro
-      - ./certs:/certs:ro
-      - caddy-data:/data
-      - caddy-config:/config
-
   # Waits; cron runs backup.sh in it every night, and setup runs restore.sh (docs/backup.md).
   backup:
     build: ./backup
@@ -59,7 +53,9 @@ services:
       db:
         condition: service_healthy
 
+networks:
+  web:
+    external: true
+
 volumes:
   db-data:
-  caddy-data:
-  caddy-config:

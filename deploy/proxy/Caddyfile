@@ -1,0 +1,3 @@
+# The shared proxy (deploy/proxy/compose.yaml). Every site on this server is one file in sites/.
+# Nothing site-specific goes here, so sites can come and go without touching each other.
+import sites/*.caddy

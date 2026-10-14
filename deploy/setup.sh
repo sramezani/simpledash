@@ -6,10 +6,11 @@
 #   deploy/setup.sh azureuser@NEW_IP --from azureuser@OLD_IP    moving servers: the old app stops,
 #                                                               its newest data comes along
 #
-# It updates and secures the server, installs Docker, starts Postgres, Caddy and the backup helper,
+# It updates and secures the server, installs Docker, starts Postgres, the backup helper and the
+# shared HTTPS proxy (other sites on the same server keep working: docs/deploy.md),
 # restores the newest R2 backup into an empty database, tells GitHub where to deploy, runs the first
 # deploy and, with a Cloudflare token, points the DNS at the server. Safe to run again.
-# The first run creates deploy/secrets/ and stops so you can fill it in.
+# Missing values and the certificate are asked for on the way, so one run is enough.
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
@@ -27,6 +28,45 @@ die() { printf '\n\033[31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
 
 # The value of KEY in an env file (empty if missing).
 env_get() { [[ -f $2 ]] && sed -n "s/^$1=//p" "$2" | tail -n 1 || true; }
+# Sets KEY=VALUE in an env file, replacing the line or adding it at the end.
+env_set() {
+  local tmp
+  tmp=$(mktemp)
+  KEY="$1" VALUE="$2" awk 'BEGIN { k = ENVIRON["KEY"]; v = ENVIRON["VALUE"] }
+    index($0, k "=") == 1 { print k "=" v; done = 1; next } { print }
+    END { if (!done) print k "=" v }' "$3" > "$tmp"
+  cat "$tmp" > "$3"
+  rm -f "$tmp"
+}
+interactive() { [[ -t 0 && -t 1 ]]; }
+
+# The same format rules as src/lib/env.ts, so a typo shows up here, not as an app that won't start.
+valid() {
+  case $1 in
+    APP_URL) [[ $2 =~ ^https:// ]] ;;
+    POSTGRES_PASSWORD) [[ $2 =~ ^[A-Za-z0-9]{16,}$ ]] ;;
+    BETTER_AUTH_SECRET | EMAIL_TOKEN_SECRET) [[ ${#2} -ge 32 ]] ;;
+    CRON_SECRET) [[ ${#2} -ge 24 ]] ;;
+    RESEND_API_KEY) [[ $2 == re_* ]] ;;
+    STRIPE_SECRET_KEY) [[ $2 =~ ^(sk|rk)_(test|live)_ ]] ;;
+    STRIPE_WEBHOOK_SECRET) [[ $2 == whsec_* ]] ;;
+    STRIPE_PRICE_*) [[ $2 == price_* ]] ;;
+    *) [[ -n $2 ]] ;;
+  esac
+}
+
+# Where each required value comes from, shown when setup asks for it.
+hint() {
+  case $1 in
+    GOOGLE_CLIENT_*) echo "Google Cloud → APIs & Services → Credentials → the OAuth Web client" ;;
+    RESEND_API_KEY) echo "Resend → API Keys (starts with re_)" ;;
+    STRIPE_SECRET_KEY) echo "Stripe → Developers → API keys (sk_live_… at launch, sk_test_… before)" ;;
+    STRIPE_WEBHOOK_SECRET) echo "Stripe → Developers → Webhooks → the endpoint https://simpledash.app/api/stripe/webhook → Signing secret" ;;
+    STRIPE_PRICE_*) echo "Stripe → Product catalog → SimpleDash Pro → the price's ID (price_…)" ;;
+    APP_URL) echo "the site's address, https://simpledash.app" ;;
+    *) echo "see .env.example" ;;
+  esac
+}
 
 target="" from=""
 while [[ $# -gt 0 ]]; do
@@ -41,6 +81,17 @@ done
 for tool in ssh ssh-keygen openssl tar curl; do
   command -v "$tool" >/dev/null || die "$tool is missing on this computer"
 done
+# The GitHub CLI tells GitHub Actions where to deploy: installed and signed in here if needed.
+if ! command -v gh >/dev/null; then
+  command -v brew >/dev/null || die "Install the GitHub CLI (https://cli.github.com), then run this again"
+  say "Installing the GitHub CLI"
+  brew install gh
+fi
+if ! gh auth status >/dev/null 2>&1; then
+  interactive || die "Sign in to GitHub first: gh auth login"
+  say "Signing in to GitHub"
+  gh auth login --hostname github.com --git-protocol https --web
+fi
 # The real address and port, also when the target is an alias from ~/.ssh/config.
 host=$(ssh -G "$target" | awk '$1 == "hostname" { print $2 }')
 [[ $(ssh -G "$target" | awk '$1 == "port" { print $2 }') == 22 ]] ||
@@ -76,6 +127,16 @@ if [[ ! -f $APP_ENV ]]; then
   first_run=true
 fi
 
+# Variables added to .env.example since app.env was made get a line too (with the example's value).
+added=""
+while IFS= read -r line || [[ -n $line ]]; do
+  [[ $line =~ ^([A-Z0-9_]+)=(.*)$ ]] || continue
+  key=${BASH_REMATCH[1]}
+  case $key in DATABASE_URL | BACKUP_DATABASE_URL) continue ;; esac
+  grep -q "^$key=" "$APP_ENV" || { env_set "$key" "${BASH_REMATCH[2]}" "$APP_ENV"; added="$added $key"; }
+done < "$ROOT/.env.example"
+[[ -z $added ]] || ok "Added new variables to app.env:$added"
+
 if [[ ! -f $CF_ENV ]]; then
   cat > "$CF_ENV" <<'CONF'
 # Optional. With a Cloudflare API token, setup points the DNS at the new server by itself.
@@ -90,28 +151,44 @@ if [[ ! -f $SECRETS/deploy-key ]]; then
   ok "Created the deploy key GitHub Actions uses (deploy/secrets/deploy-key)"
 fi
 
-missing=""
-for key in $REQUIRED; do
-  [[ -n $(env_get "$key" "$APP_ENV") ]] || missing="$missing $key"
-done
-[[ $(env_get POSTGRES_PASSWORD "$APP_ENV") =~ ^[A-Za-z0-9]*$ ]] || die "POSTGRES_PASSWORD may only use letters and digits"
-certs_missing=false
-[[ -s $SECRETS/origin.pem && -s $SECRETS/origin-key.pem ]] || certs_missing=true
-
-if [[ -n $missing ]] || $certs_missing || $first_run; then
-  echo
-  [[ -z $missing ]] || warn "Fill in, in deploy/secrets/app.env:$missing"
-  [[ $missing != *STRIPE_WEBHOOK_SECRET* ]] ||
-    echo "      (Stripe → Developers → Webhooks → the endpoint https://simpledash.app/api/stripe/webhook)"
-  if $certs_missing; then
-    warn "Add the Cloudflare Origin Certificate: Cloudflare → SSL/TLS → Origin Server → Create Certificate"
-    echo "      (simpledash.app and *.simpledash.app, 15 years). Save the certificate as"
-    echo "      deploy/secrets/origin.pem and the private key as deploy/secrets/origin-key.pem."
+# Our own secrets are made here when empty (an app.env written by hand, say).
+for key in POSTGRES_PASSWORD BETTER_AUTH_SECRET CRON_SECRET EMAIL_TOKEN_SECRET; do
+  if [[ -z $(env_get "$key" "$APP_ENV") ]]; then
+    env_set "$key" "$(openssl rand -hex 32)" "$APP_ENV"
+    ok "Made a new random $key"
   fi
-  $first_run && warn "Check the copied values in app.env (live Stripe keys at launch), and keep deploy/secrets/ in your password manager."
-  echo
-  die "Then run the same command again."
-fi
+done
+
+# Anything missing or in the wrong format is asked for here, so one run is enough.
+for key in $REQUIRED; do
+  value=$(env_get "$key" "$APP_ENV")
+  valid "$key" "$value" && continue
+  if ! interactive; then
+    [[ -n $value ]] && die "$key in deploy/secrets/app.env isn't in the right format"
+    die "$key is empty in deploy/secrets/app.env"
+  fi
+  [[ -z $value ]] || warn "$key doesn't look right ($value)"
+  echo "  $key ($(hint "$key"))"
+  value=""
+  until valid "$key" "$value"; do
+    read -r -p "  > " value
+  done
+  env_set "$key" "$value" "$APP_ENV"
+done
+[[ $(env_get STRIPE_SECRET_KEY "$APP_ENV") == *_test_* ]] &&
+  warn "Stripe is in test mode (a test key): fine for trying it, switch to the live key and prices at launch"
+for part in origin.pem:certificate origin-key.pem:"private key"; do
+  file=${part%%:*} what=${part#*:}
+  [[ -s $SECRETS/$file ]] && continue
+  interactive || die "deploy/secrets/$file is missing (docs/deploy.md step 1)"
+  echo "  The Cloudflare Origin Certificate's $what (Cloudflare → SSL/TLS → Origin Server → Create"
+  echo "  Certificate, for simpledash.app and *.simpledash.app, 15 years)."
+  echo "  Paste it, then press Enter and Ctrl-D:"
+  cat > "$SECRETS/$file"
+  chmod 600 "$SECRETS/$file"
+  grep -q "BEGIN" "$SECRETS/$file" || die "That doesn't look like a PEM file; delete deploy/secrets/$file and try again"
+done
+$first_run && warn "Keep deploy/secrets/ in your password manager: a new server needs it to read the stored tokens."
 if [[ -z $(env_get R2_ACCOUNT_ID "$APP_ENV") ]]; then
   warn "R2 isn't set in app.env: no nightly backups, and nothing to restore (docs/backup.md)"
 else
@@ -124,11 +201,12 @@ SSH_OPTS=(-o ConnectTimeout=15 -o ControlMaster=auto -o "ControlPath=/tmp/simple
 run() { ssh "${SSH_OPTS[@]}" "$@"; }
 
 # ── 2. The server ─────────────────────────────────────────────────────────────────────────
-say "Setting up $target (system updates, Docker, firewall, Postgres, Caddy)"
+say "Setting up $target (system updates, Docker, firewall, Postgres, the HTTPS proxy)"
 stage=$(mktemp -d)
 trap 'rm -rf "$stage"' EXIT
-cp -R deploy/compose.yaml deploy/caddy deploy/crontab deploy/simpledash "$stage/"
+cp -R deploy/compose.yaml deploy/caddy deploy/proxy deploy/crontab deploy/simpledash "$stage/"
 cp -R scripts/backup "$stage/backup"
+cp .env.example "$stage/env.example"
 cp "$APP_ENV" "$SECRETS/origin.pem" "$SECRETS/origin-key.pem" "$SECRETS/deploy-key.pub" "$stage/"
 COPYFILE_DISABLE=1 tar --no-mac-metadata -cz -C "$stage" . |
   run "$target" 'rm -rf ~/.simpledash-setup && mkdir -m 700 ~/.simpledash-setup && tar -xzf - -C ~/.simpledash-setup 2>/dev/null' ||
@@ -154,7 +232,7 @@ esac
 known_hosts=$(run "$target" 'cat /etc/ssh/ssh_host_*_key.pub' | awk -v h="$host" '{ print h, $1, $2 }')
 
 say "Telling GitHub Actions about the server"
-if command -v gh >/dev/null && gh auth status >/dev/null 2>&1; then
+if gh auth status >/dev/null 2>&1; then
   gh secret set DEPLOY_HOST --body "$host" >/dev/null
   gh secret set DEPLOY_SSH_KEY < "$SECRETS/deploy-key" >/dev/null
   gh secret set DEPLOY_KNOWN_HOSTS --body "$known_hosts" >/dev/null
@@ -165,7 +243,8 @@ if command -v gh >/dev/null && gh auth status >/dev/null 2>&1; then
     ok "The app is already on this server; the next merge to main deploys a new version"
   else
     say "First deploy: GitHub builds main and sends it to the server (about 5 minutes)"
-    started=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    # Two minutes early, so a clock that's a little off can't hide the new run.
+    started=$(date -u -v-2M +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d "2 minutes ago" +%Y-%m-%dT%H:%M:%SZ)
     if gh workflow run deploy.yml --ref main >/dev/null 2>&1; then
       run_id=""
       for _ in $(seq 1 20); do

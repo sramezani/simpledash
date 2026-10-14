@@ -34,6 +34,14 @@ It is written for future Claude sessions: read the latest entry before starting 
   - `getSession` read `auth.api` (and so `BETTER_AUTH_SECRET`) before `await headers()`. A build without env vars, like the Docker image on GitHub, crashed while prerendering `/settings`.
   - Earlier builds passed only because `.env` was there. `headers()` now comes first.
 
+- **Several sites on one server (later the same day):**
+  - HTTPS moved out of SimpleDash's compose into one shared proxy in `/opt/proxy` (`deploy/proxy`), with SimpleDash's block in `sites/simpledash.caddy` for its own domains only. A block the proxy rejects is put back.
+  - The `deploy` user became `simpledash`.
+  - The app is `simpledash-app` on the shared `web` network.
+  - The certificate moved to `/opt/proxy/certs/simpledash/`.
+  - The proxy and network are created only if missing.
+  - `deploy/setup.sh` now asks for missing values (one run), installs and signs in `gh`, adds new `.env.example` variables, checks formats like `env.ts`, and makes empty secrets.
+
 ### Checked
 
 - `npm run check`: 45 files, 372 tests. New and rewritten tests cover plans, prices, the webhook, Free's 30 days (including the site's time zone and both menus), `llms.txt` and structured data.

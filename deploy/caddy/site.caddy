@@ -1,0 +1,16 @@
+# SimpleDash's site in the shared proxy. `simpledash` writes it to /opt/proxy/etc/sites/simpledash.caddy
+# with the domain filled in from APP_URL. Cloudflare connects on 443 with SSL mode Full (strict),
+# so Caddy serves the Cloudflare Origin Certificate and never asks Let's Encrypt for these names.
+SITE_DOMAIN, www.SITE_DOMAIN {
+	tls /certs/simpledash/origin.pem /certs/simpledash/origin-key.pem
+
+	encode zstd gzip
+
+	@www host www.SITE_DOMAIN
+	redir @www https://SITE_DOMAIN{uri} permanent
+
+	# Jobs are called from inside the app container only (simpledash job).
+	respond /api/internal/* 404
+
+	reverse_proxy simpledash-app:3000
+}

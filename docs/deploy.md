@@ -6,7 +6,7 @@ Step by step, for Siamak. The plan behind it is in `docs/SPEC.md` section 21.
 
 - `deploy/setup.sh` turns a fresh Ubuntu or Debian server into a SimpleDash server with **one command**, run on the Mac. Run it again any time: it is safe to repeat.
 - Every merge to `main` deploys on its own: GitHub Actions checks the code, builds the image and sends it to the server (`.github/workflows/deploy.yml`).
-- The server runs four containers from `deploy/compose.yaml`: the app, Postgres 17, Caddy (HTTPS) and a small backup helper. Cron on the server runs the scheduled jobs and the nightly backup to Cloudflare R2.
+- The server runs three containers from `deploy/compose.yaml` (the app, Postgres 17 and a small backup helper), plus one HTTPS proxy (Caddy) in `/opt/proxy` that every site on the server shares. Cron on the server runs the scheduled jobs and the nightly backup to Cloudflare R2.
 - Moving to a new server is the same command with `--from <old server>`.
 
 Nothing here costs money beyond the server: GitHub Actions (2,000 minutes a month on a private repo), Cloudflare and R2 (10 GB) are free at this size.
@@ -15,7 +15,7 @@ Nothing here costs money beyond the server: GitHub Actions (2,000 minutes a mont
 | --- | --- |
 | Your Mac, `deploy/secrets/` (git-ignored) | `app.env` (every setting and secret), the Cloudflare Origin Certificate, the deploy key, an optional Cloudflare token. **Keep a copy in your password manager**: without `BETTER_AUTH_SECRET`, a restored backup can't read the stored Google and Stripe tokens |
 | GitHub → Settings → Secrets and variables → Actions | Only how to reach the server: `DEPLOY_HOST`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS` and the variable `DEPLOY_PLATFORM`. `setup.sh` sets them. No app secrets |
-| The server, `/opt/simpledash` | A copy of `app.env` (as `.env`), the certificate, the compose file, Caddy's config, the backup helper and the `simpledash` command |
+| The server, `/opt/simpledash` | A copy of `app.env` (as `.env`), the compose file, the site block template, the backup helper and the `simpledash` command. The certificate is in `/opt/proxy/certs/simpledash/` |
 | Cloudflare R2 | The nightly database backups (`docs/backup.md`) |
 
 ## 1. Cloudflare (once)
@@ -27,7 +27,7 @@ Nothing here costs money beyond the server: GitHub Actions (2,000 minutes a mont
 5. **SSL/TLS → Origin Server → Create Certificate:** RSA, hostnames `simpledash.app` and `*.simpledash.app`, 15 years. Save the certificate as `deploy/secrets/origin.pem` and the private key as `deploy/secrets/origin-key.pem`. Nothing ever renews: no certbot.
 6. **Rules:**
    - **Cache rule:** cache everything for `/`, `/privacy`, `/terms`, `/p/*`, `/demo`, `/_next/static/*`, `/flags/*` and `/api/icon/*`, respecting the origin's cache headers. (Cloudflare doesn't cache paths like `/api/icon/google.com` unless a rule says so; the icons are sent with a 30-day cache header.) Public pages send `Cache-Control: public, s-maxage=600`, so Cloudflare keeps each one about 10 minutes. Leave `/api/p/<slug>/live` out.
-   - **WAF custom rule:** block requests where the URI path starts with `/api/internal/`. (Caddy refuses them too; the jobs run inside the app container.)
+   - **WAF custom rule:** block requests where the URI path starts with `/api/internal/`. (The proxy refuses them too; the jobs run inside the app container.)
    - **Rate limiting rule** (the free plan has one): for `/api/`, for example 100 requests per 10 seconds per IP, then block for 10 seconds.
 7. **Email Routing:** `hello@simpledash.app` → your inbox.
 
@@ -48,32 +48,31 @@ Any provider works (today: Azure). What it needs:
 
 ## 4. Run the setup (one command)
 
-On the Mac, in the repo, with the GitHub CLI signed in (`brew install gh`, then `gh auth login`):
+On the Mac, in the repo:
 
 ```bash
 deploy/setup.sh azureuser@<server-ip>
 ```
 
-**The first run** creates `deploy/secrets/` and stops:
+One run does everything:
 
-- `app.env` is built from `.env.example`. `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `CRON_SECRET` and `EMAIL_TOKEN_SECRET` get new random values, and the service keys (Google, Resend, Stripe, Sentry, R2) are copied from your local `.env` as a start. `DATABASE_URL` isn't in it: compose builds it from `POSTGRES_PASSWORD`.
-- It lists what is still empty. `STRIPE_WEBHOOK_SECRET` is always empty at first: it is the signing secret of the endpoint `https://simpledash.app/api/stripe/webhook` in Stripe (step 11), not the one from `stripe listen`.
-- It asks for the two certificate files from step 1.
-- Optional: put a Cloudflare API token in `deploy/secrets/cloudflare.env` (Cloudflare → My Profile → API Tokens → "Edit zone DNS" for `simpledash.app`), and setup points the DNS at the server itself.
+1. **GitHub CLI:** installs it with Homebrew if it's missing, and opens the GitHub sign-in if you're not signed in.
+2. **Secrets:** the first time, it builds `deploy/secrets/app.env` from `.env.example`. `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `CRON_SECRET` and `EMAIL_TOKEN_SECRET` get new random values, and the service keys are copied from your local `.env`. `DATABASE_URL` and `BACKUP_DATABASE_URL` aren't in it: compose builds both from `POSTGRES_PASSWORD`.
+3. **Asks for anything missing**, with where to find it. That includes `STRIPE_WEBHOOK_SECRET` (the signing secret of the endpoint `https://simpledash.app/api/stripe/webhook`, not the one from `stripe listen`) and the two Cloudflare Origin Certificate parts from step 1, which you paste in.
+4. Copies the files to the server, updates the system (`apt upgrade`, automatic security updates on), sets the clock to UTC, adds swap, installs Docker, turns on the firewall (SSH, 80, 443) and creates the `simpledash` user. GitHub's deploy key can only run `simpledash deploy` as that user: no shell.
+5. Starts Postgres and the backup helper, sets up the shared HTTPS proxy (or adds this site to it), and restores the newest backup from R2, but only into an empty database.
+6. Sets the GitHub secrets and the variable `DEPLOY_PLATFORM`, runs the first deploy and waits for it (about 5 minutes).
+7. Checks that the server answers on port 443, and points the DNS at it if `deploy/secrets/cloudflare.env` has a token (Cloudflare → My Profile → API Tokens → "Edit zone DNS" for `simpledash.app`).
 
-Fill those in and **run the same command again**. It then:
-
-1. Copies the files to the server, updates the system (`apt upgrade`, automatic security updates on), sets the clock to UTC, adds swap, installs Docker, turns on the firewall (SSH, 80, 443) and creates the `deploy` user. GitHub's deploy key can only run `simpledash deploy` as that user: no shell.
-2. Starts Postgres, Caddy and the backup helper.
-3. Restores the newest backup from R2, but only into an empty database.
-4. Sets the GitHub secrets and the variable `DEPLOY_PLATFORM`, then runs the first deploy and waits for it (about 5 minutes).
-5. Checks that the server answers on port 443, and points the DNS at it if there is a Cloudflare token.
+Keep `deploy/secrets/` in your password manager.
 
 The `.github/workflows/deploy.yml` file must be on GitHub's `main` before step 4 can deploy. If it isn't yet, setup says so, and the first push to `main` deploys.
 
 **Check:** `curl https://simpledash.app/api/health` returns `{"status":"ok"}`, and the home page loads over HTTPS.
 
-**To change a setting later** (a new Stripe key, `ADMIN_EMAILS`, …): edit `deploy/secrets/app.env` and run `deploy/setup.sh azureuser@<ip>` again. The app restarts with the new values; data stays. Never change `POSTGRES_PASSWORD` after the first setup: Postgres keeps the password it started with.
+**To change a setting later** (a new Stripe key, `ADMIN_EMAILS`, …): edit `deploy/secrets/app.env` and run `deploy/setup.sh azureuser@<ip>` again. The app restarts with the new values; data stays.
+
+**A new variable in `.env.example`** (a new feature needs one): the next `deploy/setup.sh` run adds it to `app.env` and asks for it if it's required. Deploys from GitHub don't carry secrets, so they only warn: `simpledash deploy` prints the names missing from the server's `.env`, and if the app can't start without them, the health check fails and the server stays on the previous version. Run `deploy/setup.sh` once after adding one. Never change `POSTGRES_PASSWORD` after the first setup: Postgres keeps the password it started with.
 
 ## 5. Every deploy (automatic)
 
@@ -108,7 +107,7 @@ Log in with `ssh azureuser@<ip>`, then:
 | Command | What it does |
 | --- | --- |
 | `sudo simpledash status` | The containers and the app's health |
-| `sudo simpledash logs` | Follow every log; `logs app`, `logs caddy`, `logs db`, or `logs jobs` for the scheduled jobs |
+| `sudo simpledash logs` | Follow every log; `logs app`, `logs db`, `logs proxy` (the shared Caddy), or `logs jobs` for the scheduled jobs |
 | `sudo simpledash job weekly-email` | Run a job now |
 | `sudo simpledash backup` | Back up to R2 now |
 | `sudo simpledash restore --force` | Replace the database with the newest R2 backup (stops the app meanwhile) |
@@ -116,7 +115,7 @@ Log in with `ssh azureuser@<ip>`, then:
 
 ## 8. Scheduled jobs
 
-Cron runs them as the `deploy` user (`deploy/crontab`, installed by setup and every deploy). Times are UTC. Each one runs `node scripts/run-job.mjs <job>` inside the app container, which calls `/api/internal/jobs/<job>` on localhost with `CRON_SECRET`.
+Cron runs them as the `simpledash` user (`deploy/crontab`, installed by setup and every deploy). Times are UTC. Each one runs `node scripts/run-job.mjs <job>` inside the app container, which calls `/api/internal/jobs/<job>` on localhost with `CRON_SECRET`.
 
 | Job | Schedule (cron, UTC) |
 | --- | --- |
@@ -127,6 +126,24 @@ Cron runs them as the `deploy` user (`deploy/crontab`, installed by setup and ev
 | backup | `0 2 * * *` |
 
 **Check:** `sudo simpledash job cleanup` prints `{"job":"cleanup","ok":true,…}`, and `sudo simpledash logs jobs` shows the hourly runs.
+
+## Several sites on one server
+
+Another site can use the same server with its own copy of this setup. Everything SimpleDash owns is named `simpledash`, so a second site, call it `other`, only has to use its own name in the same places:
+
+| Part | SimpleDash | Another site |
+| --- | --- | --- |
+| Folder | `/opt/simpledash` | `/opt/other` |
+| User (GitHub deploys as it; owns the crontab) | `simpledash` | `other` |
+| Compose project, volumes, images | `simpledash`, `simpledash_db-data`, `simpledash-app` | `other`, … |
+| Command | `/usr/local/bin/simpledash` | its own |
+| Name on the `web` network | `simpledash-app` | `other-app` |
+| Site block | `/opt/proxy/etc/sites/simpledash.caddy` (its domains only) | `/opt/proxy/etc/sites/other.caddy` |
+| Certificate | `/opt/proxy/certs/simpledash/` | `/opt/proxy/certs/other/` |
+
+**Shared, and created only once:** the proxy in `/opt/proxy` (`deploy/proxy`: one Caddy on ports 80 and 443 whose Caddyfile only says `import sites/*.caddy`), the Docker network `web`, the firewall, swap, Docker itself and the system updates. A later site's setup finds them and leaves them as they are; it never overwrites another site's files.
+
+**Safe by design:** a site block the proxy rejects is put back the way it was, so a mistake in one site never takes the others down. Nothing else is published: the apps and databases are only reachable on their own networks. Each site has its own Cloudflare Origin Certificate for its own domain.
 
 ## 9. Google OAuth redirect
 

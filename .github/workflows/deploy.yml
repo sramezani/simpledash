@@ -49,6 +49,7 @@ jobs:
           echo "simpledash-app:$GITHUB_SHA" > "$release/IMAGE"
           cp -R deploy/compose.yaml deploy/caddy deploy/crontab deploy/simpledash "$release/"
           cp -R scripts/backup "$release/backup"
+          cp .env.example "$release/env.example"
 
       - uses: docker/setup-qemu-action@v3
         if: vars.DEPLOY_PLATFORM != 'linux/amd64'
@@ -77,4 +78,4 @@ jobs:
           chmod 600 ~/.ssh/deploy
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
           tar -c -C "$RUNNER_TEMP/release" . | gzip -1 |
-            ssh -i ~/.ssh/deploy -o BatchMode=yes -o ServerAliveInterval=30 "deploy@$HOST"
+            ssh -i ~/.ssh/deploy -o BatchMode=yes -o ServerAliveInterval=30 "simpledash@$HOST"
