@@ -3,6 +3,7 @@
 # Run it on your Mac, from anywhere in the repo:
 #
 #   deploy/setup.sh azureuser@<server-ip>
+#   deploy/setup.sh -i ~/path/to/key.pem azureuser@<server-ip>      with a key file, like ssh -i
 #   deploy/setup.sh azureuser@NEW_IP --from azureuser@OLD_IP    moving servers: the old app stops,
 #                                                               its newest data comes along
 #
@@ -68,16 +69,23 @@ hint() {
   esac
 }
 
-target="" from=""
+target="" from="" key_opts=()
 while [[ $# -gt 0 ]]; do
   case $1 in
     --from) from=${2:?--from needs user@old-server}; shift 2 ;;
-    -h | --help) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -i)
+      key_file=${2:?-i needs a key file}
+      key_file=${key_file/#\~/$HOME}
+      [[ -f $key_file ]] || die "no key file at $key_file"
+      key_opts=(-i "$key_file" -o IdentitiesOnly=yes)
+      shift 2
+      ;;
+    -h | --help) sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     -*) die "unknown option $1 (see deploy/setup.sh --help)" ;;
     *) [[ -z $target ]] || die "one server at a time"; target=$1; shift ;;
   esac
 done
-[[ -n $target ]] || { sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 2; }
+[[ -n $target ]] || { sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'; exit 2; }
 for tool in ssh ssh-keygen openssl tar curl; do
   command -v "$tool" >/dev/null || die "$tool is missing on this computer"
 done
@@ -93,8 +101,8 @@ if ! gh auth status >/dev/null 2>&1; then
   gh auth login --hostname github.com --git-protocol https --web
 fi
 # The real address and port, also when the target is an alias from ~/.ssh/config.
-host=$(ssh -G "$target" | awk '$1 == "hostname" { print $2 }')
-[[ $(ssh -G "$target" | awk '$1 == "port" { print $2 }') == 22 ]] ||
+host=$(ssh ${key_opts[@]+"${key_opts[@]}"} -G "$target" | awk '$1 == "hostname" { print $2 }')
+[[ $(ssh ${key_opts[@]+"${key_opts[@]}"} -G "$target" | awk '$1 == "port" { print $2 }') == 22 ]] ||
   die "the server's SSH must listen on port 22 (GitHub Actions deploys there)"
 cd "$ROOT"
 
@@ -197,7 +205,7 @@ fi
 ok "Secrets complete"
 
 # One SSH connection for every step below (one login, one host-key check).
-SSH_OPTS=(-o ConnectTimeout=15 -o ControlMaster=auto -o "ControlPath=/tmp/simpledash-%C" -o ControlPersist=120 -o StrictHostKeyChecking=accept-new)
+SSH_OPTS=(${key_opts[@]+"${key_opts[@]}"} -o ConnectTimeout=15 -o ControlMaster=auto -o "ControlPath=/tmp/simpledash-%C" -o ControlPersist=120 -o StrictHostKeyChecking=accept-new)
 run() { ssh "${SSH_OPTS[@]}" "$@"; }
 
 # ── 2. The server ─────────────────────────────────────────────────────────────────────────
@@ -217,7 +225,7 @@ run -t "$target" 'sudo bash ~/.simpledash-setup/simpledash setup ~/.simpledash-s
 # ── 3. Data ───────────────────────────────────────────────────────────────────────────────
 if [[ -n $from ]]; then
   say "Stopping the app on $from and backing it up"
-  ssh -t -o StrictHostKeyChecking=accept-new "$from" 'sudo simpledash stop && sudo simpledash backup' ||
+  ssh -t ${key_opts[@]+"${key_opts[@]}"} -o StrictHostKeyChecking=accept-new "$from" 'sudo simpledash stop && sudo simpledash backup' ||
     die "couldn't back up $from; nothing changed on the new server's data, and you can run this again"
 fi
 say "Restoring the newest backup (only into an empty database)"
