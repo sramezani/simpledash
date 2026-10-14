@@ -185,16 +185,37 @@ for key in $REQUIRED; do
 done
 [[ $(env_get STRIPE_SECRET_KEY "$APP_ENV") == *_test_* ]] &&
   warn "Stripe is in test mode (a test key): fine for trying it, switch to the live key and prices at launch"
-for part in origin.pem:certificate origin-key.pem:"private key"; do
-  file=${part%%:*} what=${part#*:}
-  [[ -s $SECRETS/$file ]] && continue
+# The Cloudflare Origin Certificate: each file must be what its name says, so a certificate
+# can't be saved as the key (or the other way round). A wrong file is removed, not kept.
+pem_ok() { # file, expected header
+  [[ -s $1 ]] && head -n 1 "$1" | grep -q -- "-----BEGIN $2-----" &&
+    grep -q -- "-----END $2-----" "$1"
+}
+for part in origin.pem:CERTIFICATE:certificate origin-key.pem:PRIVATE\ KEY:"private key (the second box, not the certificate)"; do
+  IFS=: read -r file kind what <<< "$part"
+  path=$SECRETS/$file
+  if [[ -e $path ]] && ! pem_ok "$path" "$kind"; then
+    warn "deploy/secrets/$file isn't a $kind (it was removed); paste it again"
+    rm -f "$path"
+  fi
+  pem_ok "$path" "$kind" && continue
   interactive || die "deploy/secrets/$file is missing (docs/deploy.md step 1)"
-  echo "  The Cloudflare Origin Certificate's $what (Cloudflare → SSL/TLS → Origin Server → Create"
-  echo "  Certificate, for simpledash.app and *.simpledash.app, 15 years)."
-  echo "  Paste it, then press Enter and Ctrl-D:"
-  cat > "$SECRETS/$file"
-  chmod 600 "$SECRETS/$file"
-  grep -q "BEGIN" "$SECRETS/$file" || die "That doesn't look like a PEM file; delete deploy/secrets/$file and try again"
+  echo
+  echo "  Paste the Cloudflare Origin Certificate's $what."
+  echo "  It starts with -----BEGIN $kind-----"
+  echo "  (Cloudflare → SSL/TLS → Origin Server → Create Certificate, for simpledash.app and"
+  echo "  *.simpledash.app, 15 years; the private key is only shown once, on that screen)."
+  until pem_ok "$path" "$kind"; do
+    echo "  Paste it, then press Enter and Control-D:"
+    cat > "$path"
+    chmod 600 "$path"
+    if ! pem_ok "$path" "$kind"; then
+      warn "That isn't a $kind: it should start with -----BEGIN $kind-----. Try again (Control-C to stop)."
+      rm -f "$path"
+      # Control-D ended the paste; the terminal is still usable for the next one.
+    fi
+  done
+  ok "Saved deploy/secrets/$file"
 done
 $first_run && warn "Keep deploy/secrets/ in your password manager: a new server needs it to read the stored tokens."
 if [[ -z $(env_get R2_ACCOUNT_ID "$APP_ENV") ]]; then
