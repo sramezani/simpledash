@@ -1,52 +1,59 @@
-import { CircleDollarSignIcon, LayoutGridIcon, SearchIcon, SparklesIcon } from "lucide-react";
+import {
+  CircleDollarSignIcon,
+  LayoutGridIcon,
+  MailIcon,
+  SearchIcon,
+  SparklesIcon,
+} from "lucide-react";
 import type { ReactNode } from "react";
-import { plans, type BillingInterval } from "@/config/plans";
-import type { PlanState } from "@/lib/billing/plan";
+import { plans } from "@/config/plans";
 import { cn } from "@/lib/utils";
 import { UpgradeForm } from "./upgrade-form";
 
-/** The Growth-only parts (docs/SPEC.md section 28.1), in plain words. */
+/** The Pro-only parts (docs/SPEC.md section 16), in plain words. */
 const FEATURES = {
   sites: {
     Icon: LayoutGridIcon,
-    title: "Several sites are part of Growth",
+    title: `Several sites are part of ${plans.pro.name}`,
     text: "Add up to 10 Google Analytics sites, each with its own dashboard, notes, Monday email block and public page, and see them all on one page.",
   },
   search: {
     Icon: SearchIcon,
-    title: "Google search insights are part of Growth",
+    title: `Google search insights are part of ${plans.pro.name}`,
     text: "See the searches that bring people to your site from Google: the ones close to page 1, what changed, and the pages people see but don't click.",
   },
   revenue: {
     Icon: CircleDollarSignIcon,
-    title: "Revenue is part of Growth",
+    title: `Revenue is part of ${plans.pro.name}`,
     text: "Connect Stripe with a read-only key to see revenue and new customers next to your visitors, and which sources bring sales.",
+  },
+  email: {
+    Icon: MailIcon,
+    title: `The Monday email is part of ${plans.pro.name}`,
+    text: "Every Monday, last week's numbers for each of your sites in your inbox: visitors, signups, top sources and pages, and what changed.",
   },
 } as const;
 
-export type GrowthFeature = keyof typeof FEATURES;
+export type ProFeature = keyof typeof FEATURES;
 
 /**
- * "Upgrade to Growth" (docs/SPEC.md section 28.1): what the feature is, Growth's price
- * with the Monthly / Yearly switch, and one button. It takes the feature's place for
- * Starter and trials, never an error.
+ * "Upgrade to Pro" (docs/SPEC.md section 16): what the feature is, Pro's price with the
+ * Monthly / Yearly switch, and one button. It takes the feature's place on Free, never
+ * an error.
  */
 export function UpgradePanel({
   feature,
-  plan,
   upgrade,
   children,
   className,
 }: {
-  feature: GrowthFeature;
-  plan: PlanState;
+  feature: ProFeature;
   upgrade: (formData: FormData) => Promise<void>;
   /** Below the text, e.g. "Switch to this site instead". */
   children?: ReactNode;
   className?: string;
 }) {
   const { Icon, title, text } = FEATURES[feature];
-  const interval: BillingInterval = plan.kind === "paid" && plan.interval ? plan.interval : "month";
   return (
     <section
       aria-labelledby={`upgrade-${feature}-title`}
@@ -66,20 +73,11 @@ export function UpgradePanel({
           <p className="text-sm text-pretty text-muted-foreground">{text}</p>
           <p className="flex items-start gap-2 text-xs text-pretty text-muted-foreground">
             <SparklesIcon className="mt-0.5 size-3.5 shrink-0 text-primary" aria-hidden="true" />
-            {plan.kind === "trial"
-              ? `Your free trial includes ${plans.starter.name}. Upgrading now keeps the rest of it: the first charge is when it ends.`
-              : plan.kind === "paid"
-                ? `You're on ${plans[plan.plan].name}. Stripe shows the exact amount before you confirm.`
-                : "Prices include VAT. Payments are handled by Stripe."}
+            Prices include tax. Payments are handled by Stripe; cancel any time.
           </p>
           {children}
         </div>
-        <UpgradeForm
-          action={upgrade}
-          offer={["growth"]}
-          defaultInterval={interval}
-          className="w-full @2xl:max-w-sm"
-        />
+        <UpgradeForm action={upgrade} className="w-full @2xl:max-w-sm" />
       </div>
     </section>
   );

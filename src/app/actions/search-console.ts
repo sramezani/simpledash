@@ -19,7 +19,7 @@ import { getSiteContext } from "@/lib/sites/sites";
 /**
  * Google Search Console for one site (docs/SPEC.md section 28.2). Each action is
  * bound to a site ID on the page; `requireSite` checks it is the user's own and open
- * on their plan, and Search Console is Growth only.
+ * on their plan, and Search Console is Pro only.
  */
 
 type Back = "dashboard" | "settings";
@@ -29,7 +29,7 @@ const backTo = (siteId: string, back: Back, result: string) =>
     ? `/dashboard?site=${siteId}&search=${result}`
     : `/settings?site=${siteId}&search=${result}#search`) as Route;
 
-async function requireGrowthSite(siteId: string) {
+async function requireProSite(siteId: string) {
   const found = await requireSite(siteId);
   const { ent } = await getSiteContext(found.user.id);
   if (!ent.searchConsole) redirect(`/settings?site=${siteId}#search` as Route);
@@ -41,7 +41,7 @@ async function requireGrowthSite(siteId: string) {
  * isn't granted yet (one more consent screen), then picks the property that matches.
  */
 export async function connectSearchConsoleAction(siteId: string, back: Back) {
-  const { user, site } = await requireGrowthSite(siteId);
+  const { user, site } = await requireProSite(siteId);
   const account = await getGoogleAccount(user.id);
   if (!hasSearchConsoleScope(account?.scope)) {
     const done = `/api/search-console/connected?site=${site.id}&back=${back}`;
@@ -52,7 +52,7 @@ export async function connectSearchConsoleAction(siteId: string, back: Back) {
 
 /** Settings: use another of the user's Search Console properties for this site. */
 export async function chooseSearchPropertyAction(siteId: string, formData: FormData) {
-  const { site } = await requireGrowthSite(siteId);
+  const { site } = await requireProSite(siteId);
   const siteUrl = formData.get("property");
   const result =
     typeof siteUrl === "string" && siteUrl.length <= 300
@@ -63,7 +63,7 @@ export async function chooseSearchPropertyAction(siteId: string, formData: FormD
 
 /** Settings: stop using Search Console for this site. */
 export async function disconnectSearchConsoleAction(siteId: string) {
-  const { site } = await requireGrowthSite(siteId);
+  const { site } = await requireProSite(siteId);
   await disconnectProperty(site);
   redirect(backTo(site.id, "settings", "disconnected"));
 }
@@ -76,7 +76,7 @@ export async function saveBrandTermsAction(
   _state: BrandState,
   formData: FormData,
 ): Promise<BrandState> {
-  const { site } = await requireGrowthSite(siteId);
+  const { site } = await requireProSite(siteId);
   const input = formData.get("terms");
   if (typeof input !== "string" || input.length > 1000) return { error: "That's too long." };
   await saveBrandTerms(site, readBrandTerms(input));

@@ -27,6 +27,7 @@ import {
   isPreset,
   previousPeriodWords,
   rangeMenu,
+  type HistoryLimit,
   type RangeType,
   type RangeWindow,
 } from "@/lib/ga4/ranges";
@@ -68,15 +69,15 @@ type DashboardViewProps = {
   live?: ReactNode;
   /** Show "Download CSV" on the cards. */
   csv?: boolean;
-  /** Trial over and unpaid: this panel sits over the cards, which can't be used. */
-  lockedPanel?: ReactNode;
+  /** Free's 30 days: the date menu marks longer ranges "Pro" and the calendar stops there. */
+  historyLimit?: HistoryLimit | null;
   /** Below the cards, e.g. "Share your stats publicly?". */
   footer?: ReactNode;
-  /** The Google search card (Growth), or its teaser, under the list cards. */
+  /** The Google search card (Pro), or its teaser, under the list cards. */
   search?: ReactNode;
-  /** Sales and signups by source (Growth), under the list cards. */
+  /** Sales and signups by source (Pro), under the list cards. */
   sales?: ReactNode;
-  /** Revenue and New customers (Growth), after the four numbers. */
+  /** Revenue and New customers (Pro), after the four numbers. */
   extraMetrics?: OverviewMetric[];
   /** Revenue per day in `revenueCurrency`'s smallest unit, as bars under the line. */
   revenueByDay?: Map<string, number>;
@@ -234,26 +235,19 @@ export function DashboardView(props: DashboardViewProps) {
           <h1 className="sr-only">Dashboard</h1>
           <OverviewToolbar
             site={props.site}
-            menu={rangeMenu(range, window, props.basePath ?? "/dashboard", query)}
+            menu={rangeMenu(
+              range,
+              window,
+              props.basePath ?? "/dashboard",
+              query,
+              undefined,
+              props.historyLimit,
+            )}
             period={isPreset(range) ? period : null}
             note={freshnessNote(window)}
           />
           {props.notices}
-          {props.lockedPanel ? (
-            <div className="relative">
-              <div
-                inert
-                className="pointer-events-none flex flex-col gap-4 opacity-50 blur-xs select-none"
-              >
-                {cards}
-              </div>
-              <div className="absolute inset-x-0 top-4 flex justify-center">
-                {props.lockedPanel}
-              </div>
-            </div>
-          ) : (
-            cards
-          )}
+          {cards}
           {props.footer}
         </Container>
       </main>

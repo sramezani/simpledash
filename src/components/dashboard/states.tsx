@@ -1,3 +1,4 @@
+import type { Route } from "next";
 import { LockKeyholeIcon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -9,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { SAMPLE_DOMAIN } from "@/lib/ga4/sample/sample";
 import { Notice } from "@/components/shared/notice";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FREE_HISTORY_DAYS, plans } from "@/config/plans";
 import { formatTime } from "@/lib/format";
 
 /** The dashboard's states (docs/SPEC.md section 12): plain copy and one action each. */
@@ -206,5 +208,22 @@ export function SampleSiteChip() {
     <SiteChip domain={null} label={SAMPLE_DOMAIN}>
       <Badge variant="secondary">Sample data</Badge>
     </SiteChip>
+  );
+}
+
+/** Free asked for more than its 30 days (an old link, a typed address). */
+export function HistoryNotice({ href = "/settings#billing" }: { href?: string }) {
+  return (
+    <Notice
+      title={`${plans.free.name} shows the last ${FREE_HISTORY_DAYS} days, so this is Last ${FREE_HISTORY_DAYS} days.`}
+    >
+      <Link
+        href={href as Route}
+        className="font-medium text-primary underline-offset-2 hover:underline"
+      >
+        {plans.pro.name}
+      </Link>{" "}
+      shows 12 months and any dates you pick.
+    </Notice>
   );
 }

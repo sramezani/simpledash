@@ -80,8 +80,8 @@ export async function chooseProperty(userId: string): Promise<Site | null> {
 
 /**
  * How a property joins the account (docs/SPEC.md section 28.1):
- * - "replace" (Starter, and the first site): it takes the current site's place in the list.
- * - "add" (Growth): it joins the list, up to `limit` sites.
+ * - "replace" (Free, and the first site): it takes the current site's place in the list.
+ * - "add" (Pro): it joins the list, up to `limit` sites.
  * Either way it becomes the active site. A site already in the list just becomes active.
  */
 export type ConnectMode = { kind: "replace" } | { kind: "add"; limit: number };
@@ -127,8 +127,8 @@ export async function connectProperty(
     });
     const listed = !!existing?.addedAt;
     if (!listed && mode.kind === "replace") {
-      // Starter: the new site takes the current one's place. Other sites still in the
-      // list (added on Growth) stay there, paused, for when they upgrade again.
+      // Free: the new site takes the current one's place. Other sites still in the
+      // list (added on Pro) stay there, paused, for when they upgrade again.
       await tx
         .update(site)
         .set({ addedAt: null })
@@ -171,13 +171,13 @@ export async function connectProperty(
   });
 }
 
-/** Starter's switcher: the property must be in the user's own Google list. */
+/** Free's switcher: the property must be in the user's own Google list. */
 export async function switchProperty(userId: string, propertyId: string): Promise<Site> {
   await assertInGoogleList(userId, propertyId);
   return connectProperty(userId, propertyId, { kind: "replace" });
 }
 
-/** Growth's "Add a site": the property must be in the user's own Google list. */
+/** Pro's "Add a site": the property must be in the user's own Google list. */
 export async function addProperty(
   userId: string,
   propertyId: string,

@@ -50,6 +50,13 @@
       "when": 1791917139386,
       "tag": "0006_revenue_and_sales",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791982035327,
+      "tag": "0007_pro_plan",
+      "breakpoints": true
     }
   ]
 }

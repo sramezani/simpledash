@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { LegalPage, LegalSection } from "@/components/marketing/legal-page";
 import { legal } from "@/config/legal";
+import { plans } from "@/config/plans";
 import { brand } from "@/config/theme";
 
 export const metadata: Metadata = {
@@ -46,19 +47,22 @@ export default function PrivacyPage() {
             countries, and, if you connect Search Console, totals and the top searches and pages
             from it. They are deleted after 7 days without use.
           </li>
+          <li>Your billing status (plan and renewal date). Card details stay with Stripe.</li>
           <li>
-            Your billing status (trial, plan and renewal date). Card details stay with Stripe.
-          </li>
-          <li>
-            If you connect your own Stripe account (Growth): the restricted read-only key you paste,
-            encrypted, and daily totals per site: money charged, refunds, the number of new
-            customers and monthly recurring revenue. Never your customers&apos; names, emails, card
-            details or IDs. Removing Stripe in Settings deletes the key and the totals.
+            If you connect your own Stripe account ({plans.pro.name}): the restricted read-only key
+            you paste, encrypted, and daily totals per site: money charged, refunds, the number of
+            new customers and monthly recurring revenue. Never your customers&apos; names, emails,
+            card details or IDs. Removing Stripe in Settings deletes the key and the totals.
           </li>
         </ul>
         <p>
           We never store visitor-level data: no IP addresses, no visitor IDs, no individual visits.
           {` ${brand.name}`} has no tracking script of its own.
+        </p>
+        <p>
+          {brand.name} is open source, so you can check this list against the code: every table the
+          app stores is in{" "}
+          <a href={`${brand.sourceUrl}/blob/main/src/lib/db/schema.ts`}>one file</a>.
         </p>
       </LegalSection>
 
@@ -75,7 +79,7 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Search Console, read-only</strong> (the <code>webmasters.readonly</code> scope),
-            only if you connect it on a Growth plan: to list your Search Console properties and
+            only if you connect it on {plans.pro.name}: to list your Search Console properties and
             fetch the search reports shown in the Google search card. It is asked for only when you
             connect it, and we can&apos;t change anything in Search Console.
           </li>
@@ -95,11 +99,10 @@ export default function PrivacyPage() {
 
       <LegalSection title="Your own Stripe account">
         <p>
-          On Growth you can paste a restricted Stripe key with read access, to see revenue next to
-          your visitors. {brand.name} uses it only to read charges, refunds, customers&apos;
-          creation dates and subscription prices, adds them up per day, and keeps only those
-          totals. It can&apos;t change anything in your Stripe account, and we refuse keys that
-          could.
+          On {plans.pro.name} you can paste a restricted Stripe key with read access, to see revenue
+          next to your visitors. {brand.name} uses it only to read charges, refunds, customers&apos;
+          creation dates and subscription prices, adds them up per day, and keeps only those totals.
+          It can&apos;t change anything in your Stripe account, and we refuse keys that could.
         </p>
       </LegalSection>
 
@@ -113,9 +116,11 @@ export default function PrivacyPage() {
 
       <LegalSection title="Who processes data for us">
         <ul>
-          <li>Hetzner (Germany): the server that runs {brand.name}.</li>
-          <li>Supabase (EU): the database.</li>
-          <li>Cloudflare: DNS, network protection, caching and email forwarding.</li>
+          <li>Microsoft Azure: the server that runs {brand.name} and its database.</li>
+          <li>
+            Cloudflare: DNS, network protection, caching, email forwarding, and storage for the
+            nightly database backups.
+          </li>
           <li>Resend: sends the weekly email.</li>
           <li>
             Stripe: payments. Stripe is the merchant of record, so it sells the subscription to you

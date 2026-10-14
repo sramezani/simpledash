@@ -8,7 +8,6 @@ import { SiteCard, SiteCardSkeleton } from "@/components/dashboard/site-card";
 import { SitesView } from "@/components/dashboard/sites-view";
 import { DashboardSkeleton } from "@/components/dashboard/states";
 import { UpgradePanel } from "@/components/dashboard/upgrade-panel";
-import type { PlanState } from "@/lib/billing/plan";
 import { uiKitEnabled } from "@/lib/env";
 import { percentChange } from "@/lib/format";
 import { rangeWindow } from "@/lib/ga4/ranges";
@@ -19,7 +18,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const STATES = ["growth", "full", "starter", "loading"] as const;
+const STATES = ["pro", "full", "free", "loading"] as const;
 
 async function noop() {
   "use server";
@@ -45,21 +44,6 @@ export default function SitesPreviewPage({ searchParams }: PageProps<"/ui-kit/si
   );
 }
 
-/** The plan for a preview state, relative to now. */
-function previewPlan(state: (typeof STATES)[number]): PlanState {
-  if (state === "starter") {
-    return { kind: "trial", endsAt: new Date(Date.now() + 9 * 86_400_000), daysLeft: 9 };
-  }
-  return {
-    kind: "paid",
-    plan: "growth",
-    interval: "month",
-    renewsAt: null,
-    cancelAtPeriodEnd: false,
-    pastDue: false,
-  };
-}
-
 const SITES = [
   { label: "yoursite.com", scale: 1, problem: null },
   { label: "blog.yoursite.com", scale: 0.42, problem: null },
@@ -70,11 +54,10 @@ const SITES = [
 async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/sites">, "searchParams">) {
   await connection(); // dates depend on the current time
   const params = await searchParams;
-  const state = STATES.find((s) => s === params.state) ?? "growth";
+  const state = STATES.find((s) => s === params.state) ?? "pro";
   const window = rangeWindow("7d", "Europe/Amsterdam");
   const r = sampleReports(window, ["totals", "series"]);
-  const plan = previewPlan(state);
-  const shown = state === "starter" ? SITES.slice(0, 1) : SITES;
+  const shown = state === "free" ? SITES.slice(0, 1) : SITES;
   const cards = shown.map((s, i) => {
     const visitors = Math.round(r.totals.data.current.visitors * s.scale);
     const before = Math.round(r.totals.data.previous.visitors * s.scale * (1 + (i % 3) * 0.2));
@@ -117,12 +100,10 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/sites">, "searc
       </nav>
       <SitesView
         basePath="/ui-kit/dashboard"
-        upgrade={
-          state === "starter" ? <UpgradePanel feature="sites" plan={plan} upgrade={noop} /> : null
-        }
+        upgrade={state === "free" ? <UpgradePanel feature="sites" upgrade={noop} /> : null}
         cards={cards}
         add={
-          state === "growth" ? (
+          state === "pro" ? (
             <AddSiteCard
               listAction={noProperties}
               addAction={noPick}

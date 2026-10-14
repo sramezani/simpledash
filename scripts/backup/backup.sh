@@ -15,7 +15,7 @@ work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
 # Custom format without its own compression, then gzip: one compressed file, easy to check.
-# Only our schemas (not Supabase's own). Left out: report cache rows (they refill from GA4),
+# Only our two schemas. Left out: report cache rows (they refill from GA4),
 # and sessions and sign-in leftovers (live tokens; after a restore people sign in again).
 pg_dump --format=custom --compress=0 --no-owner --no-privileges \
   --schema=public --schema=drizzle \
@@ -35,9 +35,6 @@ if [ "${1:-}" = "--local" ]; then
   exit 0
 fi
 
-: "${R2_ACCOUNT_ID:?R2_ACCOUNT_ID is not set}" "${R2_BUCKET:?R2_BUCKET is not set}"
-export RCLONE_CONFIG_R2_ACCESS_KEY_ID="${R2_ACCESS_KEY_ID:?R2_ACCESS_KEY_ID is not set}"
-export RCLONE_CONFIG_R2_SECRET_ACCESS_KEY="${R2_SECRET_ACCESS_KEY:?R2_SECRET_ACCESS_KEY is not set}"
-export RCLONE_CONFIG_R2_ENDPOINT="https://$R2_ACCOUNT_ID.r2.cloudflarestorage.com"
+. "$(dirname "$0")/r2.sh"
 rclone copyto "$work/$name" "r2:$R2_BUCKET/postgres/$name" --s3-no-check-bucket
 echo "backup: uploaded postgres/$name ($size bytes)"

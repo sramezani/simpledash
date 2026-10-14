@@ -2,19 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage, LegalSection } from "@/components/marketing/legal-page";
 import { legal } from "@/config/legal";
-import { plans } from "@/config/plans";
+import { FREE_HISTORY_DAYS, plans } from "@/config/plans";
 import { brand } from "@/config/theme";
 import { priceInWords } from "@/lib/billing/prices";
 
 export const metadata: Metadata = {
   title: "Terms",
-  description: `The terms for using ${brand.name}: the free trial, prices, billing through Stripe, cancelling and refunds.`,
+  description: `The terms for using ${brand.name}: Free and Pro, prices, billing through Stripe, cancelling and refunds.`,
   alternates: { canonical: "/terms" },
 };
 
 export default function TermsPage() {
-  const starter = plans.starter;
-const growth = plans.growth;
+  const { free, pro } = plans;
   const email = legal.contactEmail;
   return (
     <LegalPage
@@ -34,34 +33,38 @@ const growth = plans.growth;
         </p>
       </LegalSection>
 
-      <LegalSection title="The free trial">
+      <LegalSection title="Free">
         <p>
-          New accounts get a {starter.trialDays}-day free trial with every {starter.name} feature.
-          No card is needed. When the trial ends, the dashboard locks and the weekly email and
-          public page pause until you subscribe. Your settings and notes are kept.
+          New accounts are on {free.name}: one site, the last {FREE_HISTORY_DAYS} days and a
+          public page, with no card and no time limit. We may change what {free.name} includes;
+          if we do, we&apos;ll tell you by email at least 30 days before.
         </p>
       </LegalSection>
 
       <LegalSection title="Prices and billing">
         <ul>
           <li>
-            The {starter.name} plan costs {priceInWords("month")} or {priceInWords("year")}, for one
-            site. The {growth.name} plan costs {priceInWords("month", growth.prices)} or{" "}
-            {priceInWords("year", growth.prices)}, for up to {growth.limits.sites} sites, with Google
-            search insights and revenue from Stripe. Prices include VAT.
+            The {pro.name} plan costs {priceInWords("month")} or {priceInWords("year")}, for up to{" "}
+            {pro.limits.sites} sites, with 12 months and any dates, the Monday email, Google search
+            insights and revenue from Stripe. Prices include tax.
           </li>
           <li>
-            You can switch between plans in Settings → Billing. Stripe shows the exact amount for
-            the rest of your period before you confirm. Moving to {starter.name} keeps your other
-            sites and their settings, paused, until you move back.
+            Launch price: if you subscribe at today&apos;s price, it stays the same for as long as
+            your subscription runs without a break.
+          </li>
+          <li>
+            You can switch between monthly and yearly in Settings → Billing. Stripe shows the exact
+            amount for the rest of your period before you confirm. Going back to {free.name} keeps
+            your other sites and their settings, paused, until you upgrade again.
           </li>
           <li>
             Payments are handled by Stripe, which acts as the merchant of record: Stripe sells the
             subscription to you, charges your card and handles sales tax and VAT.
           </li>
           <li>
-            Subscriptions renew automatically at the end of each month or year until you cancel. We
-            tell you before any price change, and it applies from your next renewal.
+            Subscriptions renew automatically at the end of each month or year until you cancel.
+            Apart from the launch price above, we tell you before any price change, and it applies
+            from your next renewal.
           </li>
         </ul>
       </LegalSection>

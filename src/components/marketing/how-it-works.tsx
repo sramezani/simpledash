@@ -1,5 +1,6 @@
 import { LayoutDashboardIcon, LogInIcon, SearchIcon } from "lucide-react";
 import { Container } from "@/components/shared/container";
+import { FREE_HISTORY_DAYS, plans } from "@/config/plans";
 
 const steps = [
   {
@@ -15,15 +16,15 @@ const steps = [
   {
     icon: LayoutDashboardIcon,
     title: "See it on one page",
-    body: "Your visitors, sources and top pages, in plain words. Plus a short email every Monday.",
+    body: `Your visitors, sources and top pages, in plain words. On ${plans.pro.name}, a short email every Monday too.`,
   },
 ];
 
 const reasons = [
   ["Zero setup", "If GA4 is already on your site, it works in one click. No new tracking code."],
   [
-    "Full history from day one",
-    "Google already stores it, so your charts go back years, not days.",
+    "Full charts from day one",
+    `Google already stores your visits, so nothing starts empty: the last ${FREE_HISTORY_DAYS} days on ${plans.free.name}, years on ${plans.pro.name}.`,
   ],
   ["A flat price", "No traffic limits and no per-event pricing, because we store almost nothing."],
 ];

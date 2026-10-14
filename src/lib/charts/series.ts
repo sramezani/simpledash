@@ -17,7 +17,7 @@ export type ChartPoint = {
   solid: number | null;
   /** The last part, still updating: drawn dashed. Overlaps `solid` by one point. */
   pending: number | null;
-  /** Revenue from Stripe for this day or month, in the currency's smallest unit (Growth). */
+  /** Revenue from Stripe for this day or month, in the currency's smallest unit (Pro). */
   revenue?: number;
 };
 

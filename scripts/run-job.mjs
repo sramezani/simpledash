@@ -1,5 +1,6 @@
 // Runs a scheduled job inside the app container (docs/SPEC.md section 20).
-// Coolify scheduled task: node scripts/run-job.mjs <warm-cache|weekly-email|cleanup>
+// Cron on the server runs it through `simpledash job <job>` (deploy/crontab):
+// node scripts/run-job.mjs <warm-cache|weekly-email|revenue-sync|cleanup>
 const job = process.argv[2];
 const secret = process.env.CRON_SECRET;
 const port = process.env.PORT ?? "3000";

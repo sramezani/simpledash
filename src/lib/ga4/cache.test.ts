@@ -289,7 +289,7 @@ describe("getReports", () => {
   });
 });
 
-describe("cache only (locked accounts)", () => {
+describe("cache only (no Google calls)", () => {
   it("returns what's cached and never calls Google", async () => {
     const deps = makeDeps();
     seed(deps, { fetchedAt: new Date(NOW.getTime() - 30 * HOUR) });

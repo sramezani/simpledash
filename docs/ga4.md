@@ -64,10 +64,10 @@ How states clear on their own:
 
 A user's sites are `site` rows; `added_at` set means the site is in their list and `is_active` marks the one the dashboard opens with (the one opened last). `src/lib/sites/` holds the rules:
 
-- `access.ts` (pure, tested): the list in the order added, which sites the plan opens (Growth: every listed site up to 10; Starter and trials: the active one), the site a page shows (`chooseSite`: the one in `?site=`, or the active one; an unlisted or unknown ID is "missing"), and whether one more can be added.
+- `access.ts` (pure, tested): the list in the order added, which sites the plan opens (Pro: every listed site up to 10; Free: the active one), the site a page shows (`chooseSite`: the one in `?site=`, or the active one; an unlisted or unknown ID is "missing"), and whether one more can be added.
 - `sites.ts`: `getSiteContext(userId, requested)` (plan, list and choice, once per request), `markSiteOpened` (the dashboard calls it after the response), `removeSite`.
 - `requireSite(siteId)` (`src/lib/auth/session.ts`) uses them: every action and route handler that takes a site ID checks it is the user's own, listed and open on their plan.
-- Adding and switching go through `connectProperty(userId, propertyId, mode)` in `properties.ts`: `replace` (Starter, the first site) takes the active site's place in the list; `add` (Growth) joins it, with the limit checked under a per-user advisory lock so two quick clicks can't pass it. Both check the property is in the user's own Google list first.
+- Adding and switching go through `connectProperty(userId, propertyId, mode)` in `properties.ts`: `replace` (Free, the first site) takes the active site's place in the list; `add` (Pro) joins it, with the limit checked under a per-user advisory lock so two quick clicks can't pass it. Both check the property is in the user's own Google list first.
 
 ## Property choice
 
@@ -88,7 +88,7 @@ The switcher (`switchSite` server action) checks the property against the user's
 | `warm-cache` | `src/lib/jobs/warm-cache.ts` | Hourly: for `ok`, unblocked sites in a list whose dashboard was opened in the last 24 hours (`site.last_viewed_at`, stamped at most hourly when a dashboard opens), fetch stale or missing 7-day reports, 3 sites at a time. Sites nobody opens aren't refreshed (Sprint 5: GA4 calls grow with sites) |
 | `cleanup` | `src/lib/jobs/cleanup.ts` | Daily: report caches not fetched for 7 days, expired sessions and sign-in leftovers |
 
-They run through `POST /api/internal/jobs/<job>` with `Authorization: Bearer <CRON_SECRET>`. Coolify calls them with `node scripts/run-job.mjs <job>` (see `docs/deploy.md`).
+They run through `POST /api/internal/jobs/<job>` with `Authorization: Bearer <CRON_SECRET>`. Cron on the server calls them with `simpledash job <job>`, which runs `node scripts/run-job.mjs <job>` in the app container (see `docs/deploy.md` step 8).
 
 ## Checked in Sprint 1
 

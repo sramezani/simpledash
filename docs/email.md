@@ -20,8 +20,8 @@ The Monday email with last week's numbers: one email per account, one block per 
 The `weekly-email` job runs every hour (`node scripts/run-job.mjs weekly-email`, at :00). It picks accounts that:
 
 - have the weekly email on (it is on by default),
-- aren't locked (trial over and unpaid),
-- have at least one site with status `ok` that the plan opens (Growth: every site in the list; Starter: the one it shows),
+- are on Pro (the Monday email is a Pro feature since Oct 14, 2026; Free accounts are skipped and Settings says so),
+- have at least one site with status `ok` that the plan opens (every site in the list, up to 10),
 - and whose main site's local time is Monday between 13:00 and 17:59. The main site is the active one (the one opened most recently).
 
 For each one it first **claims** a row in `email_send` (user and week). The key makes a second email in the same week impossible. Then it refreshes each site's 7-day reports (`totals`, `sources`, `pages`, `actions`, `ai_sources`, which also warms the dashboard), builds one block per site (the main site first) and sends the emails in batches.

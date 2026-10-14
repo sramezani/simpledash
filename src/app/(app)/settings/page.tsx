@@ -45,6 +45,7 @@ import { getSitePublicPage } from "@/lib/public-page/public-page";
 import { slugFromDomain } from "@/lib/public-page/slug";
 import { readSiteId } from "@/lib/sites/access";
 import { getSiteContext } from "@/lib/sites/sites";
+import { plans } from "@/config/plans";
 
 export const metadata: Metadata = { title: "Settings", robots: { index: false, follow: false } };
 
@@ -154,7 +155,7 @@ async function SearchConsoleSection({
   if (!ctx.ent.searchConsole) {
     return (
       <div id="search" className="scroll-mt-20">
-        <UpgradePanel feature="search" plan={ctx.plan} upgrade={upgrade} />
+        <UpgradePanel feature="search" upgrade={upgrade} />
       </div>
     );
   }
@@ -213,11 +214,11 @@ async function RevenueSections({
     return (
       <SettingsSection id="revenue" title="Revenue and sales">
         <p className="text-sm text-pretty text-muted-foreground">
-          Revenue from Stripe next to your visitors, and sales and signups by source, are part of
-          Growth, with Google search insights.
+          Revenue from Stripe next to your visitors, and sales and signups by source, are part of{" "}
+          {plans.pro.name}, with Google search insights.
         </p>
         <Button asChild variant="outline" className="h-9 self-start pointer-coarse:h-11">
-          <a href="#search">See Growth</a>
+          <a href="#billing">See {plans.pro.name}</a>
         </Button>
       </SettingsSection>
     );

@@ -23,11 +23,11 @@ export const metadata: Metadata = {
 };
 
 const STATES = [
-  "trial",
-  "paid",
-  "growth",
+  "free",
+  "pro",
+  "pro-yearly",
+  "cancelling",
   "past-due",
-  "locked",
   "errors",
   "public-on",
   "downgraded",
@@ -74,68 +74,36 @@ export default function SettingsPreviewPage({ searchParams }: PageProps<"/ui-kit
 function previewPlans() {
   const now = Date.now();
   const day = 24 * 60 * 60 * 1000;
+  const pro = (over: Partial<Extract<PlanState, { kind: "paid" }>> = {}): PlanState => ({
+    kind: "paid",
+    plan: "pro",
+    interval: "month",
+    renewsAt: new Date(now + 20 * day),
+    cancelAtPeriodEnd: false,
+    pastDue: false,
+    ...over,
+  });
+  const free: PlanState = { kind: "free" };
   return {
-    trial: { kind: "trial", endsAt: new Date(now + 9 * day), daysLeft: 9 },
-    paid: {
-      kind: "paid",
-      plan: "starter",
-      interval: "year",
-      renewsAt: new Date(now + 300 * day),
-      cancelAtPeriodEnd: false,
-      pastDue: false,
-    },
-    growth: {
-      kind: "paid",
-      plan: "growth",
-      interval: "month",
-      renewsAt: new Date(now + 20 * day),
-      cancelAtPeriodEnd: false,
-      pastDue: false,
-    },
-    downgraded: {
-      kind: "paid",
-      plan: "starter",
-      interval: "month",
-      renewsAt: new Date(now + 20 * day),
-      cancelAtPeriodEnd: false,
-      pastDue: false,
-    },
-    "past-due": {
-      kind: "paid",
-      plan: "starter",
-      interval: "month",
-      renewsAt: new Date(now + 3 * day),
-      cancelAtPeriodEnd: false,
-      pastDue: true,
-    },
-    locked: { kind: "locked", trialEndedAt: new Date(now - 2 * day) },
-    errors: { kind: "trial", endsAt: new Date(now + day / 2), daysLeft: 1 },
-    "public-on": { kind: "trial", endsAt: new Date(now + 13 * day), daysLeft: 13 },
-    "search-off": {
-      kind: "paid",
-      plan: "growth",
-      interval: "month",
-      renewsAt: new Date(now + 20 * day),
-      cancelAtPeriodEnd: false,
-      pastDue: false,
-    },
-    "search-pick": {
-      kind: "paid",
-      plan: "growth",
-      interval: "year",
-      renewsAt: new Date(now + 200 * day),
-      cancelAtPeriodEnd: false,
-      pastDue: false,
-    },
+    free,
+    pro: pro(),
+    "pro-yearly": pro({ interval: "year", renewsAt: new Date(now + 300 * day) }),
+    cancelling: pro({ cancelAtPeriodEnd: true }),
+    "past-due": pro({ renewsAt: new Date(now + 3 * day), pastDue: true }),
+    errors: free,
+    "public-on": free,
+    downgraded: free,
+    "search-off": pro(),
+    "search-pick": pro({ interval: "year", renewsAt: new Date(now + 200 * day) }),
   } satisfies Record<(typeof STATES)[number], PlanState>;
 }
 
 async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/settings">, "searchParams">) {
   await connection(); // "days left" depends on the current time
   const params = await searchParams;
-  const state = STATES.find((s) => s === params.state) ?? "trial";
+  const state = STATES.find((s) => s === params.state) ?? "free";
   const plans: Record<(typeof STATES)[number], PlanState> = previewPlans();
-  const several = state === "growth" || state === "downgraded";
+  const several = state === "pro" || state === "downgraded";
   const sites = [
     {
       id: "00000000-0000-4000-8000-000000000001",
@@ -170,7 +138,7 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/settings">, "se
       <SettingsFrame>
         <SettingsView
           user={{ name: "Alex Example", email: "alex@yoursite.com" }}
-          weeklyEmail={state !== "locked"}
+          weeklyEmail
           plan={plans[state]}
           publicPage={{
             slug: "yoursite-com",
@@ -181,24 +149,23 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/settings">, "se
           publicBase="http://localhost:3000/p/"
           sites={sites}
           site={sites[0]!}
-          siteLimit={state === "growth" ? 10 : 1}
-          hasSignupEvent={state !== "trial"}
+          siteLimit={plans[state].kind === "paid" ? 10 : 1}
+          hasSignupEvent={state !== "free"}
           billingError={state === "errors"}
           deleteProblem={state === "errors" ? "error" : null}
           sitesNotice={state === "errors" ? "error" : null}
           siteSections={
-            plans[state].kind === "paid" &&
-            (plans[state] as { plan?: string }).plan === "growth" ? (
+            plans[state].kind === "paid" ? (
               <>
                 <SettingsSection id="search" title="Google Search Console">
                   <SearchConsoleSettings
                     label="yoursite.com"
                     granted={state !== "search-off"}
-                    property={state === "growth" ? PROPERTIES[0]! : null}
+                    property={state === "pro" ? PROPERTIES[0]! : null}
                     properties={state === "search-off" ? null : PROPERTIES}
                     brand={{
                       fromDomain: ["yoursite"],
-                      extra: state === "growth" ? ["your site"] : [],
+                      extra: state === "pro" ? ["your site"] : [],
                     }}
                     result={state === "search-pick" ? "no_match" : null}
                     actions={{
@@ -212,7 +179,7 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/settings">, "se
                 <SettingsSection id="revenue" title="Revenue from Stripe">
                   <RevenueSettings
                     connection={
-                      state === "growth"
+                      state === "pro"
                         ? {
                             keyHint: "x9Qa",
                             livemode: true,
@@ -228,7 +195,7 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/settings">, "se
                 </SettingsSection>
                 <SettingsSection id="sales" title="What counts as a sale?">
                   <SaleSettings
-                    saleEvent={state === "growth" ? "purchase" : null}
+                    saleEvent={state === "pro" ? "purchase" : null}
                     salePage={null}
                     keyEvents={["purchase", "sign_up", "trial_started"]}
                     result={null}
@@ -238,7 +205,7 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/settings">, "se
               </>
             ) : (
               <div id="search">
-                <UpgradePanel feature="search" plan={plans[state]} upgrade={noop} />
+                <UpgradePanel feature="search" upgrade={noop} />
               </div>
             )
           }

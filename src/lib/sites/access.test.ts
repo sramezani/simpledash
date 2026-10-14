@@ -8,8 +8,8 @@ const site = (id: string, addedDay: number | null, isActive = false) => ({
   addedAt: addedDay === null ? null : at(addedDay),
 });
 
-const growth = { sites: 10 };
-const starter = { sites: 1 };
+const pro = { sites: 10 };
+const free = { sites: 1 };
 
 describe("siteList", () => {
   it("lists added sites in the order they were added", () => {
@@ -25,12 +25,12 @@ describe("siteList", () => {
 describe("openableSites", () => {
   const sites = [site("a", 1), site("b", 2, true), site("c", 3)];
 
-  it("opens every added site on Growth", () => {
-    expect(openableSites(sites, growth).map((s) => s.id)).toEqual(["a", "b", "c"]);
+  it("opens every added site on Pro", () => {
+    expect(openableSites(sites, pro).map((s) => s.id)).toEqual(["a", "b", "c"]);
   });
 
-  it("opens only the active site on Starter, keeping the others paused", () => {
-    expect(openableSites(sites, starter).map((s) => s.id)).toEqual(["b"]);
+  it("opens only the active site on Free, keeping the others paused", () => {
+    expect(openableSites(sites, free).map((s) => s.id)).toEqual(["b"]);
   });
 
   it("never opens more than the limit, oldest first", () => {
@@ -38,7 +38,7 @@ describe("openableSites", () => {
   });
 
   it("opens nothing without sites", () => {
-    expect(openableSites([], growth)).toEqual([]);
+    expect(openableSites([], pro)).toEqual([]);
   });
 });
 
@@ -46,40 +46,40 @@ describe("chooseSite", () => {
   const sites = [site("a", 1), site("b", 2, true), site("c", 3), site("old", null)];
 
   it("shows the active site when the address names none", () => {
-    expect(chooseSite(sites, growth, null)).toMatchObject({ kind: "open", site: { id: "b" } });
-    expect(chooseSite(sites, starter, undefined)).toMatchObject({
+    expect(chooseSite(sites, pro, null)).toMatchObject({ kind: "open", site: { id: "b" } });
+    expect(chooseSite(sites, free, undefined)).toMatchObject({
       kind: "open",
       site: { id: "b" },
     });
   });
 
-  it("opens a named site on Growth", () => {
-    expect(chooseSite(sites, growth, "c")).toMatchObject({ kind: "open", site: { id: "c" } });
+  it("opens a named site on Pro", () => {
+    expect(chooseSite(sites, pro, "c")).toMatchObject({ kind: "open", site: { id: "c" } });
   });
 
-  it("asks a Starter user to upgrade for a listed site that isn't the active one", () => {
-    expect(chooseSite(sites, starter, "c")).toMatchObject({ kind: "upgrade", site: { id: "c" } });
+  it("asks a Free user to upgrade for a listed site that isn't the active one", () => {
+    expect(chooseSite(sites, free, "c")).toMatchObject({ kind: "upgrade", site: { id: "c" } });
   });
 
   it("treats unknown and unlisted sites as missing", () => {
-    expect(chooseSite(sites, growth, "nope")).toEqual({ kind: "missing" });
-    expect(chooseSite(sites, growth, "old")).toEqual({ kind: "missing" });
-    expect(chooseSite([], growth, null)).toEqual({ kind: "missing" });
+    expect(chooseSite(sites, pro, "nope")).toEqual({ kind: "missing" });
+    expect(chooseSite(sites, pro, "old")).toEqual({ kind: "missing" });
+    expect(chooseSite([], pro, null)).toEqual({ kind: "missing" });
   });
 });
 
 describe("canAddSite", () => {
-  it("lets Growth add sites up to the limit", () => {
-    expect(canAddSite([site("a", 1)], growth)).toBe(true);
+  it("lets Pro add sites up to the limit", () => {
+    expect(canAddSite([site("a", 1)], pro)).toBe(true);
     const ten = Array.from({ length: 10 }, (_, i) => site(`s${i}`, i + 1));
-    expect(canAddSite(ten, growth)).toBe(false);
+    expect(canAddSite(ten, pro)).toBe(false);
     // Rows that left the list don't count.
-    expect(canAddSite([...ten.slice(0, 9), site("gone", null)], growth)).toBe(true);
+    expect(canAddSite([...ten.slice(0, 9), site("gone", null)], pro)).toBe(true);
   });
 
-  it("never lets Starter add a second site", () => {
-    expect(canAddSite([site("a", 1)], starter)).toBe(false);
-    expect(canAddSite([], starter)).toBe(false);
+  it("never lets Free add a second site", () => {
+    expect(canAddSite([site("a", 1)], free)).toBe(false);
+    expect(canAddSite([], free)).toBe(false);
   });
 });
 

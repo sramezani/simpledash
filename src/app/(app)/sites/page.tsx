@@ -10,7 +10,6 @@ import { SitesView } from "@/components/dashboard/sites-view";
 import { DashboardSkeleton } from "@/components/dashboard/states";
 import { UpgradePanel } from "@/components/dashboard/upgrade-panel";
 import { requireUser } from "@/lib/auth/session";
-import { isLocked } from "@/lib/billing/plan";
 import type { Site } from "@/lib/db/schema";
 import { canAddSite } from "@/lib/sites/access";
 import { getSiteContext } from "@/lib/sites/sites";
@@ -18,7 +17,7 @@ import { siteWeek } from "@/lib/sites/summary";
 
 export const metadata: Metadata = { title: "All sites", robots: { index: false, follow: false } };
 
-/** All sites (docs/SPEC.md section 28.1): Growth's overview; Starter sees the upgrade panel. */
+/** All sites (docs/SPEC.md section 28.1): Pro's overview; Free sees the upgrade panel. */
 export default function SitesPage() {
   return (
     <Suspense fallback={<DashboardSkeleton />}>
@@ -30,21 +29,20 @@ export default function SitesPage() {
 async function Sites() {
   await connection(); // the 7 days depend on the current time
   const user = await requireUser();
-  const { plan, ent, sites, openable } = await getSiteContext(user.id);
-  const growth = ent.sites > 1;
-  const locked = isLocked(plan);
-  // Starter sees its one site; Growth sees every site it can open.
-  const shown = growth ? openable : openable.slice(0, 1);
+  const { ent, sites, openable } = await getSiteContext(user.id);
+  const multiple = ent.sites > 1;
+  // Free sees its one site; Pro sees every site it can open.
+  const shown = multiple ? openable : openable.slice(0, 1);
   return (
     <SitesView
-      upgrade={growth ? null : <UpgradePanel feature="sites" plan={plan} upgrade={upgrade} />}
+      upgrade={multiple ? null : <UpgradePanel feature="sites" upgrade={upgrade} />}
       cards={shown.map((s) => (
         <Suspense key={s.id} fallback={<SiteCardSkeleton label={labelOf(s)} domain={s.domain} />}>
-          <SiteCardLoader site={s} cacheOnly={locked} />
+          <SiteCardLoader site={s} />
         </Suspense>
       ))}
       add={
-        growth && canAddSite(sites, ent) && !locked ? (
+        multiple && canAddSite(sites, ent) ? (
           <AddSiteCard
             listAction={listMyProperties}
             addAction={addSite}
@@ -61,8 +59,8 @@ async function Sites() {
 
 const labelOf = (s: Site) => s.domain ?? s.displayName;
 
-async function SiteCardLoader({ site, cacheOnly }: { site: Site; cacheOnly: boolean }) {
-  const week = await siteWeek(site, { cacheOnly });
+async function SiteCardLoader({ site }: { site: Site }) {
+  const week = await siteWeek(site);
   return (
     <SiteCard
       site={{

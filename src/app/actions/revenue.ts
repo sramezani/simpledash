@@ -21,7 +21,7 @@ import { reportError } from "@/lib/report-error";
 import { getSiteContext } from "@/lib/sites/sites";
 
 /**
- * Revenue and sales for one site (docs/SPEC.md section 28.3), Growth only. Each action
+ * Revenue and sales for one site (docs/SPEC.md section 28.3), Pro only. Each action
  * is bound to a site ID on the page; `requireSite` checks it's the user's own.
  */
 

@@ -9,8 +9,7 @@ const createStripe = () =>
   new Stripe(env.STRIPE_SECRET_KEY, { maxNetworkRetries: 2, timeout: 20_000 });
 export const stripe: ReturnType<typeof createStripe> = lazyObject(createStripe);
 
-/** The four price IDs: two per plan (docs/SPEC.md section 28.1). */
+/** Pro's two price IDs, monthly and yearly (docs/SPEC.md section 16). */
 export const planPrices = (): PlanPrices => ({
-  starter: { month: env.STRIPE_PRICE_MONTHLY, year: env.STRIPE_PRICE_YEARLY },
-  growth: { month: env.STRIPE_PRICE_GROWTH_MONTHLY, year: env.STRIPE_PRICE_GROWTH_YEARLY },
+  pro: { month: env.STRIPE_PRICE_MONTHLY, year: env.STRIPE_PRICE_YEARLY },
 });

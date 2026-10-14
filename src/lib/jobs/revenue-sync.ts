@@ -8,7 +8,7 @@ import { needsSync, syncRevenue } from "@/lib/revenue/revenue";
 
 /**
  * Hourly at :20 (docs/SPEC.md sections 20 and 28.3): brings each connected site's
- * Stripe totals up to date. Only accounts whose plan includes revenue (paid Growth);
+ * Stripe totals up to date. Only accounts whose plan includes revenue (Pro);
  * sites synced in the last hour are skipped.
  */
 export async function revenueSyncJob(now: Date = new Date()) {
@@ -19,7 +19,7 @@ export async function revenueSyncJob(now: Date = new Date()) {
     .innerJoin(billing, eq(billing.userId, revenueSource.userId))
     .where(and(eq(revenueSource.status, "ok"), isNotNull(site.addedAt)));
   const due = rows.filter(
-    (r) => entitlements(planState(r.billing, now)).revenue && needsSync(r.source, now),
+    (r) => entitlements(planState(r.billing)).revenue && needsSync(r.source, now),
   );
   const results = await mapLimit(due, 3, (r) =>
     syncRevenue(r.site, r.source, now).catch(() => "unavailable" as const),

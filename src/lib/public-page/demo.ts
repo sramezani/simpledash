@@ -13,7 +13,7 @@ type LiveView = Extract<PublicView, { kind: "live" }>;
  * when that page is missing or paused, so the landing page's demo never breaks.
  */
 export async function getDemoView(range: RangeType, now?: Date): Promise<LiveView> {
-  const view = await getPublicView(demo.slug, range);
+  const view = await getPublicView(demo.slug, range, true);
   if (view.kind === "live") return view;
   const window = rangeWindow(range, "UTC", now ?? new Date());
   return {
@@ -29,5 +29,7 @@ export async function getDemoView(range: RangeType, now?: Date): Promise<LiveVie
     signupEvent: SAMPLE_SIGNUP_EVENT,
     comparisonGap: comparisonGap(window, null),
     customLimited: false,
+    poweredBy: true,
+    fullHistory: true,
   };
 }

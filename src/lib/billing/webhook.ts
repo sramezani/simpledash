@@ -1,5 +1,5 @@
 import type Stripe from "stripe";
-import { planIds, type PlanId } from "@/config/plans";
+import { paidPlanIds, type PaidPlanId } from "@/config/plans";
 import { PAID_STATUSES } from "./plan";
 
 /**
@@ -14,24 +14,24 @@ export type SubscriptionFacts = {
   /** Set at checkout in the subscription's metadata. */
   userId: string | null;
   status: string;
-  /** From the price: one of our four, or Starter for an unknown one (reported). */
-  plan: PlanId;
+  /** From the price. A paid subscription on an unknown price is still Pro (and reported). */
+  plan: PaidPlanId;
   interval: "month" | "year" | null;
   priceId: string | null;
   currentPeriodEnd: Date | null;
   cancelAtPeriodEnd: boolean;
 };
 
-/** The four price IDs, two per plan. */
-export type PlanPrices = Record<PlanId, Record<"month" | "year", string>>;
+/** The price IDs, monthly and yearly for each paid plan. */
+export type PlanPrices = Record<PaidPlanId, Record<"month" | "year", string>>;
 
 /** Which plan and interval a price ID is, or null when it isn't one of ours. */
 export function priceInfo(
   priceId: string | null,
   prices: PlanPrices,
-): { plan: PlanId; interval: "month" | "year" } | null {
+): { plan: PaidPlanId; interval: "month" | "year" } | null {
   if (!priceId) return null;
-  for (const plan of planIds) {
+  for (const plan of paidPlanIds) {
     for (const interval of ["month", "year"] as const) {
       if (prices[plan][interval] === priceId) return { plan, interval };
     }
@@ -54,8 +54,8 @@ export function subscriptionFacts(
     customerId: typeof sub.customer === "string" ? sub.customer : sub.customer.id,
     userId: sub.metadata?.userId ?? null,
     status: sub.status,
-    // An unknown price never unlocks Growth: it counts as Starter and is reported.
-    plan: known?.plan ?? "starter",
+    // One paid plan: an old or unknown price (say, from before Pro) is still Pro, and reported.
+    plan: known?.plan ?? "pro",
     interval,
     priceId,
     currentPeriodEnd: item?.current_period_end ? new Date(item.current_period_end * 1000) : null,

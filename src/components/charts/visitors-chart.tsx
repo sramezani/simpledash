@@ -18,7 +18,7 @@ type TooltipProps = {
   currency?: string;
 };
 
-/** The same tooltip as the server-rendered chart's (StaticLineChart), plus revenue on Growth. */
+/** The same tooltip as the server-rendered chart's (StaticLineChart), plus revenue on Pro. */
 function VisitorsTooltip({ active, payload, currency }: TooltipProps) {
   const point = payload?.[0]?.payload;
   if (!active || !point) return null;
@@ -52,7 +52,7 @@ type VisitorsChartProps = {
   notes?: ChartNoteMark[];
   /** Clicking a day starts a note on it (dashboard only). */
   canAddNotes?: boolean;
-  /** Revenue's currency: the points' `revenue` shows as bars under the line (Growth). */
+  /** Revenue's currency: the points' `revenue` shows as bars under the line (Pro). */
   revenueCurrency?: string;
 };
 

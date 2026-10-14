@@ -1,8 +1,15 @@
 "use client";
 
-import { CalendarDaysIcon, CalendarIcon, ChevronDownIcon, LoaderCircleIcon } from "lucide-react";
+import {
+  CalendarDaysIcon,
+  CalendarIcon,
+  ChevronDownIcon,
+  LoaderCircleIcon,
+  LockIcon,
+} from "lucide-react";
 import type { Route } from "next";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Fragment,
@@ -31,7 +38,15 @@ export type RangePickerProps = {
   /** The range shown now ("7d", "2026-09-01..2026-09-30") and its label. */
   value: string;
   label: string;
-  presets: { value: string; label: string; href: string; shortcut: string; separated: boolean }[];
+  presets: {
+    value: string;
+    label: string;
+    href: string;
+    shortcut: string;
+    separated: boolean;
+    /** Beyond Free's 30 days: shown with "Pro", and it opens the upgrade. */
+    locked: boolean;
+  }[];
   custom: {
     href: string;
     slot: string;
@@ -40,6 +55,8 @@ export type RangePickerProps = {
     firstDay: string;
     lastDay: string;
   };
+  /** Free's limit under the menu, with a link to upgrade. */
+  limit: { note: string; href: string } | null;
 };
 
 const loadPanel = () => import("./custom-range-panel");
@@ -65,7 +82,7 @@ const CUSTOM_KEY = "C";
  * (`?range=`), so the server renders the new range. The label changes at once and a
  * small spinner shows while the new numbers load.
  */
-export function RangePicker({ value, label, presets, custom }: RangePickerProps) {
+export function RangePicker({ value, label, presets, custom, limit }: RangePickerProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [shown, setShown] = useOptimistic({ value, label });
@@ -76,9 +93,13 @@ export function RangePicker({ value, label, presets, custom }: RangePickerProps)
   const toCalendar = useRef(false);
   const isCustom = !presets.some((p) => p.value === shown.value);
 
-  function go(next: { value: string; label: string; href: string }) {
+  function go(next: { value: string; label: string; href: string; locked?: boolean }) {
     setMenuOpen(false);
     setCalendarOpen(false);
+    if (next.locked) {
+      router.push(next.href as Route);
+      return;
+    }
     if (next.value === shown.value) return;
     startTransition(() => {
       setShown({ value: next.value, label: next.label });
@@ -167,13 +188,25 @@ export function RangePicker({ value, label, presets, custom }: RangePickerProps)
             {presets.map((preset) => (
               <Fragment key={preset.value}>
                 {preset.separated ? <DropdownMenuSeparator /> : null}
-                <DropdownMenuRadioItem
-                  value={preset.value}
-                  className="group/item h-9 cursor-pointer gap-3 rounded-md pr-2 pl-2.5 transition-colors duration-100 data-[state=checked]:font-medium pointer-coarse:h-11 [&>[data-slot=dropdown-menu-radio-item-indicator]]:right-2.5"
-                >
-                  <span className="flex-1">{preset.label}</span>
-                  <Kbd className="group-data-[state=checked]/item:invisible">{preset.shortcut}</Kbd>
-                </DropdownMenuRadioItem>
+                {preset.locked ? (
+                  <DropdownMenuItem
+                    onSelect={() => go(preset)}
+                    className="h-9 cursor-pointer gap-3 rounded-md pr-2 pl-2.5 text-muted-foreground transition-colors duration-100 pointer-coarse:h-11"
+                  >
+                    <span className="flex-1">{preset.label}</span>
+                    <ProBadge />
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuRadioItem
+                    value={preset.value}
+                    className="group/item h-9 cursor-pointer gap-3 rounded-md pr-2 pl-2.5 transition-colors duration-100 data-[state=checked]:font-medium pointer-coarse:h-11 [&>[data-slot=dropdown-menu-radio-item-indicator]]:right-2.5"
+                  >
+                    <span className="flex-1">{preset.label}</span>
+                    <Kbd className="group-data-[state=checked]/item:invisible">
+                      {preset.shortcut}
+                    </Kbd>
+                  </DropdownMenuRadioItem>
+                )}
               </Fragment>
             ))}
           </DropdownMenuRadioGroup>
@@ -198,6 +231,18 @@ export function RangePicker({ value, label, presets, custom }: RangePickerProps)
             )}
             <CalendarDaysIcon className="size-4 text-muted-foreground" aria-hidden="true" />
           </DropdownMenuItem>
+          {limit ? (
+            <p className="px-2.5 pt-2 pb-1 text-xs text-pretty text-muted-foreground">
+              {limit.note}{" "}
+              <Link
+                href={limit.href as Route}
+                onClick={() => setMenuOpen(false)}
+                className="font-medium text-primary underline-offset-2 hover:underline"
+              >
+                Pro shows everything.
+              </Link>
+            </p>
+          ) : null}
         </DropdownMenuContent>
       </DropdownMenu>
       <PopoverContent
@@ -216,6 +261,16 @@ export function RangePicker({ value, label, presets, custom }: RangePickerProps)
         />
       </PopoverContent>
     </Popover>
+  );
+}
+
+/** "Pro" next to a range Free can't open. */
+function ProBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+      <LockIcon className="size-3" aria-hidden="true" />
+      Pro
+    </span>
   );
 }
 

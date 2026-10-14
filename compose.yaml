@@ -1,7 +1,7 @@
 # Local development and production-image testing (docs/SPEC.md section 21).
 #   docker compose up -d db      Postgres for `npm run dev`
 #   docker compose --profile app up --build   the production image on http://localhost:3000
-# Coolify deploys from the Dockerfile directly, not from this file.
+# Production uses deploy/compose.yaml instead (docs/deploy.md).
 services:
   db:
     image: postgres:17-alpine

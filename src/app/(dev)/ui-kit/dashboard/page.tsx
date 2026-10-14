@@ -9,6 +9,7 @@ import {
   DashboardSkeleton,
   NoAccessNotice,
   NoDataNotice,
+  HistoryNotice,
   NoPropertyNotice,
   QuotaNotice,
   RevokedNotice,
@@ -19,7 +20,6 @@ import { ChartNotes } from "@/components/charts/chart-notes";
 import { LiveCard } from "@/components/globe/live-card";
 import { SignupPicker } from "@/components/cards/signup-picker";
 import { EmailNotice } from "@/components/dashboard/email-notice";
-import { LockedPanel } from "@/components/dashboard/locked-panel";
 import { OpenInsteadForm, PausedSiteView } from "@/components/dashboard/paused-site";
 import { ShareCard } from "@/components/dashboard/share-card";
 import { SiteSwitcher } from "@/components/dashboard/site-switcher";
@@ -27,12 +27,17 @@ import { SearchCard } from "@/components/search/search-card";
 import { SearchConnect, SearchProblemCard, SearchTeaser } from "@/components/search/search-states";
 import { sampleSearchCard } from "@/lib/search-console/sample";
 import { UpgradePanel } from "@/components/dashboard/upgrade-panel";
-import type { PlanState } from "@/lib/billing/plan";
 import type { PropertyList } from "@/lib/ga4/property-choice";
 import { SiteChip } from "@/components/shared/site-chip";
 import { Badge } from "@/components/ui/badge";
 import { uiKitEnabled } from "@/lib/env";
-import { comparisonGap, parseRange, rangeWindow } from "@/lib/ga4/ranges";
+import {
+  comparisonGap,
+  freeFirstDay,
+  parseRange,
+  rangeForPlan,
+  rangeWindow,
+} from "@/lib/ga4/ranges";
 import { REPORTS } from "@/lib/ga4/reports";
 import { addDays } from "@/lib/ga4/ranges";
 import {
@@ -64,10 +69,10 @@ const STATES = [
   "quota-empty",
   "unavailable",
   "not-granted",
-  "locked",
   "loading",
-  "growth",
-  "starter-menu",
+  "pro",
+  "free-menu",
+  "free-history",
   "paused-site",
   "search-connect",
   "search-error",
@@ -130,12 +135,12 @@ const PREVIEW_SITES = [
   { id: "00000000-0000-4000-8000-000000000003", label: "docs.yoursite.com", domain: null },
 ];
 
-/** The real site menu, on sample sites: Growth with three, or Starter with paused ones. */
-function PreviewSwitcher({ growth, range }: { growth: boolean; range: string }) {
+/** The real site menu, on sample sites: Pro with three, or Free with paused ones. */
+function PreviewSwitcher({ pro, range }: { pro: boolean; range: string }) {
   const sites = PREVIEW_SITES.map((s, i) => ({
     ...s,
-    openable: growth || i === 0,
-    problem: i === 2 && growth ? "Google access ended" : null,
+    openable: pro || i === 0,
+    problem: i === 2 && pro ? "Google access ended" : null,
   }));
   return (
     <SiteSwitcher
@@ -143,8 +148,8 @@ function PreviewSwitcher({ growth, range }: { growth: boolean; range: string }) 
       sites={sites}
       listedProperties={["properties/101", "properties/102", "properties/103"]}
       currentProperty="properties/101"
-      growth={growth}
-      limit={growth ? 10 : 1}
+      multiple={pro}
+      limit={pro ? 10 : 1}
       range={range === "7d" ? null : range}
       listAction={sampleProperties}
       switchAction={previewPick}
@@ -153,15 +158,17 @@ function PreviewSwitcher({ growth, range }: { growth: boolean; range: string }) 
   );
 }
 
-function trialPlan(): PlanState {
-  return { kind: "trial", endsAt: new Date(Date.now() + 9 * 86_400_000), daysLeft: 9 };
-}
-
 async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "searchParams">) {
   await connection(); // dates depend on the current time
   const params = await searchParams;
-  const range = parseRange(params.range);
   const state = STATES.find((s) => s === params.state) ?? "normal";
+  const pro = state === "pro";
+  // Free (every state but "pro") sees the last 30 days, like the real dashboard.
+  const { range, limited } = rangeForPlan(
+    state === "free-history" ? "12m" : parseRange(params.range),
+    pro,
+    "Europe/Amsterdam",
+  );
   const window = rangeWindow(range, "Europe/Amsterdam");
   const reports = sampleReports(window, REPORTS);
   const extra = sampleReports(window, [
@@ -171,7 +178,7 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
     "purchase_landing",
   ]);
   // A payment page among the sources, to show the owner's warning.
-  if (state === "growth") {
+  if (pro) {
     reports.sources.data = {
       rows: [
         ...reports.sources.data.rows,
@@ -192,10 +199,10 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
       <>
         <PreviewNav state={state} range={range} />
         <PausedSiteView
-          switcher={<PreviewSwitcher growth={false} range={range} />}
+          switcher={<PreviewSwitcher pro={false} range={range} />}
           label="blog.yoursite.com"
         >
-          <UpgradePanel feature="sites" plan={trialPlan()} upgrade={noop}>
+          <UpgradePanel feature="sites" upgrade={noop}>
             <OpenInsteadForm
               label="blog.yoursite.com"
               siteId={PREVIEW_SITES[1]!.id}
@@ -217,6 +224,7 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
     quota: <QuotaNotice until={quotaUntil} timeZone="Europe/Amsterdam" cached />,
     "quota-empty": <QuotaNotice until={quotaUntil} timeZone="Europe/Amsterdam" cached={false} />,
     unavailable: <UnavailableNotice />,
+    "free-history": <HistoryNotice href="/ui-kit/settings#billing" />,
   };
 
   const empty = state === "quota-empty" || state === "unavailable";
@@ -267,6 +275,11 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
           state === "no-history" ? "Not enough history to compare" : comparisonGap(window, null)
         }
         query={state === "normal" ? undefined : { state }}
+        historyLimit={
+          pro
+            ? null
+            : { firstDay: freeFirstDay(window.today), upgradeHref: "/ui-kit/settings#billing" }
+        }
         notes={previewNotes}
         notesPanel={
           <ChartNotes
@@ -286,33 +299,33 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
             endpoint={null}
           />
         }
-        site={
-          state === "growth" || state === "starter-menu" ? (
-            <PreviewSwitcher growth={state === "growth"} range={range} />
-          ) : (
-            site
-          )
-        }
+        site={pro || state === "free-menu" ? <PreviewSwitcher pro={pro} range={range} /> : site}
         siteName="yoursite.com"
         notices={
-          state === "normal" ? <EmailNotice turnOff={noop} dismiss={noop} /> : notices[state]
+          pro ? (
+            <EmailNotice turnOff={noop} dismiss={noop} />
+          ) : limited ? (
+            notices["free-history"]
+          ) : (
+            notices[state]
+          )
         }
         footer={state === "normal" ? <ShareCard action={sampleShare} /> : null}
         ownerTips
         extraMetrics={
-          state === "growth"
+          pro
             ? revenueMetrics({
                 view: sampleRevenue(window),
                 visitors: reports.totals.data.current.visitors,
                 comparable: true,
-                settingsHref: "/ui-kit/settings?state=growth#revenue",
+                settingsHref: "/ui-kit/settings?state=pro#revenue",
               })
             : undefined
         }
-        revenueByDay={state === "growth" ? growthRevenue(window).byDay : undefined}
-        revenueCurrency={state === "growth" ? "EUR" : undefined}
+        revenueByDay={pro ? proRevenue(window).byDay : undefined}
+        revenueCurrency={pro ? "EUR" : undefined}
         sales={
-          state === "growth" ? (
+          pro ? (
             <SalesCard
               data={{
                 sources: reports.sources.data,
@@ -329,28 +342,27 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
               salePage={null}
               currency="EUR"
               exportInfo={{ site: "yoursite.com", ...window.current }}
-              settingsHref="/ui-kit/settings?state=growth#sales"
+              settingsHref="/ui-kit/settings?state=pro#sales"
             />
           ) : null
         }
         search={
-          state === "growth" ? (
+          pro ? (
             <SearchCard
               data={sampleSearchCard(window.current, { signupEvent })}
               siteName="yoursite.com"
               signupEvent={signupEvent}
-              settingsHref="/ui-kit/settings?state=growth#search"
+              settingsHref="/ui-kit/settings?state=pro#search"
             />
           ) : state === "search-connect" ? (
             <SearchConnect connect={noop} />
           ) : state === "search-error" ? (
             <SearchProblemCard problem="scope" connect={noop} settingsHref="/ui-kit/settings" />
-          ) : state === "normal" || state === "starter-menu" ? (
-            <SearchTeaser href="/ui-kit/settings?state=trial#search" />
+          ) : state === "normal" || state === "free-menu" || state === "free-history" ? (
+            <SearchTeaser href="/ui-kit/settings#search" />
           ) : null
         }
         dimmed={state === "revoked" || state === "no-access"}
-        lockedPanel={state === "locked" ? <LockedPanel upgrade={noop} /> : undefined}
       />
     </>
   );
@@ -377,7 +389,7 @@ function PreviewNav({ state, range }: { state: string; range: string }) {
 }
 
 /** The sample revenue's current period, for the bars. */
-function growthRevenue(window: {
+function proRevenue(window: {
   current: { start: string; end: string };
   previous: { start: string; end: string };
 }) {

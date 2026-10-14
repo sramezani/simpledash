@@ -116,7 +116,7 @@ export const accountRelations = relations(account, ({ one }) => ({
 
 /**
  * A GA4 property connected by a user. `added_at` set means the site is in the user's
- * list (Starter: one, Growth: up to 10); `is_active` is the one the dashboard opens with.
+ * list (Free: one, Pro: up to 10); `is_active` is the one the dashboard opens with.
  * Rows that left the list keep their notes and settings, so adding the site again restores them.
  */
 export const site = pgTable(
@@ -143,11 +143,11 @@ export const site = pgTable(
     addedAt: timestamp("added_at", { withTimezone: true }),
     /** When its dashboard was last opened (stamped at most hourly), for warm-cache. */
     lastViewedAt: timestamp("last_viewed_at", { withTimezone: true }),
-    /** The Search Console property for Google search insights (Growth), e.g. sc-domain:example.com. */
+    /** The Search Console property for Google search insights (Pro), e.g. sc-domain:example.com. */
     searchConsoleUrl: text("search_console_url"),
     /** Extra spellings of the site's name, for "Your name vs others" (at most 10). */
     brandTerms: text("brand_terms").array().default(sql`'{}'::text[]`).notNull(),
-    /** What counts as a sale (Growth): a GA4 key event, or a "thank you" page path. */
+    /** What counts as a sale (Pro): a GA4 key event, or a "thank you" page path. */
     saleEvent: text("sale_event"),
     salePage: text("sale_page"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -261,16 +261,15 @@ export const publicPage = pgTable(
   (table) => [index("public_page_user_idx").on(table.userId)],
 );
 
-/** The trial lives here; Stripe is only involved once someone upgrades. */
+/** Free unless Stripe says otherwise; Stripe is only involved once someone upgrades to Pro. */
 export const billing = pgTable("billing", {
   userId: text("user_id")
     .primaryKey()
     .references(() => user.id, { onDelete: "cascade" }),
-  trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }).notNull(),
-  /** The Stripe subscription status, or null before the first upgrade. */
+  /** The Stripe subscription status, or null on Free before the first upgrade. */
   status: text("status"),
-  /** Which plan the subscription is for, from its price (the webhook). Null before the first payment. */
-  plan: text("plan", { enum: ["starter", "growth"] }),
+  /** Which paid plan the subscription is for, from its price (the webhook). Null before the first payment. */
+  plan: text("plan", { enum: ["pro"] }),
   stripeCustomerId: text("stripe_customer_id").unique(),
   stripeSubscriptionId: text("stripe_subscription_id"),
   planInterval: text("plan_interval", { enum: ["month", "year"] }),

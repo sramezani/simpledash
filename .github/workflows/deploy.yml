@@ -1,0 +1,80 @@
+# Checks every pull request; on main it also builds the image and deploys it (docs/deploy.md).
+# The deploy job waits until deploy/setup.sh has set up a server: it sets the variable
+# DEPLOY_PLATFORM and the secrets DEPLOY_HOST, DEPLOY_SSH_KEY and DEPLOY_KNOWN_HOSTS.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Typecheck, lint and tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run check
+
+  deploy:
+    name: Build and deploy
+    needs: check
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.DEPLOY_PLATFORM != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    concurrency:
+      group: production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Collect the release files
+        run: |
+          release="$RUNNER_TEMP/release"
+          mkdir -p "$release"
+          echo "simpledash-app:$GITHUB_SHA" > "$release/IMAGE"
+          cp -R deploy/compose.yaml deploy/caddy deploy/crontab deploy/simpledash "$release/"
+          cp -R scripts/backup "$release/backup"
+
+      - uses: docker/setup-qemu-action@v3
+        if: vars.DEPLOY_PLATFORM != 'linux/amd64'
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build the image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: ${{ vars.DEPLOY_PLATFORM }}
+          tags: simpledash-app:${{ github.sha }}
+          outputs: type=docker,dest=${{ runner.temp }}/release/app.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # The deploy key can only run `simpledash deploy` on the server, which reads the release
+      # from stdin, starts it, waits for /api/health and goes back to the previous version if not.
+      - name: Send it to the server
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          tar -c -C "$RUNNER_TEMP/release" . | gzip -1 |
+            ssh -i ~/.ssh/deploy -o BatchMode=yes -o ServerAliveInterval=30 "deploy@$HOST"

@@ -1,7 +1,7 @@
 import "server-only";
 import { render } from "@react-email/components";
 import { and, eq, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
-import { unlockedUserIds } from "@/lib/billing/billing";
+import { paidUserIds } from "@/lib/billing/billing";
 import { entitlements, planState } from "@/lib/billing/plan";
 import { db } from "@/lib/db/client";
 import { billing, emailSend, site, user, userSettings, type Site } from "@/lib/db/schema";
@@ -24,16 +24,17 @@ type Prepared = { userId: string; weekStart: string; email: OutgoingEmail };
 type Account = { userId: string; email: string; main: Site; sites: Site[] };
 
 /**
- * The accounts that get the email: on, not locked, with at least one working site
- * the plan opens. Their sites come in list order with the main (active) one first.
+ * The accounts that get the email: Pro (the Monday email is a Pro feature), with it on
+ * and at least one working site the plan opens. Their sites come in list order with the
+ * main (active) one first.
  */
-async function accounts(now: Date): Promise<Account[]> {
+async function accounts(): Promise<Account[]> {
   const people = await db
     .select({ userId: user.id, email: user.email, billing })
     .from(user)
     .innerJoin(userSettings, eq(userSettings.userId, user.id))
     .innerJoin(billing, eq(billing.userId, user.id))
-    .where(and(eq(userSettings.weeklyEmail, true), inArray(user.id, unlockedUserIds(now))));
+    .where(and(eq(userSettings.weeklyEmail, true), inArray(user.id, paidUserIds())));
   if (people.length === 0) return [];
   const rows = await db
     .select()
@@ -48,9 +49,11 @@ async function accounts(now: Date): Promise<Account[]> {
       ),
     );
   return people.flatMap((p) => {
+    const ent = entitlements(planState(p.billing));
+    if (!ent.weeklyEmail) return [];
     const open = openableSites(
       rows.filter((s) => s.userId === p.userId),
-      entitlements(planState(p.billing, now)),
+      ent,
     );
     const main = open.find((s) => s.isActive) ?? open[0];
     const sites = open.filter((s) => s.status === "ok");
@@ -64,12 +67,12 @@ async function accounts(now: Date): Promise<Account[]> {
 /**
  * Hourly at :00 (docs/SPEC.md sections 14, 20 and 28.1). Sends last week's numbers,
  * one block per site, to accounts whose main site's local time is Monday afternoon,
- * with the email on, the account not locked and at least one site working. A row in
+ * with the email on, the account on Pro and at least one site working. A row in
  * email_send is claimed first, so a week's email can only go out once; it is released
  * again if the send fails.
  */
 export async function weeklyEmailJob(now: Date = new Date()) {
-  const candidates = await accounts(now);
+  const candidates = await accounts();
   const due = candidates.filter((c) => isSendTime(now, c.main.timeZone));
 
   let skipped = 0;

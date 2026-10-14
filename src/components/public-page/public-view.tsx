@@ -21,6 +21,7 @@ import {
   freshnessNote,
   isPreset,
   previousPeriodWords,
+  freeFirstDay,
   rangeMenu,
   type RangeType,
 } from "@/lib/ga4/ranges";
@@ -94,7 +95,14 @@ export function PublicView({
         <Container className="flex flex-col gap-4 pt-5 sm:pt-6">
           <OverviewToolbar
             site={<SiteChip as="h1" domain={view.label} label={view.label} />}
-            menu={rangeMenu(range, window, basePath, query, defaultRange)}
+            menu={rangeMenu(
+              range,
+              window,
+              basePath,
+              query,
+              defaultRange,
+              view.fullHistory ? null : { firstDay: freeFirstDay(window.today) },
+            )}
             period={isPreset(range) ? period : null}
             note={freshnessNote(window)}
           />
@@ -160,12 +168,12 @@ export function PublicView({
           ) : null}
         </Container>
       </main>
-      <PoweredBy embedded={embedded} />
+      {view.poweredBy ? <PoweredBy embedded={embedded} /> : null}
     </>
   );
 }
 
-/** The "Powered by SimpleDash" link on every public page. Inside the demo frame it opens the whole page. */
+/** The "Powered by SimpleDash" link on Free owners' public pages. Inside the demo frame it opens the whole page. */
 export function PoweredBy({ embedded = false }: { embedded?: boolean }) {
   return (
     <footer className="border-t">
@@ -183,7 +191,7 @@ export function PoweredBy({ embedded = false }: { embedded?: boolean }) {
   );
 }
 
-/** "This page is paused." Shown when the owner's plan is locked or Google access ended. */
+/** "This page is paused." Shown when Google access ended or the site isn't open on the owner's plan. */
 export function PausedView({ label }: { label: string }) {
   return (
     <>

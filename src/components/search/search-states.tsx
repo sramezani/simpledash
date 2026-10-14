@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SearchProblem } from "@/lib/search-console/client";
 import { cn } from "@/lib/utils";
+import { plans } from "@/config/plans";
 
 /** The Google search card's frame for states without numbers. */
 function Frame({
@@ -44,7 +45,7 @@ function Title({ children = "Google search" }: { children?: ReactNode }) {
   );
 }
 
-/** Growth without Search Console: what it shows, and one button (docs/SPEC.md section 28.2). */
+/** Pro without Search Console: what it shows, and one button (docs/SPEC.md section 28.2). */
 export function SearchConnect({ connect }: { connect: (formData: FormData) => Promise<void> }) {
   return (
     <Frame dashed>
@@ -61,7 +62,7 @@ export function SearchConnect({ connect }: { connect: (formData: FormData) => Pr
   );
 }
 
-/** Starter and trials: Google search insights are part of Growth. */
+/** Free: Google search insights are part of Pro. */
 export function SearchTeaser({ href }: { href: string }) {
   return (
     <Frame dashed className="sm:flex-row sm:items-center sm:gap-4">
@@ -72,16 +73,16 @@ export function SearchTeaser({ href }: { href: string }) {
             Which Google searches and sources bring your sales?
           </h2>
           <p className="text-sm text-pretty text-muted-foreground">
-            Growth adds Google search insights (searches close to page 1, what changed, pages
-            people see but don&apos;t click), revenue from Stripe next to your visitors, and sales
-            by source.
+            {plans.pro.name} adds Google search insights (searches close to page 1, what changed,
+            pages people see but don&apos;t click), revenue from Stripe next to your visitors, and
+            sales by source.
           </p>
         </div>
       </div>
       <Button asChild variant="outline" className="h-9 shrink-0 gap-1.5 pointer-coarse:h-11">
         <Link href={href as Route}>
           <SparklesIcon aria-hidden="true" />
-          See Growth
+          See {plans.pro.name}
         </Link>
       </Button>
     </Frame>

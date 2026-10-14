@@ -2,7 +2,9 @@ import { ChevronDownIcon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Container } from "@/components/shared/container";
-import { plans } from "@/config/plans";
+import { FREE_HISTORY_DAYS, plans } from "@/config/plans";
+import { brand } from "@/config/theme";
+import { formatPrice } from "@/lib/format";
 
 const items: { q: string; a: ReactNode }[] = [
   {
@@ -30,8 +32,17 @@ const items: { q: string; a: ReactNode }[] = [
     a: "No. We only ask for read-only access to Google Analytics. You can remove it at any time in your Google account.",
   },
   {
-    q: "What happens after the free trial?",
-    a: `After ${plans.starter.trialDays} days the dashboard locks until you subscribe. Nothing is deleted, and there's no card to cancel.`,
+    q: "Is it really free?",
+    a: `Yes. ${plans.free.name} is one site and the last ${FREE_HISTORY_DAYS} days, with no card and no time limit. ${plans.pro.name} is ${formatPrice(plans.pro.prices.month)} a month and adds more sites, 12 months and any dates, the Monday email, Google search insights and revenue from Stripe.`,
+  },
+  {
+    q: "Is SimpleDash open source?",
+    a: (
+      <>
+        Yes. The code is on <a href={brand.sourceUrl}>GitHub</a> under the AGPL-3.0 license, so you
+        can see exactly what it reads and stores.
+      </>
+    ),
   },
   {
     q: "Do I have to add a tracking script?",

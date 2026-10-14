@@ -8,7 +8,8 @@ import { LiveCard } from "@/components/globe/live-card";
 import { PausedView, PublicView } from "@/components/public-page/public-view";
 import { defaultPublicCardIds, publicCardIds } from "@/config/cards";
 import { uiKitEnabled } from "@/lib/env";
-import { comparisonGap, parseRange, rangeWindow } from "@/lib/ga4/ranges";
+import { comparisonGap, parseRange,
+  rangeForPlan, rangeWindow } from "@/lib/ga4/ranges";
 import { REPORTS } from "@/lib/ga4/reports";
 import { sampleLive, sampleReports, SAMPLE_SIGNUP_EVENT } from "@/lib/ga4/sample/sample";
 
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const STATES = ["default-cards", "all-cards", "paused"] as const;
+const STATES = ["default-cards", "all-cards", "free", "paused"] as const;
 
 /** Dev only: a public stats page on sample data, without a real page in the database. */
 export default function PublicPreviewPage({ searchParams }: PageProps<"/ui-kit/public">) {
@@ -32,8 +33,8 @@ export default function PublicPreviewPage({ searchParams }: PageProps<"/ui-kit/p
 async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/public">, "searchParams">) {
   await connection(); // dates depend on the current time
   const params = await searchParams;
-  const range = parseRange(params.range);
   const state = STATES.find((s) => s === params.state) ?? "default-cards";
+  const { range } = rangeForPlan(parseRange(params.range), state !== "free", "Europe/Amsterdam");
   const window = rangeWindow(range, "Europe/Amsterdam");
   const cards = state === "all-cards" ? publicCardIds : defaultPublicCardIds;
   return (
@@ -72,6 +73,9 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/public">, "sear
             signupEvent: cards.includes("signups") ? SAMPLE_SIGNUP_EVENT : null,
             comparisonGap: comparisonGap(window, null),
             customLimited: false,
+            // "free": a Free owner's page, with "Powered by" and the menu stopping at 30 days.
+            poweredBy: state === "free",
+            fullHistory: state !== "free",
           }}
         />
       )}

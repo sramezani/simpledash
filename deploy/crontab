@@ -1,0 +1,8 @@
+# SimpleDash scheduled jobs (docs/SPEC.md section 20), installed for the deploy user by
+# `simpledash setup` and every deploy. Times are UTC. Output goes to the journal:
+# `simpledash logs jobs`.
+5 * * * * /usr/local/bin/simpledash job warm-cache 2>&1 | logger -t simpledash
+0 * * * * /usr/local/bin/simpledash job weekly-email 2>&1 | logger -t simpledash
+20 * * * * /usr/local/bin/simpledash job revenue-sync 2>&1 | logger -t simpledash
+30 3 * * * /usr/local/bin/simpledash job cleanup 2>&1 | logger -t simpledash
+0 2 * * * /usr/local/bin/simpledash backup 2>&1 | logger -t simpledash

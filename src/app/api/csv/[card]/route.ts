@@ -1,23 +1,22 @@
 import { connection } from "next/server";
-import { isUserLocked } from "@/lib/billing/billing";
 import { csvCardIds, type CardId } from "@/config/cards";
 import { findOpenSite, getApiUser } from "@/lib/auth/session";
 import { csvFilename, toCsv } from "@/lib/csv";
 import { csvReports, csvTable } from "@/lib/csv-cards";
 import { loadReports } from "@/lib/ga4/data";
-import { parseRange } from "@/lib/ga4/ranges";
+import { getPlan } from "@/lib/billing/billing";
+import { entitlements } from "@/lib/billing/plan";
+import { parseRange, rangeForPlan } from "@/lib/ga4/ranges";
 
 /**
  * "Download CSV" for a card (docs/SPEC.md section 13): /api/csv/<card>?site=<id>&range=30d.
  * Built from the same cached reports as the dashboard; only the user's own sites
- * that their plan opens.
+ * that their plan opens, and on Free only the last 30 days.
  */
 export async function GET(request: Request, ctx: RouteContext<"/api/csv/[card]">) {
   await connection();
   const user = await getApiUser();
   if (!user) return new Response("Sign in first.", { status: 401 });
-  if (await isUserLocked(user.id))
-    return new Response("Your free trial has ended.", { status: 402 });
   const { card } = await ctx.params;
   if (!(csvCardIds as readonly string[]).includes(card))
     return new Response("Not found", { status: 404 });
@@ -26,7 +25,8 @@ export async function GET(request: Request, ctx: RouteContext<"/api/csv/[card]">
   if (!site) return new Response("Connect a Google Analytics site first.", { status: 404 });
 
   const id = card as CardId;
-  const range = parseRange(search.get("range"));
+  const { fullHistory } = entitlements(await getPlan(user.id));
+  const { range } = rangeForPlan(parseRange(search.get("range")), fullHistory, site.timeZone);
   const result = await loadReports(site, range, csvReports[id] ?? []);
   const data = Object.fromEntries(Object.entries(result.reports).map(([r, v]) => [r, v.data]));
   const table = csvTable(id, data, result.window, site.signupEvent);

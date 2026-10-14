@@ -22,9 +22,7 @@ import { EmailNotice } from "@/components/dashboard/email-notice";
 import { ShareCard } from "@/components/dashboard/share-card";
 import { getSettings } from "@/lib/email/settings";
 import { getSitePublicPage } from "@/lib/public-page/public-page";
-import { LockedPanel } from "@/components/dashboard/locked-panel";
 import { Notice } from "@/components/shared/notice";
-import { isLocked } from "@/lib/billing/plan";
 import { addNoteAction, deleteNoteAction, updateNoteAction } from "@/app/actions/notes";
 import {
   addSite,
@@ -35,7 +33,7 @@ import {
 } from "@/app/actions/site";
 import { OpenInsteadForm, PausedSiteView } from "@/components/dashboard/paused-site";
 import { UpgradePanel } from "@/components/dashboard/upgrade-panel";
-import { plans, type PlanId } from "@/config/plans";
+import { plans } from "@/config/plans";
 import { ChartNotes } from "@/components/charts/chart-notes";
 import { LiveCard } from "@/components/globe/live-card";
 import { SignupChange } from "@/components/cards/signup-change";
@@ -46,6 +44,7 @@ import { SiteSwitcher, type SwitcherSite } from "@/components/dashboard/site-swi
 import {
   AccessNotGranted,
   DashboardSkeleton,
+  HistoryNotice,
   NoAccessNotice,
   NoDataNotice,
   NoPropertyNotice,
@@ -63,7 +62,14 @@ import { getLive } from "@/lib/ga4/realtime";
 import { listNotes } from "@/lib/notes/notes";
 import { classifyError } from "@/lib/ga4/errors";
 import { chooseFirstSite, listKeyEventNames, stillHasAccess } from "@/lib/ga4/properties";
-import { comparisonGap, parseRange, rangeWindow, type RangeType } from "@/lib/ga4/ranges";
+import {
+  comparisonGap,
+  freeFirstDay,
+  parseRange,
+  rangeForPlan,
+  rangeWindow,
+  type RangeType,
+} from "@/lib/ga4/ranges";
 import { goalEvents, REPORTS, type ReportName } from "@/lib/ga4/reports";
 import { paramsFor } from "@/lib/ga4/cache";
 import { SalesCard } from "@/components/cards/sales-card";
@@ -93,9 +99,8 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
   const range = parseRange(params.range);
   const requested = readSiteId(params.site);
   const ctx = await getSiteContext(user.id, requested);
-  const locked = isLocked(ctx.plan);
-  const upgradedTo = upgradedPlan(params.upgraded);
-  const upgraded = upgradedTo ? <UpgradedNotice plan={upgradedTo} /> : null;
+  // `?upgraded=pro` after Checkout.
+  const upgraded = params.upgraded ? <UpgradedNotice /> : null;
 
   const account = await getGoogleAccount(user.id);
   if (!hasAnalyticsScope(account?.scope)) return <AccessNotGranted signIn={allowAnalyticsAccess} />;
@@ -107,7 +112,6 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
         site={choice.site}
         ctx={ctx}
         range={range}
-        locked={locked}
         extra={upgraded}
         searchResult={typeof params.search === "string" ? params.search : null}
       />
@@ -120,7 +124,7 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
         switcher={<Switcher site={choice.site} ctx={ctx} range={null} />}
         label={label}
       >
-        <UpgradePanel feature="sites" plan={ctx.plan} upgrade={upgrade}>
+        <UpgradePanel feature="sites" upgrade={upgrade}>
           <OpenInsteadForm label={label} siteId={choice.site.id} action={openListedSiteAction} />
         </UpgradePanel>
       </PausedSiteView>
@@ -128,8 +132,6 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
   }
   // An old link to a site that left the list: open the dashboard as usual.
   if (requested) redirect("/dashboard");
-  // A locked account doesn't call Google, so no property is looked up.
-  if (locked) return <SampleDashboard range={range} notice={null} locked />;
   return (
     <Suspense fallback={<DashboardSkeleton message="Finding your Google Analytics site…" />}>
       <FirstVisit userId={user.id} range={range} />
@@ -160,7 +162,7 @@ async function FirstVisit({ userId, range }: { userId: string; range: RangeType 
   }
   if (!site) return <SampleDashboard range={range} notice={<NoPropertyNotice />} />;
   const ctx = await getSiteContext(userId, site.id);
-  return <SiteDashboard site={site} ctx={ctx} range={range} locked={false} extra={null} />;
+  return <SiteDashboard site={site} ctx={ctx} range={range} extra={null} />;
 }
 
 const toSwitcherSite = (s: Site, openable: boolean): SwitcherSite => ({
@@ -181,7 +183,7 @@ function Switcher({ site, ctx, range }: { site: Site; ctx: SiteContext; range: s
       sites={sites.map((s) => toSwitcherSite(s, openable.has(s.id)))}
       listedProperties={ctx.sites.filter((s) => s.addedAt).map((s) => s.propertyId)}
       currentProperty={site.propertyId}
-      growth={ctx.ent.sites > 1}
+      multiple={ctx.ent.sites > 1}
       limit={ctx.ent.sites}
       range={range}
       listAction={listMyProperties}
@@ -192,25 +194,16 @@ function Switcher({ site, ctx, range }: { site: Site; ctx: SiteContext; range: s
   );
 }
 
-/** `?upgraded=growth` after Checkout or a plan change (`1` from before Growth existed). */
-function upgradedPlan(value: unknown): PlanId | null {
-  if (value === "growth") return "growth";
-  if (value === "starter" || value === "1") return "starter";
-  return null;
-}
-
 async function SiteDashboard({
   site: initial,
   ctx,
-  range,
-  locked,
+  range: requestedRange,
   extra,
   searchResult = null,
 }: {
   site: Site;
   ctx: SiteContext;
   range: RangeType;
-  locked: boolean;
   extra: React.ReactNode;
   /** `?search=` after connecting Search Console: "connected", "no_match", "denied"… */
   searchResult?: string | null;
@@ -219,7 +212,7 @@ async function SiteDashboard({
   // This site is now the one the dashboard opens with, and warm-cache keeps it fresh.
   after(() => markSiteOpened(initial));
   // Lost access earlier? Check again, so the banner clears on its own when access is back.
-  if (site.status === "no_access" && !locked) {
+  if (site.status === "no_access") {
     const back = await stillHasAccess(site.userId, site.propertyId).catch(() => false);
     if (back) {
       await markSiteOk(site.id);
@@ -229,16 +222,18 @@ async function SiteDashboard({
 
   // One clock for the reports and the notes, so both cover the same days.
   const now = new Date();
+  // Free sees the last 30 days: a longer range (an old link) shows Last 30 days instead.
+  const { range, limited } = rangeForPlan(requestedRange, ctx.ent.fullHistory, site.timeZone, now);
   const window = rangeWindow(range, site.timeZone, now);
-  const growthRevenue = ctx.ent.revenue && !locked;
+  const proRevenue = ctx.ent.revenue;
   const [result, notes, settings, publicPage, revenue] = await Promise.all([
-    loadReports(site, range, REPORTS, { now, cacheOnly: locked }),
+    loadReports(site, range, REPORTS, { now }),
     listNotes(site.id, window.current.start, window.current.end),
     getSettings(site.userId),
     getSitePublicPage(site.id),
-    growthRevenue ? loadRevenue(site, window).catch(() => null) : null,
+    proRevenue ? loadRevenue(site, window).catch(() => null) : null,
   ]);
-  if (growthRevenue) {
+  if (proRevenue) {
     // Stripe totals older than an hour are brought up to date after the response.
     after(async () => {
       const source = await getRevenueSource(site.id);
@@ -262,7 +257,7 @@ async function SiteDashboard({
 
   // Sites that can't reach Google (access ended or lost) don't ask it for key events either.
   const picker =
-    site.status === "ok" && !locked ? (
+    site.status === "ok" ? (
       <Suspense fallback={<Skeleton className="h-9 w-full" />}>
         <SignupPickerLoader site={site} action={signupAction} />
       </Suspense>
@@ -283,17 +278,23 @@ async function SiteDashboard({
       site={switcher}
       siteId={site.id}
       siteName={label}
+      historyLimit={
+        ctx.ent.fullHistory
+          ? null
+          : { firstDay: freeFirstDay(result.window.today), upgradeHref: "/settings#billing" }
+      }
       notices={
         <>
           {extra}
+          {limited ? <HistoryNotice /> : null}
           {notice}
-          {settings.weeklyEmail && !settings.emailNoticeDismissed && !locked ? (
+          {ctx.ent.weeklyEmail && settings.weeklyEmail && !settings.emailNoticeDismissed ? (
             <EmailNotice turnOff={setWeeklyEmailAction} dismiss={dismissEmailNoticeAction} />
           ) : null}
         </>
       }
       footer={
-        !publicPage && !locked && site.status === "ok" ? (
+        !publicPage && site.status === "ok" ? (
           <ShareCard
             action={turnOnPublicPageAction.bind(null, site.id)}
             settingsHref={`/settings?site=${site.id}#public`}
@@ -313,10 +314,7 @@ async function SiteDashboard({
         />
       }
       live={
-        site.status === "ok" &&
-        !locked &&
-        result.problem !== "revoked" &&
-        result.problem !== "no_access" ? (
+        site.status === "ok" && result.problem !== "revoked" && result.problem !== "no_access" ? (
           <Suspense fallback={<LiveCard data={null} endpoint={null} loading />}>
             <LiveLoader site={site} />
           </Suspense>
@@ -337,18 +335,17 @@ async function SiteDashboard({
       revenueByDay={revenue?.kind === "ready" ? revenue.current.byDay : undefined}
       revenueCurrency={revenue?.kind === "ready" ? revenue.current.currency : undefined}
       sales={
-        growthRevenue && site.status !== "needs_reconnect" ? (
+        proRevenue && site.status !== "needs_reconnect" ? (
           <Suspense fallback={<Skeleton className="h-[30rem] rounded-2xl" />}>
             <SalesLoader site={site} range={range} />
           </Suspense>
         ) : null
       }
       search={
-        locked || site.status === "needs_reconnect" ? null : (
+        site.status === "needs_reconnect" ? null : (
           <SearchSection site={site} ctx={ctx} range={range} result={searchResult} />
         )
       }
-      lockedPanel={locked ? <LockedPanel upgrade={upgrade} /> : undefined}
       dimmed={result.problem === "revoked" || result.problem === "no_access"}
       refreshToken={result.refreshing ? fetchedAt : null}
     />
@@ -356,8 +353,8 @@ async function SiteDashboard({
 }
 
 /**
- * The Google search card (docs/SPEC.md section 28.2): Growth with Search Console sees
- * it, streamed on its own; Growth without sees "Connect"; Starter sees the teaser.
+ * The Google search card (docs/SPEC.md section 28.2): Pro with Search Console sees it,
+ * streamed on its own; Pro without sees "Connect"; Free sees the teaser.
  */
 function SearchSection({
   site,
@@ -494,15 +491,7 @@ async function SignupPickerLoader({
   return <SignupPicker keyEvents={keyEvents} current={site.signupEvent} action={action} />;
 }
 
-function SampleDashboard({
-  range,
-  notice,
-  locked,
-}: {
-  range: RangeType;
-  notice: React.ReactNode;
-  locked?: boolean;
-}) {
+function SampleDashboard({ range, notice }: { range: RangeType; notice: React.ReactNode }) {
   const window = rangeWindow(range, "UTC");
   return (
     <DashboardView
@@ -514,14 +503,13 @@ function SampleDashboard({
       site={<SampleSiteChip />}
       siteName={SAMPLE_DOMAIN}
       notices={notice}
-      lockedPanel={locked ? <LockedPanel upgrade={upgrade} /> : undefined}
     />
   );
 }
 
-function UpgradedNotice({ plan }: { plan: PlanId }) {
+function UpgradedNotice() {
   return (
-    <Notice title={`Thank you! Your ${plans[plan].name} plan is active.`}>
+    <Notice title={`Thank you! ${plans.pro.name} is active.`}>
       It can take a minute for Stripe to confirm. You&apos;ll find the plan and invoices in
       Settings.
     </Notice>

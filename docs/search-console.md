@@ -1,6 +1,6 @@
 # Google search insights (Search Console)
 
-The Google search card on Growth: five views from the user's own Search Console data. The plan is in `docs/SPEC.md` section 28.2; this file says how the code does it.
+The Google search card on Pro: five views from the user's own Search Console data. The plan is in `docs/SPEC.md` section 28.2; this file says how the code does it.
 
 **Rule:** only `src/lib/search-console/` calls the Search Console API, with `fetch` and the user's own access token. Pages and actions use its functions.
 
@@ -22,7 +22,7 @@ UI: `src/components/search/` (`SearchCard`, and `SearchConnect`, `SearchTeaser`,
 
 ## Connecting
 
-1. Settings → Google Search Console (or the dashboard's "Connect Search Console" card), Growth only.
+1. Settings → Google Search Console (or the dashboard's "Connect Search Console" card), Pro only.
 2. Without the scope yet: Better Auth's link flow (`linkGoogleScope` in `src/lib/auth/link-scope.ts`, never a server action, with a fixed list of the two read-only scopes) sends the user to Google with `webmasters.readonly`. Better Auth merges it into `account.scope` and saves the new tokens; our database hook drops the cached access token so the next call carries the new scope.
 3. Google returns to `/api/search-console/connected?site=…&back=…`, which picks the matching property (`autoConnect`) and goes back with `?search=connected` or `no_match`.
 4. With the scope already granted (another site), Connect picks the property straight away.
@@ -66,7 +66,7 @@ With older numbers cached, the card shows them with a one-line note instead.
 
 ## Previews
 
-`/ui-kit/dashboard?state=growth` (the card on sample data; switch tabs), `state=search-connect`, `state=search-error`, `state=normal` (the Starter teaser). `/ui-kit/settings?state=growth|search-off|search-pick|trial` (the Settings card).
+`/ui-kit/dashboard?state=pro` (the card on sample data; switch tabs), `state=search-connect`, `state=search-error`, `state=normal` (the Free teaser). `/ui-kit/settings?state=pro|search-off|search-pick|trial` (the Settings card).
 
 ## Google's side (Siamak)
 

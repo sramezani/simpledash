@@ -21,13 +21,15 @@ What's done and what's next, in plain words.
 - [ ] Postgres on Supabase (plain Postgres via the ORM) and first migration (users)
   - [ ] Local Postgres in Docker for development. Supabase is for production only
     - `compose.yaml` is ready. Until Docker is installed, development uses Supabase (Siamak's call, 2026-10-11).
+    - Since 14 Oct, production runs its own Postgres on the server (see "Hosting" below). Supabase stays for development only, until Docker is on the Mac.
   - [x] Drizzle set up. The first migration creates Better Auth's tables, including `user` (2026-10-11)
     - Waiting for Siamak to run `npm run db:migrate` once (Claude's permission check blocks writes to Supabase).
 - [x] Environment variable template (`.env.example`) with every key documented (2026-10-11)
 - [x] Dockerfile (Next.js standalone output) and Docker Compose for local and server use (2026-10-11)
   - Not run in Docker yet (no Docker on the Mac). The standalone build was tested without `.env`, as Docker builds it.
-- [ ] Hetzner server with Coolify (or Compose), Cloudflare DNS and Full (strict) SSL, and a first deploy of a "hello" page
+- [ ] A server with Docker Compose, Cloudflare DNS and Full (strict) SSL, and a first deploy
   - [x] `docs/deploy.md`: step-by-step server, Coolify and Cloudflare setup (2026-10-11)
+  - [x] Replaced on 14 Oct by one command per server (`deploy/setup.sh`) and deploys from GitHub Actions (see "Hosting" below)
   - [ ] `/api/health` answers on the real domain over HTTPS
 - [x] Run Lighthouse on the hello page as the performance baseline (scores go in `docs/STORY.md`) (2026-10-11)
   - Local production build: mobile 98 / 100 / 100 / 100, desktop 100 / 100 / 100 / 100. Re-run on the real domain after the first deploy.
@@ -37,10 +39,10 @@ What's done and what's next, in plain words.
 
 - [ ] Install Docker Desktop or OrbStack on the Mac, and Node 24 (`nvm install 24`)
 - [x] Supabase: create the project in Frankfurt (`eu-central-1`). Put the session-pooler connection string only in Coolify's env vars, never in chat or git (2026-10-11)
-  - Created in eu-west-1 (Ireland). The password was shared in chat, so change it before launch (`docs/deploy.md` step 1).
-- [ ] Hetzner: create the server (EU, 2 vCPU, 4 GB) and install Coolify
+  - Created in eu-west-1 (Ireland). Development only since 14 Oct; production runs its own Postgres.
+- [ ] ~~Hetzner: create the server (EU, 2 vCPU, 4 GB) and install Coolify~~ Replaced by "Hosting" below (14 Oct)
 - [ ] Cloudflare: add `simpledash.app`, point DNS at the server (proxied), set SSL to Full (strict), and create an Origin Certificate for the server
-- [ ] Push the repo to GitHub and connect it in Coolify (git is Siamak's)
+- [ ] Push the repo to GitHub (git is Siamak's). No Coolify: GitHub Actions deploys (see "Hosting" below)
 - [ ] Review `docs/SPEC.md` and `docs/DECISIONS.md`, and flag any default to change
 
 ## Sprint 1: connect Google
@@ -158,8 +160,7 @@ What's done and what's next, in plain words.
 - [ ] Resend: add `simpledash.app` and its SPF, DKIM and DMARC records in Cloudflare
 - [ ] Cloudflare R2: a bucket and API token for backups, with a 30-day delete rule
 - [ ] Sentry: a project for the server, plus the uptime monitor on `/api/health`
-- [ ] Coolify: add the scheduled tasks (Claude writes the exact commands)
-  - The commands are in `docs/deploy.md` step 6 and `docs/backup.md`.
+- [x] Scheduled tasks and the nightly backup: in `deploy/crontab`, installed by `deploy/setup.sh` and every deploy, so there's nothing to add by hand (14 Oct)
 - [ ] Review and publish the launch posts
 
 ## UI polish (Siamak's list, 12 Oct)
@@ -201,9 +202,9 @@ What's done and what's next, in plain words.
   - Migration `0004_growth_and_sites.sql`, tested on a local Postgres with old rows. **Siamak runs `npm run db:migrate`** (until then the app errors on the new columns).
 - [x] The Monday email with one block per site (13 Oct)
   - Preview: `/ui-kit/email?sites=3`.
-- [ ] Siamak: create the Growth product and prices in Stripe (test and live)
-  - Test mode done by Claude (13 Oct). Live: the product "SimpleDash Growth" (SaaS tax code, tax-inclusive €19 and €190), then its IDs in Coolify (`STRIPE_PRICE_GROWTH_MONTHLY`, `STRIPE_PRICE_GROWTH_YEARLY`).
-- [ ] Siamak: Customer Portal → "Customers can switch plans" with all four prices (test and live)
+- [x] ~~Siamak: create the Growth product and prices in Stripe (test and live)~~ Replaced by Pro on 14 Oct (see "Free and Pro" below)
+  - The Growth test product isn't used any more and can be archived in Stripe.
+- [ ] Siamak: Customer Portal → "Customers can switch plans" with Pro's two prices (test and live)
 - [ ] **Done when:** a Growth test user pays in test mode, adds three sites, switches between them and sees all three on `/sites`; a Starter user sees the upgrade panel.
 
 ### Sprint 6: Google search insights
@@ -227,8 +228,55 @@ What's done and what's next, in plain words.
 - [x] Revenue per source only from GA4 `purchase` values, never estimated (13 Oct)
 - [x] The Stripe Checkout warning in Sources (every plan) (13 Oct)
   - Dashboard only; public pages never show it. Preview: `/ui-kit/dashboard?state=growth`.
-- [ ] Siamak: add the `revenue-sync` scheduled task in Coolify (`docs/deploy.md` step 6)
+- [x] The `revenue-sync` job runs hourly from `deploy/crontab`; setup installs it (14 Oct)
 - [ ] **Done when:** Siamak's test Stripe account shows the same daily revenue as Stripe's dashboard, and a test purchase event in GA4 shows under its source.
+
+## Hosting: one server, one command (Siamak's call, 14 Oct; `docs/deploy.md`, `docs/SPEC.md` section 21)
+
+- [x] `deploy/compose.yaml`: the app, Postgres 17, Caddy with the Cloudflare Origin Certificate, and the backup helper (14 Oct)
+- [x] `deploy/setup.sh`: one command on the Mac sets up a fresh Ubuntu or Debian server (updates, Docker, firewall, deploy user, files), restores the newest backup into an empty database, sets the GitHub secrets, runs the first deploy and, with a token, the Cloudflare DNS (14 Oct)
+  - The first run creates `deploy/secrets/` from `.env.example` and stops; checked on a copy of the repo. The server part can only run on a real server.
+- [x] `deploy/simpledash` on the server: status, logs, job, backup, restore, stop and start, plus setup and deploy for the tools (14 Oct)
+- [x] `.github/workflows/deploy.yml`: checks every pull request; on `main` builds the image and sends it to the server, which goes back to the previous version if the new one isn't healthy (14 Oct)
+  - `npm run check` passes in a clean copy without `.env`, as on GitHub's runner. The workflow itself runs for the first time on GitHub.
+- [x] Moving servers: `deploy/setup.sh <new> --from <old>` stops the old app, backs it up and restores it on the new one (14 Oct)
+- [x] `scripts/backup/restore.sh`: the newest R2 backup into the database; refuses to overwrite data unless asked (14 Oct)
+  - Tested on a local Postgres with rclone replaced by a local folder (`docs/backup.md`, "Restore test").
+
+**Siamak's part**
+
+- [ ] Cloudflare: the Origin Certificate, saved as `deploy/secrets/origin.pem` and `origin-key.pem` (`docs/deploy.md` step 1)
+- [ ] Cloudflare R2: the bucket and token, into `deploy/secrets/app.env` (`docs/backup.md`)
+- [ ] Azure: open ports 80 and 443 in the VM's network security group
+- [ ] Push to GitHub (with `.github/workflows/deploy.yml`), then run `deploy/setup.sh azureuser@<server-ip>` twice: the first run creates `deploy/secrets/app.env`, the second sets everything up
+- [ ] Keep a copy of `deploy/secrets/` in a password manager
+- [ ] Tell Claude the Azure region, for the privacy page (it now says "Microsoft Azure" without a place)
+- [ ] **Done when:** `https://simpledash.app/api/health` answers over HTTPS, a merge to `main` deploys on its own, and `sudo simpledash backup` puts a file in R2.
+
+## Free and Pro, and open source (Siamak's call, 14 Oct; `docs/SPEC.md` section 16)
+
+- [x] Plans: Free (one site, the last 30 days, a public page with "Powered by SimpleDash") and Pro ($9 a month or $90 a year, tax included, everything). No trial (14 Oct)
+  - `plans.ts`, `entitlements`, the webhook (Pro from the price) and checkout without a trial, all unit tested.
+- [x] Nothing locks on Free: the locked overlay, the 402s for CSV and live data, and the jobs' "unlocked" filter are gone (14 Oct)
+- [x] Free's 30 days: the date menu's Pro badge on 12 months, the calendar starting 30 days back, a note when an older range is asked for, and the same rule for CSV and public pages (14 Oct)
+  - `rangeForPlan`, `fitsFreeHistory` and the menu are unit tested, including the site's own time zone.
+- [x] The Monday email for Pro only; Settings says so on Free (14 Oct)
+- [x] "Powered by SimpleDash" on Free owners' public pages only; the demo always has it (14 Oct)
+- [x] Pricing section, hero, FAQ (with "Is it really free?" and "Is SimpleDash open source?"), terms (Free, launch price, 30 days' notice), privacy, `llms.txt` and structured data in dollars (14 Oct)
+- [x] Settings → Billing, the "part of Pro" panels and the site menu say Free and Pro (14 Oct)
+- [x] Migration `0007_pro_plan.sql`: paid rows become `pro`, `trial_ends_at` dropped (14 Oct)
+- [x] Stripe test mode: "SimpleDash Pro" with $9 and $90 USD prices; Checkout with Managed Payments opens at both amounts (14 Oct)
+- [x] Open source: README for outsiders with a "What SimpleDash stores" table, NOTICE (trademark and credits), CONTRIBUTING, SECURITY; the server IP and the old password note removed from the docs (14 Oct)
+- [ ] `LICENSE`: the official AGPL-3.0 text (waiting for Siamak's OK to fetch it from gnu.org, or add it on GitHub)
+
+**Siamak's part**
+
+- [ ] Run `npm run db:migrate` (migration 0007, after 0004–0006)
+- [ ] Stripe live: the "SimpleDash Pro" product with $9 and $90 tax-inclusive USD prices, their IDs in `deploy/secrets/app.env` (`STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`); the Portal's plan switching with both
+- [ ] Update `docs/ROADMAP.md` (pricing, and the subheadline: "full history from day one" became "the history GA4 already has")
+- [ ] Decide on contributor terms before outside pull requests (today: AGPL in, AGPL out, no CLA)
+- [ ] Make the GitHub repo public (fresh history or not) before the site goes live: the FAQ and privacy page link to it
+- [ ] **Done when:** a new account lands on Free with no card, 12 months shows the Pro badge, upgrading in test mode unlocks everything at once, and the repo is public with its LICENSE.
 
 ## V3: later (postponed 13 Oct; `docs/SPEC.md` section 29)
 

@@ -1,0 +1,221 @@
+#!/usr/bin/env bash
+# SimpleDash on its server (docs/deploy.md). Installed as /usr/local/bin/simpledash.
+#
+#   simpledash status              containers and the app's health
+#   simpledash logs [service]      follow the logs (app, db, caddy, backup; or "jobs" for cron)
+#   simpledash job <name>          run a scheduled job now (warm-cache, weekly-email, …)
+#   simpledash backup              back up the database to R2 now
+#   simpledash restore [--force]   restore the newest R2 backup (--force replaces existing data)
+#   simpledash stop | start        stop or start the app (the database keeps running)
+#
+# Used by the tools, not by hand:
+#   simpledash setup <dir>         prepare a fresh Ubuntu or Debian server (run by deploy/setup.sh)
+#   simpledash deploy              load a new release from stdin (run by GitHub Actions)
+set -euo pipefail
+
+APP_DIR=/opt/simpledash
+DEPLOY_USER=deploy
+IMAGE=simpledash-app
+
+say() { printf '\033[1m▸ %s\033[0m\n' "$*"; }
+die() { printf '\033[31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
+compose() { docker compose --project-directory "$APP_DIR" -f "$APP_DIR/compose.yaml" "$@"; }
+has_image() { docker image inspect "$IMAGE:$1" >/dev/null 2>&1; }
+
+# Replaces a file by renaming a full copy over it, so a running copy of this script keeps its
+# old version. Folders are updated file by file and never swapped: Caddy's container has
+# ./caddy mounted and would keep seeing a removed folder.
+replace() {
+  local from=$1 to=$2 file
+  if [[ -d $from ]]; then
+    mkdir -p "$to"
+    for file in "$from"/*; do replace "$file" "$to/$(basename "$file")"; done
+  else
+    cp "$from" "$to.new"
+    mv -f "$to.new" "$to"
+  fi
+}
+
+# The files that come with every release: compose, Caddy, the backup helper, cron and this script.
+install_release_files() {
+  local src=$1
+  replace "$src/compose.yaml" "$APP_DIR/compose.yaml"
+  replace "$src/caddy" "$APP_DIR/caddy"
+  replace "$src/backup" "$APP_DIR/backup"
+  replace "$src/crontab" "$APP_DIR/crontab"
+  replace "$src/simpledash" "$APP_DIR/simpledash"
+  chmod 755 "$APP_DIR/simpledash" "$APP_DIR"/backup/*.sh
+  if [[ $EUID -eq 0 ]]; then
+    chown -R "$DEPLOY_USER:$DEPLOY_USER" "$APP_DIR"
+    crontab -u "$DEPLOY_USER" "$APP_DIR/crontab"
+  else
+    crontab "$APP_DIR/crontab"
+  fi
+}
+
+# Waits until the app container reports healthy (its HEALTHCHECK calls /api/health).
+wait_healthy() {
+  local id state
+  for _ in $(seq 1 90); do
+    id=$(compose ps -q app)
+    state=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$id" 2>/dev/null || echo missing)
+    [[ $state == healthy ]] && return 0
+    sleep 2
+  done
+  return 1
+}
+
+cmd_setup() {
+  local src=${1:?usage: simpledash setup <dir>}
+  [[ $EUID -eq 0 ]] || die "setup needs root (sudo)"
+  # shellcheck disable=SC1091
+  . /etc/os-release
+  [[ $ID == ubuntu || $ID == debian ]] || die "setup supports Ubuntu and Debian, not $ID"
+  # No questions from apt or from needrestart (Ubuntu) while updating.
+  export DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a
+
+  say "Updating the system"
+  apt-get update -q
+  apt-get upgrade -yq -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold
+  apt-get install -yq ca-certificates curl ufw unattended-upgrades
+  cat > /etc/apt/apt.conf.d/20auto-upgrades <<'CONF'
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+CONF
+  # Cron times in the crontab are UTC.
+  timedatectl set-timezone Etc/UTC 2>/dev/null || ln -sf /usr/share/zoneinfo/Etc/UTC /etc/localtime
+
+  if [[ -z $(swapon --show --noheadings) ]]; then
+    say "Adding 2 GB of swap"
+    fallocate -l 2G /swapfile
+    chmod 600 /swapfile
+    mkswap /swapfile >/dev/null
+    swapon /swapfile
+    grep -q '^/swapfile ' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  fi
+
+  if ! command -v docker >/dev/null || ! docker compose version >/dev/null 2>&1; then
+    say "Installing Docker"
+    install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL "https://download.docker.com/linux/$ID/gpg" -o /etc/apt/keyrings/docker.asc
+    chmod a+r /etc/apt/keyrings/docker.asc
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/$ID ${UBUNTU_CODENAME:-$VERSION_CODENAME} stable" \
+      > /etc/apt/sources.list.d/docker.list
+    apt-get update -q
+    apt-get install -yq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  fi
+  if [[ ! -f /etc/docker/daemon.json ]]; then
+    # Docker's "local" log driver rotates container logs on its own.
+    echo '{ "log-driver": "local" }' > /etc/docker/daemon.json
+    systemctl restart docker
+  fi
+  systemctl enable --now docker >/dev/null
+
+  say "Creating the $DEPLOY_USER user (GitHub Actions deploys as it)"
+  id "$DEPLOY_USER" >/dev/null 2>&1 || useradd --create-home --shell /bin/bash "$DEPLOY_USER"
+  usermod -aG docker "$DEPLOY_USER"
+  local home
+  home=$(getent passwd "$DEPLOY_USER" | cut -d: -f6)
+  install -d -m 700 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$home/.ssh"
+  # This key can only run `simpledash deploy`: no shell, no forwarding.
+  printf 'restrict,command="/usr/local/bin/simpledash deploy" %s\n' "$(cat "$src/deploy-key.pub")" \
+    > "$home/.ssh/authorized_keys"
+  chown "$DEPLOY_USER:$DEPLOY_USER" "$home/.ssh/authorized_keys"
+  chmod 600 "$home/.ssh/authorized_keys"
+
+  say "Installing SimpleDash's files in $APP_DIR"
+  install -d -m 750 "$APP_DIR" "$APP_DIR/certs"
+  install -m 600 "$src/app.env" "$APP_DIR/.env"
+  install -m 600 "$src/origin.pem" "$APP_DIR/certs/origin.pem"
+  install -m 600 "$src/origin-key.pem" "$APP_DIR/certs/origin-key.pem"
+  install_release_files "$src"
+  ln -sf "$APP_DIR/simpledash" /usr/local/bin/simpledash
+
+  say "Turning on the firewall (SSH, 80 and 443)"
+  local port
+  for port in $(sshd -T 2>/dev/null | awk '$1 == "port" { print $2 }'); do ufw allow "$port/tcp" >/dev/null; done
+  ufw allow 22/tcp >/dev/null
+  ufw allow 80/tcp >/dev/null
+  ufw allow 443/tcp >/dev/null
+  ufw --force enable >/dev/null
+
+  say "Starting Postgres, Caddy and the backup helper"
+  compose up -d --build --wait db caddy backup
+  # Picks up a new certificate when setup runs again on the same server.
+  compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --force >/dev/null
+  if has_image current; then
+    say "Starting the app"
+    compose up -d --wait app
+  fi
+  say "Server ready"
+  if [[ -f /var/run/reboot-required ]]; then
+    say "Some updates need a restart: run 'sudo reboot' when it suits you (everything starts again on its own)"
+  fi
+}
+
+cmd_deploy() {
+  local tag
+  RELEASE_DIR=$(mktemp -d "$APP_DIR/.release.XXXXXX")
+  trap 'rm -rf "$RELEASE_DIR"' EXIT
+  say "Receiving the release"
+  tar -xz -C "$RELEASE_DIR"
+  tag=$(cat "$RELEASE_DIR/IMAGE")
+  [[ $tag == "$IMAGE":* ]] || die "unexpected image name: $tag"
+
+  say "Loading $tag"
+  docker load -i "$RELEASE_DIR/app.tar" >/dev/null
+  install_release_files "$RELEASE_DIR"
+
+  has_image current && docker tag "$IMAGE:current" "$IMAGE:previous"
+  docker tag "$tag" "$IMAGE:current"
+
+  say "Starting it (the app runs database migrations first)"
+  compose up -d --build --remove-orphans
+  if ! wait_healthy; then
+    compose logs --tail=60 app >&2 || true
+    if has_image previous; then
+      say "The new version isn't healthy: going back to the previous one"
+      docker tag "$IMAGE:previous" "$IMAGE:current"
+      compose up -d app
+    fi
+    die "deploy failed"
+  fi
+  compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --force >/dev/null
+
+  # current and previous stay; the per-commit tags and unused layers go.
+  docker image ls "$IMAGE" --format '{{.Tag}}' | grep -vxE 'current|previous' \
+    | sed "s|^|$IMAGE:|" | xargs -r docker rmi >/dev/null || true
+  docker image prune -f >/dev/null
+  say "Deployed $tag"
+}
+
+cmd_restore() {
+  local mode=${1:-}
+  case $mode in
+    "" | --if-empty) compose exec -T backup restore.sh $mode ;;
+    --force)
+      compose stop app 2>/dev/null || true
+      compose exec -T backup restore.sh --force
+      has_image current && compose up -d app
+      ;;
+    *) die "usage: simpledash restore [--force]" ;;
+  esac
+}
+
+case ${1:-} in
+  setup) shift; cmd_setup "$@" ;;
+  deploy) cmd_deploy ;;
+  status)
+    compose ps
+    compose exec -T app wget -qO- http://127.0.0.1:3000/api/health && echo || die "the app isn't answering"
+    ;;
+  logs)
+    if [[ ${2:-} == jobs ]]; then journalctl -t simpledash -f -n 100; else compose logs -f --tail=200 ${2:+"$2"}; fi
+    ;;
+  job) compose exec -T app node scripts/run-job.mjs "${2:?usage: simpledash job <name>}" ;;
+  backup) compose exec -T backup backup.sh ;;
+  restore) cmd_restore "${2:-}" ;;
+  stop) compose stop app ;;
+  start) compose up -d --wait app ;;
+  *) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

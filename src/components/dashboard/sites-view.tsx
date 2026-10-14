@@ -4,7 +4,7 @@ import { TopBar } from "./top-bar";
 
 /**
  * All sites (`/sites`, docs/SPEC.md section 28.1): one card per site in the list,
- * then "Add a site". For Starter and trials, the upgrade panel comes first.
+ * then "Add a site". For Free, the upgrade panel comes first.
  */
 export function SitesView({
   cards,
@@ -17,7 +17,7 @@ export function SitesView({
   cards: ReactNode;
   /** The dashed "Add a site" card, while below the limit. */
   add?: ReactNode;
-  /** "Several sites are part of Growth", for Starter and trials. */
+  /** "Several sites are part of Pro", for Free. */
   upgrade?: ReactNode;
   /** A line under the heading, e.g. a notice after removing a site. */
   note?: ReactNode;

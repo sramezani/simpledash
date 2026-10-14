@@ -208,7 +208,7 @@ export async function getReports<R extends ReportName>(
       rows.set(row.report, row);
   }
 
-  // Locked accounts only read what's cached: no Google calls (docs/SPEC.md section 16).
+  // Cache only: no Google calls (a public page over its hourly custom-range limit).
   let problem = options.cacheOnly ? null : blockedProblem(site, now);
   let quotaUntil = problem === "quota" ? site.quotaBlockedUntil : null;
 

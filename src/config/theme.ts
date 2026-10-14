@@ -33,9 +33,11 @@ export const brand = {
   name: "SimpleDash",
   tagline: "Google Analytics, in a dash.",
   description:
-    "Connect your Google account and see your visitors, sources and top pages on one page. No setup, no new tracking code, full history from day one.",
+    "Connect your Google account and see your visitors, sources and top pages on one page. No setup, no new tracking code, and the history GA4 already has.",
   url: "https://simpledash.app",
   supportEmail: "hello@simpledash.app",
+  /** The open-source code (AGPL-3.0). */
+  sourceUrl: "https://github.com/sramezani/simpledash",
 } as const;
 
 /** Light theme only in V1. A `dark` palette with the same keys can be added later. */
@@ -132,7 +134,7 @@ export const uiPairs: ReadonlyArray<readonly [ColorToken, ColorToken]> = [
   ["chart-2", "card"],
   // Searches with the site's name, next to chart-1 in the Google search card.
   ["chart-3", "card"],
-  // Revenue bars under the visitors line (Growth).
+  // Revenue bars under the visitors line (Pro).
   ["chart-4", "card"],
 ];
 

@@ -34,7 +34,7 @@ export type SettingsViewProps = {
   sites: SettingsSite[];
   /** The site the site settings are for (`?site=`, or the active one); null without a site. */
   site: SettingsSite | null;
-  /** Growth's site limit (1 on Starter). */
+  /** The plan's site limit (1 on Free). */
   siteLimit: number;
   /** The saved public page, or the values a new one would start with. */
   publicPage: PublicPageValues;
@@ -72,17 +72,32 @@ export function SettingsView(props: SettingsViewProps) {
       <Account user={user} signOut={actions.signOut} />
 
       <Section id="email" title="Weekly email">
-        <p className="text-sm text-muted-foreground">
-          {props.weeklyEmail
-            ? `On. Every Monday afternoon (in your site's time zone) we email last week's numbers${several ? " for each of your sites" : ""} to ${user.email}.`
-            : "Off. Turn it on to get last week's numbers every Monday."}
-        </p>
-        <form action={actions.setWeeklyEmail}>
-          {props.weeklyEmail ? null : <input type="hidden" name="weeklyEmail" value="on" />}
-          <Button type="submit" variant="outline" className="h-9 pointer-coarse:h-11">
-            {props.weeklyEmail ? "Turn off" : "Turn on"}
-          </Button>
-        </form>
+        {plan.kind === "paid" ? (
+          <>
+            <p className="text-sm text-muted-foreground">
+              {props.weeklyEmail
+                ? `On. Every Monday afternoon (in your site's time zone) we email last week's numbers${several ? " for each of your sites" : ""} to ${user.email}.`
+                : "Off. Turn it on to get last week's numbers every Monday."}
+            </p>
+            <form action={actions.setWeeklyEmail}>
+              {props.weeklyEmail ? null : <input type="hidden" name="weeklyEmail" value="on" />}
+              <Button type="submit" variant="outline" className="h-9 pointer-coarse:h-11">
+                {props.weeklyEmail ? "Turn off" : "Turn on"}
+              </Button>
+            </form>
+          </>
+        ) : (
+          <p className="text-sm text-pretty text-muted-foreground">
+            The Monday email is part of {plans.pro.name}: every Monday afternoon, last week&apos;s
+            numbers for each of your sites in your inbox.{" "}
+            <a
+              href="#billing"
+              className="font-medium text-primary underline-offset-2 hover:underline"
+            >
+              See {plans.pro.name}
+            </a>
+          </p>
+        )}
       </Section>
 
       <Section id="billing" title="Billing">
@@ -104,32 +119,17 @@ export function SettingsView(props: SettingsViewProps) {
                 Manage billing
               </Button>
               <p className="mt-2 text-xs text-muted-foreground">
-                Card, invoices, changing plan or switching between monthly and yearly, and
-                cancelling, on Stripe.
+                Card, invoices, switching between monthly and yearly, and cancelling, on Stripe.
+                After cancelling, {plans.pro.name} runs to the end of the period you paid for,
+                then you&apos;re on {plans.free.name}.
               </p>
             </form>
-            {plan.plan === "starter" ? (
-              <div className="flex flex-col gap-3 border-t pt-4">
-                <p className="text-sm text-pretty text-muted-foreground">
-                  <span className="font-medium text-foreground">{plans.growth.name}</span> adds up
-                  to {plans.growth.limits.sites} sites, Google search insights and revenue from
-                  Stripe. Stripe shows the exact amount before you confirm.
-                </p>
-                <UpgradeForm
-                  action={actions.upgrade}
-                  offer={["growth"]}
-                  defaultInterval={plan.interval ?? "month"}
-                  className="max-w-sm"
-                />
-              </div>
-            ) : null}
           </>
         ) : (
           <>
-            <UpgradeForm action={actions.upgrade} />
+            <UpgradeForm action={actions.upgrade} className="max-w-sm" />
             <p className="text-xs text-muted-foreground">
-              Prices include VAT. Payments are handled by Stripe.
-              {plan.kind === "trial" ? " Upgrading now keeps the rest of your free trial." : ""}
+              Prices include tax. Payments are handled by Stripe; cancel any time.
             </p>
           </>
         )}
@@ -254,7 +254,7 @@ export function SettingsView(props: SettingsViewProps) {
   );
 }
 
-/** Settings → Sites (docs/SPEC.md section 28.1): the list, with Remove on Growth. */
+/** Settings → Sites (docs/SPEC.md section 28.1): the list, with Remove on Pro. */
 function SitesSection({
   sites,
   current,
@@ -269,7 +269,7 @@ function SitesSection({
   remove: Action;
 }) {
   if (sites.length === 0) return null;
-  const growth = limit > 1;
+  const multiple = limit > 1;
   return (
     <Section id="sites" title="Sites">
       {notice === "removed" ? (
@@ -282,9 +282,9 @@ function SitesSection({
         </Notice>
       ) : null}
       <p className="text-sm text-pretty text-muted-foreground">
-        {growth
+        {multiple
           ? `${sites.length} of ${limit} sites. Add sites from the site menu on the dashboard.`
-          : `${plans.starter.name} shows one site at a time: switch it from the site menu on the dashboard. ${plans.growth.name} adds up to ${plans.growth.limits.sites}.`}
+          : `${plans.free.name} shows one site at a time: switch it from the site menu on the dashboard. ${plans.pro.name} adds up to ${plans.pro.limits.sites}.`}
       </p>
       <ul className="flex flex-col divide-y rounded-xl border">
         {sites.map((s) => (
@@ -294,7 +294,7 @@ function SitesSection({
               <span className="truncate text-sm font-medium">{s.label}</span>
               {s.paused ? (
                 <span className="text-xs text-muted-foreground">
-                  Paused · part of {plans.growth.name}
+                  Paused · part of {plans.pro.name}
                 </span>
               ) : null}
             </span>
@@ -304,7 +304,7 @@ function SitesSection({
                 <Link href={`/settings?site=${s.id}#site` as Route}>Settings</Link>
               </Button>
             ) : null}
-            {growth && sites.length > 1 ? (
+            {multiple && sites.length > 1 ? (
               <PopoverButton
                 id={`remove-${s.id}`}
                 className={cn(
@@ -333,7 +333,7 @@ function SitesSection({
       <Button asChild variant="outline" className="h-9 gap-1.5 self-start pointer-coarse:h-11">
         <Link href={"/sites" as Route}>
           <LayoutGridIcon aria-hidden="true" />
-          {growth ? "All sites" : `Add sites with ${plans.growth.name}`}
+          {multiple ? "All sites" : `Add sites with ${plans.pro.name}`}
         </Link>
       </Button>
     </Section>

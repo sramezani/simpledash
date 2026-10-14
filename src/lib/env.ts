@@ -26,11 +26,9 @@ const schema = z.object({
     .string()
     .regex(/^(sk|rk)_(test|live)_/, "A Stripe secret key (sk_test_… or sk_live_…)"),
   STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_"),
+  // Pro's two prices
   STRIPE_PRICE_MONTHLY: z.string().startsWith("price_"),
   STRIPE_PRICE_YEARLY: z.string().startsWith("price_"),
-  // Sprint 5: the Growth plan's two prices
-  STRIPE_PRICE_GROWTH_MONTHLY: z.string().startsWith("price_"),
-  STRIPE_PRICE_GROWTH_YEARLY: z.string().startsWith("price_"),
   /** Stripe Managed Payments (Stripe as merchant of record). On unless set to "false". */
   STRIPE_MANAGED_PAYMENTS: z
     .enum(["true", "false"])

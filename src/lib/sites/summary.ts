@@ -15,8 +15,8 @@ export function siteProblem(status: Site["status"]): string | null {
  * One site's last 7 days for All sites (docs/SPEC.md section 28.1), from the same
  * cached 7-day reports as its dashboard: visitors, the change and the daily line.
  */
-export async function siteWeek(site: Site, options: { cacheOnly?: boolean } = {}) {
-  const result = await loadReports(site, "7d", ["totals", "series"], options);
+export async function siteWeek(site: Site) {
+  const result = await loadReports(site, "7d", ["totals", "series"]);
   const totals = result.reports.totals.data;
   const gap = comparisonGap(result.window, site.propertyCreatedAt);
   return {

@@ -66,7 +66,7 @@ export const ACTION_EVENTS = ["file_download", "click", "form_submit"] as const;
 
 export type ReportParams = {
   signupEvent: string | null;
-  /** What counts as a sale (Growth): a key event or a thank-you page path. */
+  /** What counts as a sale (Pro): a key event or a thank-you page path. */
   saleEvent?: string | null;
   salePage?: string | null;
 };

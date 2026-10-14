@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { PropertyList } from "@/lib/ga4/property-choice";
 import { SitePickerDialog } from "./site-picker-dialog";
 
-/** The dashed "Add a site" card at the end of All sites (Growth, below the limit). */
+/** The dashed "Add a site" card at the end of All sites (Pro, below the limit). */
 export function AddSiteCard({
   listAction,
   addAction,

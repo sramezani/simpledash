@@ -174,7 +174,7 @@ const isFresh = (row: Row, window: SearchWindow, now: Date) =>
 
 /**
  * The Google search card's data for a site and the dashboard's range. Search Console
- * is only called for a site with a property chosen; Growth checks happen before.
+ * is only called for a site with a property chosen; Pro checks happen before.
  */
 export async function loadSearch(
   site: Site,

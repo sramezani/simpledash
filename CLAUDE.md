@@ -1,6 +1,6 @@
 # SimpleDash: brief for Claude Code
 
-SimpleDash (simpledash.app) turns the Google Analytics 4 data a founder already has into one simple dashboard page, a Monday email and an optional public stats page. It has no tracking script of its own. It is built for indie hackers and small SaaS or content sites that already run GA4. There is one plan on sale, Starter: €9 a month or €90 a year, with a 14-day trial and no card needed. A Growth plan (€19 a month) shows as "coming soon" in the pricing section.
+SimpleDash (simpledash.app) turns the Google Analytics 4 data a founder already has into one simple dashboard page, a Monday email and an optional public stats page. It has no tracking script of its own. It is built for indie hackers and small SaaS or content sites that already run GA4. There are two plans: **Free** (one site, the last 30 days, a public page; no card, no time limit) and **Pro** at $9 a month or $90 a year (up to 10 sites, 12 months and any dates, the Monday email, Google search insights, revenue from Stripe). There is no trial. The code is open source under the AGPL-3.0.
 
 - **What and why:** `docs/ROADMAP.md`. This is Siamak's brief; don't edit it.
 - **How:** `docs/SPEC.md`. Update the spec before building something differently, and log the change in `docs/DECISIONS.md`.
@@ -32,7 +32,7 @@ These are not up for debate. Anything that would break one goes to Siamak first.
 5. **Never invent explanations.** Summaries state what changed, from the numbers. No guessed reasons.
 6. **Show missing data honestly.** Never show a fake zero.
 7. **Fast.** Public pages (landing, public stats, legal) target 100 in all four Lighthouse categories, and never go below 95. The dashboard targets the same for Accessibility and Best Practices: serve from cache and refresh in the background.
-8. **Cheap to run.** Well under €1 per customer per month.
+8. **Cheap to run.** Well under $1 (€1) per customer per month.
 
 ## Stack (details and versions in `docs/SPEC.md` section 3)
 
@@ -43,13 +43,13 @@ These are not up for debate. Anything that would break one goes to Siamak first.
 | Theme and brand | One file, `src/config/theme.ts`, written into each page as CSS variables. Light theme only in V1 |
 | Charts | shadcn/ui charts (Recharts) in the dashboard only. Server-rendered SVG on landing and public pages |
 | Live globe | cobe, loaded lazily |
-| Database | Postgres on Supabase, used as plain Postgres, through Drizzle ORM and postgres.js. Local Postgres in Docker for development |
+| Database | Postgres 17 in a container on the server, through Drizzle ORM and postgres.js. Local Postgres in Docker (or Supabase, for now) for development |
 | Auth | Better Auth with Google sign-in and read-only Analytics consent. Tokens are encrypted |
 | Google APIs | `@google-analytics/data` and `@google-analytics/admin` (v1beta) |
 | Email | Resend with React Email |
 | Payments | Stripe Checkout, Customer Portal and webhooks, with Managed Payments (Stripe is the merchant of record) |
 | Errors and uptime | Sentry, on the server only |
-| Hosting | Hetzner (EU), Coolify and Docker, behind Cloudflare (Full strict SSL). Backups go to Cloudflare R2 |
+| Hosting | One server (Azure today) with Docker Compose and Caddy, behind Cloudflare (Full strict SSL). `deploy/setup.sh` sets up a server in one command; GitHub Actions deploys every merge to `main`. Backups go to Cloudflare R2 |
 | Tests | Vitest unit tests. No end-to-end tests |
 | Package manager | npm |
 
@@ -69,6 +69,7 @@ npm test                  # vitest run
 npm run db:generate       # drizzle-kit generate: SQL migration from schema changes
 npm run db:migrate        # apply migrations
 docker compose up -d db   # local Postgres
+deploy/setup.sh user@ip   # Siamak only: set up (or, with --from, move to) the production server
 ```
 
 ## Conventions

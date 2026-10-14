@@ -44,7 +44,7 @@ type OverviewCardProps = {
   footer?: ReactNode;
   /** Shown inside the chart area: "Add a note, like …" (dashboard only). */
   hint?: string;
-  /** When the points carry revenue (Growth): its currency, for the table. */
+  /** When the points carry revenue (Pro): its currency, for the table. */
   revenueCurrency?: string;
 };
 

@@ -8,8 +8,15 @@ import { getSiteContext } from "@/lib/sites/sites";
 import { auth } from "./auth";
 import { SIGNED_IN_HINT } from "./signed-in-hint";
 
-/** The signed-in session, read once per request. */
-export const getSession = cache(async () => auth.api.getSession({ headers: await headers() }));
+/**
+ * The signed-in session, read once per request. `headers()` comes first: it marks the
+ * page as dynamic before Better Auth (and its secret) is touched, so a build without
+ * env vars (the Docker image) skips these pages instead of failing.
+ */
+export const getSession = cache(async () => {
+  const requestHeaders = await headers();
+  return auth.api.getSession({ headers: requestHeaders });
+});
 
 export type SessionUser = NonNullable<Awaited<ReturnType<typeof getSession>>>["user"];
 

@@ -12,11 +12,12 @@ import type { PropertyList, PropertySummary } from "@/lib/ga4/property-choice";
 import { formatNumber } from "@/lib/format";
 import { matchesSearch } from "@/lib/text";
 import { cn } from "@/lib/utils";
+import { plans } from "@/config/plans";
 
 type SitePickerDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** "add": Growth adds a site to the list. "switch": Starter replaces its one site. */
+  /** "add": Pro adds a site to the list. "switch": Free replaces its one site. */
   mode: "add" | "switch";
   listAction: () => Promise<PropertyList>;
   /** Adds or switches; on success it returns the site's ID and its dashboard opens. */
@@ -41,7 +42,7 @@ function byAccount(properties: PropertySummary[]) {
 }
 
 /**
- * "Add a site" (Growth) and "Switch site" (Starter): the Google Analytics properties
+ * "Add a site" (Pro) and "Switch site" (Free): the Google Analytics properties
  * the user can read, fetched live when the dialog opens, grouped by account, with a
  * search box. Sites already in the list say so. Picking one opens its dashboard.
  */
@@ -153,8 +154,8 @@ export function SitePickerDialog({
 
         {full ? (
           <p role="status" className="border-b bg-muted/60 px-4 py-2.5 text-sm sm:px-5">
-            You have {usage!.limit} sites, the most Growth allows. Remove one in Settings to add
-            another.
+            You have {usage!.limit} sites, the most {plans.pro.name} allows. Remove one in Settings
+            to add another.
           </p>
         ) : null}
         {error ? (

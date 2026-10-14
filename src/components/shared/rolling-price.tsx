@@ -56,7 +56,7 @@ function Grow({ show, children }: { show: "month" | "year"; children: ReactNode 
 
 const isDigit = (c: string | undefined) => c !== undefined && c >= "0" && c <= "9";
 
-/** Splits "€1,234" into its prefix ("€"), number ("1,234") and suffix (""). */
+/** Splits "$1,234" into its prefix ("$"), number ("1,234") and suffix (""). */
 function parts(value: string) {
   const first = value.search(/\d/);
   const last = value.length - [...value].reverse().join("").search(/\d/);
@@ -70,7 +70,7 @@ function parts(value: string) {
 
 /**
  * A price that rolls like an odometer when the switch moves between Monthly and
- * Yearly ("€9" ⇄ "€90"). Screen readers get the plain value that is showing.
+ * Yearly ("$9" ⇄ "$90"). Screen readers get the plain value that is showing.
  */
 export function RollingPrice({
   month,
@@ -166,7 +166,7 @@ export function Swap({
   );
 }
 
-/** Content that only shows for Yearly, opening smoothly (e.g. "Save €18"). */
+/** Content that only shows for Yearly, opening smoothly (e.g. "Save $18"). */
 export function YearlyOnly({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div

@@ -1,30 +1,26 @@
 import "server-only";
-import { eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
+import { eq, inArray, isNull, lte, or } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { billing, user, userSettings, type Billing } from "@/lib/db/schema";
-import { PAID_STATUSES, planState, trialEnd, type PlanState } from "./plan";
+import { PAID_STATUSES, planState, type PlanState } from "./plan";
 import type { SubscriptionFacts } from "./webhook";
 
-/** Creates the trial and settings rows for a new user (a Better Auth hook). */
-export async function createUserRows(userId: string, createdAt: Date) {
-  await db
-    .insert(billing)
-    .values({ userId, trialEndsAt: trialEnd(createdAt) })
-    .onConflictDoNothing();
+/** Creates the billing (Free) and settings rows for a new user (a Better Auth hook). */
+export async function createUserRows(userId: string) {
+  await db.insert(billing).values({ userId }).onConflictDoNothing();
   await db.insert(userSettings).values({ userId }).onConflictDoNothing();
 }
 
-/** The user's billing row; created from the sign-up date if it's missing. */
+/** The user's billing row; created (Free) if it's missing. */
 export async function getBilling(userId: string): Promise<Billing> {
   const row = await db.query.billing.findFirst({ where: eq(billing.userId, userId) });
   if (row) return row;
-  const owner = await db.query.user.findFirst({ where: eq(user.id, userId) });
-  await createUserRows(userId, owner?.createdAt ?? new Date());
+  await createUserRows(userId);
   return (await db.query.billing.findFirst({ where: eq(billing.userId, userId) }))!;
 }
 
-export async function getPlan(userId: string, now: Date = new Date()): Promise<PlanState> {
-  return planState(await getBilling(userId), now);
+export async function getPlan(userId: string): Promise<PlanState> {
+  return planState(await getBilling(userId));
 }
 
 /** Saves a subscription state unless a newer one is already stored (the webhook). */
@@ -41,7 +37,7 @@ export async function applySubscription(userId: string, facts: SubscriptionFacts
   };
   const rows = await db
     .insert(billing)
-    .values({ userId, trialEndsAt: stateAt, ...values })
+    .values({ userId, ...values })
     .onConflictDoUpdate({
       target: billing.userId,
       set: values,
@@ -64,15 +60,10 @@ export async function findUserByCustomer(customerId: string): Promise<string | n
   return row?.userId ?? null;
 }
 
-/** A subquery of users who aren't locked (paying, or still in the trial), for jobs. */
-export function unlockedUserIds(now: Date = new Date()) {
+/** A subquery of the users who pay (Pro), for jobs that are Pro only. */
+export function paidUserIds() {
   return db
     .select({ userId: billing.userId })
     .from(billing)
-    .where(or(inArray(billing.status, [...PAID_STATUSES]), gt(billing.trialEndsAt, now)));
-}
-
-/** True when the user's trial is over and nothing is paid (a quick check for API routes). */
-export async function isUserLocked(userId: string): Promise<boolean> {
-  return (await getPlan(userId)).kind === "locked";
+    .where(inArray(billing.status, [...PAID_STATUSES]));
 }

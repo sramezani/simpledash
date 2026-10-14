@@ -1,26 +1,29 @@
-import { plans } from "@/config/plans";
+import { currency, plans, taxIncluded } from "@/config/plans";
 import { brand } from "@/config/theme";
 
 /**
  * SoftwareApplication JSON-LD for the landing page (docs/SPEC.md section 17).
- * Offers come from plans.ts: every plan that is on sale, monthly and yearly.
+ * Offers come from plans.ts: Free, and Pro monthly and yearly.
  */
 export function softwareApplication(appUrl: string) {
-  const { starter } = plans;
-  const onSale = Object.values(plans).filter((p) => p.status === "on_sale");
-  const offer = (price: number, unitCode: "MON" | "ANN", name: string) => ({
+  const { free, pro } = plans;
+  const offer = (price: number, name: string, unitCode?: "MON" | "ANN") => ({
     "@type": "Offer",
     name,
     price: String(price),
-    priceCurrency: starter.currency,
+    priceCurrency: currency,
     url: `${appUrl}/#pricing`,
-    priceSpecification: {
-      "@type": "UnitPriceSpecification",
-      price: String(price),
-      priceCurrency: starter.currency,
-      unitCode,
-      valueAddedTaxIncluded: true,
-    },
+    ...(unitCode
+      ? {
+          priceSpecification: {
+            "@type": "UnitPriceSpecification",
+            price: String(price),
+            priceCurrency: currency,
+            unitCode,
+            valueAddedTaxIncluded: taxIncluded,
+          },
+        }
+      : {}),
   });
   return {
     "@context": "https://schema.org",
@@ -30,10 +33,11 @@ export function softwareApplication(appUrl: string) {
     url: appUrl,
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
-    offers: onSale.flatMap((p) => [
-      offer(p.prices.month, "MON", `${p.name}, monthly`),
-      offer(p.prices.year, "ANN", `${p.name}, yearly`),
-    ]),
+    offers: [
+      offer(0, free.name),
+      offer(pro.prices.month, `${pro.name}, monthly`, "MON"),
+      offer(pro.prices.year, `${pro.name}, yearly`, "ANN"),
+    ],
   };
 }
 

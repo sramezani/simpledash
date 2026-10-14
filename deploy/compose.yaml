@@ -1,0 +1,65 @@
+# Production on one server (docs/deploy.md): the app, Postgres, Caddy and the backup helper.
+# It lives in /opt/simpledash next to `.env` (a copy of deploy/secrets/app.env, which compose also
+# reads for the ${…} values below). Run it through the `simpledash` command (deploy/simpledash).
+name: simpledash
+
+services:
+  app:
+    # Built by GitHub Actions and loaded on the server by `simpledash deploy`; never pulled.
+    image: simpledash-app:current
+    pull_policy: never
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://simpledash:${POSTGRES_PASSWORD:?}@db:5432/simpledash
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: simpledash
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_DB: simpledash
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U simpledash"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # HTTPS with the Cloudflare Origin Certificate; Cloudflare's SSL mode is Full (strict).
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy:/etc/caddy:ro
+      - ./certs:/certs:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+  # Waits; cron runs backup.sh in it every night, and setup runs restore.sh (docs/backup.md).
+  backup:
+    build: ./backup
+    image: simpledash-backup:local
+    restart: unless-stopped
+    environment:
+      BACKUP_DATABASE_URL: postgres://simpledash:${POSTGRES_PASSWORD:?}@db:5432/simpledash
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+      R2_BUCKET: ${R2_BUCKET:-}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:
+  caddy-data:
+  caddy-config:

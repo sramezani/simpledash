@@ -74,7 +74,7 @@ export async function markSiteOpened(opened: Site, now: Date = new Date()) {
 }
 
 /**
- * Takes a site off a Growth user's list (Settings). Its notes and settings stay, so
+ * Takes a site off a Pro user's list (Settings). Its notes and settings stay, so
  * adding it again restores them, and its public page pauses. The last site can't go.
  */
 export async function removeSite(

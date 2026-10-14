@@ -1,0 +1,24 @@
+SimpleDash
+https://simpledash.app
+
+This program is free software: you can redistribute it and/or modify it under the
+terms of the GNU Affero General Public License, version 3 (see LICENSE).
+
+Trademarks
+----------
+The name "SimpleDash" and the dash ("–") logo are not covered by the license. You may
+run, change and share the code, but a fork or a hosted copy must use its own name and
+logo, so people can tell it apart from simpledash.app.
+
+Third-party data and assets
+---------------------------
+- City data for the live globe (src/lib/ga4/geo/places.json) comes from GeoNames
+  (https://www.geonames.org/), via the all-the-cities package, licensed under
+  CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+- Country flags (public/flags) come from country-flag-icons, MIT license.
+- Browser, operating system and device icons (public/icons/tech) come from the Iconify
+  sets "Logos" (CC0 1.0) and "Flat Color Icons" (MIT).
+- The Geist and Caveat fonts (Google Fonts, loaded with next/font) are under the SIL Open
+  Font License 1.1.
+
+Every npm dependency keeps its own license; see package.json and node_modules.

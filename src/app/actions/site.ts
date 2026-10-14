@@ -21,6 +21,7 @@ import { publicTag } from "@/lib/public-page/view";
 import { readSiteId } from "@/lib/sites/access";
 import { getSiteContext, markSiteOpened, removeSite } from "@/lib/sites/sites";
 import { reportError } from "@/lib/report-error";
+import { plans } from "@/config/plans";
 
 const PROPERTY = /^properties\/\d{1,20}$/;
 
@@ -40,8 +41,8 @@ export async function listMyProperties(): Promise<PropertyList> {
 }
 
 /**
- * Starter's switcher: the new site takes the current one's place. The property must
- * be in the user's own Google list. Growth adds sites instead, so nothing is lost.
+ * Free's switcher: the new site takes the current one's place. The property must
+ * be in the user's own Google list. Pro adds sites instead, so nothing is lost.
  */
 export async function switchSite(propertyId: string): Promise<SitePick> {
   const user = await requireUser();
@@ -49,7 +50,7 @@ export async function switchSite(propertyId: string): Promise<SitePick> {
     return { error: "That isn't a Google Analytics property." };
   }
   const { ent } = await getSiteContext(user.id);
-  if (ent.sites > 1) return { error: "On Growth, add the site instead." };
+  if (ent.sites > 1) return { error: `On ${plans.pro.name}, add the site instead.` };
   try {
     return { siteId: (await switchProperty(user.id, propertyId)).id };
   } catch {
@@ -57,19 +58,19 @@ export async function switchSite(propertyId: string): Promise<SitePick> {
   }
 }
 
-/** Growth's "Add a site": up to the plan's limit, checked again on the server. */
+/** Pro's "Add a site": up to the plan's limit, checked again on the server. */
 export async function addSite(propertyId: string): Promise<SitePick> {
   const user = await requireUser();
   if (typeof propertyId !== "string" || !PROPERTY.test(propertyId)) {
     return { error: "That isn't a Google Analytics property." };
   }
   const { ent } = await getSiteContext(user.id);
-  if (ent.sites <= 1) return { error: "Several sites are part of the Growth plan." };
+  if (ent.sites <= 1) return { error: `Several sites are part of ${plans.pro.name}.` };
   try {
     return { siteId: (await addProperty(user.id, propertyId, ent.sites)).id };
   } catch (error) {
     if (error instanceof SiteLimitError) {
-      return { error: `You have ${error.limit} sites, the most Growth allows.` };
+      return { error: `You have ${error.limit} sites, the most ${plans.pro.name} allows.` };
     }
     reportError("Adding a site failed", error, { userId: user.id });
     return { error: "Couldn't add that site. Please try again." };
@@ -77,7 +78,7 @@ export async function addSite(propertyId: string): Promise<SitePick> {
 }
 
 /**
- * "Switch to this site instead" (Starter, on a site the plan doesn't open): makes one
+ * "Switch to this site instead" (Free, on a site the plan doesn't open): makes one
  * of the user's own listed sites the one they see. Nothing leaves the list.
  */
 export async function openListedSiteAction(formData: FormData) {
@@ -90,7 +91,7 @@ export async function openListedSiteAction(formData: FormData) {
   redirect(`/dashboard?site=${chosen.id}`);
 }
 
-/** Settings → Sites: take a site off a Growth user's list. Its data is kept. */
+/** Settings → Sites: take a site off a Pro user's list. Its data is kept. */
 export async function removeSiteAction(formData: FormData) {
   const user = await requireUser();
   const id = readSiteId(formData.get("site"));

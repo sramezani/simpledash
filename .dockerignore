@@ -13,3 +13,5 @@ coverage
 !README.md
 Dockerfile
 compose.yaml
+.github
+deploy

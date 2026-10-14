@@ -1,6 +1,6 @@
 # Revenue and sales by source
 
-Growth's money features: revenue from the user's own Stripe account, and sales and signups by source from GA4. The plan is in `docs/SPEC.md` section 28.3; this file says how the code does it.
+Pro's money features: revenue from the user's own Stripe account, and sales and signups by source from GA4. The plan is in `docs/SPEC.md` section 28.3; this file says how the code does it.
 
 **The rule:** exact numbers only. Revenue is what Stripe recorded; revenue per source is GA4's own purchase value. Nothing is multiplied, matched by time or estimated.
 
@@ -35,16 +35,16 @@ The secret helper `src/lib/auth/secrets.ts` encrypts with Better Auth's key, lik
 - **Stored** (`revenue_day`, one row per site and day in the site's time zone): `money` per currency (`charged`, `refunded`, in the smallest unit), `new_customers`, and `mrr` per currency on the days a sync recorded it.
 - **First sync:** 25 months back (`backfillStart`), so 12 months can be compared with the 12 before. `revenue_source.covers_from` remembers the first day covered; a period that starts earlier isn't compared ("Stripe totals start …").
 - **Later syncs** (hourly `revenue-sync` at :20, and after a dashboard view when the last sync is over an hour old): from 2 days before the last sync, so a late refund lands on its own day. Those days are replaced; earlier MRR snapshots are kept and today's is recorded.
-- **Skipped:** keys marked invalid (Stripe stopped accepting them), sites removed from the list, and accounts whose plan doesn't include revenue (Starter, trials, locked).
+- **Skipped:** keys marked invalid (Stripe stopped accepting them), sites removed from the list, and accounts whose plan doesn't include revenue (Free).
 
-## What the dashboard shows (Growth, connected)
+## What the dashboard shows (Pro, connected)
 
 - **Revenue** = charged minus refunded in the main currency (the one with the most charged), before Stripe's fees. Under it: MRR (the monthly list price of active and past-due subscriptions, before discounts; usage-based prices can't be counted and are named), refunds, other currencies (named, never converted), "test mode" for a test key.
 - **New customers** = customers Stripe created in the period, with "1 per 412 visitors" (visitors ÷ new customers, same days).
 - **Bars** under the visitors line: revenue per day, or per month on 12 months. None on hourly charts (the totals are daily). The tooltip and "View as table" include it.
 - Before Stripe is connected, Revenue shows "Connect Stripe" (to Settings).
 
-## Sales and signups by source (Growth)
+## Sales and signups by source (Pro)
 
 - **What counts as a sale** (Settings): a GA4 key event, or views of a page path (`site.sale_event`, `site.sale_page`), or nothing.
 - **GA4 reports** (`src/lib/ga4/reports.ts`, extra reports only this card loads): `goals_sources` / `goals_landing` (event counts of the signup and sale events by source and landing page), `sale_page_sources` / `sale_page_landing` (views of the thank-you page), `purchase_sources` / `purchase_landing` (GA4's `purchaseRevenue`).
@@ -57,9 +57,9 @@ When `checkout.stripe.com` or another payment page (`paymentReferrers`: Stripe, 
 
 ## Previews
 
-`/ui-kit/dashboard?state=growth` (revenue in the overview, the bars, the sales card and the warning on sample data); `/ui-kit/settings?state=growth` (connected) and `?state=search-off` (not connected).
+`/ui-kit/dashboard?state=pro` (revenue in the overview, the bars, the sales card and the warning on sample data); `/ui-kit/settings?state=pro` (connected) and `?state=search-off` (not connected).
 
 ## Siamak's part
 
-- Add the `revenue-sync` scheduled task in Coolify (`docs/deploy.md` step 6).
+- The `revenue-sync` job runs hourly at :20 from `deploy/crontab` (`docs/deploy.md` step 8); nothing to add by hand.
 - The "Done when" check: connect a restricted key from the test Stripe account (make a test charge or two first), compare the daily revenue with Stripe's dashboard, and send a test `purchase` event in GA4.

@@ -37,7 +37,7 @@ const minor = (amount: number, currency: string) =>
   Math.round(amount * 10 ** currencyDigits(currency));
 
 /**
- * Sales and signups by source (docs/SPEC.md section 28.3), Growth: Sources | Landing
+ * Sales and signups by source (docs/SPEC.md section 28.3), Pro: Sources | Landing
  * pages with visitors, signups and sales, all GA4's own counts. Revenue only when GA4
  * itself has purchase values; never estimated.
  */

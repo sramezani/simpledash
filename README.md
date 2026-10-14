@@ -4,32 +4,58 @@
 
 SimpleDash ([simpledash.app](https://simpledash.app)) takes the Google Analytics 4 data a site already has and turns it into:
 
-- one simple dashboard page
-- a weekly Monday email
+- one simple dashboard page, in plain words instead of GA jargon
+- a Monday email with last week's numbers
 - an optional public stats page
 
-There is no new tracking script. Visitor data comes from the user's own GA4 property through Google's read-only APIs.
+There is **no tracking script**. Everything comes from your own GA4 property through Google's read-only APIs, including the history GA4 already has. It's built for indie hackers and small SaaS or content sites that run GA4 and find it confusing.
 
-**Price:** Starter costs €9 a month or €90 a year (VAT included), with a 14-day free trial and no card. Growth costs €19 a month or €190 a year and adds up to 10 sites, Google search insights, revenue from Stripe and sales by source (the trial is on Starter; Growth starts when paid for).
+- **Free:** one site, the last 30 days, a public stats page. No card, no time limit.
+- **Pro:** $9 a month or $90 a year (tax included). Up to 10 sites, 12 months and any dates, the Monday email, Google search insights from Search Console, revenue from Stripe and sales by source.
+
+Use it at **[simpledash.app](https://simpledash.app)**. The code is open source under the [AGPL-3.0](LICENSE).
+
+## What SimpleDash stores
+
+As little as possible, and never data about individual visitors: no IP addresses, no visitor IDs, no single visits. Every table is in [`src/lib/db/schema.ts`](src/lib/db/schema.ts).
+
+| Table | What's in it | Kept for |
+| --- | --- | --- |
+| `user`, `session`, `verification` | Name, email and picture from Google; sign-in sessions (no IP addresses) | Until the account is deleted; sessions until they expire |
+| `account` | Google access and refresh tokens, **encrypted** | Until Google is disconnected or the account is deleted |
+| `site` | The GA4 properties you added: name, domain, time zone, your chosen signup and sale events, the Search Console property | Until removed or the account is deleted |
+| `report_cache` | Copies of report **totals** from Google (visitors per day, top pages, sources, countries, and top searches when Search Console is on), so pages open fast and stay within Google's limits | 7 days without use; never in backups |
+| `chart_note`, `user_settings`, `public_page` | Your notes on the chart, the email switch, public page choices | Until deleted |
+| `billing`, `stripe_event` | Plan, Stripe customer and subscription IDs, renewal date. Card details stay with Stripe | Until the account is deleted |
+| `email_send` | Which week's Monday email went out, so it's never sent twice | Until the account is deleted |
+| `revenue_source`, `revenue_day` | Pro, only if you connect Stripe: your read-only key, **encrypted**, and daily totals (charged, refunded, new customers, MRR). No customer names, emails or IDs | Until Stripe is removed in Settings |
+
+Nightly database backups (`docs/backup.md`) leave out the report caches and sign-in sessions, and are deleted after 30 days. The full policy is at [simpledash.app/privacy](https://simpledash.app/privacy).
+
+## Self-hosting
+
+SimpleDash is built to run simpledash.app. Self-hosting works but isn't officially supported yet: you need your own Google Cloud OAuth app, Stripe keys (test keys are fine), Resend and a server. `docs/deploy.md` describes how simpledash.app itself runs, with one command per server (`deploy/setup.sh`).
+
+## Contributing
+
+Issues and pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md). Security problems go to the address in [SECURITY.md](SECURITY.md), not to public issues.
 
 ## Status
 
-All of V1 (Sprints 0–4) is built: the project setup, Google sign-in with read-only Analytics, the automatic site choice, the GA4 data layer with its cache, the full dashboard (summary line, the 4 numbers, the visitors chart with notes, Sources, Pages, Countries, Devices, AI traffic, Actions, the live globe, CSV on every card, every state), the landing page with a live demo and pricing, the legal pages and SEO files, the Monday email, public stats pages, Stripe billing with the 14-day trial, settings (disconnect Google, delete account), usage counts, Sentry and nightly backups. What's left before launch is mostly accounts and settings on Siamak's side (see Sprint 4 in the checklist).
-
-V2 (the Growth plan, `docs/SPEC.md` section 28) is being built: Sprint 5 (Growth in Stripe, plan limits, several sites with `/sites`, a public page per site, the Monday email with one block per site) Sprint 6 (Google search insights from Search Console: five views on the dashboard, connected per site in Settings) and Sprint 7 (revenue from a read-only Stripe key as daily totals, sales and signups by source, the payment-page warning) are done in code. Progress is tracked in [docs/CHECKLIST.md](docs/CHECKLIST.md), and the session log is in [docs/STORY.md](docs/STORY.md).
+V1 (Sprints 0–4) and V2 (Sprints 5–7) are built: Google sign-in with read-only Analytics, the GA4 data layer with its cache, the full dashboard, the landing page with a live demo and pricing, the Monday email, public pages, Stripe billing, several sites, Google search insights from Search Console, and revenue from a read-only Stripe key. Since 14 Oct 2026 the plans are Free and Pro (no trial). Progress is in [docs/CHECKLIST.md](docs/CHECKLIST.md) and the session log in [docs/STORY.md](docs/STORY.md).
 
 ## Requirements
 
 - **Node 24** (`nvm install 24`; `.nvmrc` pins it). Node 22.13 or newer also works for development.
 - **npm** (comes with Node).
-- **Postgres 17.** Either Docker (Docker Desktop or OrbStack) for the local database in `compose.yaml`, or the Supabase session pooler URL.
+- **Postgres 17.** Docker (Docker Desktop or OrbStack) for the local database in `compose.yaml`, or any Postgres 17 URL.
 
 ## Setup
 
 ```bash
 npm install
 cp .env.example .env        # then fill in the values (see below)
-docker compose up -d db     # local Postgres (skip if DATABASE_URL points at Supabase)
+docker compose up -d db     # local Postgres (skip if DATABASE_URL points elsewhere)
 npm run db:migrate          # create the tables
 npm run dev                 # http://localhost:3000
 ```
@@ -41,8 +67,8 @@ Pages:
 | `/` | Landing page: the live demo in a browser frame, how it works, pricing (`/#pricing`), FAQ. Shows "Dashboard" instead of "Sign in" when you're signed in |
 | `/demo` | The live demo: a real public stats page, set in `src/config/demo.ts` (sample data if that page is off) |
 | `/signin` | "Continue with Google" (needs `GOOGLE_CLIENT_ID` and the redirect URI on the Google client) |
-| `/dashboard` | The dashboard (signed in). `?site=<id>` names the site (default: the one opened last). `?range=today`, `yesterday`, `7d` (default), `30d`, `12m`, or a custom range like `?range=2026-09-01..2026-09-30` |
-| `/sites` | All sites (Growth): each site's last 7 days. Starter sees the upgrade panel (signed in) |
+| `/dashboard` | The dashboard (signed in). `?site=<id>` names the site (default: the one opened last). `?range=today`, `yesterday`, `7d` (default), `30d`, `12m`, or a custom range like `?range=2026-09-01..2026-09-30`. On Free, anything older than 30 days shows Last 30 days |
+| `/sites` | All sites (Pro): each site's last 7 days. Free sees the upgrade panel (signed in) |
 | `/settings` | Account, weekly email, billing, sites, then the site settings for `?site=<id>` (public page), disconnect Google, delete account (signed in) |
 | `/admin` | Usage counts (only for `ADMIN_EMAILS`; a 404 for everyone else) |
 | `/p/<slug>` | A public stats page |
@@ -52,7 +78,7 @@ Pages:
 | `/ui-kit` | Every theme token and shared component (development only) |
 | `/ui-kit/dashboard?state=…` | The dashboard on sample data, in every state (development only) |
 | `/ui-kit/settings?state=…`, `/ui-kit/public?state=…` | Settings and a public page on sample data (development only) |
-| `/ui-kit/sites?state=…` | All sites on sample data: `growth`, `full`, `starter`, `loading` (development only) |
+| `/ui-kit/sites?state=…` | All sites on sample data: `pro`, `full`, `free`, `loading` (development only) |
 | `/ui-kit/email` | The weekly email on sample data (`?text=1` for the plain-text version, `?sites=3` for several sites; development only) |
 | `/api/health` | `{"status":"ok"}` when the database answers |
 | `/robots.txt`, `/sitemap.xml`, `/llms.txt` | SEO files |
@@ -66,13 +92,13 @@ Pages:
 
 ## Scheduled jobs
 
-Jobs are `POST /api/internal/jobs/<job>` with `Authorization: Bearer $CRON_SECRET`. In production, Coolify runs them inside the container (`docs/deploy.md`):
+Jobs are `POST /api/internal/jobs/<job>` with `Authorization: Bearer $CRON_SECRET`. In production, cron on the server runs them inside the app container through `simpledash job <job>` (`deploy/crontab`, `docs/deploy.md` step 8):
 
 ```bash
 node scripts/run-job.mjs warm-cache     # hourly at :05
-node scripts/run-job.mjs weekly-email   # hourly at :00 (sends on Mondays, 13:00–17:59 local time)
+node scripts/run-job.mjs weekly-email   # hourly at :00 (Pro; sends on Mondays, 13:00–17:59 local time)
 node scripts/run-job.mjs cleanup        # daily at 03:30 UTC
-node scripts/run-job.mjs revenue-sync   # hourly at :20 (Growth sites with Stripe connected)
+node scripts/run-job.mjs revenue-sync   # hourly at :20 (Pro sites with Stripe connected)
 ```
 
 ## Scripts
@@ -103,20 +129,20 @@ All of them are listed with comments in [.env.example](.env.example). `src/lib/e
 | Name | Used for | Needed from |
 | --- | --- | --- |
 | `APP_URL` | Absolute links, canonical URLs, the Better Auth base URL. Also read at build time | Sprint 0 |
-| `DATABASE_URL` | Postgres: local Docker, or the Supabase **session** pooler (port 5432) | Sprint 0 |
+| `DATABASE_URL` | Postgres: local Docker, or the Supabase **session** pooler (port 5432) for development. On the server, `deploy/compose.yaml` sets it | Sprint 0 |
+| `POSTGRES_PASSWORD` | Server only: the Postgres container's password (set once by `deploy/setup.sh`) | Oct 14 |
 | `BETTER_AUTH_SECRET` | Signs sessions and encrypts the stored Google tokens | Sprint 1 |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google sign-in and read-only Analytics access | Sprint 1 |
 | `CRON_SECRET` | Protects `/api/internal/jobs/*` | Sprint 1 |
 | `RESEND_API_KEY`, `EMAIL_FROM` | Sending the weekly email | Sprint 4 |
 | `EMAIL_TOKEN_SECRET` | Signs unsubscribe links | Sprint 4 |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Stripe API and webhook signatures | Sprint 4 |
-| `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY` | The two Starter prices (€9 a month, €90 a year) | Sprint 4 |
-| `STRIPE_PRICE_GROWTH_MONTHLY`, `STRIPE_PRICE_GROWTH_YEARLY` | The two Growth prices (€19 a month, €190 a year) | Sprint 5 |
+| `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY` | Pro's two prices ($9 a month, $90 a year, tax included) | Sprint 4 |
 | `STRIPE_MANAGED_PAYMENTS` | `true` (default): Stripe is the merchant of record in Checkout | Sprint 4 |
 | `STRIPE_PUBLISHABLE_KEY` | Not used by the server; kept for reference | — |
 | `SENTRY_DSN` | Server error reports (optional) | Sprint 4 |
 | `ADMIN_EMAILS` | Who can open `/admin` | Sprint 4 |
-| `BACKUP_DATABASE_URL`, `R2_*` | The backup service only, not the app ([docs/backup.md](docs/backup.md)) | Sprint 4 |
+| `BACKUP_DATABASE_URL`, `R2_*` | The backup helper on the server, not the app ([docs/backup.md](docs/backup.md)). Compose sets `BACKUP_DATABASE_URL` | Sprint 4 |
 | `SHOW_UI_KIT` | `1` turns the dev previews on in a **local** production build (for Lighthouse). Never set it on the server | — |
 
 ## Theme and brand
@@ -129,7 +155,16 @@ The look of the whole site and the brand facts live in one file, `src/config/the
 
 ## Deploy
 
-One Docker image (`Dockerfile`, Next.js standalone on Node 24), deployed by Coolify on a Hetzner server behind Cloudflare. The container applies database migrations when it starts. Step by step: [docs/deploy.md](docs/deploy.md).
+One server behind Cloudflare runs `deploy/compose.yaml`: the app image (`Dockerfile`, Next.js standalone on Node 24), Postgres 17, Caddy for HTTPS and a backup helper. The app applies database migrations when it starts. Step by step: [docs/deploy.md](docs/deploy.md).
+
+```bash
+deploy/setup.sh azureuser@<server-ip>                        # a fresh server, one command (run it twice the first time)
+deploy/setup.sh azureuser@<new-ip> --from azureuser@<old-ip>  # move to a new server with the data
+```
+
+- **Secrets** live in `deploy/secrets/` (git-ignored; the first run creates `app.env` from `.env.example`). Keep a copy in a password manager.
+- **Every merge to `main`** deploys on its own: `.github/workflows/deploy.yml` runs `npm run check`, builds the image and sends it to the server, which goes back to the previous version if `/api/health` fails. Pull requests run the check only.
+- **On the server:** `sudo simpledash status`, `logs`, `job <name>`, `backup`, `restore --force`.
 
 ## Docs
 
@@ -141,7 +176,7 @@ One Docker image (`Dockerfile`, Next.js standalone on Node 24), deployed by Cool
 | [docs/STORY.md](docs/STORY.md) | Session log: what was done and learned, and what's next |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Technical decisions, one line each with the reason |
 | [docs/ui.md](docs/ui.md) | Theme file, tokens, guards and component layers |
-| [docs/deploy.md](docs/deploy.md) | Server, Coolify, Cloudflare and Supabase setup |
+| [docs/deploy.md](docs/deploy.md) | The server, one-command setup, deploys from GitHub, Cloudflare, moving servers |
 | [docs/ga4.md](docs/ga4.md) | The GA4 data layer: reports, cache, errors, property choice, jobs |
 | [docs/auth.md](docs/auth.md) | Sign-in, sessions, Google tokens and access checks |
 | [docs/google-verification.md](docs/google-verification.md) | Google's OAuth app verification: what to set up, the scope justification, the demo video script |
@@ -153,3 +188,7 @@ One Docker image (`Dockerfile`, Next.js standalone on Node 24), deployed by Cool
 | [docs/backup.md](docs/backup.md) | Nightly backups to R2 and how to restore one |
 | [docs/launch.md](docs/launch.md) | Launch kit: Product Hunt, Indie Hackers, X thread, screenshots |
 | [CLAUDE.md](CLAUDE.md) | Brief and working rules for Claude Code |
+
+## License
+
+SimpleDash is free software under the [GNU Affero General Public License v3.0](LICENSE). Credits for the data, icons and fonts it uses, and the note about the SimpleDash name and logo, are in [NOTICE](NOTICE).

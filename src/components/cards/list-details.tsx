@@ -48,7 +48,7 @@ export function ListDetails({
   rows,
   fileName,
   sublabelHeader,
-  triggerLabel = "Details",
+  triggerLabel = "More",
 }: ListDetailsProps) {
   const id = useId();
   const [query, setQuery] = useState("");

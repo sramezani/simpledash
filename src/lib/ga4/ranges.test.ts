@@ -9,12 +9,15 @@ import {
   rangeLabel,
   daysIn,
   endOfMonth,
+  fitsFreeHistory,
+  freeFirstDay,
   freshnessNote,
   hourIn,
   keyToDate,
   keyToHour,
   lacksHistory,
   parseRange,
+  rangeForPlan,
   rangeMenu,
   rangeWindow,
   seriesKeys,
@@ -227,6 +230,69 @@ describe("rangeMenu", () => {
       firstDay: "2015-08-14",
       lastDay: "2026-10-11",
     });
+  });
+});
+
+describe("Free's 30 days", () => {
+  const today = "2026-10-11";
+  const now = new Date("2026-10-11T12:00:00Z");
+
+  it("starts on the first day of Last 30 days", () => {
+    expect(freeFirstDay(today)).toBe("2026-09-11");
+    expect(rangeWindow("30d", "UTC", now).current.start).toBe(freeFirstDay(today));
+  });
+
+  it("fits every preset but 12 months, and custom days inside the 30 days", () => {
+    for (const r of ["today", "yesterday", "7d", "30d"] as const) {
+      expect(fitsFreeHistory(r, today)).toBe(true);
+    }
+    expect(fitsFreeHistory("12m", today)).toBe(false);
+    expect(fitsFreeHistory("2026-09-11..2026-10-11", today)).toBe(true);
+    expect(fitsFreeHistory("2026-09-10..2026-09-20", today)).toBe(false);
+  });
+
+  it("swaps a longer range for Last 30 days on Free only", () => {
+    expect(rangeForPlan("12m", false, "UTC", now)).toEqual({ range: "30d", limited: true });
+    expect(rangeForPlan("2025-01-01..2025-01-31", false, "UTC", now)).toEqual({
+      range: "30d",
+      limited: true,
+    });
+    expect(rangeForPlan("7d", false, "UTC", now)).toEqual({ range: "7d", limited: false });
+    expect(rangeForPlan("12m", true, "UTC", now)).toEqual({ range: "12m", limited: false });
+  });
+
+  it("uses the site's own today", () => {
+    // 01:00 on 12 Oct in Tokyo is still 11 Oct in UTC.
+    const early = new Date("2026-10-11T16:00:00Z");
+    expect(rangeForPlan("2026-09-11..2026-09-12", false, "Asia/Tokyo", early).limited).toBe(true);
+    expect(rangeForPlan("2026-09-12..2026-09-13", false, "Asia/Tokyo", early).limited).toBe(false);
+  });
+
+  it("locks 12 months in the dashboard menu and stops the calendar 30 days back", () => {
+    const w = rangeWindow("7d", "UTC", now);
+    const menu = rangeMenu("7d", w, "/dashboard", {}, "7d", {
+      firstDay: freeFirstDay(w.today),
+      upgradeHref: "/settings#billing",
+    });
+    expect(menu.presets.find((p) => p.value === "12m")).toMatchObject({
+      locked: true,
+      href: "/settings#billing",
+    });
+    expect(menu.presets.filter((p) => p.locked).map((p) => p.value)).toEqual(["12m"]);
+    expect(menu.custom.firstDay).toBe("2026-09-11");
+    expect(menu.limit).toEqual({
+      note: "Free shows the last 30 days.",
+      href: "/settings#billing",
+    });
+  });
+
+  it("leaves 12 months out of a public page's menu, with no upgrade note", () => {
+    const w = rangeWindow("7d", "UTC", now);
+    const menu = rangeMenu("7d", w, "/p/x", {}, "7d", { firstDay: freeFirstDay(w.today) });
+    expect(menu.presets.map((p) => p.value)).toEqual(["today", "yesterday", "7d", "30d"]);
+    expect(menu.limit).toBeNull();
+    expect(rangeMenu("7d", w, "/dashboard").limit).toBeNull();
+    expect(rangeMenu("7d", w, "/dashboard").presets.every((p) => !p.locked)).toBe(true);
   });
 });
 

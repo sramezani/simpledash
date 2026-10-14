@@ -25,12 +25,13 @@ import {
 import type { PropertyList } from "@/lib/ga4/property-choice";
 import { cn } from "@/lib/utils";
 import { SitePickerDialog } from "./site-picker-dialog";
+import { plans } from "@/config/plans";
 
 export type SwitcherSite = {
   id: string;
   label: string;
   domain: string | null;
-  /** False for a site the plan doesn't open now (added on Growth, now on Starter). */
+  /** False for a site the plan doesn't open now (added on Pro, now on Free). */
   openable: boolean;
   /** "Google access ended", "No access": shown next to the site. */
   problem: string | null;
@@ -42,10 +43,10 @@ type SiteSwitcherProps = {
   sites: SwitcherSite[];
   /** Property IDs already in the list, so the picker can say "Added". */
   listedProperties: string[];
-  /** The property shown now (Starter's switcher marks it). */
+  /** The property shown now (Free's switcher marks it). */
   currentProperty: string;
-  /** Growth: several sites, up to `limit`. */
-  growth: boolean;
+  /** Pro: several sites, up to `limit`. */
+  multiple: boolean;
   limit: number;
   /** The date range in the address, kept when moving between sites. */
   range: string | null;
@@ -57,8 +58,8 @@ type SiteSwitcherProps = {
 };
 
 /**
- * The site chip with the site menu (docs/SPEC.md section 28.1). Growth: the sites in
- * the list as links, "All sites" and "Add a site…". Starter: its one site, "Switch
+ * The site chip with the site menu (docs/SPEC.md section 28.1). Pro: the sites in
+ * the list as links, "All sites" and "Add a site…". Free: its one site, "Switch
  * site…" and "Add another site" (the upgrade panel on /sites).
  */
 export function SiteSwitcher({
@@ -66,7 +67,7 @@ export function SiteSwitcher({
   sites,
   listedProperties,
   currentProperty,
-  growth,
+  multiple,
   limit,
   range,
   listAction,
@@ -115,8 +116,8 @@ export function SiteSwitcher({
           }}
         >
           <DropdownMenuLabel className="flex items-baseline justify-between gap-2">
-            <span>{growth || listed > 1 ? "Your sites" : "Your site"}</span>
-            {growth ? (
+            <span>{multiple || listed > 1 ? "Your sites" : "Your site"}</span>
+            {multiple ? (
               <span className="text-xs font-normal text-muted-foreground tabular-nums">
                 {listed} of {limit}
               </span>
@@ -137,7 +138,7 @@ export function SiteSwitcher({
                       <span className="truncate text-xs text-warning">{s.problem}</span>
                     ) : !s.openable ? (
                       <span className="truncate text-xs text-muted-foreground">
-                        Paused · part of Growth
+                        Paused · part of {plans.pro.name}
                       </span>
                     ) : null}
                   </span>
@@ -151,7 +152,7 @@ export function SiteSwitcher({
             ))}
           </div>
           <DropdownMenuSeparator />
-          {growth ? (
+          {multiple ? (
             <>
               <DropdownMenuItem
                 asChild
@@ -192,7 +193,7 @@ export function SiteSwitcher({
                 <Link href={"/sites" as Route}>
                   <PlusIcon className="size-4 text-muted-foreground" aria-hidden="true" />
                   <span className="flex-1">Add another site</span>
-                  <Badge variant="secondary">Growth</Badge>
+                  <Badge variant="secondary">{plans.pro.name}</Badge>
                 </Link>
               </DropdownMenuItem>
             </>
@@ -202,11 +203,11 @@ export function SiteSwitcher({
       <SitePickerDialog
         open={picker}
         onOpenChange={setPicker}
-        mode={growth ? "add" : "switch"}
+        mode={multiple ? "add" : "switch"}
         listAction={listAction}
-        pickAction={growth ? addAction : switchAction}
-        inList={growth ? listedProperties : [currentProperty]}
-        usage={growth ? { used: listed, limit } : undefined}
+        pickAction={multiple ? addAction : switchAction}
+        inList={multiple ? listedProperties : [currentProperty]}
+        usage={multiple ? { used: listed, limit } : undefined}
         reconnect={reconnect}
       />
     </div>

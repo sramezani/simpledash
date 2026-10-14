@@ -92,10 +92,12 @@ describe("dates", () => {
 });
 
 describe("formatPrice", () => {
-  it("shows whole euros without decimals", () => {
-    expect(formatPrice(9)).toBe("€9");
-    expect(formatPrice(90)).toBe("€90");
-    expect(formatPrice(7.5)).toBe("€7.50");
+  it("shows whole dollars without decimals, with a plain $ sign", () => {
+    expect(formatPrice(9)).toBe("$9");
+    expect(formatPrice(90)).toBe("$90");
+    expect(formatPrice(7.5)).toBe("$7.50");
+    expect(formatPrice(0)).toBe("$0");
+    expect(formatPrice(9, "EUR")).toBe("€9");
   });
 });
 

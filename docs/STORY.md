@@ -4,6 +4,114 @@ A dated log with one entry per session. **Newest entry first.**
 
 It is written for future Claude sessions: read the latest entry before starting work. Ideas that fall outside the roadmap go here too (Working rule 5).
 
+## 2026-10-14 · Session 10 · Free and Pro, no trial, and open source
+
+### Done
+
+- **Siamak's call:** Free (one site, the last 30 days, a public page with "Powered by SimpleDash") plus one paid plan, Pro ($9 a month or $90 a year, tax included, everything, launch price kept while subscribed). No trial. Open source under AGPL-3.0, with the internal docs kept public.
+- **Plans:**
+  - `plans.ts` holds Free and Pro, with `limits`: `sites`, `fullHistory`, `weeklyEmail`, `searchConsole`, `revenue`, `poweredBy`. Prices are in USD (`formatPrice` with a narrow "$").
+  - `planState` is now paid or free, and nothing locks. `LockedPanel`, the 402s in CSV and live data, and the jobs' "unlocked" filter are gone.
+  - The webhook treats any paid subscription as Pro: an unknown price is reported, but stays Pro.
+  - Checkout has no trial and takes only `interval`; a paying user gets the Portal. `createPlanChange` is removed.
+- **Free's 30 days:**
+  - `rangeForPlan`, `fitsFreeHistory` and `freeFirstDay` live in `ranges.ts`.
+  - On Free, the date menu shows "Last 12 months" with a Pro badge that opens Settings → Billing (by click or the L key), the calendar starts 30 days back, and a note sits under the menu.
+  - An older `?range=` shows Last 30 days, with `HistoryNotice`. The same rule applies to CSV and to a Free owner's public page, which drops 12 months from its menu.
+- **Pro only:**
+  - The Monday email: the job reads `paidUserIds()`, and Settings says it's part of Pro.
+  - The "part of Pro" panels (`UpgradePanel`: sites, search, revenue, email) with one `UpgradeForm`.
+- **Public pages:** "Powered by" shows on Free only; the demo always has it and every range (`getPublicView(..., demo)`).
+- **Everywhere on screen:** Starter and Growth became Free and Pro: pricing section ("$0 / month" and "$9", launch price note), hero, how it works, FAQ ("Is it really free?", "Is SimpleDash open source?"), terms (Free may change with 30 days' notice, the launch price), privacy (a link to `schema.ts`), `llms.txt`, structured data, `/admin` counts, and the dev previews (`?state=pro`, `free-menu`, `free-history`; public `?state=free`).
+- **Migration `0007_pro_plan.sql`:** paid rows become `pro`, and `trial_ends_at` is dropped. Tested on a local Postgres with trial, Starter, Growth and cancelled rows.
+- **Stripe test mode:** "SimpleDash Pro" (`prod_VRKUUhARi1JbiX`) with tax-inclusive $9 and $90 USD prices. Both Checkout sessions with Managed Payments opened at the right amounts and were expired again. Local `.env` now holds the Pro price IDs; the GROWTH variables are gone.
+- **Open source:**
+  - README for outsiders: what it is, the plans, a "What SimpleDash stores" table, self-hosting "works but isn't supported", contributing, license.
+  - New files: NOTICE (trademark, GeoNames, flags, icons, fonts), CONTRIBUTING (AGPL in, AGPL out), SECURITY.
+  - The server IP and the "password shared in chat" notes are removed from the docs.
+  - `brand.sourceUrl` points to the GitHub repo.
+- **A bug from before, fixed:**
+  - `getSession` read `auth.api` (and so `BETTER_AUTH_SECRET`) before `await headers()`. A build without env vars, like the Docker image on GitHub, crashed while prerendering `/settings`.
+  - Earlier builds passed only because `.env` was there. `headers()` now comes first.
+
+### Checked
+
+- `npm run check`: 45 files, 372 tests. New and rewritten tests cover plans, prices, the webhook, Free's 30 days (including the site's time zone and both menus), `llms.txt` and structured data.
+- `next build` with an empty environment (`env -i`, only `APP_URL`) passes; the landing, privacy and terms pages are still static.
+- In the browser, on a repo copy on :3200 against a throwaway Postgres:
+  - pricing at 1440 and 375 px, Monthly and Yearly
+  - the Free date menu with the Pro badge and its keyboard path (L opens Settings → Billing)
+  - the 30-day note
+  - Settings on Free and Pro
+  - the paused site
+  - the public page on Free (no 12 months, "Powered by") and on Pro (no link)
+
+### Not done
+
+- **`LICENSE`:** the official AGPL-3.0 text isn't in the repo yet. Fetching it from gnu.org is a download, so it waits for Siamak's OK. GitHub's "Add file → LICENSE" template is the other way.
+- Lighthouse wasn't run.
+
+### Next
+
+- Siamak:
+  - `npm run db:migrate` (0004–0007).
+  - The live Pro product and prices.
+  - The Portal with Pro's two prices.
+  - Update `ROADMAP.md` (pricing; the subheadline now says "the history GA4 already has").
+  - Decide on contributor terms.
+  - Make the repo public before the site goes live (the FAQ and privacy page link to it).
+  - Tell Claude the Azure region for the privacy page.
+
+## 2026-10-14 · Session 9 · Hosting: one server, one command, deploys from GitHub
+
+### Done
+
+- **Siamak's call:** no Coolify and no Supabase in production. One server (Azure today) with Docker Compose; set up with one command; every merge to `main` deploys; moving to a new server is the same command with `--from`. Everything free beyond the server.
+- **`deploy/compose.yaml`:** the app (`simpledash-app:current`, never pulled), Postgres 17, Caddy (Cloudflare Origin Certificate, Full (strict), `www` and HTTP redirects, `/api/internal/*` refused) and the backup helper. `DATABASE_URL` and `BACKUP_DATABASE_URL` are built from `POSTGRES_PASSWORD`.
+- **`deploy/setup.sh user@server [--from user@old]`** (on the Mac):
+  - The first run builds `deploy/secrets/app.env` from `.env.example` (new random secrets, service keys from `.env`, `STRIPE_WEBHOOK_SECRET` left empty on purpose) plus the deploy key, and stops until everything is filled in.
+  - Then it sends the files over one SSH connection and runs `simpledash setup` as root: apt upgrade, automatic security updates, UTC, swap, Docker from Docker's repo, `ufw`, the `deploy` user with a key that can only run `simpledash deploy`. It starts db, caddy and backup.
+  - With `--from`: it stops the old app and backs it up first.
+  - It restores the newest R2 backup into an empty database, sets the GitHub secrets and the `DEPLOY_PLATFORM` variable with `gh`, runs the first deploy and watches it, checks port 443, and sets the Cloudflare DNS when a token is given.
+- **`deploy/simpledash`** on the server: `status`, `logs [jobs]`, `job`, `backup`, `restore [--force]`, `stop`, `start`, plus `setup` and `deploy`.
+  - `deploy` reads the release from stdin, keeps the previous image, waits for `/api/health` and goes back if the new one isn't healthy.
+  - Folders are updated file by file, because Caddy's mounted `caddy/` folder would keep pointing at a removed folder.
+- **`.github/workflows/deploy.yml`:** check on every PR and push. On `main`, once a server is set up, it builds with the GHA cache and streams `docker save` plus the release files over SSH. No registry.
+- **Jobs** moved from Coolify's scheduled tasks to `deploy/crontab` (the deploy user's crontab, UTC, output in the journal). That also covers the `revenue-sync` task Siamak still had to add.
+- **`scripts/backup/restore.sh`** (with `r2.sh` shared with `backup.sh`): plain, `--if-empty` and `--force`.
+- **Docs:** `deploy.md` rewritten, plus `backup.md`, SPEC sections 2, 3, 4, 17, 20, 21, 22, 24 and 25, DECISIONS (old Coolify and Supabase lines struck through), CHECKLIST (new "Hosting" section), README, CLAUDE.md, `.env.example`, `ga4.md`, `revenue.md` and `launch.md`.
+- **Privacy page:** the processors are now Microsoft Azure (server and database) and Cloudflare (with backups). `legal.lastUpdated` is 2026-10-14.
+
+### Checked
+
+- `npm run check` passes in a clean copy of the repo without `.env` (what GitHub's runner sees): 45 files, 368 tests.
+- `setup.sh` on a copy of the repo:
+  - The first run creates the secrets and lists what's missing.
+  - The second run gets as far as SSH, with a clear message when the server can't be reached.
+  - Unknown options are refused.
+- `restore.sh` on the throwaway local Postgres, with rclone replaced by a local folder: all six cases, and the newest of two files wins.
+- `install_release_files` against a fake `/opt/simpledash`: the files are copied, the scripts are executable, and the caddy folder keeps its inode.
+- YAML of the workflow and the compose file parses.
+
+### Not checked (needs a real server or GitHub)
+
+- `simpledash setup` and `simpledash deploy` on a server, Caddy with the real certificate, and the workflow's first run. There's no Docker or Linux VM on this Mac.
+- The first real run is the test. Siamak's steps are in CHECKLIST → "Hosting".
+
+### Learned
+
+- Google's console lists `webmasters.readonly` as **non-sensitive**. Only `analytics.readonly` is sensitive.
+  - `docs/google-verification.md` line 23 still calls Search Console sensitive.
+  - Claude offered to fix it; it waits for Siamak's OK.
+- Docker-published ports bypass `ufw`. That's fine here: only Caddy publishes 80 and 443, and the app and Postgres publish nothing.
+- macOS ships bash 3.2, so `setup.sh` avoids newer bash features (no associative arrays, no `mapfile`).
+
+### Next
+
+- Siamak: the certificate, R2, Azure ports 80 and 443, push, then `deploy/setup.sh azureuser@<server-ip>` twice.
+- Tell Claude the Azure region for the privacy page.
+- After the first deploy: Lighthouse on the real domain, and the three V2 "Done when" checks.
+
 ## 2026-10-13 · Session 8 · V2 built: Growth, several sites, Google search insights, revenue
 
 ### Done
@@ -169,7 +277,7 @@ It is written for future Claude sessions: read the latest entry before starting 
 1. Sign in once with your real Google account on localhost and check the dashboard, then the Monday email with `node scripts/run-job.mjs weekly-email` on a Monday afternoon (or ask Claude for a one-off test send).
 2. Stripe live mode: Managed Payments, the product and prices, the webhook endpoint, and the Portal's "switch plans" setting (it's off in test mode too).
 3. Resend domain, R2 bucket and token, Sentry project with the uptime monitor, the Coolify scheduled tasks (`docs/deploy.md` steps 6–10, `docs/backup.md`).
-4. Rotate the Supabase password before launch (it was shared in a chat).
+4. Rotate the Supabase password before launch.
 5. Fill in `src/config/legal.ts`, deploy, then Google's app verification.
 6. Review and post the launch kit.
 
@@ -437,7 +545,7 @@ Mobile: FCP 0.8 s, LCP 2.3 s, TBT 10 ms, CLS 0. Run it again on the real domain 
 - **Security review:** the `/security-review` skill needs a git remote (`origin/HEAD`), and this repo has none, so the review was done by hand. Found and fixed:
   - The Supabase pooler accepts plain-text connections, and postgres.js doesn't ask for TLS by default. TLS is now required for every non-local host (`src/lib/db/ssl.ts`, also in `scripts/migrate.mjs`).
   - Local Postgres was published on all interfaces with a dev password. It's now 127.0.0.1 only.
-  - The Supabase password was shared in chat: change it before launch (`docs/deploy.md` step 1).
+  - Change the Supabase password before launch (`docs/deploy.md` step 1).
 
 ### Siamak's answers (this session)
 

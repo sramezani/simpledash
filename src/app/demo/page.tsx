@@ -65,7 +65,7 @@ function DemoBanner() {
           href="/signin"
           className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 font-medium text-primary-foreground transition-colors duration-150 hover:bg-primary/90 pointer-coarse:h-11"
         >
-          Try it free for {plans.starter.trialDays} days
+          Get yours, {plans.free.name.toLowerCase()}
           <ArrowRightIcon className="size-4" aria-hidden="true" />
         </Link>
       </Container>

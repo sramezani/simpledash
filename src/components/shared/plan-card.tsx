@@ -9,7 +9,7 @@ type PlanCardProps = {
   badge?: ReactNode;
   summary: string;
   prices: { month: number; year: number };
-  /** What paying yearly saves, in euros (12 × the monthly price − the yearly price). */
+  /** What paying yearly saves, in dollars (12 × the monthly price − the yearly price). 0 for Free. */
   yearlySaving: number;
   features: readonly string[];
   /** The plan to pick: a coloured edge and a raised card. */
@@ -37,6 +37,8 @@ export function PlanCard({
   className,
 }: PlanCardProps) {
   const compact = size === "compact";
+  // Free: "$0 / month", the same for Monthly and Yearly.
+  const free = prices.month === 0 && prices.year === 0;
   return (
     <article
       className={cn(
@@ -56,29 +58,44 @@ export function PlanCard({
         <p className="text-sm text-muted-foreground">{summary}</p>
       </div>
       <div className="flex flex-col">
-        <p className="flex items-baseline gap-1.5">
-          <RollingPrice
-            month={formatPrice(prices.month)}
-            year={formatPrice(prices.year)}
-            className={cn("font-semibold tracking-tight", compact ? "text-3xl" : "text-5xl")}
-          />
-          <Swap
-            month="/ month"
-            year="/ year"
-            className={cn("text-muted-foreground", compact ? "text-sm" : "text-base")}
-          />
-        </p>
-        <YearlyOnly>
-          <p
-            className={cn(
-              "flex items-center gap-2 text-sm font-medium text-primary",
-              compact ? "pt-2" : "pt-3",
-            )}
-          >
-            <CheckIcon className="size-4 shrink-0" aria-hidden="true" />
-            Save {formatPrice(yearlySaving)} a year
+        {free ? (
+          <p className="flex items-baseline gap-1.5">
+            <span
+              className={cn("font-semibold tracking-tight", compact ? "text-3xl" : "text-5xl")}
+            >
+              {formatPrice(0)}
+            </span>
+            <span className={cn("text-muted-foreground", compact ? "text-sm" : "text-base")}>
+              / month
+            </span>
           </p>
-        </YearlyOnly>
+        ) : (
+          <p className="flex items-baseline gap-1.5">
+            <RollingPrice
+              month={formatPrice(prices.month)}
+              year={formatPrice(prices.year)}
+              className={cn("font-semibold tracking-tight", compact ? "text-3xl" : "text-5xl")}
+            />
+            <Swap
+              month="/ month"
+              year="/ year"
+              className={cn("text-muted-foreground", compact ? "text-sm" : "text-base")}
+            />
+          </p>
+        )}
+        {yearlySaving > 0 ? (
+          <YearlyOnly>
+            <p
+              className={cn(
+                "flex items-center gap-2 text-sm font-medium text-primary",
+                compact ? "pt-2" : "pt-3",
+              )}
+            >
+              <CheckIcon className="size-4 shrink-0" aria-hidden="true" />
+              Save {formatPrice(yearlySaving)} a year
+            </p>
+          </YearlyOnly>
+        ) : null}
       </div>
       <ul
         className={cn(

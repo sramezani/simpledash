@@ -30,7 +30,7 @@ Product Hunt's gallery wants 1270 × 760; the desktop shots are exactly that at 
 
 **Topics:** Analytics, SaaS, Developer Tools, Indie Hackers (pick the 3 that exist).
 
-**Pricing:** Paid, with a free trial. Starter €9 a month or €90 a year (VAT included).
+**Pricing:** Free, with a paid plan. Free: one site and the last 30 days. Pro: $9 a month or $90 a year (tax included).
 
 **First comment (from the maker):**
 
@@ -52,7 +52,7 @@ Product Hunt's gallery wants 1270 × 760; the desktop shots are exactly that at 
 > - **Little stored.** Your settings, encrypted Google tokens and short-lived report caches. Nothing about individual visitors.
 > - **Honest numbers.** Missing data says so instead of showing a zero, and yesterday is marked "still updating".
 >
-> It's €9 a month or €90 a year, with 14 days free and no card. There's a Monday email with last week's numbers, and you can share a public stats page if you build in public.
+> It's free for one site and the last 30 days, no card. Pro is $9 a month (or $90 a year) for more sites, 12 months, a Monday email with last week's numbers, Google search insights and revenue from Stripe. You can share a public stats page if you build in public.
 >
 > I'd love to hear what you'd want on the page, and what you'd remove. [link]
 
@@ -77,9 +77,9 @@ Product Hunt's gallery wants 1270 × 760; the desktop shots are exactly that at 
 > - It reads GA4 through Google's Data and Admin APIs with read-only access. There's no script to add to your site.
 > - Reports are cached for a few hours and refreshed in the background, so the page opens fast and stays well inside Google's quotas.
 > - It stores your settings, encrypted Google tokens and short-lived caches. Nothing about individual visitors.
-> - Stack: Next.js 16, Postgres (Supabase), Better Auth, Stripe, Resend, on a Hetzner server in Germany behind Cloudflare.
+> - Stack: Next.js 16, Postgres, Better Auth, Stripe, Resend, on one server with Docker Compose behind Cloudflare.
 >
-> **Pricing:** one plan, €9 a month or €90 a year, 14 days free without a card. I wanted it cheap enough that it's an easy yes for a side project, and it's built to cost well under €1 per customer per month to run.
+> **Pricing:** free for one site and 30 days; Pro is $9 a month or $90 a year. I wanted it cheap enough that it's an easy yes for a side project, and it's built to cost well under $1 per customer per month to run.
 >
 > **What I learned building it:**
 >
@@ -130,13 +130,13 @@ Product Hunt's gallery wants 1270 × 760; the desktop shots are exactly that at 
 > [04-public-page.png]
 
 6/
-> Read-only Google access. Nothing stored about your visitors. Hosted in the EU.
+> Read-only Google access. Nothing stored about your visitors. Open source (AGPL-3.0).
 >
-> €9 a month or €90 a year. 14 days free, no card.
+> Free for one site, no card. Pro: $9 a month or $90 a year.
 >
 > [link]
 
 ## After launch
 
 - Answer every comment on Product Hunt and Indie Hackers the same day.
-- Note what people ask for in `docs/STORY.md`, so it can go into the V2 planning (the Growth plan list in `src/config/plans.ts`).
+- Note what people ask for in `docs/STORY.md`, so it can go into the V2 planning (the Pro plan list in `src/config/plans.ts`).

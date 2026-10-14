@@ -2,6 +2,7 @@ import { Container } from "@/components/shared/container";
 import { HeroCta } from "./account-link";
 import { brand } from "@/config/theme";
 import { plans } from "@/config/plans";
+import { formatPrice } from "@/lib/format";
 
 /** The headline and button, exactly as in the roadmap. */
 export function Hero() {
@@ -21,7 +22,8 @@ export function Hero() {
         <div className="flex flex-col items-center gap-2">
           <HeroCta startLabel="See my dashboard, free" />
           <p className="text-xs text-muted-foreground signed-in:hidden">
-            {plans.starter.trialDays} days free · no card · read-only access
+            {plans.free.name} for one site · no card · read-only access · {plans.pro.name}{" "}
+            {formatPrice(plans.pro.prices.month)} a month
           </p>
         </div>
       </Container>

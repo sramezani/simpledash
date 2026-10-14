@@ -7,10 +7,7 @@ import {
   type WebhookDeps,
 } from "./webhook";
 
-const prices = {
-  starter: { month: "price_month", year: "price_year" },
-  growth: { month: "price_growth_month", year: "price_growth_year" },
-};
+const prices = { pro: { month: "price_month", year: "price_year" } };
 const NOW = new Date("2026-10-12T12:00:00Z");
 
 function subscription(
@@ -110,31 +107,25 @@ describe("signature check", () => {
 describe("subscriptionFacts", () => {
   it("turns the price into the plan and interval", () => {
     expect(subscriptionFacts(subscription({ priceId: "price_month" }), prices)).toMatchObject({
-      plan: "starter",
+      plan: "pro",
       interval: "month",
       unknownPrice: false,
     });
     expect(subscriptionFacts(subscription({ priceId: "price_year" }), prices)).toMatchObject({
-      plan: "starter",
+      plan: "pro",
       interval: "year",
       unknownPrice: false,
     });
-    expect(
-      subscriptionFacts(subscription({ priceId: "price_growth_month" }), prices),
-    ).toMatchObject({ plan: "growth", interval: "month", unknownPrice: false });
-    expect(subscriptionFacts(subscription({ priceId: "price_growth_year" }), prices)).toMatchObject(
-      { plan: "growth", interval: "year", unknownPrice: false },
-    );
   });
 
-  it("flags a price that isn't one of the four, and never gives it Growth", () => {
+  it("flags a price that isn't one of ours, and keeps the paying customer on Pro", () => {
     expect(subscriptionFacts(subscription({ priceId: "price_other" }), prices)).toMatchObject({
-      plan: "starter",
+      plan: "pro",
       interval: "month",
       unknownPrice: true,
     });
     expect(subscriptionFacts(subscription({ priceId: "price_other_year" }), prices)).toMatchObject({
-      plan: "starter",
+      plan: "pro",
       interval: "year",
       unknownPrice: true,
     });
@@ -187,19 +178,19 @@ describe("handleStripeEvent", () => {
     }
   });
 
-  it("stores the plan from the price when someone switches to Growth and back", async () => {
+  it("stores the interval from the price when someone switches yearly and back", async () => {
     await handleStripeEvent(
-      event("customer.subscription.updated", subscription({ priceId: "price_growth_year" }), 1),
+      event("customer.subscription.updated", subscription({ priceId: "price_year" }), 1),
       deps,
       prices,
     );
-    expect(deps.applied.at(-1)?.facts).toMatchObject({ plan: "growth", interval: "year" });
+    expect(deps.applied.at(-1)?.facts).toMatchObject({ plan: "pro", interval: "year" });
     await handleStripeEvent(
       event("customer.subscription.updated", subscription({ priceId: "price_month" }), 2),
       deps,
       prices,
     );
-    expect(deps.applied.at(-1)?.facts).toMatchObject({ plan: "starter", interval: "month" });
+    expect(deps.applied.at(-1)?.facts).toMatchObject({ plan: "pro", interval: "month" });
   });
 
   it("refreshes from Stripe on invoice events", async () => {

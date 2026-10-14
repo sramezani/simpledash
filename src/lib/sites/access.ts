@@ -5,8 +5,8 @@ import type { Entitlements } from "@/lib/billing/plan";
  *
  * - A site with `addedAt` set is in the user's list; `isActive` is the one the
  *   dashboard opens with (the one opened most recently).
- * - Growth opens every added site, up to its limit, in the order they were added.
- * - Starter and trials open only the active site. Sites added while on Growth stay in
+ * - Pro opens every added site, up to its limit, in the order they were added.
+ * - Free open only the active site. Sites added while on Pro stay in
  *   the list, paused, and open again after upgrading (Siamak, Oct 13, 2026).
  */
 
@@ -60,7 +60,7 @@ export function chooseSite<T extends SiteRef>(
   return openable.includes(site) ? { kind: "open", site } : { kind: "upgrade", site };
 }
 
-/** Whether one more site can be added: Growth below its limit. */
+/** Whether one more site can be added: Pro below its limit. */
 export function canAddSite(sites: SiteRef[], ent: Pick<Entitlements, "sites">): boolean {
   return ent.sites > 1 && sites.filter((s) => s.addedAt !== null).length < ent.sites;
 }

@@ -1,3 +1,4 @@
+import { FREE_HISTORY_DAYS, plans } from "@/config/plans";
 import { formatDay, formatDayRange } from "@/lib/format";
 
 /**
@@ -297,6 +298,33 @@ export function lacksHistory(
  * Why the numbers can't be compared with the period before, or null when they can.
  * Today isn't over, so a period that ends today would always read "down".
  */
+/** The first day Free can see: 30 days before today, the start of "Last 30 days". */
+export function freeFirstDay(today: string): string {
+  return addDays(today, -FREE_HISTORY_DAYS);
+}
+
+/** Whether a range fits in Free's last 30 days: every preset but 12 months, and custom days inside them. */
+export function fitsFreeHistory(range: RangeType, today: string): boolean {
+  if (isPreset(range)) return range !== "12m";
+  return customDays(range)!.start >= freeFirstDay(today);
+}
+
+/**
+ * The range a plan shows: the one asked for, or "Last 30 days" when Free asks for more
+ * (an old link, a typed address). `limited` says the range was changed.
+ */
+export function rangeForPlan(
+  range: RangeType,
+  fullHistory: boolean,
+  timeZone: string,
+  now: Date = new Date(),
+): { range: RangeType; limited: boolean } {
+  if (fullHistory || fitsFreeHistory(range, todayIn(timeZone, now))) {
+    return { range, limited: false };
+  }
+  return { range: "30d", limited: true };
+}
+
 export function comparisonGap(
   window: RangeWindow,
   propertyCreatedAt: Date | null | undefined,
@@ -329,6 +357,8 @@ export type RangeMenu = {
     shortcut: string;
     /** A line above it, between the single days and the longer periods. */
     separated: boolean;
+    /** Beyond the plan's history (Free): it links to the upgrade instead. */
+    locked: boolean;
   }[];
   custom: {
     /** The page address with `slot` where "start..end" goes. */
@@ -341,7 +371,15 @@ export type RangeMenu = {
     firstDay: string;
     lastDay: string;
   };
+  /** Free's limit, shown under the menu with a link to upgrade. Null with full history. */
+  limit: { note: string; href: string } | null;
 };
+
+/**
+ * Free's history in the date menu: the first day the calendar allows, and where
+ * "Last 12 months" leads. Without `upgradeHref` (a public page), it is just left out.
+ */
+export type HistoryLimit = { firstDay: string; upgradeHref?: string };
 
 /**
  * The date menu (docs/SPEC.md section 8): the presets, each linking to
@@ -355,6 +393,7 @@ export function rangeMenu(
   basePath: string,
   query: Record<string, string> = {},
   defaultRange: RangeType = DEFAULT_RANGE,
+  history: HistoryLimit | null = null,
 ): RangeMenu {
   const href = (r: string) => {
     const params = new URLSearchParams(query);
@@ -362,24 +401,32 @@ export function rangeMenu(
     const search = params.toString();
     return search ? `${basePath}?${search}` : basePath;
   };
+  const beyond = (r: RangePreset) => history !== null && !fitsFreeHistory(r, window.today);
   return {
     value: range,
     label: rangeLabel(range),
-    presets: RANGE_PRESETS.map((r) => ({
+    presets: RANGE_PRESETS.filter((r) => !beyond(r) || history?.upgradeHref).map((r) => ({
       value: r,
       label: PRESET_LABELS[r],
-      href: href(r),
+      href: beyond(r) ? history!.upgradeHref! : href(r),
       shortcut: SHORTCUTS[r],
       separated: r === "7d",
+      locked: beyond(r),
     })),
     custom: {
       href: href(CUSTOM_SLOT),
       slot: CUSTOM_SLOT,
       start: window.current.start,
       end: window.current.end,
-      firstDay: GA4_FIRST_DAY,
+      firstDay: history ? history.firstDay : GA4_FIRST_DAY,
       lastDay: window.today,
     },
+    limit: history?.upgradeHref
+      ? {
+          note: `${plans.free.name} shows the last ${FREE_HISTORY_DAYS} days.`,
+          href: history.upgradeHref,
+        }
+      : null,
   };
 }
 

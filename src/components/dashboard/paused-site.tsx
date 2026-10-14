@@ -2,11 +2,12 @@ import type { ReactNode } from "react";
 import { Container } from "@/components/shared/container";
 import { Button } from "@/components/ui/button";
 import { TopBar } from "./top-bar";
+import { plans } from "@/config/plans";
 
 /**
- * A site in the list that the plan doesn't open now (added on Growth, back on
- * Starter: docs/SPEC.md section 28.1). Nothing is deleted: the upgrade panel, with a
- * way to make this site the one Starter shows instead (`OpenInsteadForm`).
+ * A site in the list that the plan doesn't open now (added on Pro, back on
+ * Free: docs/SPEC.md section 28.1). Nothing is deleted: the upgrade panel, with a
+ * way to make this site the one Free shows instead (`OpenInsteadForm`).
  */
 export function PausedSiteView({
   switcher,
@@ -33,7 +34,7 @@ export function PausedSiteView({
   );
 }
 
-/** "Show mysite.com instead": Starter shows this listed site in place of the current one. */
+/** "Show mysite.com instead": Free shows this listed site in place of the current one. */
 export function OpenInsteadForm({
   label,
   siteId,
@@ -47,7 +48,8 @@ export function OpenInsteadForm({
     <form action={action} className="flex flex-col items-start gap-2 pt-2">
       <input type="hidden" name="site" value={siteId} />
       <p className="text-sm text-pretty text-muted-foreground">
-        {label} is paused: Starter shows one site at a time. Its notes and settings are kept.
+        {label} is paused: {plans.free.name} shows one site at a time. Its notes and settings are
+        kept.
       </p>
       <Button type="submit" variant="outline" className="h-9 pointer-coarse:h-11">
         Show {label} instead

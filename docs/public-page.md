@@ -33,7 +33,8 @@ The optional public stats page at `/p/<slug>`, one per site. The plan is in `doc
 
 ## When it isn't live
 
-- **Paused** ("This page is paused."): the owner's trial ended unpaid, the site lost Google access, the site was removed from the owner's list, or the plan doesn't open it any more (a Growth account back on Starter: only the site Starter shows stays live). `noindex`, and out of the sitemap. The Right now endpoint follows the same rule (`publicSiteOf`).
+- **Paused** ("This page is paused."): the site lost Google access, the site was removed from the owner's list, or the plan doesn't open it any more (a Pro account back on Free: only the site Free shows stays live). Nothing pauses just for being on Free.
+- **Free owners:** the page shows "Powered by SimpleDash" at the bottom and stops at 30 days like their dashboard (12 months is left out of the menu, and an older `?range=` shows Last 30 days). Pro owners' pages have no link and every range. The landing page's demo always has both. `noindex`, and out of the sitemap. The Right now endpoint follows the same rule (`publicSiteOf`).
 - A plan change from the Stripe webhook refreshes the owner's pages at once; removing a site refreshes its page.
 - **Off or unknown slug:** "Page not found" with `noindex`. The status is 200 because the page streams (see `docs/DECISIONS.md`).
 

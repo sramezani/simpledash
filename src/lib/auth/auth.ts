@@ -49,8 +49,8 @@ const createAuth = () =>
     },
     databaseHooks: {
       user: {
-        // Every new account starts a 14-day trial, with the weekly email on.
-        create: { after: async (row) => createUserRows(row.id, new Date(row.createdAt)) },
+        // Every new account starts on Free, with the weekly email switch on (it sends on Pro).
+        create: { after: async (row) => createUserRows(row.id) },
       },
       account: {
         // New Google tokens (sign-in or refresh) mean a "Google access ended" site works again.

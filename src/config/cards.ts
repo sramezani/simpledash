@@ -106,7 +106,7 @@ export const cards = [
     publicDefault: false,
   },
   {
-    // Growth with Stripe connected (docs/SPEC.md section 28.3). Private: never on public pages.
+    // Pro with Stripe connected (docs/SPEC.md section 28.3). Private: never on public pages.
     id: "revenue",
     title: "Revenue",
     help: "What customers paid through Stripe minus refunds, before Stripe's fees, in your main currency. Read from your Stripe account (read-only) and counted in your site's time zone. MRR is the monthly price of active and past-due subscriptions, before discounts, at the last sync.",

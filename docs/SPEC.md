@@ -4,6 +4,10 @@ Oct 11, 2026 · Written by Claude Code from `docs/ROADMAP.md` · Status: approve
 
 **Updated Oct 11, 2026 (session 2):** a yearly price and Growth shown as "coming soon" (sections 16 and 17), one theme and brand file and a UI quality bar (section 18), and code structure and reuse rules (section 4).
 
+**Updated Oct 14, 2026 (session 10):** Free and Pro replace Starter, Growth and the trial (section 16): Free is one site and 30 days with nothing locked, Pro is $9 a month or $90 a year with everything. Free's 30 days in the date menu and ranges (sections 8 and 16), the Monday email for Pro (section 14), "Powered by" on Free public pages only (section 15), the pricing section (section 17), and open-source files (README, NOTICE, CONTRIBUTING, SECURITY).
+
+**Updated Oct 14, 2026 (session 9):** production moved to one server with Docker Compose and Caddy, set up by `deploy/setup.sh`, with deploys from GitHub Actions (sections 2, 3, 20 and 21).
+
 **Updated Oct 13, 2026 (session 8):** Sprint 7 built: revenue from Stripe and sales by source (section 28.3, "How it's built"), with `revenue_source`, `revenue_day` and the sale columns (section 9) and the `revenue-sync` job (section 20). Sprint 6 built: Google search insights (section 28.2, "How it's built"), with the two new site columns (section 9). Sprint 5 built: how the Growth plan, several sites, per-site public pages and the multi-site Monday email work (section 28.1, "How it's built"), with the data model, billing, jobs and env vars updated (sections 9, 16, 20 and 22).
 
 **Updated Oct 13, 2026 (session 7):** the V2 plan (section 28) and the V3 list (section 29), as decided by Siamak.
@@ -42,11 +46,11 @@ Siamak's decisions on Oct 11, 2026 (also in `docs/DECISIONS.md`):
 - **Date ranges** are made of full days ending yesterday. 12 months means the last 12 full months (section 8).
 - **Better Auth** handles Google sign-in instead of Auth.js (section 6).
 - **Stripe Managed Payments** handles VAT and sales tax, with Stripe as the merchant of record (section 16).
-- **When a trial ends unpaid**, the dashboard locks and the weekly email and public page pause too. All data is kept (section 16).
+- ~~**When a trial ends unpaid**, the dashboard locks and the weekly email and public page pause too.~~ Since Oct 14 there's no trial and nothing locks: Free and Pro (section 16).
 
 Added later the same day:
 
-- **Pricing:** one plan, **Starter**, at €9 a month or €90 a year (2 months free). **Growth** (€19 a month or €190 a year) shows as "Coming soon". Pricing is a section on the landing page with a Monthly / Yearly switch (sections 16 and 17). This replaces the roadmap's "one plan at €9 a month" for V1.
+- **Pricing** (replaced on Oct 14 by Free and Pro, section 16): one plan, **Starter**, at €9 a month or €90 a year (2 months free). **Growth** (€19 a month or €190 a year) shows as "Coming soon". Pricing is a section on the landing page with a Monthly / Yearly switch (sections 16 and 17). This replaces the roadmap's "one plan at €9 a month" for V1.
 - **Theme and brand in one file:** `src/config/theme.ts`, and the code only uses its tokens (section 18).
 - **Light theme only** in V1, confirmed (section 18).
 - **UI bar:** the polish of the best tools in this space (Siamak named DataFast), with our own design (section 18).
@@ -56,7 +60,7 @@ Added later the same day:
 ```
                 Cloudflare: DNS · proxy · SSL Full (strict) · cache for static files, landing, legal, /p/*
                                                    │
-                      Hetzner server (EU) · Coolify · Docker
+              One server (Azure today) · Docker Compose · Caddy with the Cloudflare Origin Certificate
                       ┌────────────────────────────────────────────────┐
   browser ──────────► │ Next.js 16 app (standalone image, one process) │
                       │   pages · route handlers · server actions      │
@@ -66,10 +70,12 @@ Added later the same day:
                       │   src/lib/billing  Checkout, Portal, webhook   │◄─► Stripe (Managed Payments)
                       │   Sentry (server only)                         │──► Sentry
                       └──────────────────────┬─────────────────────────┘
-   Coolify scheduled tasks (hourly, daily) ──┤  call /api/internal/jobs/*
+   cron on the server (hourly, daily) ───────┤  calls /api/internal/jobs/* inside the app container
    backup container (nightly) ───────────────┤──► Cloudflare R2
                                              ▼
-                      Postgres on Supabase (free tier, Frankfurt): plain Postgres via Drizzle
+                      Postgres 17 in a container on the same server: plain Postgres via Drizzle
+
+   GitHub Actions, on every merge to main: check → build the image → send it to the server over SSH
 ```
 
 **The pipeline:**
@@ -79,7 +85,7 @@ Added later the same day:
 3. The GA4 data layer fetches reports and stores them in `report_cache`. There is one shared entry per property, report and range.
 4. The dashboard, the weekly email and the public page all read from that cache.
 
-**The setup** is one app, one container and one database. There is no queue, no Redis and no separate worker. Background work runs in one of two ways:
+**The setup** is one app container and one database container, on one server. There is no queue, no Redis and no separate worker. Background work runs in one of two ways:
 
 - right after a response is sent (`after()` from `next/server`)
 - from scheduled jobs
@@ -100,7 +106,8 @@ Versions were checked on npm on Oct 11, 2026. Pin exact versions in `package.jso
 | Charts | shadcn/ui charts (Recharts), **dashboard only** | recharts 3.10 | Landing and public pages use server-rendered SVG (sections 15 and 17) |
 | Globe | cobe | 2.0 | About 5 KB, loaded lazily |
 | Language | TypeScript, strict | 6.0.3, pinned | typescript-eslint needs < 6.1. TypeScript 7 comes later |
-| Database | Postgres on Supabase free tier, plain Postgres | Supabase default (17) | Shared pooler in session mode (section 21) |
+| Database | Postgres in a container on the server (`postgres:17-alpine`), plain Postgres | 17 | The same image runs locally (section 21) |
+| Hosting | One Ubuntu or Debian server with Docker Compose, Caddy and cron, behind Cloudflare. GitHub Actions deploys | Caddy 2 | `deploy/`, section 21 |
 | ORM | Drizzle ORM and drizzle-kit, with the postgres.js driver | 0.45 / 0.31 / postgres 3.4 | SQL migrations in `drizzle/` |
 | Auth | Better Auth: Google provider, Drizzle adapter | 1.7 | Replaces Auth.js (section 6) |
 | Google APIs | `@google-analytics/data`, `@google-analytics/admin` (both v1beta), `google-auth-library` | 7.2 / 10.1 / 11.2 | Official clients |
@@ -126,13 +133,19 @@ Versions were checked on npm on Oct 11, 2026. Pin exact versions in `package.jso
 .
 ├── CLAUDE.md · README.md · .env.example · .nvmrc
 ├── Dockerfile · compose.yaml · .dockerignore
+├── .github/workflows/deploy.yml     checks pull requests; on main also builds and deploys
+├── deploy/                          the production server (section 21)
+│   ├── setup.sh                     one command per server, run on the Mac
+│   ├── simpledash                   the command on the server: setup, deploy, status, logs, backup…
+│   ├── compose.yaml · caddy/ · crontab
+│   └── secrets/                     app.env, certificate, deploy key (git-ignored)
 ├── next.config.ts · drizzle.config.ts · vitest.config.ts · eslint.config.mjs · .prettierrc
 ├── drizzle/                         SQL migrations (generated, committed)
 ├── public/                          flags/ (SVG), images
 ├── scripts/
 │   ├── migrate.mjs                  runs migrations when the container starts
-│   ├── run-job.mjs                  used by Coolify scheduled tasks
-│   └── backup/                      Dockerfile + backup.sh (pg_dump → R2)
+│   ├── run-job.mjs                  used by the cron jobs on the server
+│   └── backup/                      Dockerfile + backup.sh and restore.sh (pg_dump ↔ R2)
 ├── docs/                            ROADMAP, SPEC, CHECKLIST, STORY, DECISIONS, <area>.md
 └── src/
     ├── proxy.ts                     sends signed-out visitors from /dashboard and /settings to /signin
@@ -222,7 +235,7 @@ More features come in V2 (several sites, alerts, revenue), so the code is built 
 | `/demo` | **Live demo** (section 17): a real public stats page, framed on the landing page with `?embed=1` | public | partly prerendered, cached about 10 minutes, plus Cloudflare |
 | `/signin` | **Sign in**: one screen saying what we read (read-only), then "Continue with Google" | public | static |
 | `/dashboard` | **Dashboard**: the cards (section 11); `?site=<id>` names the site (section 28.1) | signed in | dynamic, streamed per card, cache-first |
-| `/sites` | **All sites** (Growth): one card per site; Starter sees the upgrade panel (section 28.1) | signed in | dynamic, streamed per site |
+| `/sites` | **All sites** (Pro): one card per site; Free sees the upgrade panel (section 28.1) | signed in | dynamic, streamed per site |
 | `/settings` | **Settings**: account, weekly email, public page, billing, disconnect Google, delete account | signed in | dynamic |
 | `/p/[slug]` | **Public page** (section 15) | public | cached about 10 minutes, plus Cloudflare |
 | `/privacy`, `/terms` | **Legal** | public | static |
@@ -360,6 +373,7 @@ Stripe keeps its own payment records, because it is the merchant of record.
 - The calendar's code loads the first time "Custom" is pointed at or chosen, so pages don't carry it otherwise.
 - With a custom range, the button shows its days ("1 Sep – 30 Sep") and the period isn't repeated next to it.
 - The weekly email uses the 7-day range computed on a Monday, which is exactly last Monday to Sunday (section 14).
+- **Free's 30 days** (section 16): on Free, "Last 12 months" shows a "Pro" badge and opens Settings → Billing, the calendar starts 30 days before today (`freeFirstDay`), and a note under the menu says "Free shows the last 30 days. Pro shows everything." An address with an older range shows Last 30 days instead (`rangeForPlan`), on the dashboard, CSV downloads and public pages. A Free owner's public page leaves 12 months out of its menu.
 
 **Still updating:**
 
@@ -448,7 +462,7 @@ Primary key (`property_id`, `report`, `range_type`, `params_hash`).
   - A slug is 3–40 characters of `[a-z0-9-]`. Reserved words are blocked.
   - One page per site since Sprint 5 (it was one per user, showing the active site).
 - **`user_settings`**: `user_id` pk fk, `weekly_email` boolean (default true), `email_notice_dismissed` boolean (default false), `created_at`, `updated_at`.
-- **`billing`**: `user_id` pk fk, `trial_ends_at` (sign-up + 14 days), `status` (Stripe subscription status or null), `plan` (`starter` or `growth`, from the price; null until the first payment), `stripe_customer_id`, `stripe_subscription_id`, `plan_interval` (`month` or `year`, null until the first payment), `current_period_end`, `cancel_at_period_end`, `state_at`, `updated_at`.
+- **`billing`**: `user_id` pk fk, `status` (Stripe subscription status, or null on Free), `plan` (`pro`, from the price; null until the first payment), `stripe_customer_id`, `stripe_subscription_id`, `plan_interval` (`month` or `year`, null until the first payment), `current_period_end`, `cancel_at_period_end`, `state_at`, `updated_at`.
 - **`email_send`**: `user_id` fk, `week_start` date, `sent_at`, `provider_message_id`. The primary key is (`user_id`, `week_start`), so a week's email can only go out once.
 - **`stripe_event`**: `event_id` pk, `type`, `received_at`. The webhook skips events it has already stored.
 - **`revenue_source`** (Sprint 7): `site_id` pk fk → site (cascade), `user_id` fk, `secret` (the restricted Stripe key, encrypted), `key_hint` (last 4), `livemode`, `status` (`ok` · `invalid`), `covers_from` (first day of the totals), `last_sync_at`, `last_error`, `mrr_left_out`, `connected_at`.
@@ -560,7 +574,7 @@ The dashboard is one scrolling page.
 - **Below it:** notices (weekly email notice, state banners from section 12), then the cards. The period next to the date menu is small and light.
 - **The overview** (`OverviewCard`): one card with the four numbers in a row, short dividers between them (two by two on phones), and the visitors chart underneath. Downloads for the chart and the four numbers sit in one small CSV menu.
 - **Layout:** one column on phones, a grid on wider screens.
-- **List cards** (`ListCard`: Sources, Pages, Countries, Devices, AI traffic, Actions) have no visible title and no CSV button, like DataFast: tabs at the top left name the view ("Country | City"), the view's column names sit at the right, and "Details" at the bottom opens the whole list (section 13). The title stays for screen readers; the plain-words help moved into Details. A card with one view shows its name as a single tab.
+- **List cards** (`ListCard`: Sources, Pages, Countries, Devices, AI traffic, Actions) have no visible title and no CSV button, like DataFast: tabs at the top left name the view ("Country | City"), the view's column names sit at the right, and "More" at the bottom opens the whole list (section 13). The title stays for screen readers; the plain-words help moved into Details. A card with one view shows its name as a single tab.
 - **The overview and "Right now"** keep their ⓘ help; "Right now" shows no visible title either (its ⓘ carries the GeoNames credit).
 - **Built from shared parts:** every list card sits in the shared `CardShell` (title, help, CSV, and the loading, empty, error, stale and locked states). The card list, titles and help text come from `src/config/cards.ts` (section 4).
 - **List cards have a fixed height** of 10 rows (`RankedList`), whatever their number of rows, so cards side by side line up and nothing moves. The rest of a list is in Details. Share bars are soft blue (`chart-1`) and grow in when a list appears.
@@ -754,7 +768,7 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 | **Analytics access not granted** | The Analytics scope was unticked on Google's consent screen | Card: "SimpleDash needs read-only access to Google Analytics." Button: "Allow access" |
 | **Google access revoked** | `invalid_grant` or a 401 | Banner: "Google access ended. Reconnect to see fresh numbers." Button: "Reconnect Google". Cached numbers stay visible, greyed out |
 | **Google quota reached** | A 429 from Google | A note on the cards with the time it clears. Cached numbers stay (section 10.4) |
-| **Trial ended** | Trial over and no paid subscription | A locked overlay on the cards: "Your free trial has ended. Keep SimpleDash for €9 a month or €90 a year." The Monthly / Yearly switch and an "Upgrade" button (section 16). Settings still work, and nothing is deleted |
+| **Older than Free's 30 days** | Free, and the address asks for 12 months or older custom days | Last 30 days, with the note "Free shows the last 30 days, so this is Last 30 days. Pro shows 12 months and any dates you pick." (section 16) |
 | **Lost access to the property** | A 403 from Google | A banner, plus the switcher |
 
 **Other empty states from the roadmap:**
@@ -794,7 +808,7 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 
 - The `weekly-email` job runs every hour. It picks users who meet all of these:
   - The weekly email is on.
-  - The account is not locked (section 16).
+  - The account is on Pro (the Monday email is a Pro feature, section 16).
   - The active site has status `ok`.
   - Local time in the site's time zone is Monday, between 13:00 and 17:59.
   - There is no `email_send` row for this week yet.
@@ -877,56 +891,51 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 
 **When it's not live:**
 
-- **Paused:** when the owner is locked (trial ended, unpaid) or disconnected from Google, the page only says "This page is paused." with the SimpleDash link. It is `noindex` and drops out of the sitemap.
+- **Paused:** when the owner is disconnected from Google, or the site isn't open on the owner's plan (an extra site after going back to Free), the page only says "This page is paused." with the SimpleDash link. It is `noindex` and drops out of the sitemap.
 - **Turned off (or never made):** the page shows "Page not found" with `noindex`. The page streams inside a Suspense boundary (Cache Components), so the status code is already 200 when the database answers; a real 404 status would need a lookup before rendering on every view. Search engines treat a `noindex` page like a 404.
 
 **Sitemap:** includes pages that are on, indexable and not paused.
 
 ## 16. Billing
 
-**Plans and prices** (Siamak, Oct 11, 2026). They live in one place, `src/config/plans.ts`, which feeds the pricing section, the upgrade screens, settings, structured data and `llms.txt`.
+**Plans and prices** (Siamak, Oct 14, 2026; they replace Starter, Growth and the 14-day trial). They live in one place, `src/config/plans.ts`, which feeds the pricing section, the upgrade screens, settings, the terms, structured data, `llms.txt` and every server-side limit.
 
-| Plan | Price | What it includes | Status |
+| Plan | Price | What it includes |
+| --- | --- | --- |
+| **Free** | $0. No card, no time limit | One GA4 site; Today, Yesterday, 7 and 30 days (custom days inside the last 30); every dashboard card; a public stats page with "Powered by SimpleDash" |
+| **Pro** | $9 a month, or $90 a year (2 months free), tax included. Launch price: it stays the same while the subscription runs without a break | Everything in Free, plus: up to 10 sites, 12 months and any dates, the Monday email, Google search insights (section 28.2), revenue from Stripe and sales by source (section 28.3), and a public page without our link |
+
+- "2 months free" is worked out from the prices (12 × $9 − $90 = $18, which is 2 months of $9). It is never typed in by hand.
+- Prices are in US dollars (`currency` in `plans.ts`) and shown as "$9" (`formatPrice`, narrow symbol).
+- Stripe has one product, "SimpleDash Pro" (SaaS tax code `txcd_10103001`), with two tax-inclusive USD prices: `STRIPE_PRICE_MONTHLY` and `STRIPE_PRICE_YEARLY` (section 22).
+- The terms say Free may change, with 30 days' notice by email.
+
+**Limits** (`entitlements(planState)` in `src/lib/billing/plan.ts`, from `plans.ts`):
+
+| Limit | Free | Pro | Enforced in |
 | --- | --- | --- | --- |
-| **Starter** | €9 a month, or €90 a year (2 months free) | One GA4 site, no traffic limits, every V1 feature, and a 14-day free trial with no card | On sale |
-| **Growth** | €19 a month or €190 a year | Everything in Starter, plus the V2 list (section 28): up to 10 sites, Google search insights, revenue from Stripe, sales by source | On sale since Sprint 5. The free trial is Starter only; Growth starts when paid for |
+| `sites` | 1 | 10 | `src/lib/sites/access.ts`, the add-site action, under a per-user advisory lock |
+| `fullHistory` | No: the last 30 days (`FREE_HISTORY_DAYS`) | Yes | `rangeForPlan` (`src/lib/ga4/ranges.ts`): the dashboard, CSV downloads and public pages show Last 30 days instead of an older range, with a note on the dashboard. The date menu shows "Last 12 months" with a Pro badge that opens Settings → Billing, and the calendar starts 30 days back |
+| `weeklyEmail` | No | Yes | The weekly-email job only reads paying accounts; Settings shows the email as part of Pro |
+| `searchConsole`, `revenue` | No | Yes | Their actions, cards, jobs and settings sections (section 28) |
+| `poweredBy` | Yes | No | The public page's footer (section 15); the landing page's demo always shows it |
 
-- "2 months free" is worked out from the prices (12 × €9 − €90 = €18, which is 2 months of €9). It is never typed in by hand.
-- Stripe has two products, Starter and Growth, with two prices each. Their IDs are in `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_GROWTH_MONTHLY` and `STRIPE_PRICE_GROWTH_YEARLY` (section 22).
-- Growth went on sale with V2 (section 28.1), with its limits in `plans.ts`.
+**Plan state** (`getPlan(user)`, `planState` in `src/lib/billing/plan.ts`, unit tested):
 
-**Trial:**
+- **Paid (Pro):** the Stripe subscription status is `active`, `trialing` or `past_due`.
+- **Free:** everything else, including after a subscription ends. Nothing locks: Free keeps the dashboard, the public page and the data. Extra sites added on Pro stay in the list, paused, until the next upgrade.
 
-- `billing.trial_ends_at` is set to sign-up + 14 days when the user is created.
-- No card and no Stripe calls during the trial.
+**Upgrade:** the server action `upgrade` (`src/app/actions/billing.ts`) creates a Checkout Session (`createCheckout` in `src/lib/billing/checkout.ts`).
 
-**Plan state** (`getPlan(user)` in `src/lib/billing/plan.ts`):
-
-- **Paid:** the Stripe subscription status is `active`, `trialing` or `past_due`.
-- **Trial:** otherwise, if now is before `trial_ends_at`.
-- **Locked:** everything else.
-
-**What locked means:**
-
-- The dashboard overlay (section 12).
-- No weekly email.
-- The public page is paused.
-- No GA4 calls: jobs skip locked users.
-- All data is kept.
-
-**Upgrade:** a server action, `startCheckout` (`src/lib/billing/checkout.ts`), creates a Checkout Session.
-
-- **Where:** the locked overlay (section 12) and Settings → Billing. Both hold the same Monthly / Yearly switch as the pricing section (`BillingSwitch`), here as a form field named `interval`. The form posts to the server action, so upgrading needs no JavaScript.
+- **Where:** Settings → Billing and the "part of Pro" panels (more sites, Google search insights, revenue, the Monday email). They hold the same Monthly / Yearly switch as the pricing section (`BillingSwitch`), here as a form field named `interval`. The form posts to the server action, so upgrading needs no JavaScript.
 - **Price:** the action checks `interval` (`month` or `year`) with Zod and picks `STRIPE_PRICE_MONTHLY` or `STRIPE_PRICE_YEARLY` on the server. **The browser never sends a price ID.**
-- Subscription mode, for the chosen price.
-- **Stripe Managed Payments** is turned on, so Stripe is the merchant of record and handles VAT and sales tax.
-- The product needs an eligible digital tax code (SaaS).
-- If 48 hours or more of the trial are left, pass `subscription_data.trial_end`, so upgrading early doesn't cost trial days. This works the same for both prices. Check in Sprint 4 that Managed Payments supports this; if not, charge right away.
-- On success, go to `/dashboard?upgraded=1`. On cancel, go to `/settings`.
+- Subscription mode, no trial. **Stripe Managed Payments** is on, so Stripe is the merchant of record and handles VAT and sales tax.
+- Someone already paying gets the Customer Portal instead.
+- On success, go to `/dashboard?upgraded=pro`. On cancel, go to `/settings#billing`.
 
-**Manage:** a Stripe Customer Portal session for card, invoices, cancelling, and switching between monthly and yearly. The Portal's plan-switching setting lists both Starter prices. Check in Sprint 4 that the Portal works with Managed Payments.
+**Manage:** a Stripe Customer Portal session for card, invoices, cancelling, and switching between monthly and yearly (the Portal's plan-switching setting lists both Pro prices).
 
-**Settings → Billing** shows the plan in plain words, for example "Free trial · 9 days left" or "Starter · €90 a year · renews on 11 Oct 2027", with "Upgrade" or "Manage billing".
+**Settings → Billing** shows the plan in plain words: "Free", "Pro · $90 a year · renews on 11 Oct 2027" or "Pro · $9 a month · ends on 4 Nov 2026", with "Upgrade to Pro" or "Manage billing".
 
 **Webhook** (`/api/stripe/webhook`):
 
@@ -936,12 +945,12 @@ There is no setup screen. Every state below is a card or banner on the dashboard
   - `checkout.session.completed`
   - `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`
   - `invoice.paid`, `invoice.payment_failed`
-- Read the subscription's price and store its interval (`month` or `year`) in `billing.plan_interval`. A price that isn't one of the two Starter prices is reported to Sentry.
-- **Unit tests:** signature check, each event to status, price to `plan_interval`, repeated events, and out-of-order events (the newest subscription state wins).
+- Read the subscription's price and store `plan` (`pro`) and its interval in `billing`. A paid subscription on a price that isn't one of Pro's two (an old Starter or Growth test price, say) is still Pro, and is reported to Sentry.
+- **Unit tests:** signature check, each event to status, price to plan and interval, repeated events, and out-of-order events (the newest subscription state wins).
 
 **Managed Payments limits:** subscriptions can only be created through Checkout or Payment Links, and Connect isn't supported. Neither affects us.
 
-**Prices on the landing page:** the pricing section (section 17). Prices include VAT.
+**Migration `0007_pro_plan.sql`:** every row that had a paid plan becomes `pro`, and `billing.trial_ends_at` is dropped.
 
 ## 17. Landing page, legal pages and SEO files
 
@@ -961,7 +970,7 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 - Fixed height: the page scrolls inside the window, and its date menu, tabs and tooltips work.
 - The frame starts loading only when it comes near the screen, then fades in over a placeholder of the same shape, so the landing page's first load stays light.
 - **Which page:** `src/config/demo.ts` holds the slug (now `meetline-me`) and the range the demo opens with. If that page is missing or paused, `/demo` shows sample data instead, so the landing page never breaks.
-- **`/demo` on its own** shows the same page with a "Live demo" banner and a trial button. It is `noindex` (the original is `/p/<slug>`), may be framed by our own site only (`frame-ancestors 'self'`), and is cached like a public page.
+- **`/demo` on its own** shows the same page with a "Live demo" banner and a "Get yours, free" button. It always allows every range and shows "Powered by SimpleDash", whatever the demo owner's plan. It is `noindex` (the original is `/p/<slug>`), may be framed by our own site only (`frame-ancestors 'self'`), and is cached like a public page.
 - **No Recharts on the landing page:** the demo uses the server-rendered chart, and its JavaScript runs inside the frame.
 
 **How it works, in 3 steps:**
@@ -976,19 +985,15 @@ There is no setup screen. Every state below is a card or banner on the dashboard
   - Two radio buttons styled as a segmented control, labelled "Monthly" and "Yearly". A handwritten "2 months free" note with an arrow points at Yearly (screen readers hear "Yearly · 2 months free").
   - The white pill slides to the checked option, and CSS `:has()` shows the matching prices, so it needs no JavaScript.
   - It starts on Monthly. Arrow keys move between the options, and focus is visible.
-- **Prices roll** like an odometer when the switch moves (`RollingPrice`, CSS only): "€9" ⇄ "€90", "€19" ⇄ "€190". "/ month" and "/ year" crossfade, and for Yearly a "Save €18 a year" line opens under the price (12 × the monthly price − the yearly price).
-- **Starter card:**
-  - "€9 / month", or "€90 / year" with "Save €18 a year" when Yearly is picked.
-  - Its feature list: one GA4 site, no traffic limits, full history from day one, the weekly email, the public page.
-  - The button "Start 14-day free trial →" → `/signin`, with "€0 due today · no card needed" under it.
-  - Billing is only chosen at upgrade (section 16), because the trial needs no card.
-- **Growth card** (on sale since Sprint 5):
-  - "€19 / month", or "€190 / year" with "Save €38 a year".
-  - "Everything in Starter, plus" its feature list (section 16).
-  - The button "Start free, upgrade later →" → `/signin`, with "The 14-day trial is on Starter. Growth starts when you upgrade." under it (the trial is Starter only, section 28.1).
-- Both cards are the shared `PlanCard` (`components/shared`), which the in-app plan choice also uses in a compact size.
+- **Prices roll** like an odometer when the switch moves (`RollingPrice`, CSS only): "$9" ⇄ "$90". "/ month" and "/ year" crossfade, and for Yearly a "Save $18 a year" line opens under Pro's price (12 × the monthly price − the yearly price).
+- **Free card** (since Oct 14, 2026): "$0", its feature list (section 16), and the outline button "Start free →" → `/signin`, with "No card needed, no time limit" under it.
+- **Pro card** (highlighted): "$9 / month", or "$90 / year" with "Save $18 a year". "Everything in Free, plus" its feature list. The button "Start free, upgrade any time →" → `/signin`, with the launch price note under it. Billing is chosen at upgrade, in Settings (section 16).
+- Both cards are the shared `PlanCard` (`components/shared`), which the in-app upgrade also uses in a compact size.
+- The heading is "Free to start, one simple price", with "Prices include tax."
 
-**FAQ:** "Do I need GA4?" and "What do you store?".
+**Hero:** under the button, "Free for one site · no card · read-only access · Pro $9 a month".
+
+**FAQ:** "Do I need GA4?", "What do you store?", "Can SimpleDash change anything in my Google account?", "Is it really free?", "Is SimpleDash open source?" (the code on GitHub, AGPL-3.0) and "Do I have to add a tracking script?".
 
 **Brand:** the name is always SimpleDash, one word. The logo is a "–" dash mark, drawn by the shared `Logo` component. The favicons (`icon.tsx`, `apple-icon.tsx`) and the Open Graph images draw it from the theme file (section 18), so a brand colour change reaches them too.
 
@@ -1001,7 +1006,7 @@ Both are static, in plain English. Claude drafts them, Siamak reviews them (this
 - **What we store:** users, settings, encrypted Google tokens, chart notes, public-page settings and short-lived report caches. Never visitor-level data.
 - **What we read from Google:** read-only Analytics, and why.
 - **Google's rules:** compliance with the Google API Services User Data Policy, including the Limited Use requirements. Google verification needs this.
-- **Processors:** Hetzner, Supabase, Cloudflare, Resend, Stripe (as merchant of record) and Sentry.
+- **Processors:** the server host (Microsoft Azure today; it also holds the database), Cloudflare (with R2 for backups), Resend, Stripe (as merchant of record) and Sentry.
 - **Retention and deletion:** deleting the account removes everything; disconnecting revokes Google access.
 - **Cookies:** only necessary ones (session and sign-in state).
 - **Contact.**
@@ -1009,8 +1014,8 @@ Both are static, in plain English. Claude drafts them, Siamak reviews them (this
 **The terms cover:**
 
 - the service
-- the trial
-- prices and billing through Stripe as merchant of record: monthly or yearly, renewing automatically
+- Free (and that it may change, with 30 days' notice by email)
+- Pro's prices, the launch price, and billing through Stripe as merchant of record: monthly or yearly, renewing automatically
 - cancellation and refunds (the refund rule for yearly plans is an open question, section 27)
 - acceptable use
 - liability
@@ -1022,14 +1027,13 @@ Both are static, in plain English. Claude drafts them, Siamak reviews them (this
 - **Canonical URLs:** built from `APP_URL`.
 - **Open Graph images:** one for the landing page (`opengraph-image.tsx`, generated at build time) and one per public page.
 - **Structured data:** `SoftwareApplication` JSON-LD on the landing page: name, description, `applicationCategory` "BusinessApplication", `operatingSystem` "Web", and `offers`.
-  - Two `Offer`s, each with a `UnitPriceSpecification`: €9 a month (`unitCode` "MON") and €90 a year (`unitCode` "ANN"), priceCurrency "EUR", both from `plans.ts`.
-  - Every plan on sale gets its two offers: Growth's €19 and €190 joined in Sprint 5.
+  - Three `Offer`s from `plans.ts`, priceCurrency "USD": Free at 0, and Pro at 9 a month (`unitCode` "MON") and 90 a year (`unitCode` "ANN"), each of Pro's with a `UnitPriceSpecification` (tax included).
 - **`robots.txt`:**
   - Allows `/`, `/privacy`, `/terms` and `/p/`.
   - Blocks `/dashboard`, `/settings`, `/admin`, `/signin`, `/api/` and `/email/`.
   - Links to the sitemap.
 - **`sitemap.xml`:** landing, privacy and terms (Sprint 3), plus public pages (Sprint 4).
-- **`llms.txt`:** short plain text for AI assistants: what SimpleDash is, who it's for, features, prices (Starter at €9 a month or €90 a year; Growth at €19 a month or €190 a year), what we store, and key links (including `/#pricing` and `/demo`).
+- **`llms.txt`:** short plain text for AI assistants: what SimpleDash is, who it's for, features, prices (Free; Pro at $9 a month or $90 a year), what we store, and key links (including `/#pricing` and `/demo`).
 
 ## 18. Design, performance and accessibility
 
@@ -1106,7 +1110,7 @@ The bar is the polish of the best tools in this space: everything clear, quick a
   - a soft blue share bar sits behind the row (`bg-chart-1/12`) and grows in
   - the whole row highlights on hover
   - long labels are cut short, and the full text stays available on hover and to screen readers
-  - the card shows the top rows at a fixed height; "Details" opens the rest in a modal
+  - the card shows the top rows at a fixed height; "More" opens the rest in a modal
 
 **Interaction:**
 
@@ -1219,15 +1223,15 @@ A full CSP is a later improvement: script nonces would make the static pages dyn
 
 ## 20. Jobs and operations
 
-Jobs run as Coolify scheduled tasks. Each one runs `node scripts/run-job.mjs <job>` inside the app container, which POSTs to `http://localhost:3000/api/internal/jobs/<job>` with the bearer secret.
+Jobs run from cron on the server (`deploy/crontab`, as the `deploy` user, times in UTC). Each one runs `simpledash job <job>`, which runs `node scripts/run-job.mjs <job>` inside the app container. That POSTs to `http://localhost:3000/api/internal/jobs/<job>` with the bearer secret. Output goes to the journal (`simpledash logs jobs`).
 
 | Job | When | What it does |
 | --- | --- | --- |
-| `warm-cache` | hourly at :05 | For listed, unlocked, `ok` sites whose dashboard was opened in the last 24 hours (`last_viewed_at`, since Sprint 5): refresh the 7-day reports when they're stale or the day has turned in the site's time zone. Skips quota-blocked sites |
+| `warm-cache` | hourly at :05 | For listed `ok` sites, on every plan, whose dashboard was opened in the last 24 hours (`last_viewed_at`, since Sprint 5): refresh the 7-day reports when they're stale or the day has turned in the site's time zone. Skips quota-blocked sites |
 | `weekly-email` | hourly at :00 | Section 14 |
-| `revenue-sync` | hourly at :20 | Brings Growth sites' Stripe totals up to date (section 28.3) |
+| `revenue-sync` | hourly at :20 | Brings Pro sites' Stripe totals up to date (section 28.3) |
 | `cleanup` | daily at 03:30 UTC | Deletes `report_cache` rows not fetched for 7 days, and expired sessions and verification rows |
-| backup | nightly at 02:00 UTC | Runs in a separate small container with a Postgres client and rclone. `pg_dump` (custom format) of our `public` and `drizzle` schemas (not Supabase's own), without the rows of `report_cache`, `session` and `verification`, then gzip, then the R2 bucket. An R2 lifecycle rule deletes copies after 30 days. Restore one into local Postgres once, to prove it works. Setup and restore: `docs/backup.md` |
+| backup | nightly at 02:00 UTC | Runs in a separate small container with a Postgres client and rclone. `pg_dump` (custom format) of our `public` and `drizzle` schemas, without the rows of `report_cache`, `session` and `verification`, then gzip, then the R2 bucket. An R2 lifecycle rule deletes copies after 30 days. Restore one into local Postgres once, to prove it works. Setup and restore: `docs/backup.md` |
 
 ### Monitoring
 
@@ -1235,16 +1239,16 @@ Jobs run as Coolify scheduled tasks. Each one runs `node scripts/run-job.mjs <jo
   - Errors from GA4 calls, jobs and webhooks.
   - One free uptime monitor on `/api/health`.
   - One free cron monitor on the weekly email job.
-- **`/api/health`** runs `select 1` and returns 200 or 503. The uptime check calls it every minute, which also keeps the Supabase project active (free projects may pause after 7 days of low activity).
+- **`/api/health`** runs `select 1` and returns 200 or 503. The uptime check calls it every minute, and each deploy waits for it before keeping a new version.
 
 ### Usage counts (`/admin`, only for `ADMIN_EMAILS`)
 
 - Signups: total, last 7 days and last 30 days.
 - Connected sites.
-- On trial, paying (monthly and yearly) and locked.
-- Trial-to-paid rate.
+- Free, and Pro monthly and yearly.
+- The share of accounts on Pro.
 - Public pages turned on.
-- Weekly email turned on.
+- Monday email turned on (Pro accounts only).
 
 Weekly email opens are read in Resend's dashboard.
 
@@ -1262,10 +1266,10 @@ Multi-stage, on `node:24-alpine`:
    - `CMD node scripts/migrate.mjs && node server.js`.
    - `HEALTHCHECK` on `/api/health`.
 
-### `compose.yaml`
+### `compose.yaml` (local)
 
 - **`db`:** `postgres:17-alpine` with a volume, for local development.
-- **`app`:** builds the Dockerfile, reads `.env` and serves port 3000. Use it to test the production image locally. Coolify deploys from the Dockerfile directly.
+- **`app`:** builds the Dockerfile, reads `.env` and serves port 3000. Use it to test the production image locally.
 
 ### Local development
 
@@ -1275,43 +1279,33 @@ Multi-stage, on `node:24-alpine`:
 
 Next.js runs on the Mac and Postgres runs in Docker. This needs Docker Desktop or OrbStack, which is not installed on this Mac today.
 
-### Server setup
+### Production: one server (Siamak's call, Oct 14, 2026)
 
-Siamak does this; Claude writes the step-by-step guide in `docs/deploy.md` during Sprint 0.
+No Coolify and no Supabase in production. Step by step for Siamak: `docs/deploy.md`.
 
-1. **Hetzner Cloud server:**
-   - EU location: Falkenstein or Nuremberg, near Supabase's Frankfurt region.
-   - 2 vCPU and 4 GB RAM. Coolify needs about 2 GB; add swap for builds.
-   - Ubuntu LTS, SSH key login.
-   - Firewall: port 22 from your IP only, plus 80 and 443.
-2. **Coolify:**
-   - Install Coolify and connect the GitHub repo, using the Dockerfile build pack.
-   - Set env vars in Coolify.
-   - Health check on `/api/health`.
-   - Auto-deploy on push to `main`.
-   - Add the scheduled tasks from section 20.
-3. **Supabase:**
-   - Project in `eu-central-1` (Frankfurt).
-   - `DATABASE_URL` is the shared pooler in **session mode**. That works over IPv4. The direct connection is IPv6-only, and Docker has no IPv6 by default.
-4. **Cloudflare:**
-   - DNS: an A record for `simpledash.app` pointing at the server, proxied.
-   - SSL/TLS: "Full (strict)", with a Cloudflare Origin Certificate installed in Coolify's proxy, and "Always Use HTTPS".
-   - Cache rules for static files, `/`, `/privacy`, `/terms` and `/p/*`.
-   - A WAF rule for `/api/internal/*`.
-   - A rate-limiting rule for `/api/`.
-   - Email Routing for `hello@simpledash.app`.
-5. **Google Cloud:**
-   - Create a project and enable the Google Analytics Data API and Admin API.
-   - **OAuth consent screen** (External):
-     - app name SimpleDash and the dash logo
-     - support email
-     - `simpledash.app` as an authorised domain
-     - privacy and terms URLs
-     - scopes: `openid`, `email`, `profile` and `analytics.readonly`
-   - **Web client** with redirect URIs:
-     - `http://localhost:3000/api/auth/callback/google`
-     - `https://simpledash.app/api/auth/callback/google`
-   - Publish it **"In production"** (unverified) as early as Sprint 1. In "Testing" status, refresh tokens expire every 7 days. The 100-user cap and Google's warning screen stay until verification, which is submitted in Sprint 3.
+**`deploy/compose.yaml`** runs four containers in `/opt/simpledash`:
+
+- **`app`:** the image `simpledash-app:current`, never pulled from a registry. `DATABASE_URL` comes from `POSTGRES_PASSWORD`; everything else from `.env` (a copy of `deploy/secrets/app.env`). No published port.
+- **`db`:** `postgres:17-alpine` with a named volume. No published port.
+- **`caddy`:** ports 80 and 443. Serves the Cloudflare Origin Certificate (Cloudflare SSL mode Full (strict), 15-year certificate, no Let's Encrypt), redirects `www` to the bare domain and HTTP to HTTPS, refuses `/api/internal/*` and proxies the rest to `app:3000`.
+- **`backup`:** built from `scripts/backup/`; waits for cron's nightly `backup.sh` and setup's `restore.sh` (section 20, `docs/backup.md`).
+
+**`deploy/setup.sh <user@server> [--from <user@old-server>]`**, run on the Mac:
+
+1. The first run builds `deploy/secrets/app.env` from `.env.example` (new random secrets, service keys copied from `.env`), makes the deploy key and stops until the certificate files and every required value are there.
+2. Sends the release files and secrets over SSH and runs `simpledash setup` as root: system updates and automatic security updates, UTC clock, 2 GB swap, Docker from Docker's apt repository with the rotating `local` log driver, `ufw` (SSH, 80, 443), the `deploy` user and the files. Then it starts `db`, `caddy` and `backup`.
+3. With `--from`: stops the old server's app and backs it up.
+4. `simpledash restore --if-empty`: the newest R2 backup, only into an empty database and before the app's first start.
+5. Sets the GitHub secrets (`DEPLOY_HOST`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, from the server's own host keys over the same SSH session) and the variable `DEPLOY_PLATFORM` (from the server's CPU), then runs the first deploy and waits for it.
+6. Checks port 443 on the server's IP, and with a Cloudflare token sets the DNS records (`A` proxied, `www` CNAME if missing).
+
+**`.github/workflows/deploy.yml`:**
+
+- Every pull request and push: `npm ci` and `npm run check` on Node from `.nvmrc`.
+- On `main` (or by hand), once `DEPLOY_PLATFORM` is set: builds the `Dockerfile` for that platform with the GitHub Actions cache, then streams the image (`docker save`) with `deploy/` and `scripts/backup/` to `deploy@server` over SSH. One deploy at a time.
+- The deploy key is restricted on the server to `command="simpledash deploy"`: no shell, no forwarding.
+
+**`simpledash deploy`** (on the server): loads the image as `simpledash-app:<commit>`, updates the release files, tags the old `current` as `previous`, starts the new one (migrations run first) and waits up to 3 minutes for a healthy `/api/health`. If it isn't healthy, it goes back to `previous` and fails the run. It reloads Caddy and removes older images. Migrations stay additive, so going back never meets a schema it can't read.
 
 ## 22. Environment variables
 
@@ -1320,7 +1314,8 @@ These become `.env.example` in Sprint 0. Each variable is added in the sprint sh
 | Name | Used for | Example or format | From |
 | --- | --- | --- | --- |
 | `APP_URL` | Absolute links, canonical URLs, Better Auth base URL | `http://localhost:3000` · `https://simpledash.app` | Sprint 0 |
-| `DATABASE_URL` | Postgres: local Docker, or the Supabase session pooler | `postgres://…` | Sprint 0 |
+| `DATABASE_URL` | Postgres: local Docker. On the server `deploy/compose.yaml` sets it, so `app.env` leaves it out | `postgres://…` | Sprint 0 |
+| `POSTGRES_PASSWORD` | Server only: the Postgres container's password, from which compose builds `DATABASE_URL` and `BACKUP_DATABASE_URL`. Letters and digits; set once | random | Oct 14 |
 | `BETTER_AUTH_SECRET` | Signs sessions and encrypts Google tokens | 32+ random bytes | Sprint 1 |
 | `GOOGLE_CLIENT_ID` | Google OAuth | | Sprint 1 |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth | | Sprint 1 |
@@ -1330,14 +1325,12 @@ These become `.env.example` in Sprint 0. Each variable is added in the sprint sh
 | `EMAIL_FROM` | Sender address | `SimpleDash <hello@simpledash.app>` | Sprint 4 |
 | `STRIPE_SECRET_KEY` | Stripe API | test key in development | Sprint 4 |
 | `STRIPE_WEBHOOK_SECRET` | Webhook signatures | | Sprint 4 |
-| `STRIPE_PRICE_MONTHLY` | Starter, €9 a month | `price_…` | Sprint 4 |
-| `STRIPE_PRICE_YEARLY` | Starter, €90 a year | `price_…` | Sprint 4 |
-| `STRIPE_PRICE_GROWTH_MONTHLY` | Growth, €19 a month | `price_…` | Sprint 5 |
-| `STRIPE_PRICE_GROWTH_YEARLY` | Growth, €190 a year | `price_…` | Sprint 5 |
+| `STRIPE_PRICE_MONTHLY` | Pro, $9 a month (tax included) | `price_…` | Sprint 4 |
+| `STRIPE_PRICE_YEARLY` | Pro, $90 a year (tax included) | `price_…` | Sprint 4 |
 | `STRIPE_MANAGED_PAYMENTS` | Turns Managed Payments on in Checkout | `true` (default) | Sprint 4 |
 | `SENTRY_DSN` | Server error reports (optional) | | Sprint 4 |
 | `ADMIN_EMAILS` | Who can open `/admin` | comma-separated | Sprint 4 |
-| `BACKUP_DATABASE_URL` | Backup container: database to dump | `postgres://…` | Sprint 4 |
+| `BACKUP_DATABASE_URL` | Backup container: database to dump and restore into. Set by `deploy/compose.yaml` | `postgres://…` | Sprint 4 |
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | Backup container: where dumps go | | Sprint 4 |
 
 ## 23. Testing
@@ -1376,16 +1369,16 @@ Vitest unit tests only. The roadmap rules out end-to-end tests.
 
 | Item | Per month |
 | --- | --- |
-| Hetzner server (2 vCPU, 4 GB) | about €4–8 (check the current price) |
-| Supabase free | €0. Pro ($25) only if pausing becomes a problem or we pass 500 MB |
+| The server (2 vCPU, 2–4 GB; Azure today) | the provider's price for that size. Postgres runs on it, so there's no database bill |
+| GitHub Actions (checks, builds, deploys) | €0: 2,000 minutes a month on a private repo; a deploy takes about 5–8 |
 | Cloudflare (DNS, proxy, cache, Email Routing) and R2 (10 GB free) | €0 |
 | Resend | €0, then $20 at about 90 weekly-email users |
 | Sentry Developer | €0 |
-| Stripe and Managed Payments | Per payment: Stripe's fees plus 3.5%. That's about €0.32 on €9 a month, or €3.15 on €90 a year (about €0.26 a month) |
+| Stripe and Managed Payments | Per payment: Stripe's fees plus 3.5%. 3.5% of $9 is about $0.32, plus Stripe's card fee; check Stripe's current pricing |
 
-**At 100 customers:** about €25 a month in total, roughly €0.25 per customer, not counting payment fees. That's well under the €1 limit.
+**At 100 customers:** the server plus about €20 for Resend, not counting payment fees. With a server under €60 a month, that's under €0.80 per customer, inside the €1 limit.
 
-**Storage:** about 11 reports × 3 ranges × up to 15 KB per property, under 0.5 MB. So the 500 MB free database holds about 1,000 connected sites after the 7-day cleanup.
+**Storage:** about 11 reports × 3 ranges × up to 15 KB per property, under 0.5 MB. So 500 MB of the server's disk holds about 1,000 connected sites after the 7-day cleanup.
 
 ## 25. GA4 and Google facts (verified Oct 11, 2026)
 
@@ -1400,7 +1393,7 @@ Vitest unit tests only. The roadmap rules out end-to-end tests.
 | OAuth Testing status | Refresh tokens expire in 7 days in "Testing". They also stop after 6 months unused, on revocation, or when time-limited access expires | [OAuth 2.0](https://developers.google.com/identity/protocols/oauth2#expiration) | Publish "In production" early, and handle `invalid_grant` |
 | Unverified apps | Capped at 100 new users. Verification needs a verified domain, privacy policy and demo video, and takes 3–5 business days (from the roadmap) | [Unverified apps](https://support.google.com/cloud/answer/7454865), [sensitive scopes](https://developers.google.com/identity/protocols/oauth2/production-readiness/sensitive-scope-verification) | Submit in Sprint 3 |
 | Admin API | v1beta has `accountSummaries`, `properties` (`timeZone`, `createTime`, `serviceLevel`), `dataStreams` and `keyEvents` | [Admin API](https://developers.google.com/analytics/devguides/config/admin/v1/rest) | Property choice (section 7) and the signup picker |
-| Supabase free | 500 MB database. "May pause" after 7 days of low activity. The shared pooler is IPv4-only and session mode supports prepared statements. The direct connection is IPv6 | [Pricing](https://supabase.com/pricing), [connecting](https://supabase.com/docs/guides/database/connecting-to-postgres), [production checklist](https://supabase.com/docs/guides/deployment/going-into-prod) | Session pooler. The health check keeps it active |
+| Supabase free | 500 MB database. "May pause" after 7 days of low activity. The shared pooler is IPv4-only and session mode supports prepared statements. The direct connection is IPv6 | [Pricing](https://supabase.com/pricing), [connecting](https://supabase.com/docs/guides/database/connecting-to-postgres), [production checklist](https://supabase.com/docs/guides/deployment/going-into-prod) | Development only since Oct 14, 2026: production runs its own Postgres (section 21) |
 | Resend | Free: 3,000 a month, 100 a day. Pro: $20 for 50,000 with no daily cap | [Pricing](https://resend.com/pricing) | Upgrade at about 90 weekly-email users |
 | Stripe Managed Payments | Stripe is the merchant of record and handles tax in 80+ countries, for an extra 3.5% per transaction. European businesses are supported, and SaaS qualifies. Subscriptions must be created through Checkout or Payment Links | [Overview](https://docs.stripe.com/payments/managed-payments), [eligibility](https://docs.stripe.com/payments/managed-payments/eligibility) | Section 16 |
 | Stripe Checkout trials | `subscription_data.trial_end` and `trial_period_days` are supported | [Free trials](https://docs.stripe.com/payments/checkout/free-trials) | Early upgrade keeps the remaining trial days |
@@ -1432,6 +1425,8 @@ Vitest unit tests only. The roadmap rules out end-to-end tests.
 | Support address: `hello@simpledash.app` forwarded to your inbox with Cloudflare Email Routing? | Sprint 3 |
 
 ## 28. V2 plan: the Growth plan (Siamak, Oct 13, 2026)
+
+> **Since Oct 14, 2026, Growth is Pro and Starter is Free** (section 16): every "Growth" feature below is in Pro, and "Starter" or "the trial" means Free. There is no trial any more. The text below stays as it was planned and built.
 
 Siamak's decisions on Oct 13, 2026 replace the roadmap's V2 list (`docs/ROADMAP.md` itself is unchanged). V2 starts now, by Siamak's choice, before the roadmap's 3-paying-users gate.
 

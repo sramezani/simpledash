@@ -60,23 +60,20 @@ async function Counts() {
     {
       title: "Plans",
       rows: [
-        ["On trial", formatNumber(u.plans.trial)],
-        ["Starter, monthly", formatNumber(u.plans.starterMonthly)],
-        ["Starter, yearly", formatNumber(u.plans.starterYearly)],
-        ["Growth, monthly", formatNumber(u.plans.growthMonthly)],
-        ["Growth, yearly", formatNumber(u.plans.growthYearly)],
+        ["Free", formatNumber(u.plans.free)],
+        ["Pro, monthly", formatNumber(u.plans.proMonthly)],
+        ["Pro, yearly", formatNumber(u.plans.proYearly)],
         ...(u.plans.otherPaid > 0
           ? [["Paying, another price", formatNumber(u.plans.otherPaid)] as [string, string]]
           : []),
-        ["Locked", formatNumber(u.plans.locked)],
-        ["Trial to paid", u.trialToPaid === null ? "Not yet" : formatPercent(u.trialToPaid * 100)],
+        ["On Pro", u.freeToPaid === null ? "Not yet" : formatPercent(u.freeToPaid * 100)],
       ],
     },
     {
       title: "Features",
       rows: [
         ["Public pages on", formatNumber(u.publicPages)],
-        ["Weekly email on", formatNumber(u.weeklyEmail)],
+        ["Monday email on (Pro)", formatNumber(u.weeklyEmail)],
       ],
     },
   ];

@@ -17,46 +17,38 @@ describe("prices", () => {
     expect(yearlyLabel()).toBe("Yearly · 2 months free");
   });
 
-  it("works out the yearly saving for each plan", () => {
-    expect(yearlySaving(plans.starter.prices)).toBe(18);
-    expect(yearlySaving(plans.growth.prices)).toBe(38);
+  it("works out the yearly saving", () => {
+    expect(yearlySaving()).toBe(18);
+    expect(yearlySaving(plans.pro.prices)).toBe(18);
     expect(monthsFreeLabel()).toBe("2 months free");
     expect(monthsFreeLabel({ month: 9, year: 99 })).toBe("1 month free");
   });
 
-  it("states prices in words from plans.ts", () => {
-    expect(priceInWords("month")).toBe("€9 a month");
-    expect(priceInWords("year")).toBe("€90 a year");
-    expect(priceInWords("year", plans.growth.prices)).toBe("€190 a year");
-    expect(plans.growth.prices.month).toBe(19);
+  it("states Pro's prices in words from plans.ts", () => {
+    expect(priceInWords("month")).toBe("$9 a month");
+    expect(priceInWords("year")).toBe("$90 a year");
+    expect(plans.pro.prices).toEqual({ month: 9, year: 90 });
+    expect(plans.free.prices).toEqual({ month: 0, year: 0 });
   });
 
   it("says the plan in plain words", () => {
     const end = new Date("2027-10-11T12:00:00Z");
-    expect(planInWords({ kind: "trial", endsAt: end, daysLeft: 9 })).toBe(
-      "Free trial · 9 days left",
-    );
-    expect(planInWords({ kind: "trial", endsAt: end, daysLeft: 1 })).toBe(
-      "Free trial · 1 day left",
-    );
-    expect(planInWords({ kind: "locked", trialEndedAt: end })).toBe(
-      "Free trial ended on 11 Oct 2027",
-    );
+    expect(planInWords({ kind: "free" })).toBe("Free");
     const paid = {
       kind: "paid",
-      plan: "starter",
+      plan: "pro",
       interval: "year",
       renewsAt: end,
       cancelAtPeriodEnd: false,
       pastDue: false,
     } as const;
-    expect(planInWords(paid)).toBe("Starter · €90 a year · renews on 11 Oct 2027");
+    expect(planInWords(paid)).toBe("Pro · $90 a year · renews on 11 Oct 2027");
     expect(planInWords({ ...paid, cancelAtPeriodEnd: true })).toBe(
-      "Starter · €90 a year · ends on 11 Oct 2027",
+      "Pro · $90 a year · ends on 11 Oct 2027",
     );
-    expect(planInWords({ ...paid, interval: null, renewsAt: null })).toBe("Starter");
-    expect(planInWords({ ...paid, plan: "growth", interval: "month" })).toBe(
-      "Growth · €19 a month · renews on 11 Oct 2027",
+    expect(planInWords({ ...paid, interval: "month" })).toBe(
+      "Pro · $9 a month · renews on 11 Oct 2027",
     );
+    expect(planInWords({ ...paid, interval: null, renewsAt: null })).toBe("Pro");
   });
 });

@@ -3,6 +3,8 @@
  * (docs/SPEC.md section 4). Everything on screen and in emails goes through here.
  */
 
+import { currency as planCurrency } from "@/config/plans";
+
 const LOCALE = "en-GB";
 
 const integer = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 0 });
@@ -75,11 +77,12 @@ export function formatDayRange(start: string, end: string): string {
   return `${formatDay(start, !sameYear)} – ${formatDay(end, !sameYear)}`;
 }
 
-/** Whole euros: 9 → "€9", 90 → "€90". */
-export function formatPrice(amount: number, currency = "EUR"): string {
+/** Our prices, in whole dollars: 9 → "$9", 90 → "$90" (src/config/plans.ts). */
+export function formatPrice(amount: number, currency: string = planCurrency): string {
   return new Intl.NumberFormat(LOCALE, {
     style: "currency",
     currency,
+    currencyDisplay: "narrowSymbol",
     maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
   }).format(amount);
 }

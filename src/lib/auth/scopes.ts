@@ -2,7 +2,7 @@
 export const ANALYTICS_SCOPE = "https://www.googleapis.com/auth/analytics.readonly";
 
 /**
- * Asked for only when a Growth user connects Search Console (docs/SPEC.md section 28.2).
+ * Asked for only when a Pro user connects Search Console (docs/SPEC.md section 28.2).
  * Read-only.
  */
 export const SEARCH_CONSOLE_SCOPE = "https://www.googleapis.com/auth/webmasters.readonly";
