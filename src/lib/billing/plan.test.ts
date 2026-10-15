@@ -55,7 +55,6 @@ describe("entitlements", () => {
     const free = entitlements(planState(base));
     expect(free).toEqual({ plan: "free", ...plans.free.limits });
     expect(free).toMatchObject({
-      sites: 1,
       fullHistory: false,
       weeklyEmail: false,
       searchConsole: false,
@@ -68,7 +67,6 @@ describe("entitlements", () => {
     const pro = entitlements(planState({ ...base, status: "active" }));
     expect(pro).toEqual({
       plan: "pro",
-      sites: 10,
       fullHistory: true,
       weeklyEmail: true,
       searchConsole: true,

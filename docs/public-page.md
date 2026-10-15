@@ -17,7 +17,7 @@ The optional public stats page at `/p/<slug>`, one per site. The plan is in `doc
 
 ## One page per site
 
-`public_page` is keyed on `site_id` (since Sprint 5; migration `0004` moved each page to its owner's active site). Each site has its own address, cards and indexing. Settings → Public page edits the page of the site shown under "Site settings" (`/settings?site=<id>`), and the dashboard's "Share your stats publicly?" card turns on the page of the site being viewed.
+`public_page` is keyed on `site_id` (since Sprint 5; migration `0004` moved each page to its owner's active site). Each site has its own address, cards and indexing. Each site's settings page (`/settings/sites/<id>`, opened from the gear in the site menu or the settings menu) edits that site's page, and the dashboard's "Share your stats publicly?" card turns on the page of the site being viewed.
 
 ## Turning it on
 
@@ -33,8 +33,9 @@ The optional public stats page at `/p/<slug>`, one per site. The plan is in `doc
 
 ## When it isn't live
 
-- **Paused** ("This page is paused."): the site lost Google access, the site was removed from the owner's list, or the plan doesn't open it any more (a Pro account back on Free: only the site Free shows stays live). Nothing pauses just for being on Free.
-- **Free owners:** the page shows "Powered by SimpleDash" at the bottom and stops at 30 days like their dashboard (12 months is left out of the menu, and an older `?range=` shows Last 30 days). Pro owners' pages have no link and every range. The landing page's demo always has both. `noindex`, and out of the sitemap. The Right now endpoint follows the same rule (`publicSiteOf`).
+- **Paused** ("This page is paused."): the site lost Google access. `noindex`, and out of the sitemap. The Right now endpoint follows the same rule (`publicSiteOf`). Nothing pauses for being on Free: no plan limits the number of sites (since Oct 15, 2026).
+- **Removed site:** a site taken off the owner's list shows "Page not found" until it is opened again.
+- **Free owners:** the page shows "Powered by SimpleDash" at the bottom and stops at 30 days like their dashboard (12 months is left out of the menu, and an older `?range=` shows Last 30 days). Pro owners' pages have no link and every range. The landing page's demo always has both.
 - A plan change from the Stripe webhook refreshes the owner's pages at once; removing a site refreshes its page.
 - **Off or unknown slug:** "Page not found" with `noindex`. The status is 200 because the page streams (see `docs/DECISIONS.md`).
 

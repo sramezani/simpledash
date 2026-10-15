@@ -10,8 +10,8 @@ import { parseRange, rangeForPlan } from "@/lib/ga4/ranges";
 
 /**
  * "Download CSV" for a card (docs/SPEC.md section 13): /api/csv/<card>?site=<id>&range=30d.
- * Built from the same cached reports as the dashboard; only the user's own sites
- * that their plan opens, and on Free only the last 30 days.
+ * Built from the same cached reports as the dashboard; only the user's own sites,
+ * and on Free only the last 30 days.
  */
 export async function GET(request: Request, ctx: RouteContext<"/api/csv/[card]">) {
   await connection();

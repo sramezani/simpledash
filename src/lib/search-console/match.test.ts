@@ -11,7 +11,10 @@ describe("matchProperty", () => {
 
   it("then a URL property: https before http, without www before with", () => {
     expect(
-      matchProperty("example.com", [owner("http://example.com/"), owner("https://www.example.com/")]),
+      matchProperty("example.com", [
+        owner("http://example.com/"),
+        owner("https://www.example.com/"),
+      ]),
     ).toBe("https://www.example.com/");
     expect(matchProperty("www.example.com", [owner("https://example.com/")])).toBe(
       "https://example.com/",

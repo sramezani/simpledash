@@ -4,6 +4,63 @@ A dated log with one entry per session. **Newest entry first.**
 
 It is written for future Claude sessions: read the latest entry before starting work. Ideas that fall outside the roadmap go here too (Working rule 5).
 
+## 2026-10-15 · Session 13 · One-click site menu and settings pages
+
+### Done
+
+- **Pointer cursor** on every link, button, menu item, checkbox, radio and select: one base rule in `globals.css` (Tailwind 4 resets buttons to the default cursor), and `cursor-pointer` in `ui/dropdown-menu.tsx` (shadcn had `cursor-default`). Disabled controls keep the default cursor.
+- **One site menu for Free and Pro** (`SiteSwitcher`):
+  - It lists every Google Analytics site in the Google account (live, kept in the browser for 5 minutes, fetched on hover), grouped by account, with search from 8 sites.
+  - One click opens a site, with no dialog and no Switch button. Own sites are plain links. Any other site goes through `openSite`: Free swaps it in (`switchProperty`), Pro adds it (`addProperty`, up to 10, with a clear message when full). Both check Google's list on the server.
+  - The rows come from `siteMenuGroups` / `filterSiteMenu` (`src/lib/sites/menu.ts`, 6 tests).
+  - A gear next to each of the user's sites opens `/settings/sites/<id>`.
+- **Removed:**
+  - "Add a site", "Switch site", "All sites", `SitePickerDialog` and the `/sites` page (`SitesView`, `SiteCard`, `AddSiteCard`, `Sparkline`, `lib/sites/summary.ts`) and its ui-kit preview.
+  - `switchSite`, `addSite`, `canAddSite`, `SettingsView`, `SiteLinksMenu`.
+- **Settings pages:**
+  - `/settings` (Profile), `/settings/billing`, `/settings/email` and `/settings/sites/[siteId]`, in `SettingsShell` with `SettingsNav` on the left ("Account", then "Sites"; a row that scrolls sideways on phones).
+  - The sections are in `settings-sections.tsx`, and the addresses in `settings-routes.ts`. The menu's items come from `settingsNavGroups` (4 tests).
+  - Every link that went to `/settings#…` or `?site=` now uses the new addresses: the email, Stripe's cancel and return URLs, Search Console's return, the dashboard and the actions.
+  - Old addresses still land on the right page: `?site=` is redirected on the server, `#billing` / `#email` in the browser.
+- **Polish found while checking:**
+  - Keyboard focus fell out of the site menu when Google's list arrived and rebuilt the rows. It is now put back on the same row.
+  - The phone settings row cut off the focus ring.
+  - Scrolling the settings row to the page shown could move the page itself. Now only the row scrolls.
+  - "Paused" no longer squeezes the site's name.
+- **Checked:**
+  - `npm run check`: 47 files, 381 tests, lint clean.
+  - A production build with an empty environment.
+  - The `/ui-kit` dashboard and settings previews at 375 and 1440 px, with a keyboard-only pass: open the menu, arrow keys, Enter on a site, the gear, Escape back to the chip, Tab through the settings menu.
+  - Computed cursors are "pointer".
+- **Docs:** SPEC (the update note, and sections 5, 7, 16 and 28.1), README pages, `docs/ui.md`, `ga4.md`, `billing.md`, `email.md`, `public-page.md`, CHECKLIST, DECISIONS, CLAUDE.md (settings addresses come from one file).
+
+### Later the same session: no site limit
+
+- **Siamak's call:** Free and Pro both open every Google Analytics site in the account, and the menu is the same on both.
+- **Removed:**
+  - The `sites` limit in `plans.ts` and `entitlements`.
+  - `openableSites` (the Monday email and public pages now use the whole list), the `"upgrade"` choice in `chooseSite` (it now returns the site or null), and `SiteContext.openable` and `choice` (now `site`).
+  - The replace mode, `SiteLimitError` and `switchProperty` in `properties.ts`. `addProperty` now takes no limit.
+  - The paused-site dashboard (`paused-site.tsx`), `PausedSiteSettings`, `openListedSiteAction`, the "Several sites are part of Pro" panel and its `children` slot, "n of 10 in use", the Free footer in the menu, "Paused" in the settings menu, and the `openable` field in the menu's rows.
+- **Sitemap:** public pages now come from one query (on, indexable, site listed and working).
+- **Copy:**
+  - Free is "All your Google Analytics sites"; Pro's "Up to 10 sites" is gone.
+  - Updated: hero, FAQ, terms (also "Settings → Plan & billing"), `llms.txt` (with a test), CLAUDE.md, README, SPEC (sections 5, 7, 15, 16, 17 and 28.1), billing, ga4, email, public-page and ui docs, CHECKLIST, DECISIONS.
+- **Keyboard fix:** when Google's list arrives, focus now goes back to the exact item it was on (the site or its gear), not just the row.
+- **Checked:**
+  - `npm run check`: 47 files, 376 tests, lint clean.
+  - On the previews: the Pro menu without a count, the Free menu at 375 px with the keyboard only, Free with three sites in settings, and the landing page's pricing text.
+- **For Siamak:** `docs/ROADMAP.md` still says one site on Free and 10 on Pro. No migration this time either.
+
+### Not checked
+
+- The live Google list and opening a real site, signed in. The preview's open button returns a fixed message. It needs a real account, locally or in production.
+
+### Next (Siamak)
+
+- Try the menu signed in on Free and on Pro: open a site that isn't yours yet, then use the gear.
+- No migration this time.
+
 ## 2026-10-14 · Session 12 · Our own Google Analytics, with consent
 
 ### Done

@@ -358,7 +358,11 @@ function samplePayload<R extends ReportName>(report: R, window: RangeWindow): Pa
     purchase_sources: () => {
       const rows = GOALS.map(([source, , saleRate]) => {
         const visitors = current * (SOURCES.find(([s]) => s === source)?.[1] ?? 0);
-        return { source, label: sourceLabel(source), revenue: Math.round(visitors * saleRate) * 19 };
+        return {
+          source,
+          label: sourceLabel(source),
+          revenue: Math.round(visitors * saleRate) * 19,
+        };
       }).filter((r) => r.revenue > 0);
       return { rows, total: rows.reduce((a, r) => a + r.revenue, 0) };
     },

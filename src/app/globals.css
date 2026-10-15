@@ -94,6 +94,30 @@
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-ring;
   }
+  /*
+   * Everything clickable shows the hand cursor (Tailwind 4 resets buttons to the arrow):
+   * buttons, menu items, tabs, labels for a control, checkboxes, radios and selects.
+   * Disabled ones keep the arrow.
+   */
+  :is(
+    button,
+    [role="button"],
+    [role="menuitem"],
+    [role="menuitemradio"],
+    [role="menuitemcheckbox"],
+    [role="option"],
+    [role="tab"],
+    [role="switch"],
+    summary,
+    select,
+    label[for],
+    input[type="checkbox"],
+    input[type="radio"],
+    input[type="file"],
+    input[type="submit"]
+  ):not(:disabled, [aria-disabled="true"], [data-disabled]) {
+    cursor: pointer;
+  }
   /* Tailwind's reset removes the browser's centring of popovers; put it back. */
   [popover] {
     margin: auto;

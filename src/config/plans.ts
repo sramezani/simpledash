@@ -11,9 +11,8 @@ export const taxIncluded = true;
 /** How far back Free can look: the last 30 days, and custom days inside them. */
 export const FREE_HISTORY_DAYS = 30;
 
+/** Sites have no limit on either plan: every Google Analytics site in the account (Siamak, Oct 15, 2026). */
 export type PlanLimits = {
-  /** Sites in the dashboard at once. */
-  sites: number;
   /** 12 months and custom ranges of any length; Free sees the last 30 days. */
   fullHistory: boolean;
   /** The Monday email. */
@@ -40,15 +39,14 @@ export const plans = {
     id: "free",
     name: "Free",
     prices: { month: 0, year: 0 },
-    summary: "Your Google Analytics in plain words, for one site.",
+    summary: "Your Google Analytics in plain words, for all your sites.",
     features: [
-      "One Google Analytics site",
+      "All your Google Analytics sites",
       "Today, 7 days and 30 days",
       "No traffic limits",
       "A public stats page",
     ],
     limits: {
-      sites: 1,
       fullHistory: false,
       weeklyEmail: false,
       searchConsole: false,
@@ -62,7 +60,6 @@ export const plans = {
     prices: { month: 9, year: 90 },
     summary: "Everything in Free, plus:",
     features: [
-      "Up to 10 sites",
       "12 months and any dates",
       "The Monday email",
       "Google search insights",
@@ -71,7 +68,6 @@ export const plans = {
       "Your public page without our link",
     ],
     limits: {
-      sites: 10,
       fullHistory: true,
       weeklyEmail: true,
       searchConsole: true,

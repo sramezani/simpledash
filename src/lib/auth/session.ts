@@ -28,8 +28,8 @@ export async function requireUser(): Promise<SessionUser> {
 }
 
 /**
- * The signed-in user and one of their own sites that the plan lets them open: the one
- * named by `siteId` (a form field or `?site=`), or the active one. Never trusts a
+ * The signed-in user and one of their own sites: the one named by `siteId` (a form
+ * field or `?site=`), or the active one. Never trusts a
  * property ID from the browser, and a site ID only after checking it is theirs.
  * For pages and actions that need a site; anything else is a 404.
  */
@@ -40,14 +40,13 @@ export async function requireSite(siteId?: unknown): Promise<{ user: SessionUser
   return { user, site: found };
 }
 
-/** One of the user's sites they may open now, or null (route handlers answer 404). */
+/** One of the user's own listed sites, or null (route handlers answer 404). */
 export async function findOpenSite(userId: string, siteId?: unknown): Promise<Site | null> {
   const given = siteId !== undefined && siteId !== null && siteId !== "";
   const requested = given ? readSiteId(siteId) : null;
   // A malformed ID is never "the active site": it's simply not found.
   if (given && !requested) return null;
-  const { choice } = await getSiteContext(userId, requested);
-  return choice.kind === "open" ? choice.site : null;
+  return (await getSiteContext(userId, requested)).site;
 }
 
 /** For route handlers: the user, or null (the handler answers 401). */

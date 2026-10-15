@@ -21,19 +21,34 @@ const QUERIES: [string, string, [number, number, number], [number, number, numbe
   ["yoursite login", "/", [380, 260, 1.2], [360, 250, 1.2]],
   ["ga4 dashboard", "/pricing", [3200, 14, 11.2], [2600, 9, 12.8]],
   ["simple ga4 dashboard", "/", [1450, 22, 9.4], [900, 11, 13.6]],
-  ["google analytics alternative", "/blog/ga4-without-the-confusion", [5400, 61, 8.6], [5100, 140, 5.2]],
+  [
+    "google analytics alternative",
+    "/blog/ga4-without-the-confusion",
+    [5400, 61, 8.6],
+    [5100, 140, 5.2],
+  ],
   ["ga4 too complicated", "/blog/ga4-without-the-confusion", [1900, 160, 3.4], [600, 30, 9.1]],
   ["ga4 for beginners", "/blog/ga4-without-the-confusion", [2600, 240, 2.9], [2400, 96, 6.4]],
   ["ga4 explained", "/blog/ga4-without-the-confusion", [980, 9, 13.1], [1100, 12, 12.2]],
   ["seo for small sites", "/blog/seo-for-small-sites", [3100, 12, 14.4], [2900, 48, 9.9]],
   ["seo checklist small business", "/blog/seo-for-small-sites", [1200, 8, 10.6], [700, 2, 18.2]],
   ["indie launch checklist", "/blog/indie-launch-checklist", [860, 92, 2.4], [400, 30, 3.8]],
-  ["product hunt launch checklist", "/blog/indie-launch-checklist", [1700, 18, 9.9], [1500, 21, 9.4]],
+  [
+    "product hunt launch checklist",
+    "/blog/indie-launch-checklist",
+    [1700, 18, 9.9],
+    [1500, 21, 9.4],
+  ],
   ["analytics dashboard for startups", "/", [2300, 12, 15.2], [1800, 6, 19.4]],
   ["public analytics page", "/docs/getting-started", [640, 44, 4.1], [520, 39, 4.3]],
   ["share analytics publicly", "/docs/getting-started", [1600, 4, 4.6], [1400, 5, 4.8]],
   ["ga4 weekly email report", "/", [900, 7, 12.6], [300, 1, 21.4]],
-  ["ai traffic google analytics", "/blog/ga4-without-the-confusion", [2200, 31, 7.2], [400, 4, 15.1]],
+  [
+    "ai traffic google analytics",
+    "/blog/ga4-without-the-confusion",
+    [2200, 31, 7.2],
+    [400, 4, 15.1],
+  ],
   ["chatgpt referral traffic ga4", "/blog/ga4-without-the-confusion", [760, 12, 8.8], [90, 0, 24]],
   ["changelog template", "/changelog", [450, 1, 18.6], [520, 2, 17.9]],
   ["small site seo tips", "/blog/seo-for-small-sites", [700, 3, 12.2], [800, 19, 6.1]],
@@ -102,18 +117,48 @@ export function sampleSearchCard(
       };
     }),
   };
-  const brandNow = QUERIES.filter((q) => q[0].includes("yoursite")).reduce((a, q) => a + q[2][1], 0);
-  const brandThen = QUERIES.filter((q) => q[0].includes("yoursite")).reduce((a, q) => a + q[3][1], 0);
-  const otherNow = QUERIES.filter((q) => !q[0].includes("yoursite")).reduce((a, q) => a + q[2][1], 0);
-  const otherThen = QUERIES.filter((q) => !q[0].includes("yoursite")).reduce((a, q) => a + q[3][1], 0);
+  const brandNow = QUERIES.filter((q) => q[0].includes("yoursite")).reduce(
+    (a, q) => a + q[2][1],
+    0,
+  );
+  const brandThen = QUERIES.filter((q) => q[0].includes("yoursite")).reduce(
+    (a, q) => a + q[3][1],
+    0,
+  );
+  const otherNow = QUERIES.filter((q) => !q[0].includes("yoursite")).reduce(
+    (a, q) => a + q[2][1],
+    0,
+  );
+  const otherThen = QUERIES.filter((q) => !q[0].includes("yoursite")).reduce(
+    (a, q) => a + q[3][1],
+    0,
+  );
   const perDay = (total: number, i: number) =>
     Math.round((total / window.days) * (0.75 + ((i * 37) % 10) / 20) * scale * 4);
 
   const overview = parseSearch(
     "search_overview",
     [
-      { rows: [{ ...now, clicks: Math.round(now.clicks * scale * 4), impressions: Math.round(now.impressions * scale * 4), position: 7.4 }] },
-      { rows: [{ ...then, clicks: Math.round(then.clicks * scale * 4), impressions: Math.round(then.impressions * scale * 4), position: 8.1 }] },
+      {
+        rows: [
+          {
+            ...now,
+            clicks: Math.round(now.clicks * scale * 4),
+            impressions: Math.round(now.impressions * scale * 4),
+            position: 7.4,
+          },
+        ],
+      },
+      {
+        rows: [
+          {
+            ...then,
+            clicks: Math.round(then.clicks * scale * 4),
+            impressions: Math.round(then.impressions * scale * 4),
+            position: 8.1,
+          },
+        ],
+      },
       days,
     ],
     ctx,
@@ -126,8 +171,18 @@ export function sampleSearchCard(
   const brand = parseSearch(
     "search_brand",
     [
-      { rows: Array.from({ length: window.days }, (_, i) => ({ keys: [addDays(window.current.start, i)], clicks: perDay(brandNow, i) })) },
-      { rows: Array.from({ length: window.days }, (_, i) => ({ keys: [addDays(window.current.start, i)], clicks: perDay(otherNow, i + 3) })) },
+      {
+        rows: Array.from({ length: window.days }, (_, i) => ({
+          keys: [addDays(window.current.start, i)],
+          clicks: perDay(brandNow, i),
+        })),
+      },
+      {
+        rows: Array.from({ length: window.days }, (_, i) => ({
+          keys: [addDays(window.current.start, i)],
+          clicks: perDay(otherNow, i + 3),
+        })),
+      },
       { rows: [{ clicks: Math.round(brandThen * scale * 4) }] },
       { rows: [{ clicks: Math.round(otherThen * scale * 4) }] },
     ],

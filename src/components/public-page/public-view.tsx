@@ -191,7 +191,7 @@ export function PoweredBy({ embedded = false }: { embedded?: boolean }) {
   );
 }
 
-/** "This page is paused." Shown when Google access ended or the site isn't open on the owner's plan. */
+/** "This page is paused." Shown when Google access to the site ended. */
 export function PausedView({ label }: { label: string }) {
   return (
     <>

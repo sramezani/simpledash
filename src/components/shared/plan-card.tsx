@@ -60,9 +60,7 @@ export function PlanCard({
       <div className="flex flex-col">
         {free ? (
           <p className="flex items-baseline gap-1.5">
-            <span
-              className={cn("font-semibold tracking-tight", compact ? "text-3xl" : "text-5xl")}
-            >
+            <span className={cn("font-semibold tracking-tight", compact ? "text-3xl" : "text-5xl")}>
               {formatPrice(0)}
             </span>
             <span className={cn("text-muted-foreground", compact ? "text-sm" : "text-base")}>

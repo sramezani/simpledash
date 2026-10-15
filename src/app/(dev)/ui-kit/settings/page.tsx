@@ -7,15 +7,27 @@ import { UpgradePanel } from "@/components/dashboard/upgrade-panel";
 import { RevenueSettings } from "@/components/settings/revenue-settings";
 import { SaleSettings } from "@/components/settings/sale-settings";
 import { SearchConsoleSettings } from "@/components/settings/search-console-settings";
+import { SettingsNav } from "@/components/settings/settings-nav";
 import {
-  SettingsFrame,
+  BillingSettings,
+  DeleteAccountSettings,
+  EmailSettings,
+  GoogleSettings,
+  ProfileSettings,
+  PublicPageSettings,
+  RemoveSiteSettings,
+} from "@/components/settings/settings-sections";
+import {
+  SettingsHeader,
   SettingsSection,
+  SettingsShell,
   SettingsSkeleton,
-  SettingsView,
-} from "@/components/settings/settings-view";
+} from "@/components/settings/settings-shell";
+import { SiteIcon } from "@/components/shared/site-icon";
 import { defaultPublicCardIds } from "@/config/cards";
 import type { PlanState } from "@/lib/billing/plan";
 import { uiKitEnabled } from "@/lib/env";
+import { settingsNavGroups } from "@/lib/settings-nav";
 
 export const metadata: Metadata = {
   title: "Settings preview",
@@ -30,7 +42,7 @@ const STATES = [
   "past-due",
   "errors",
   "public-on",
-  "downgraded",
+  "free-sites",
   "search-off",
   "search-pick",
 ] as const;
@@ -60,7 +72,7 @@ const PROPERTIES = [
   { siteUrl: "https://blog.yoursite.com/", label: "https://blog.yoursite.com/" },
 ];
 
-/** Dev only: the settings page in each state, without signing in. */
+/** Dev only: every settings page in each state, without signing in. */
 export default function SettingsPreviewPage({ searchParams }: PageProps<"/ui-kit/settings">) {
   if (!uiKitEnabled) notFound();
   return (
@@ -92,32 +104,51 @@ function previewPlans() {
     "past-due": pro({ renewsAt: new Date(now + 3 * day), pastDue: true }),
     errors: free,
     "public-on": free,
-    downgraded: free,
+    "free-sites": free,
     "search-off": pro(),
     "search-pick": pro({ interval: "year", renewsAt: new Date(now + 200 * day) }),
   } satisfies Record<(typeof STATES)[number], PlanState>;
 }
 
+const PAGES = ["account", "billing", "email", "site"] as const;
+type PreviewPage = (typeof PAGES)[number];
+
+const PREVIEW_SITES = [
+  { id: "00000000-0000-4000-8000-000000000001", label: "yoursite.com", domain: null },
+  { id: "00000000-0000-4000-8000-000000000002", label: "blog.yoursite.com", domain: null },
+  { id: "00000000-0000-4000-8000-000000000003", label: "docs.yoursite.com", domain: null },
+];
+
 async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/settings">, "searchParams">) {
-  await connection(); // "days left" depends on the current time
+  await connection(); // renewal dates depend on the current time
   const params = await searchParams;
   const state = STATES.find((s) => s === params.state) ?? "free";
-  const plans: Record<(typeof STATES)[number], PlanState> = previewPlans();
-  const several = state === "pro" || state === "downgraded";
-  const sites = [
-    {
-      id: "00000000-0000-4000-8000-000000000001",
-      label: "yoursite.com",
-      domain: null,
-      paused: false,
-    },
-    ...(several
-      ? [
-          { id: "00000000-0000-4000-8000-000000000002", label: "blog.yoursite.com", domain: null },
-          { id: "00000000-0000-4000-8000-000000000003", label: "docs.yoursite.com", domain: null },
-        ].map((s) => ({ ...s, paused: state === "downgraded" }))
-      : []),
-  ];
+  // A site ID (the site menu's gear) opens that site's page.
+  const siteParam = typeof params.site === "string" ? params.site : null;
+  const page: PreviewPage = siteParam
+    ? "site"
+    : (PAGES.find((p) => p === params.page) ?? "account");
+  const plan = previewPlans()[state];
+  const paid = plan.kind === "paid";
+  // Sites have no limit on any plan: "free-sites" is Free with three of them.
+  const several = state === "pro" || state === "free-sites";
+  const sites = PREVIEW_SITES.slice(0, several ? 3 : 1);
+  const site = sites.find((s) => s.id === siteParam) ?? sites[0]!;
+
+  const href = (to: PreviewPage, siteId?: string) => {
+    const query = new URLSearchParams({ state });
+    if (to !== "account") query.set("page", to);
+    if (siteId) query.set("site", siteId);
+    return `/ui-kit/settings?${query}`;
+  };
+  const groups = settingsNavGroups(sites, {
+    account: href("account"),
+    billing: href("billing"),
+    email: href("email"),
+    site: (id) => href("site", id),
+  });
+  const activeHref = page === "site" ? href("site", site.id) : href(page);
+
   return (
     <>
       <nav
@@ -127,7 +158,7 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/settings">, "se
         {STATES.map((s) => (
           <Link
             key={s}
-            href={{ pathname: "/ui-kit/settings", query: { state: s } }}
+            href={{ pathname: "/ui-kit/settings", query: { state: s, page } }}
             aria-current={s === state ? "page" : undefined}
             className="rounded-md px-2 py-1 aria-[current=page]:bg-card aria-[current=page]:font-medium"
           >
@@ -135,31 +166,73 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/settings">, "se
           </Link>
         ))}
       </nav>
-      <SettingsFrame>
-        <SettingsView
-          user={{ name: "Alex Example", email: "alex@yoursite.com" }}
-          weeklyEmail
-          plan={plans[state]}
-          publicPage={{
-            slug: "yoursite-com",
-            enabled: state === "public-on",
-            indexable: true,
-            cards: [...defaultPublicCardIds],
-          }}
-          publicBase="http://localhost:3000/p/"
-          sites={sites}
-          site={sites[0]!}
-          siteLimit={plans[state].kind === "paid" ? 10 : 1}
-          hasSignupEvent={state !== "free"}
-          billingError={state === "errors"}
-          deleteProblem={state === "errors" ? "error" : null}
-          sitesNotice={state === "errors" ? "error" : null}
-          siteSections={
-            plans[state].kind === "paid" ? (
+      <SettingsShell
+        dashboardHref="/ui-kit/dashboard"
+        nav={<SettingsNav groups={groups} activeHref={activeHref} />}
+      >
+        {page === "account" ? (
+          <>
+            <SettingsHeader
+              title="Profile"
+              description="Your account, and SimpleDash's access to Google."
+            />
+            <ProfileSettings
+              user={{ name: "Alex Example", email: "alex@yoursite.com" }}
+              signOut={noop}
+            />
+            <GoogleSettings siteCount={sites.length} disconnect={noop} />
+            <DeleteAccountSettings problem={state === "errors" ? "error" : null} action={noop} />
+          </>
+        ) : page === "billing" ? (
+          <>
+            <SettingsHeader title="Plan & billing" description="Your plan, and Stripe." />
+            <BillingSettings
+              plan={plan}
+              error={state === "errors"}
+              upgrade={noop}
+              manageBilling={noop}
+            />
+          </>
+        ) : page === "email" ? (
+          <>
+            <SettingsHeader
+              title="Monday email"
+              description="Last week's numbers in your inbox, every Monday afternoon in your site's time zone."
+            />
+            <EmailSettings
+              plan={plan}
+              on
+              email="alex@yoursite.com"
+              siteCount={sites.length}
+              action={noop}
+              billingHref={href("billing")}
+            />
+          </>
+        ) : (
+          <>
+            <SettingsHeader
+              icon={<SiteIcon domain={site.domain} />}
+              title={site.label}
+              description="These settings are for this site only."
+            />
+            <PublicPageSettings
+              label={site.label}
+              formKey={site.id}
+              base="http://localhost:3000/p/"
+              values={{
+                slug: "yoursite-com",
+                enabled: state === "public-on",
+                indexable: true,
+                cards: [...defaultPublicCardIds],
+              }}
+              hasSignupEvent={state !== "free"}
+              action={noopSave}
+            />
+            {paid ? (
               <>
                 <SettingsSection id="search" title="Google Search Console">
                   <SearchConsoleSettings
-                    label="yoursite.com"
+                    label={site.label}
                     granted={state !== "search-off"}
                     property={state === "pro" ? PROPERTIES[0]! : null}
                     properties={state === "search-off" ? null : PROPERTIES}
@@ -204,23 +277,16 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/settings">, "se
                 </SettingsSection>
               </>
             ) : (
-              <div id="search">
+              <div id="search" className="scroll-mt-20">
                 <UpgradePanel feature="search" upgrade={noop} />
               </div>
-            )
-          }
-          actions={{
-            signOut: noop,
-            setWeeklyEmail: noop,
-            savePublicPage: noopSave,
-            upgrade: noop,
-            manageBilling: noop,
-            disconnectGoogle: noop,
-            deleteAccount: noop,
-            removeSite: noop,
-          }}
-        />
-      </SettingsFrame>
+            )}
+            {sites.length > 1 ? (
+              <RemoveSiteSettings label={site.label} siteId={site.id} action={noop} />
+            ) : null}
+          </>
+        )}
+      </SettingsShell>
     </>
   );
 }

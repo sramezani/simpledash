@@ -20,13 +20,11 @@ import { ChartNotes } from "@/components/charts/chart-notes";
 import { LiveCard } from "@/components/globe/live-card";
 import { SignupPicker } from "@/components/cards/signup-picker";
 import { EmailNotice } from "@/components/dashboard/email-notice";
-import { OpenInsteadForm, PausedSiteView } from "@/components/dashboard/paused-site";
 import { ShareCard } from "@/components/dashboard/share-card";
 import { SiteSwitcher } from "@/components/dashboard/site-switcher";
 import { SearchCard } from "@/components/search/search-card";
 import { SearchConnect, SearchProblemCard, SearchTeaser } from "@/components/search/search-states";
 import { sampleSearchCard } from "@/lib/search-console/sample";
-import { UpgradePanel } from "@/components/dashboard/upgrade-panel";
 import type { PropertyList } from "@/lib/ga4/property-choice";
 import { SiteChip } from "@/components/shared/site-chip";
 import { Badge } from "@/components/ui/badge";
@@ -73,7 +71,6 @@ const STATES = [
   "pro",
   "free-menu",
   "free-history",
-  "paused-site",
   "search-connect",
   "search-error",
 ] as const;
@@ -108,7 +105,7 @@ async function sampleShare() {
   return { url: "http://localhost:3000/p/yoursite-com" };
 }
 
-/** The site picker's list in the preview: a Google account with two Analytics accounts. */
+/** The site menu's list in the preview: a Google account with two Analytics accounts. */
 async function sampleProperties(): Promise<PropertyList> {
   "use server";
   await new Promise((r) => setTimeout(r, 400));
@@ -124,36 +121,47 @@ async function sampleProperties(): Promise<PropertyList> {
   };
 }
 
-async function previewPick() {
+async function previewOpen() {
   "use server";
-  return { error: "This is a preview: nothing was added." };
+  return { error: "This is a preview: nothing was opened." };
 }
 
 const PREVIEW_SITES = [
-  { id: "00000000-0000-4000-8000-000000000001", label: "yoursite.com", domain: null },
-  { id: "00000000-0000-4000-8000-000000000002", label: "blog.yoursite.com", domain: null },
-  { id: "00000000-0000-4000-8000-000000000003", label: "docs.yoursite.com", domain: null },
+  {
+    id: "00000000-0000-4000-8000-000000000001",
+    propertyId: "properties/101",
+    label: "yoursite.com",
+    domain: null,
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000002",
+    propertyId: "properties/102",
+    label: "blog.yoursite.com",
+    domain: null,
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000003",
+    propertyId: "properties/103",
+    label: "docs.yoursite.com",
+    domain: null,
+  },
 ];
 
-/** The real site menu, on sample sites: Pro with three, or Free with paused ones. */
+/** The real site menu, on sample sites: three of the user's sites (Pro), or one (Free). */
 function PreviewSwitcher({ pro, range }: { pro: boolean; range: string }) {
-  const sites = PREVIEW_SITES.map((s, i) => ({
+  const sites = PREVIEW_SITES.slice(0, pro ? 3 : 1).map((s, i) => ({
     ...s,
-    openable: pro || i === 0,
-    problem: i === 2 && pro ? "Google access ended" : null,
+    problem: i === 2 ? "Google access ended" : null,
   }));
   return (
     <SiteSwitcher
       current={sites[0]!}
       sites={sites}
-      listedProperties={["properties/101", "properties/102", "properties/103"]}
-      currentProperty="properties/101"
-      multiple={pro}
-      limit={pro ? 10 : 1}
       range={range === "7d" ? null : range}
       listAction={sampleProperties}
-      switchAction={previewPick}
-      addAction={previewPick}
+      openAction={previewOpen}
+      dashboardPath="/ui-kit/dashboard"
+      settingsPath={`/ui-kit/settings?state=${pro ? "pro" : "free"}&site=`}
     />
   );
 }
@@ -194,25 +202,6 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
   const quotaUntil = new Date(`${window.today}T15:00:00Z`);
 
   if (state === "not-granted") return <AccessNotGranted signIn={noop} />;
-  if (state === "paused-site") {
-    return (
-      <>
-        <PreviewNav state={state} range={range} />
-        <PausedSiteView
-          switcher={<PreviewSwitcher pro={false} range={range} />}
-          label="blog.yoursite.com"
-        >
-          <UpgradePanel feature="sites" upgrade={noop}>
-            <OpenInsteadForm
-              label="blog.yoursite.com"
-              siteId={PREVIEW_SITES[1]!.id}
-              action={noop}
-            />
-          </UpgradePanel>
-        </PausedSiteView>
-      </>
-    );
-  }
   if (state === "loading")
     return <DashboardSkeleton message="Finding your Google Analytics site…" />;
 
@@ -224,7 +213,7 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
     quota: <QuotaNotice until={quotaUntil} timeZone="Europe/Amsterdam" cached />,
     "quota-empty": <QuotaNotice until={quotaUntil} timeZone="Europe/Amsterdam" cached={false} />,
     unavailable: <UnavailableNotice />,
-    "free-history": <HistoryNotice href="/ui-kit/settings#billing" />,
+    "free-history": <HistoryNotice href="/ui-kit/settings?page=billing" />,
   };
 
   const empty = state === "quota-empty" || state === "unavailable";
@@ -278,7 +267,7 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
         historyLimit={
           pro
             ? null
-            : { firstDay: freeFirstDay(window.today), upgradeHref: "/ui-kit/settings#billing" }
+            : { firstDay: freeFirstDay(window.today), upgradeHref: "/ui-kit/settings?page=billing" }
         }
         notes={previewNotes}
         notesPanel={
@@ -318,7 +307,7 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
                 view: sampleRevenue(window),
                 visitors: reports.totals.data.current.visitors,
                 comparable: true,
-                settingsHref: "/ui-kit/settings?state=pro#revenue",
+                settingsHref: "/ui-kit/settings?state=pro&page=site#revenue",
               })
             : undefined
         }
@@ -342,7 +331,7 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
               salePage={null}
               currency="EUR"
               exportInfo={{ site: "yoursite.com", ...window.current }}
-              settingsHref="/ui-kit/settings?state=pro#sales"
+              settingsHref="/ui-kit/settings?state=pro&page=site#sales"
             />
           ) : null
         }
@@ -352,14 +341,14 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
               data={sampleSearchCard(window.current, { signupEvent })}
               siteName="yoursite.com"
               signupEvent={signupEvent}
-              settingsHref="/ui-kit/settings?state=pro#search"
+              settingsHref="/ui-kit/settings?state=pro&page=site#search"
             />
           ) : state === "search-connect" ? (
             <SearchConnect connect={noop} />
           ) : state === "search-error" ? (
             <SearchProblemCard problem="scope" connect={noop} settingsHref="/ui-kit/settings" />
           ) : state === "normal" || state === "free-menu" || state === "free-history" ? (
-            <SearchTeaser href="/ui-kit/settings#search" />
+            <SearchTeaser href="/ui-kit/settings?page=site#search" />
           ) : null
         }
         dimmed={state === "revoked" || state === "no-access"}

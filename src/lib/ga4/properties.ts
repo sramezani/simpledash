@@ -1,5 +1,5 @@
 import "server-only";
-import { and, count, eq, isNotNull, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { site, type Site } from "@/lib/db/schema";
 import { adminClient, runSingleReport } from "./clients";
@@ -79,26 +79,11 @@ export async function chooseProperty(userId: string): Promise<Site | null> {
 }
 
 /**
- * How a property joins the account (docs/SPEC.md section 28.1):
- * - "replace" (Free, and the first site): it takes the current site's place in the list.
- * - "add" (Pro): it joins the list, up to `limit` sites.
- * Either way it becomes the active site. A site already in the list just becomes active.
+ * Fetches the property's details, adds it to the user's list (docs/SPEC.md section 28.1:
+ * no limit on any plan) and makes it the active site. A site already in the list just
+ * becomes active, and one that left the list comes back with its notes and settings.
  */
-export type ConnectMode = { kind: "replace" } | { kind: "add"; limit: number };
-
-export class SiteLimitError extends Error {
-  constructor(readonly limit: number) {
-    super(`At most ${limit} sites`);
-    this.name = "SiteLimitError";
-  }
-}
-
-/** Fetches the property's details and makes it the user's active site. */
-export async function connectProperty(
-  userId: string,
-  propertyId: string,
-  mode: ConnectMode = { kind: "replace" },
-): Promise<Site> {
+export async function connectProperty(userId: string, propertyId: string): Promise<Site> {
   const client = await adminClient(userId);
   const [[property], [streams]] = await Promise.all([
     client.getProperty({ name: propertyId }, ADMIN_TIMEOUT),
@@ -120,27 +105,8 @@ export async function connectProperty(
   };
 
   return db.transaction(async (tx) => {
-    // One change to a user's list at a time, so two quick clicks can't pass the limit.
+    // One change to a user's list at a time, so two quick clicks can't leave two active sites.
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`sites:${userId}`}))`);
-    const existing = await tx.query.site.findFirst({
-      where: and(eq(site.userId, userId), eq(site.propertyId, propertyId)),
-    });
-    const listed = !!existing?.addedAt;
-    if (!listed && mode.kind === "replace") {
-      // Free: the new site takes the current one's place. Other sites still in the
-      // list (added on Pro) stay there, paused, for when they upgrade again.
-      await tx
-        .update(site)
-        .set({ addedAt: null })
-        .where(and(eq(site.userId, userId), eq(site.isActive, true)));
-    }
-    if (!listed && mode.kind === "add") {
-      const [listedCount] = await tx
-        .select({ value: count() })
-        .from(site)
-        .where(and(eq(site.userId, userId), isNotNull(site.addedAt)));
-      if ((listedCount?.value ?? 0) >= mode.limit) throw new SiteLimitError(mode.limit);
-    }
     await tx
       .update(site)
       .set({ isActive: false })
@@ -171,20 +137,10 @@ export async function connectProperty(
   });
 }
 
-/** Free's switcher: the property must be in the user's own Google list. */
-export async function switchProperty(userId: string, propertyId: string): Promise<Site> {
+/** The site menu: opens a site, after checking it is in the user's own Google list. */
+export async function addProperty(userId: string, propertyId: string): Promise<Site> {
   await assertInGoogleList(userId, propertyId);
-  return connectProperty(userId, propertyId, { kind: "replace" });
-}
-
-/** Pro's "Add a site": the property must be in the user's own Google list. */
-export async function addProperty(
-  userId: string,
-  propertyId: string,
-  limit: number,
-): Promise<Site> {
-  await assertInGoogleList(userId, propertyId);
-  return connectProperty(userId, propertyId, { kind: "add", limit });
+  return connectProperty(userId, propertyId);
 }
 
 async function assertInGoogleList(userId: string, propertyId: string) {

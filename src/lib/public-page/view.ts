@@ -1,11 +1,11 @@
 import "server-only";
-import { and, eq, inArray, isNotNull, or } from "drizzle-orm";
+import { and, eq, isNotNull, or } from "drizzle-orm";
 import { cacheLife, cacheTag } from "next/cache";
 import type { CardId } from "@/config/cards";
 import { getBilling } from "@/lib/billing/billing";
 import { entitlements, planState, type Entitlements } from "@/lib/billing/plan";
 import { db } from "@/lib/db/client";
-import { billing, publicPage, site, type PublicPage, type Site } from "@/lib/db/schema";
+import { publicPage, site, type PublicPage, type Site } from "@/lib/db/schema";
 import { getReports } from "@/lib/ga4/cache";
 import { cacheDeps } from "@/lib/ga4/data";
 import { allowPublicCustomRange } from "@/lib/ga4/limiter";
@@ -18,7 +18,6 @@ import {
 } from "@/lib/ga4/ranges";
 import { REPORTS, type Payloads, type ReportName } from "@/lib/ga4/reports";
 import { reportError } from "@/lib/report-error";
-import { openableSites } from "@/lib/sites/access";
 import { getUserSites } from "@/lib/sites/sites";
 
 /**
@@ -56,9 +55,8 @@ export type PublicView =
 export const publicTag = (slug: string) => `public:${slug}`;
 
 /**
- * The site a public page shows, the owner's plan, and whether the page is paused:
- * Google access ended, or the site isn't open on the owner's plan any more (back on
- * Free with several sites). Null when the site is gone.
+ * The site a public page shows, the owner's plan, and whether the page is paused
+ * (Google access ended). Null when the site is gone or left the owner's list.
  */
 export async function publicSiteOf(
   page: Pick<PublicPage, "siteId" | "userId">,
@@ -70,8 +68,7 @@ export async function publicSiteOf(
   const owned = ownerSites.find((s) => s.id === page.siteId);
   if (!owned) return null;
   const ent = entitlements(planState(billingRow));
-  const open = openableSites(ownerSites, ent).some((s) => s.id === owned.id);
-  return { site: owned, paused: owned.status !== "ok" || !open, ent };
+  return { site: owned, paused: owned.status !== "ok", ent };
 }
 
 /** Which reports a set of public cards needs. */
@@ -144,39 +141,18 @@ export async function getPublicView(
   };
 }
 
-/** Public pages for the sitemap: on, indexable and not paused. Two queries. */
+/** Public pages for the sitemap: on, indexable, and their site in the owner's list and working. */
 export async function listIndexablePublicPages() {
-  const rows = await db
-    .select({
-      slug: publicPage.slug,
-      siteId: publicPage.siteId,
-      userId: publicPage.userId,
-      updatedAt: publicPage.updatedAt,
-      billing: {
-        status: billing.status,
-        plan: billing.plan,
-        planInterval: billing.planInterval,
-        currentPeriodEnd: billing.currentPeriodEnd,
-        cancelAtPeriodEnd: billing.cancelAtPeriodEnd,
-      },
-    })
+  return db
+    .select({ slug: publicPage.slug, updatedAt: publicPage.updatedAt })
     .from(publicPage)
     .innerJoin(site, eq(site.id, publicPage.siteId))
-    .innerJoin(billing, eq(billing.userId, publicPage.userId))
     .where(
-      and(eq(publicPage.enabled, true), eq(publicPage.indexable, true), eq(site.status, "ok")),
+      and(
+        eq(publicPage.enabled, true),
+        eq(publicPage.indexable, true),
+        eq(site.status, "ok"),
+        or(isNotNull(site.addedAt), eq(site.isActive, true)),
+      ),
     );
-  if (rows.length === 0) return [];
-  const owners = [...new Set(rows.map((r) => r.userId))];
-  const ownerSites = await db
-    .select({ id: site.id, userId: site.userId, isActive: site.isActive, addedAt: site.addedAt })
-    .from(site)
-    .where(and(inArray(site.userId, owners), or(isNotNull(site.addedAt), eq(site.isActive, true))));
-  return rows
-    .filter((r) => {
-      const mine = ownerSites.filter((s) => s.userId === r.userId);
-      const ent = entitlements(planState(r.billing));
-      return openableSites(mine, ent).some((s) => s.id === r.siteId);
-    })
-    .map((r) => ({ slug: r.slug, updatedAt: r.updatedAt }));
 }

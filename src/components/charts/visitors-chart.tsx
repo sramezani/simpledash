@@ -129,11 +129,7 @@ export default function VisitorsChart({
         />
         {revenue ? (
           // Revenue keeps to the lower quarter, under the line, on its own hidden scale.
-          <YAxis
-            yAxisId="revenue"
-            hide
-            domain={[0, (max: number) => Math.max(max, 1) * 4]}
-          />
+          <YAxis yAxisId="revenue" hide domain={[0, (max: number) => Math.max(max, 1) * 4]} />
         ) : null}
         <ChartTooltip
           cursor={{ stroke: "var(--color-visitors)", strokeOpacity: 0.5, strokeDasharray: "3 3" }}

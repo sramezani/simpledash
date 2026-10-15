@@ -212,7 +212,7 @@ export function SampleSiteChip() {
 }
 
 /** Free asked for more than its 30 days (an old link, a typed address). */
-export function HistoryNotice({ href = "/settings#billing" }: { href?: string }) {
+export function HistoryNotice({ href = "/settings/billing" }: { href?: string }) {
   return (
     <Notice
       title={`${plans.free.name} shows the last ${FREE_HISTORY_DAYS} days, so this is Last ${FREE_HISTORY_DAYS} days.`}

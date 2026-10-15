@@ -8,7 +8,7 @@ type TopBarProps = {
   /** Where the logo links to (the dev preview uses its own page). */
   basePath?: "/dashboard" | "/ui-kit/dashboard";
   showSettings?: boolean;
-  /** Settings for the site shown: "/settings?site=<id>". */
+  /** Settings for the site shown: "/settings/sites/<id>". */
   settingsHref?: Route;
 };
 

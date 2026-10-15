@@ -21,7 +21,7 @@ The `weekly-email` job runs every hour (`node scripts/run-job.mjs weekly-email`,
 
 - have the weekly email on (it is on by default),
 - are on Pro (the Monday email is a Pro feature since Oct 14, 2026; Free accounts are skipped and Settings says so),
-- have at least one site with status `ok` that the plan opens (every site in the list, up to 10),
+- have at least one site with status `ok` in their list (every listed site gets a block; there is no site limit),
 - and whose main site's local time is Monday between 13:00 and 17:59. The main site is the active one (the one opened most recently).
 
 For each one it first **claims** a row in `email_send` (user and week). The key makes a second email in the same week impossible. Then it refreshes each site's 7-day reports (`totals`, `sources`, `pages`, `actions`, `ai_sources`, which also warms the dashboard), builds one block per site (the main site first) and sends the emails in batches.
@@ -37,7 +37,7 @@ Sentry's cron monitor `weekly-email` notices when the job stops running or fails
 
 - **Subject:** one site: "mysite.com: 1,234 visitors last week (up 23%)". Several: "Last week: mysite.com 1,234 visitors (up 23%), and 2 more sites".
 - Per site: the summary line, the 4 numbers for Monday to Sunday against the week before (Signups only when a signup action is chosen), the top 3 sources and pages, a line about AI assistants when there were any, and a link to that site's dashboard (`/dashboard?site=<id>`). With one site the link is the "Open your dashboard" button; with several each block has its heading and dates.
-- **Footer:** why they get it, a settings link (`/settings#email`) and the unsubscribe link.
+- **Footer:** why they get it, a settings link (`/settings/email`) and the unsubscribe link.
 - Preview it at `/ui-kit/email` (development only; `?text=1` shows the plain-text part, `?sites=3` an account with three sites).
 
 ## Turning it off

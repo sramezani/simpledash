@@ -1,6 +1,6 @@
 # SimpleDash: brief for Claude Code
 
-SimpleDash (simpledash.app) turns the Google Analytics 4 data a founder already has into one simple dashboard page, a Monday email and an optional public stats page. It has no tracking script of its own. It is built for indie hackers and small SaaS or content sites that already run GA4. There are two plans: **Free** (one site, the last 30 days, a public page; no card, no time limit) and **Pro** at $9 a month or $90 a year (up to 10 sites, 12 months and any dates, the Monday email, Google search insights, revenue from Stripe). There is no trial. The code is open source under the AGPL-3.0.
+SimpleDash (simpledash.app) turns the Google Analytics 4 data a founder already has into one simple dashboard page, a Monday email and an optional public stats page. It has no tracking script of its own. It is built for indie hackers and small SaaS or content sites that already run GA4. There are two plans: **Free** (all your sites, the last 30 days, public pages; no card, no time limit) and **Pro** at $9 a month or $90 a year (12 months and any dates, the Monday email, Google search insights, revenue from Stripe). Neither plan limits the number of sites. There is no trial. The code is open source under the AGPL-3.0.
 
 - **What and why:** `docs/ROADMAP.md`. This is Siamak's brief; don't edit it.
 - **How:** `docs/SPEC.md`. Update the spec before building something differently, and log the change in `docs/DECISIONS.md`.
@@ -89,7 +89,7 @@ deploy/setup.sh user@ip   # Siamak only: set up (or, with --from, move to) the p
   - Add shadcn parts with its CLI instead of writing them.
   - Extend with a prop or a `cva` variant instead of copying, and pull shared code out the second time it's needed.
   - Prefer platform APIs (`Intl`, `URL`) and the packages we already have over new ones.
-- **Layers:** `src/config` → `components/ui` → `components/shared` → feature folders → `src/app`. Each imports only from its own folder and the layers before it, and shared blocks never fetch data. Plans and prices come only from `src/config/plans.ts`, and the card list only from `src/config/cards.ts`. Details are in `docs/SPEC.md` section 4.
+- **Layers:** `src/config` → `components/ui` → `components/shared` → feature folders → `src/app`. Each imports only from its own folder and the layers before it, and shared blocks never fetch data. Plans and prices come only from `src/config/plans.ts`, the card list only from `src/config/cards.ts`, and settings addresses only from `src/lib/settings-routes.ts`. Details are in `docs/SPEC.md` section 4.
 - **UI quality:** mobile first. Cards use container queries and the shared `CardShell` states, with no layout shift. Before ticking a UI task, check it at 375 px and 1440 px and do a keyboard-only pass. The bar is DataFast-level polish with our own design (`docs/SPEC.md` section 18).
 - **Docs:** use plain words in the docs too. Refer to a part of a doc as "section 16", never with symbols such as the section sign.
 - **Plain words on screen:**

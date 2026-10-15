@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { after, connection } from "next/server";
 import { Suspense } from "react";
 import { allowAnalyticsAccess, signInWithGoogle } from "@/app/actions/auth";
-import { upgrade } from "@/app/actions/billing";
 import { dismissEmailNoticeAction, setWeeklyEmailAction } from "@/app/actions/email";
 import { turnOnPublicPageAction } from "@/app/actions/public-page";
 import { connectSearchConsoleAction } from "@/app/actions/search-console";
@@ -24,15 +23,7 @@ import { getSettings } from "@/lib/email/settings";
 import { getSitePublicPage } from "@/lib/public-page/public-page";
 import { Notice } from "@/components/shared/notice";
 import { addNoteAction, deleteNoteAction, updateNoteAction } from "@/app/actions/notes";
-import {
-  addSite,
-  chooseSignupEvent,
-  listMyProperties,
-  openListedSiteAction,
-  switchSite,
-} from "@/app/actions/site";
-import { OpenInsteadForm, PausedSiteView } from "@/components/dashboard/paused-site";
-import { UpgradePanel } from "@/components/dashboard/upgrade-panel";
+import { chooseSignupEvent, listMyProperties, openSite } from "@/app/actions/site";
 import { plans } from "@/config/plans";
 import { ChartNotes } from "@/components/charts/chart-notes";
 import { LiveCard } from "@/components/globe/live-card";
@@ -77,10 +68,10 @@ import { revenueMetrics } from "@/components/dashboard/revenue-metrics";
 import { getRevenueSource, loadRevenue, needsSync, syncRevenue } from "@/lib/revenue/revenue";
 import { sampleReports, SAMPLE_DOMAIN, SAMPLE_SIGNUP_EVENT } from "@/lib/ga4/sample/sample";
 import { reportError } from "@/lib/report-error";
-import { readSiteId } from "@/lib/sites/access";
 import { getSiteContext, markSiteOpened, type SiteContext } from "@/lib/sites/sites";
 import { markSiteOk } from "@/lib/sites/status";
-import { siteProblem } from "@/lib/sites/summary";
+import { settingsRoutes } from "@/lib/settings-routes";
+import { readSiteId, siteProblem } from "@/lib/sites/access";
 
 export const metadata: Metadata = { title: "Dashboard", robots: { index: false, follow: false } };
 
@@ -105,29 +96,15 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
   const account = await getGoogleAccount(user.id);
   if (!hasAnalyticsScope(account?.scope)) return <AccessNotGranted signIn={allowAnalyticsAccess} />;
 
-  const { choice } = ctx;
-  if (choice.kind === "open") {
+  if (ctx.site) {
     return (
       <SiteDashboard
-        site={choice.site}
+        site={ctx.site}
         ctx={ctx}
         range={range}
         extra={upgraded}
         searchResult={typeof params.search === "string" ? params.search : null}
       />
-    );
-  }
-  if (choice.kind === "upgrade") {
-    const label = choice.site.domain ?? choice.site.displayName;
-    return (
-      <PausedSiteView
-        switcher={<Switcher site={choice.site} ctx={ctx} range={null} />}
-        label={label}
-      >
-        <UpgradePanel feature="sites" upgrade={upgrade}>
-          <OpenInsteadForm label={label} siteId={choice.site.id} action={openListedSiteAction} />
-        </UpgradePanel>
-      </PausedSiteView>
     );
   }
   // An old link to a site that left the list: open the dashboard as usual.
@@ -165,30 +142,24 @@ async function FirstVisit({ userId, range }: { userId: string; range: RangeType 
   return <SiteDashboard site={site} ctx={ctx} range={range} extra={null} />;
 }
 
-const toSwitcherSite = (s: Site, openable: boolean): SwitcherSite => ({
+const toSwitcherSite = (s: Site): SwitcherSite => ({
   id: s.id,
+  propertyId: s.propertyId,
   label: s.domain ?? s.displayName,
   domain: s.domain,
-  openable,
   problem: siteProblem(s.status),
 });
 
 /** The site menu (docs/SPEC.md section 28.1), from the request's site context. */
 function Switcher({ site, ctx, range }: { site: Site; ctx: SiteContext; range: string | null }) {
-  const openable = new Set(ctx.openable.map((s) => s.id));
   const sites = ctx.sites.some((s) => s.id === site.id) ? ctx.sites : [site, ...ctx.sites];
   return (
     <SiteSwitcher
-      current={toSwitcherSite(site, true)}
-      sites={sites.map((s) => toSwitcherSite(s, openable.has(s.id)))}
-      listedProperties={ctx.sites.filter((s) => s.addedAt).map((s) => s.propertyId)}
-      currentProperty={site.propertyId}
-      multiple={ctx.ent.sites > 1}
-      limit={ctx.ent.sites}
+      current={toSwitcherSite(site)}
+      sites={sites.map(toSwitcherSite)}
       range={range}
       listAction={listMyProperties}
-      switchAction={switchSite}
-      addAction={addSite}
+      openAction={openSite}
       reconnect={signInWithGoogle}
     />
   );
@@ -281,7 +252,7 @@ async function SiteDashboard({
       historyLimit={
         ctx.ent.fullHistory
           ? null
-          : { firstDay: freeFirstDay(result.window.today), upgradeHref: "/settings#billing" }
+          : { firstDay: freeFirstDay(result.window.today), upgradeHref: settingsRoutes.billing }
       }
       notices={
         <>
@@ -297,7 +268,7 @@ async function SiteDashboard({
         !publicPage && site.status === "ok" ? (
           <ShareCard
             action={turnOnPublicPageAction.bind(null, site.id)}
-            settingsHref={`/settings?site=${site.id}#public`}
+            settingsHref={settingsRoutes.site(site.id, "public")}
           />
         ) : null
       }
@@ -328,7 +299,7 @@ async function SiteDashboard({
               view: revenue,
               visitors: totals?.current.visitors ?? null,
               comparable: comparisonGap(result.window, site.propertyCreatedAt) === null,
-              settingsHref: `/settings?site=${site.id}#revenue`,
+              settingsHref: settingsRoutes.site(site.id, "revenue"),
             })
           : undefined
       }
@@ -367,7 +338,7 @@ function SearchSection({
   range: RangeType;
   result: string | null;
 }) {
-  const settingsHref = `/settings?site=${site.id}#search`;
+  const settingsHref = settingsRoutes.site(site.id, "search");
   if (!ctx.ent.searchConsole) return <SearchTeaser href={settingsHref} />;
   const connect = connectSearchConsoleAction.bind(null, site.id, "dashboard");
   if (!site.searchConsoleUrl) {
@@ -470,7 +441,7 @@ async function SalesLoader({ site, range }: { site: Site; range: RangeType }) {
       salePage={site.salePage}
       currency={site.currencyCode}
       exportInfo={{ site: site.domain ?? site.displayName, ...result.window.current }}
-      settingsHref={`/settings?site=${site.id}#sales`}
+      settingsHref={settingsRoutes.site(site.id, "sales")}
     />
   );
 }

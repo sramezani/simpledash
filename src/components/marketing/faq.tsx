@@ -33,7 +33,7 @@ const items: { q: string; a: ReactNode }[] = [
   },
   {
     q: "Is it really free?",
-    a: `Yes. ${plans.free.name} is one site and the last ${FREE_HISTORY_DAYS} days, with no card and no time limit. ${plans.pro.name} is ${formatPrice(plans.pro.prices.month)} a month and adds more sites, 12 months and any dates, the Monday email, Google search insights and revenue from Stripe.`,
+    a: `Yes. ${plans.free.name} is all your sites and the last ${FREE_HISTORY_DAYS} days, with no card and no time limit. ${plans.pro.name} is ${formatPrice(plans.pro.prices.month)} a month and adds 12 months and any dates, the Monday email, Google search insights and revenue from Stripe.`,
   },
   {
     q: "Is SimpleDash open source?",

@@ -1,22 +1,10 @@
-import {
-  CircleDollarSignIcon,
-  LayoutGridIcon,
-  MailIcon,
-  SearchIcon,
-  SparklesIcon,
-} from "lucide-react";
-import type { ReactNode } from "react";
+import { CircleDollarSignIcon, MailIcon, SearchIcon, SparklesIcon } from "lucide-react";
 import { plans } from "@/config/plans";
 import { cn } from "@/lib/utils";
 import { UpgradeForm } from "./upgrade-form";
 
 /** The Pro-only parts (docs/SPEC.md section 16), in plain words. */
 const FEATURES = {
-  sites: {
-    Icon: LayoutGridIcon,
-    title: `Several sites are part of ${plans.pro.name}`,
-    text: "Add up to 10 Google Analytics sites, each with its own dashboard, notes, Monday email block and public page, and see them all on one page.",
-  },
   search: {
     Icon: SearchIcon,
     title: `Google search insights are part of ${plans.pro.name}`,
@@ -44,13 +32,10 @@ export type ProFeature = keyof typeof FEATURES;
 export function UpgradePanel({
   feature,
   upgrade,
-  children,
   className,
 }: {
   feature: ProFeature;
   upgrade: (formData: FormData) => Promise<void>;
-  /** Below the text, e.g. "Switch to this site instead". */
-  children?: ReactNode;
   className?: string;
 }) {
   const { Icon, title, text } = FEATURES[feature];
@@ -75,7 +60,6 @@ export function UpgradePanel({
             <SparklesIcon className="mt-0.5 size-3.5 shrink-0 text-primary" aria-hidden="true" />
             Prices include tax. Payments are handled by Stripe; cancel any time.
           </p>
-          {children}
         </div>
         <UpgradeForm action={upgrade} className="w-full @2xl:max-w-sm" />
       </div>

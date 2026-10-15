@@ -97,7 +97,12 @@ export function mrr(subscriptions: { status: string; items: SubItem[] }[]): {
   return { amounts, leftOut };
 }
 
-export type StoredDay = { day: string; money: Money; newCustomers: number; mrr: Record<string, number> | null };
+export type StoredDay = {
+  day: string;
+  money: Money;
+  newCustomers: number;
+  mrr: Record<string, number> | null;
+};
 
 export type PeriodRevenue = {
   /** The currency with the most charged in the period (or the account's usual one). */
@@ -161,7 +166,9 @@ export function latestMrr(
   days: StoredDay[],
   until: string,
 ): { day: string; amounts: Record<string, number> } | null {
-  const recorded = days.filter((d) => d.mrr && d.day <= until).sort((a, b) => (a.day < b.day ? 1 : -1));
+  const recorded = days
+    .filter((d) => d.mrr && d.day <= until)
+    .sort((a, b) => (a.day < b.day ? 1 : -1));
   const latest = recorded[0];
   return latest ? { day: latest.day, amounts: latest.mrr! } : null;
 }

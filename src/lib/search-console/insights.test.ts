@@ -71,8 +71,18 @@ describe("nearPageOne", () => {
 });
 
 describe("whatChanged", () => {
-  const pagesNow = [pg("/a", 120, 4000, 3.1), pg("/b", 10, 900, 9), pg("/c", 51, 800, 4), pg("/new", 8, 90, 6)];
-  const pagesThen = [pg("/a", 45, 3000, 6.5), pg("/b", 40, 1000, 5), pg("/c", 50, 800, 4), pg("/gone", 20, 300, 2)];
+  const pagesNow = [
+    pg("/a", 120, 4000, 3.1),
+    pg("/b", 10, 900, 9),
+    pg("/c", 51, 800, 4),
+    pg("/new", 8, 90, 6),
+  ];
+  const pagesThen = [
+    pg("/a", 45, 3000, 6.5),
+    pg("/b", 40, 1000, 5),
+    pg("/c", 50, 800, 4),
+    pg("/gone", 20, 300, 2),
+  ];
   const queriesNow = [
     qp("alpha", "/a", 80, 1000, 2.1),
     qp("beta", "/a", 30, 2000, 4),
@@ -88,7 +98,13 @@ describe("whatChanged", () => {
   ];
 
   it("lists the biggest rises and falls, ignoring changes under 3 clicks", () => {
-    const { rising, falling } = whatChanged(pagesNow, pagesThen, queriesNow, queriesThen, "example.com");
+    const { rising, falling } = whatChanged(
+      pagesNow,
+      pagesThen,
+      queriesNow,
+      queriesThen,
+      "example.com",
+    );
     expect(rising.map((p) => [p.label, p.clicksThen, p.clicksNow])).toEqual([
       ["/a", 45, 120],
       ["/new", 0, 8],

@@ -4,6 +4,10 @@ Oct 11, 2026 · Written by Claude Code from `docs/ROADMAP.md` · Status: approve
 
 **Updated Oct 11, 2026 (session 2):** a yearly price and Growth shown as "coming soon" (sections 16 and 17), one theme and brand file and a UI quality bar (section 18), and code structure and reuse rules (section 4).
 
+**Updated Oct 15, 2026 (session 13, later):** no site limit on either plan. Free and Pro both open every Google Analytics site in the account, so paused sites, the "n of 10" count and the Free footer in the site menu are gone (sections 7, 15, 16 and 28.1).
+
+**Updated Oct 15, 2026 (session 13):** one site menu for every plan: it lists every Google Analytics site in the Google account, opens any of them with one click, and has a gear to each of the user's sites' settings. All sites (`/sites`) and the add or switch dialog are gone. Settings is split into pages with a menu on the left: Profile, Plan & billing, Monday email, and one page per site (sections 5, 7 and 28.1).
+
 **Updated Oct 14, 2026 (session 10):** Free and Pro replace Starter, Growth and the trial (section 16): Free is one site and 30 days with nothing locked, Pro is $9 a month or $90 a year with everything. Free's 30 days in the date menu and ranges (sections 8 and 16), the Monday email for Pro (section 14), "Powered by" on Free public pages only (section 15), the pricing section (section 17), and open-source files (README, NOTICE, CONTRIBUTING, SECURITY).
 
 **Updated Oct 14, 2026 (session 9):** production moved to one server with Docker Compose and Caddy, set up by `deploy/setup.sh`, with deploys from GitHub Actions (sections 2, 3, 20 and 21).
@@ -181,7 +185,7 @@ Versions were checked on npm on Oct 11, 2026. Pin exact versions in `package.jso
     │   ├── charts/                  VisitorsChart (Recharts) · StaticLineChart (SVG, no JS)
     │   ├── globe/                   LiveGlobe (lazy)
     │   ├── marketing/               Hero · HowItWorks · Pricing · Faq · Footer
-    │   └── settings/                the settings sections
+    │   └── settings/                the settings frame, its menu and the sections
     └── lib/
         ├── env.ts                   Zod-checked env; the only place that reads process.env
         ├── utils.ts                 cn() for merging classes (shadcn)
@@ -235,8 +239,10 @@ More features come in V2 (several sites, alerts, revenue), so the code is built 
 | `/demo` | **Live demo** (section 17): a real public stats page, framed on the landing page with `?embed=1` | public | partly prerendered, cached about 10 minutes, plus Cloudflare |
 | `/signin` | **Sign in**: one screen saying what we read (read-only), then "Continue with Google" | public | static |
 | `/dashboard` | **Dashboard**: the cards (section 11); `?site=<id>` names the site (section 28.1) | signed in | dynamic, streamed per card, cache-first |
-| `/sites` | **All sites** (Pro): one card per site; Free sees the upgrade panel (section 28.1) | signed in | dynamic, streamed per site |
-| `/settings` | **Settings**: account, weekly email, public page, billing, disconnect Google, delete account | signed in | dynamic |
+| `/settings` | **Settings → Profile**: the account, sign out, disconnect Google, delete account. Settings pages share one frame: a menu on the left ("Account", then "Sites"; a sideways row on phones) and the page beside it | signed in | dynamic |
+| `/settings/billing` | **Settings → Plan & billing**: the plan, Upgrade or Manage billing (section 16) | signed in | dynamic |
+| `/settings/email` | **Settings → Monday email**: on or off (Pro, section 14) | signed in | dynamic |
+| `/settings/sites/[siteId]` | **Settings for one site**: public page, Google search insights, revenue, what counts as a sale, remove the site (section 28.1) | signed in, the user's own site | dynamic |
 | `/p/[slug]` | **Public page** (section 15) | public | cached about 10 minutes, plus Cloudflare |
 | `/privacy`, `/terms` | **Legal** | public | static |
 | `/robots.txt`, `/sitemap.xml`, `/llms.txt` | **SEO files** (section 17) | public | static or cached |
@@ -333,16 +339,16 @@ Stripe keeps its own payment records, because it is the merchant of record.
    - `listDataStreams` gives the first web stream's `defaultUri`. Its hostname, without `www.`, becomes the "Showing: mysite.com" label. If there is no web stream, use the property's display name.
 6. **Save and warm:** insert the `site` (`is_active = true`), then warm the default range (section 10.3) so the dashboard opens from cache.
 
-**The switcher** sits at the top of the dashboard: "Showing: mysite.com ▾".
+**The site menu** (`SiteSwitcher`) sits at the top of the dashboard: "mysite.com ▾". It is the same on Free and Pro (since Oct 15, 2026; section 28.1).
 
-- Opening it fetches the account summaries live, through a server action.
-- Choosing a property:
-  1. Check that the property is in the user's list.
-  2. Deactivate the current site.
-  3. Upsert and activate the chosen one.
-  4. Warm its caches.
-  5. Reload the page.
-- V1 allows one site per account, so only one site is active at a time. Inactive rows remember their notes and signup event, so switching back restores them.
+- Opening it fetches the account summaries live, through a server action (`listMyProperties`). The browser keeps the list for 5 minutes, and hovering the chip starts the fetch early.
+- It lists every Google Analytics site in the Google account, grouped by account. The user's own sites open with a plain link (`/dashboard?site=<id>`), and each has a gear to its settings (`/settings/sites/<id>`).
+- Any other site opens with one click (`openSite`), with no dialog and no confirm:
+  1. Check that the property is in the user's live Google list (never trust the browser).
+  2. It joins the user's sites, on Free and Pro alike, with no limit (`addProperty`).
+  3. Upsert and activate it, under a per-user lock (`connectProperty`), so two quick clicks can't leave two active sites.
+  4. Go to its dashboard.
+- Only one site is active at a time (the one the dashboard opens with). Rows that leave the list remember their notes, signup event and settings, so opening the site again restores them.
 
 ## 8. Date ranges and comparisons
 
@@ -373,7 +379,7 @@ Stripe keeps its own payment records, because it is the merchant of record.
 - The calendar's code loads the first time "Custom" is pointed at or chosen, so pages don't carry it otherwise.
 - With a custom range, the button shows its days ("1 Sep – 30 Sep") and the period isn't repeated next to it.
 - The weekly email uses the 7-day range computed on a Monday, which is exactly last Monday to Sunday (section 14).
-- **Free's 30 days** (section 16): on Free, "Last 12 months" shows a "Pro" badge and opens Settings → Billing, the calendar starts 30 days before today (`freeFirstDay`), and a note under the menu says "Free shows the last 30 days. Pro shows everything." An address with an older range shows Last 30 days instead (`rangeForPlan`), on the dashboard, CSV downloads and public pages. A Free owner's public page leaves 12 months out of its menu.
+- **Free's 30 days** (section 16): on Free, "Last 12 months" shows a "Pro" badge and opens Settings → Plan & billing, the calendar starts 30 days before today (`freeFirstDay`), and a note under the menu says "Free shows the last 30 days. Pro shows everything." An address with an older range shows Last 30 days instead (`rangeForPlan`), on the dashboard, CSV downloads and public pages. A Free owner's public page leaves 12 months out of its menu.
 
 **Still updating:**
 
@@ -891,10 +897,10 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 
 **When it's not live:**
 
-- **Paused:** when the owner is disconnected from Google, or the site isn't open on the owner's plan (an extra site after going back to Free), the page only says "This page is paused." with the SimpleDash link. It is `noindex` and drops out of the sitemap.
+- **Paused:** when the owner is disconnected from Google, the page only says "This page is paused." with the SimpleDash link. It is `noindex` and drops out of the sitemap.
 - **Turned off (or never made):** the page shows "Page not found" with `noindex`. The page streams inside a Suspense boundary (Cache Components), so the status code is already 200 when the database answers; a real 404 status would need a lookup before rendering on every view. Search engines treat a `noindex` page like a 404.
 
-**Sitemap:** includes pages that are on, indexable and not paused.
+**Sitemap:** includes pages that are on, indexable, and whose site is in the owner's list and working (one query).
 
 ## 16. Billing
 
@@ -902,20 +908,19 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 
 | Plan | Price | What it includes |
 | --- | --- | --- |
-| **Free** | $0. No card, no time limit | One GA4 site; Today, Yesterday, 7 and 30 days (custom days inside the last 30); every dashboard card; a public stats page with "Powered by SimpleDash" |
-| **Pro** | $9 a month, or $90 a year (2 months free), tax included. Launch price: it stays the same while the subscription runs without a break | Everything in Free, plus: up to 10 sites, 12 months and any dates, the Monday email, Google search insights (section 28.2), revenue from Stripe and sales by source (section 28.3), and a public page without our link |
+| **Free** | $0. No card, no time limit | All the GA4 sites in the Google account (no limit, since Oct 15, 2026); Today, Yesterday, 7 and 30 days (custom days inside the last 30); every dashboard card; a public stats page per site with "Powered by SimpleDash" |
+| **Pro** | $9 a month, or $90 a year (2 months free), tax included. Launch price: it stays the same while the subscription runs without a break | Everything in Free, plus: 12 months and any dates, the Monday email, Google search insights (section 28.2), revenue from Stripe and sales by source (section 28.3), and a public page without our link |
 
 - "2 months free" is worked out from the prices (12 × $9 − $90 = $18, which is 2 months of $9). It is never typed in by hand.
 - Prices are in US dollars (`currency` in `plans.ts`) and shown as "$9" (`formatPrice`, narrow symbol).
 - Stripe has one product, "SimpleDash Pro" (SaaS tax code `txcd_10103001`), with two tax-inclusive USD prices: `STRIPE_PRICE_MONTHLY` and `STRIPE_PRICE_YEARLY` (section 22).
 - The terms say Free may change, with 30 days' notice by email.
 
-**Limits** (`entitlements(planState)` in `src/lib/billing/plan.ts`, from `plans.ts`):
+**Limits** (`entitlements(planState)` in `src/lib/billing/plan.ts`, from `plans.ts`). The number of sites is not one of them: both plans open every site (Siamak, Oct 15, 2026; until then Free had 1 and Pro 10).
 
 | Limit | Free | Pro | Enforced in |
 | --- | --- | --- | --- |
-| `sites` | 1 | 10 | `src/lib/sites/access.ts`, the add-site action, under a per-user advisory lock |
-| `fullHistory` | No: the last 30 days (`FREE_HISTORY_DAYS`) | Yes | `rangeForPlan` (`src/lib/ga4/ranges.ts`): the dashboard, CSV downloads and public pages show Last 30 days instead of an older range, with a note on the dashboard. The date menu shows "Last 12 months" with a Pro badge that opens Settings → Billing, and the calendar starts 30 days back |
+| `fullHistory` | No: the last 30 days (`FREE_HISTORY_DAYS`) | Yes | `rangeForPlan` (`src/lib/ga4/ranges.ts`): the dashboard, CSV downloads and public pages show Last 30 days instead of an older range, with a note on the dashboard. The date menu shows "Last 12 months" with a Pro badge that opens Settings → Plan & billing, and the calendar starts 30 days back |
 | `weeklyEmail` | No | Yes | The weekly-email job only reads paying accounts; Settings shows the email as part of Pro |
 | `searchConsole`, `revenue` | No | Yes | Their actions, cards, jobs and settings sections (section 28) |
 | `poweredBy` | Yes | No | The public page's footer (section 15); the landing page's demo always shows it |
@@ -923,19 +928,19 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 **Plan state** (`getPlan(user)`, `planState` in `src/lib/billing/plan.ts`, unit tested):
 
 - **Paid (Pro):** the Stripe subscription status is `active`, `trialing` or `past_due`.
-- **Free:** everything else, including after a subscription ends. Nothing locks: Free keeps the dashboard, the public page and the data. Extra sites added on Pro stay in the list, paused, until the next upgrade.
+- **Free:** everything else, including after a subscription ends. Nothing locks: Free keeps every site, its dashboard, its public page and the data.
 
 **Upgrade:** the server action `upgrade` (`src/app/actions/billing.ts`) creates a Checkout Session (`createCheckout` in `src/lib/billing/checkout.ts`).
 
-- **Where:** Settings → Billing and the "part of Pro" panels (more sites, Google search insights, revenue, the Monday email). They hold the same Monthly / Yearly switch as the pricing section (`BillingSwitch`), here as a form field named `interval`. The form posts to the server action, so upgrading needs no JavaScript.
+- **Where:** Settings → Plan & billing and the "part of Pro" panels (Google search insights, revenue, the Monday email). They hold the same Monthly / Yearly switch as the pricing section (`BillingSwitch`), here as a form field named `interval`. The form posts to the server action, so upgrading needs no JavaScript.
 - **Price:** the action checks `interval` (`month` or `year`) with Zod and picks `STRIPE_PRICE_MONTHLY` or `STRIPE_PRICE_YEARLY` on the server. **The browser never sends a price ID.**
 - Subscription mode, no trial. **Stripe Managed Payments** is on, so Stripe is the merchant of record and handles VAT and sales tax.
 - Someone already paying gets the Customer Portal instead.
-- On success, go to `/dashboard?upgraded=pro`. On cancel, go to `/settings#billing`.
+- On success, go to `/dashboard?upgraded=pro`. On cancel, go to `/settings/billing`.
 
 **Manage:** a Stripe Customer Portal session for card, invoices, cancelling, and switching between monthly and yearly (the Portal's plan-switching setting lists both Pro prices).
 
-**Settings → Billing** shows the plan in plain words: "Free", "Pro · $90 a year · renews on 11 Oct 2027" or "Pro · $9 a month · ends on 4 Nov 2026", with "Upgrade to Pro" or "Manage billing".
+**Settings → Plan & billing** shows the plan in plain words: "Free", "Pro · $90 a year · renews on 11 Oct 2027" or "Pro · $9 a month · ends on 4 Nov 2026", with "Upgrade to Pro" or "Manage billing".
 
 **Webhook** (`/api/stripe/webhook`):
 
@@ -991,7 +996,7 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 - Both cards are the shared `PlanCard` (`components/shared`), which the in-app upgrade also uses in a compact size.
 - The heading is "Free to start, one simple price", with "Prices include tax."
 
-**Hero:** under the button, "Free for one site · no card · read-only access · Pro $9 a month".
+**Hero:** under the button, "Free for all your sites · no card · read-only access · Pro $9 a month".
 
 **FAQ:** "Do I need GA4?", "What do you store?", "Can SimpleDash change anything in my Google account?", "Is it really free?", "Is SimpleDash open source?" (the code on GitHub, AGPL-3.0) and "Do I have to add a tracking script?".
 
@@ -1444,6 +1449,8 @@ Siamak's decisions on Oct 13, 2026 replace the roadmap's V2 list (`docs/ROADMAP.
 
 ### 28.1 Sprint 5: Growth plan and several sites
 
+> **Since Oct 15, 2026,** the site menu, All sites and settings per site work differently: see "Update (Oct 15, 2026)" at the end of this section.
+
 **Growth plan:**
 
 - €19 a month or €190 a year, VAT included, in `src/config/plans.ts`. Its feature list becomes: several sites, Google search insights, revenue from Stripe, sales by source. (Alerts, mentions and AI questions leave the list: they're V3.)
@@ -1483,6 +1490,16 @@ Siamak's decisions on Oct 13, 2026 replace the roadmap's V2 list (`docs/ROADMAP.
 - **The Monday email:** one email per account, sent on Monday afternoon in the active site's time zone. One block per allowed site with visits (the summary, the four numbers, top sources and pages, AI traffic, its own dates and an "Open dashboard" link to that site). Subject: one site as before; several sites: "Last week: mysite.com 1,234 visitors (up 23%), and 2 more sites". Sites with no visits in either week are left out; with none left, nothing is sent.
 - **`warm-cache`:** only added sites whose dashboard was opened in the last 24 hours (`last_viewed_at`), still skipping locked, broken and quota-blocked ones. It replaces the "signed in during the last 14 days" rule.
 - **Usage counts** (`/admin`): paying is split into Starter and Growth.
+
+**Update (Oct 15, 2026, Siamak): one site menu, settings pages.** This replaces the site menu, All sites and settings per site above.
+
+- **The site menu** is the same on Free and Pro (section 7). It lists every Google Analytics site in the user's Google account, grouped by account when there are several, with a search box from 8 sites. One click opens a site: the user's own sites are links; any other site is opened by `openSite` and joins the user's sites. A ✓ marks the site shown, and a short warning line shows under a site whose Google access ended. Each of the user's sites has a gear to its settings.
+- **Gone:** "Add a site…", "Switch site…", "All sites", the picker dialog (`SitePickerDialog`), the All sites page (`/sites`, with `SiteCard`, `AddSiteCard`, `SitesView`, `Sparkline` and the per-site summary query). Old `/sites` links are 404s.
+- **Settings pages** (section 5), in one frame (`SettingsShell`): a slim top bar back to the dashboard, a menu on the left (`SettingsNav`: "Account" with Profile, Plan & billing and Monday email, then "Sites" with one item per site), and the page beside it. On phones the menu is a row that scrolls sideways. The addresses come from one place, `src/lib/settings-routes.ts`, and the menu's items from `settingsNavGroups` (`src/lib/settings-nav.ts`, tested).
+- **A site's settings** (`/settings/sites/<id>`): public page, Google search insights, revenue from Stripe, what counts as a sale, and "Remove this site" (when the account has more than one). The site must be the user's own (`readSiteId`, then the user's list); anything else is a 404.
+- **Old addresses keep working:** `/settings?site=<id>` (with `search`, `sale` and `revenue`) redirects to the site's page on the server, and `/settings#billing` and `#email` move to their pages in the browser (a hash never reaches the server).
+- **Links and buttons** all show the pointer cursor (one base rule in `globals.css`, and the menu items).
+- **No site limit (later the same day, Siamak):** Free and Pro both open every Google Analytics site in the account; the menu works the same on both. This replaces "Limits" and "Going back to Starter" above for sites: there are no paused sites any more. Gone with it: the `sites` limit in `plans.ts`, `openableSites`, the replace mode and `SiteLimitError` in `connectProperty`, `switchProperty`, the paused-site dashboard and settings (`PausedSiteView`, `PausedSiteSettings`, "Show … instead"), the "Several sites are part of Pro" panel, "n of 10 in use" and the Free footer in the menu, and "Paused" in the settings menu. A Pro account's Monday email has one block per listed site; public pages pause only when Google access ended.
 
 ### 28.2 Sprint 6: Google search insights (Search Console)
 
@@ -1553,7 +1570,7 @@ Three layers, each exact, never multiplied together:
 
 | Question | Answer |
 | --- | --- |
-| Growth's site limit | 10 sites |
+| Growth's site limit | 10 sites (no limit on any plan since Oct 15, 2026) |
 | Does the 14-day trial include Growth features? | No: the trial is Starter only, so there are never extra sites to handle when it ends |
 | Stripe App or a pasted key for the revenue connection | A pasted restricted read-only key |
 

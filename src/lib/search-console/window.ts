@@ -69,6 +69,9 @@ export function latestProbe(now: Date = new Date()): DateRange {
  * With no rows (a new or quiet property), 3 days ago, Google's usual delay.
  */
 export function newestDay(dates: string[], now: Date = new Date()): string {
-  const latest = dates.filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort().at(-1);
+  const latest = dates
+    .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+    .sort()
+    .at(-1);
   return latest ?? addDays(todayIn(SEARCH_TIME_ZONE, now), -3);
 }

@@ -35,7 +35,7 @@ export function ViewToggle({ name, label, views }: { name: string; label: string
       <div className="flex min-h-8 flex-wrap items-center justify-between gap-x-3 gap-y-2 pointer-coarse:min-h-11">
         {views.length > 1 ? (
           // Many tabs scroll sideways on narrow cards instead of squeezing.
-          <div className="-m-1 max-w-[calc(100%+0.5rem)] overflow-x-auto overscroll-x-contain p-1 [scrollbar-width:none]">
+          <div className="-m-1 max-w-[calc(100%+0.5rem)] [scrollbar-width:none] overflow-x-auto overscroll-x-contain p-1">
             <SegmentedRadio
               name={name}
               label={label}

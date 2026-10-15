@@ -12,8 +12,7 @@ import { matchProperty, verifiedSites, type ScSite } from "./match";
  */
 
 export type PropertyChoice =
-  | { kind: "ok"; properties: ScSite[] }
-  | { kind: "problem"; problem: SearchProblem };
+  { kind: "ok"; properties: ScSite[] } | { kind: "problem"; problem: SearchProblem };
 
 /** The user's readable Search Console properties, or why they can't be listed. */
 export async function listProperties(userId: string): Promise<PropertyChoice> {
@@ -25,9 +24,7 @@ export async function listProperties(userId: string): Promise<PropertyChoice> {
 }
 
 /** Right after connecting: picks the property that matches the site's domain, if any. */
-export async function autoConnect(
-  owned: Site,
-): Promise<"connected" | "no_match" | SearchProblem> {
+export async function autoConnect(owned: Site): Promise<"connected" | "no_match" | SearchProblem> {
   const list = await listProperties(owned.userId);
   if (list.kind === "problem") return list.problem;
   const match = matchProperty(owned.domain, list.properties);

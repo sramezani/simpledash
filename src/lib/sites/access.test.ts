@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canAddSite, chooseSite, openableSites, readSiteId, siteList } from "./access";
+import { chooseSite, readSiteId, siteList, siteProblem } from "./access";
 
 const at = (day: number) => new Date(Date.UTC(2026, 9, day));
 const site = (id: string, addedDay: number | null, isActive = false) => ({
@@ -7,9 +7,6 @@ const site = (id: string, addedDay: number | null, isActive = false) => ({
   isActive,
   addedAt: addedDay === null ? null : at(addedDay),
 });
-
-const pro = { sites: 10 };
-const free = { sites: 1 };
 
 describe("siteList", () => {
   it("lists added sites in the order they were added", () => {
@@ -22,64 +19,35 @@ describe("siteList", () => {
   });
 });
 
-describe("openableSites", () => {
-  const sites = [site("a", 1), site("b", 2, true), site("c", 3)];
-
-  it("opens every added site on Pro", () => {
-    expect(openableSites(sites, pro).map((s) => s.id)).toEqual(["a", "b", "c"]);
-  });
-
-  it("opens only the active site on Free, keeping the others paused", () => {
-    expect(openableSites(sites, free).map((s) => s.id)).toEqual(["b"]);
-  });
-
-  it("never opens more than the limit, oldest first", () => {
-    expect(openableSites(sites, { sites: 2 }).map((s) => s.id)).toEqual(["a", "b"]);
-  });
-
-  it("opens nothing without sites", () => {
-    expect(openableSites([], pro)).toEqual([]);
-  });
-});
-
 describe("chooseSite", () => {
   const sites = [site("a", 1), site("b", 2, true), site("c", 3), site("old", null)];
 
   it("shows the active site when the address names none", () => {
-    expect(chooseSite(sites, pro, null)).toMatchObject({ kind: "open", site: { id: "b" } });
-    expect(chooseSite(sites, free, undefined)).toMatchObject({
-      kind: "open",
-      site: { id: "b" },
-    });
+    expect(chooseSite(sites, null)?.id).toBe("b");
+    expect(chooseSite(sites, undefined)?.id).toBe("b");
   });
 
-  it("opens a named site on Pro", () => {
-    expect(chooseSite(sites, pro, "c")).toMatchObject({ kind: "open", site: { id: "c" } });
+  it("opens any listed site named in the address, on every plan", () => {
+    expect(chooseSite(sites, "a")?.id).toBe("a");
+    expect(chooseSite(sites, "c")?.id).toBe("c");
   });
 
-  it("asks a Free user to upgrade for a listed site that isn't the active one", () => {
-    expect(chooseSite(sites, free, "c")).toMatchObject({ kind: "upgrade", site: { id: "c" } });
+  it("falls back to the oldest listed site when none is active", () => {
+    expect(chooseSite([site("a", 1), site("b", 2)], null)?.id).toBe("a");
   });
 
   it("treats unknown and unlisted sites as missing", () => {
-    expect(chooseSite(sites, pro, "nope")).toEqual({ kind: "missing" });
-    expect(chooseSite(sites, pro, "old")).toEqual({ kind: "missing" });
-    expect(chooseSite([], pro, null)).toEqual({ kind: "missing" });
+    expect(chooseSite(sites, "nope")).toBeNull();
+    expect(chooseSite(sites, "old")).toBeNull();
+    expect(chooseSite([], null)).toBeNull();
   });
 });
 
-describe("canAddSite", () => {
-  it("lets Pro add sites up to the limit", () => {
-    expect(canAddSite([site("a", 1)], pro)).toBe(true);
-    const ten = Array.from({ length: 10 }, (_, i) => site(`s${i}`, i + 1));
-    expect(canAddSite(ten, pro)).toBe(false);
-    // Rows that left the list don't count.
-    expect(canAddSite([...ten.slice(0, 9), site("gone", null)], pro)).toBe(true);
-  });
-
-  it("never lets Free add a second site", () => {
-    expect(canAddSite([site("a", 1)], free)).toBe(false);
-    expect(canAddSite([], free)).toBe(false);
+describe("siteProblem", () => {
+  it("says what a site's status means, and nothing when it's fine", () => {
+    expect(siteProblem("ok")).toBeNull();
+    expect(siteProblem("needs_reconnect")).toBe("Google access ended");
+    expect(siteProblem("no_access")).toBe("No access to this site in Google Analytics");
   });
 });
 

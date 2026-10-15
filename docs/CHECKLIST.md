@@ -205,7 +205,7 @@ What's done and what's next, in plain words.
 - [x] ~~Siamak: create the Growth product and prices in Stripe (test and live)~~ Replaced by Pro on 14 Oct (see "Free and Pro" below)
   - The Growth test product isn't used any more and can be archived in Stripe.
 - [ ] Siamak: Customer Portal → "Customers can switch plans" with Pro's two prices (test and live)
-- [ ] **Done when:** a Growth test user pays in test mode, adds three sites, switches between them and sees all three on `/sites`; a Starter user sees the upgrade panel.
+- [ ] **Done when:** a Growth test user pays in test mode, adds three sites, switches between them and sees all three on `/sites`; a Starter user sees the upgrade panel. (Since 15 Oct: Pro and Free, and the three sites show in the site menu, as `/sites` is gone.)
 
 ### Sprint 6: Google search insights
 
@@ -267,7 +267,7 @@ What's done and what's next, in plain words.
 - [x] Migration `0007_pro_plan.sql`: paid rows become `pro`, `trial_ends_at` dropped (14 Oct)
 - [x] Stripe test mode: "SimpleDash Pro" with $9 and $90 USD prices; Checkout with Managed Payments opens at both amounts (14 Oct)
 - [x] Open source: README for outsiders with a "What SimpleDash stores" table, NOTICE (trademark and credits), CONTRIBUTING, SECURITY; the server IP and the old password note removed from the docs (14 Oct)
-- [ ] `LICENSE`: the official AGPL-3.0 text (waiting for Siamak's OK to fetch it from gnu.org, or add it on GitHub)
+- [x] `LICENSE`: the official AGPL-3.0 text (Siamak added it on GitHub, 14 Oct)
 
 **Siamak's part**
 
@@ -277,6 +277,20 @@ What's done and what's next, in plain words.
 - [ ] Decide on contributor terms before outside pull requests (today: AGPL in, AGPL out, no CLA)
 - [ ] Make the GitHub repo public (fresh history or not) before the site goes live: the FAQ and privacy page link to it
 - [ ] **Done when:** a new account lands on Free with no card, 12 months shows the Pro badge, upgrading in test mode unlocks everything at once, and the repo is public with its LICENSE.
+
+## Site menu and settings pages (Siamak's list, 15 Oct; `docs/SPEC.md` sections 5, 7 and 28.1)
+
+- [x] Every link and button shows the pointer cursor (15 Oct)
+- [x] One site menu for Free and Pro: every Google Analytics site in the Google account, opened with one click, no dialog or Switch button (15 Oct)
+  - The opened site joins the user's sites. The menu's rows are unit tested (`src/lib/sites/menu.test.ts`).
+- [x] A gear next to each of the user's sites in the menu opens that site's settings (15 Oct)
+- [x] "Add a site", "Switch site", "All sites", the picker dialog and the `/sites` page removed, with their code (15 Oct)
+- [x] Settings in pages with a menu on the left: Profile, Plan & billing, Monday email, then one page per site. Old `/settings?site=` and `#billing` / `#email` links still land on the right page (15 Oct)
+  - Checked on the `/ui-kit` previews at 375 and 1440 px, with a keyboard-only pass of the site menu and the settings menu. The live Google list and opening a site need a real sign-in.
+- [x] No site limit: Free and Pro both open every Google Analytics site, and the menu is the same on both ("n of 10 in use" and the Free footer gone). Paused sites, "Show … instead" and the "Several sites are part of Pro" panel removed, with their code. Pricing, hero, FAQ, terms and `llms.txt` updated (15 Oct)
+  - Checked on the `/ui-kit` previews (Pro menu, Free menu at 375 px with the keyboard, Free with three sites in settings) and the landing page's pricing text.
+- [ ] Siamak: update `docs/ROADMAP.md` (Free was one site, Pro up to 10 sites)
+- [ ] **Done when:** Siamak opens another site from the menu on Free and on Pro, and the gear opens that site's settings.
 
 ## V3: later (postponed 13 Oct; `docs/SPEC.md` section 29)
 

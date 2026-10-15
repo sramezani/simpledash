@@ -86,7 +86,9 @@ export async function readSince(key: string, since: number): Promise<StripeReads
         : null,
     ),
     collect(stripe.refunds.list({ created, limit: 100 }), (r) =>
-      r.status === "succeeded" ? { created: r.created, amount: r.amount, currency: r.currency } : null,
+      r.status === "succeeded"
+        ? { created: r.created, amount: r.amount, currency: r.currency }
+        : null,
     ),
     collect(stripe.customers.list({ created, limit: 100 }), (c) => ({ created: c.created })),
   ]);
@@ -105,15 +107,13 @@ export async function readSubscriptions(
   const stripe = client(key);
   const pick = (s: Stripe.Subscription) => ({
     status: s.status,
-    items: s.items.data.map(
-      (item): SubItem => ({
-        unitAmount: item.price.unit_amount,
-        currency: item.price.currency,
-        interval: interval(item.price.recurring?.interval),
-        intervalCount: item.price.recurring?.interval_count ?? 1,
-        quantity: item.quantity ?? 1,
-      }),
-    ),
+    items: s.items.data.map((item): SubItem => ({
+      unitAmount: item.price.unit_amount,
+      currency: item.price.currency,
+      interval: interval(item.price.recurring?.interval),
+      intervalCount: item.price.recurring?.interval_count ?? 1,
+      quantity: item.quantity ?? 1,
+    })),
   });
   const [active, pastDue] = await Promise.all([
     collect(stripe.subscriptions.list({ status: "active", limit: 100 }), pick),

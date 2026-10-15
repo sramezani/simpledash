@@ -40,7 +40,10 @@ describe("bucketDays", () => {
           { created: at("2026-10-05T12:00:00Z"), amount: 1500, currency: "usd" },
         ],
         refunds: [{ created: at("2026-10-05T15:00:00Z"), amount: 900, currency: "eur" }],
-        customers: [{ created: at("2026-10-05T09:00:00Z") }, { created: at("2026-10-05T22:30:00Z") }],
+        customers: [
+          { created: at("2026-10-05T09:00:00Z") },
+          { created: at("2026-10-05T22:30:00Z") },
+        ],
       },
       "Europe/Amsterdam",
     );
@@ -56,7 +59,11 @@ describe("bucketDays", () => {
 });
 
 describe("mrr", () => {
-  const item = (unitAmount: number | null, interval: "month" | "year" | "week" | null, extra = {}) => ({
+  const item = (
+    unitAmount: number | null,
+    interval: "month" | "year" | "week" | null,
+    extra = {},
+  ) => ({
     unitAmount,
     currency: "eur",
     interval,
@@ -69,7 +76,10 @@ describe("mrr", () => {
     expect(monthlyAmount(item(1900, "month"))).toBe(1900);
     expect(monthlyAmount(item(19000, "year"))).toBeCloseTo(1583.33, 1);
     expect(monthlyAmount(item(1200, "week"))).toBe(5200);
-    expect(monthlyAmount(item(5000, "month", { intervalCount: 3, quantity: 2 }))).toBeCloseTo(3333.33, 1);
+    expect(monthlyAmount(item(5000, "month", { intervalCount: 3, quantity: 2 }))).toBeCloseTo(
+      3333.33,
+      1,
+    );
     expect(monthlyAmount(item(null, "month"))).toBeNull();
   });
 
@@ -87,14 +97,24 @@ describe("mrr", () => {
 
 describe("periodRevenue", () => {
   const days: StoredDay[] = [
-    { day: "2026-10-01", money: { EUR: { charged: 5000, refunded: 0 } }, newCustomers: 2, mrr: null },
+    {
+      day: "2026-10-01",
+      money: { EUR: { charged: 5000, refunded: 0 } },
+      newCustomers: 2,
+      mrr: null,
+    },
     {
       day: "2026-10-03",
       money: { EUR: { charged: 2000, refunded: 1000 }, USD: { charged: 900, refunded: 0 } },
       newCustomers: 1,
       mrr: { EUR: 12000 },
     },
-    { day: "2026-10-09", money: { EUR: { charged: 9900, refunded: 0 } }, newCustomers: 5, mrr: null },
+    {
+      day: "2026-10-09",
+      money: { EUR: { charged: 9900, refunded: 0 } },
+      newCustomers: 5,
+      mrr: null,
+    },
   ];
 
   it("adds up charged minus refunded in the main currency, and names the others", () => {

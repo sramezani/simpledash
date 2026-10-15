@@ -122,9 +122,17 @@ function dateRanges(window: RangeWindow, periods: "both" | "current") {
 export const googleSearchFilter: FilterExpression = {
   andGroup: {
     expressions: [
-      { filter: { fieldName: "sessionSource", stringFilter: { matchType: "EXACT", value: "google" } } },
       {
-        filter: { fieldName: "sessionMedium", stringFilter: { matchType: "EXACT", value: "organic" } },
+        filter: {
+          fieldName: "sessionSource",
+          stringFilter: { matchType: "EXACT", value: "google" },
+        },
+      },
+      {
+        filter: {
+          fieldName: "sessionMedium",
+          stringFilter: { matchType: "EXACT", value: "organic" },
+        },
       },
     ],
   },
@@ -163,9 +171,12 @@ export function goalEvents(params: ReportParams): string[] {
 }
 
 export function paramsKey(report: ReportName, params: ReportParams): string {
-  if (report === "actions" || report === "search_signups") return `signup=${params.signupEvent ?? ""}`;
-  if (report === "goals_sources" || report === "goals_landing") return `goals=${goalEvents(params).join(",")}`;
-  if (report === "sale_page_sources" || report === "sale_page_landing") return `page=${params.salePage ?? ""}`;
+  if (report === "actions" || report === "search_signups")
+    return `signup=${params.signupEvent ?? ""}`;
+  if (report === "goals_sources" || report === "goals_landing")
+    return `goals=${goalEvents(params).join(",")}`;
+  if (report === "sale_page_sources" || report === "sale_page_landing")
+    return `page=${params.salePage ?? ""}`;
   if (report === "ai_sources" || report === "ai_pages") return `ai=v${AI_LIST_VERSION}`;
   return "-";
 }
@@ -589,7 +600,11 @@ const parsers: { [R in ReportName]: (rows: Row[], window: RangeWindow) => Payloa
       bySource.set(source, events);
     }
     return {
-      rows: [...bySource].map(([source, events]) => ({ source, label: sourceLabel(source), events })),
+      rows: [...bySource].map(([source, events]) => ({
+        source,
+        label: sourceLabel(source),
+        events,
+      })),
     };
   },
 

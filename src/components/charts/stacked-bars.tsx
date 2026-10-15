@@ -68,7 +68,10 @@ export function StackedBars({
             />
           ))}
           {bars.map((bar, i) => (
-            <div key={bar.label} className="group/bar relative flex h-full min-w-0 flex-1 flex-col justify-end">
+            <div
+              key={bar.label}
+              className="group/bar relative flex h-full min-w-0 flex-1 flex-col justify-end"
+            >
               <div
                 className="flex w-full flex-col justify-end overflow-hidden rounded-t-[3px] transition-opacity duration-150 group-hover/bar:opacity-80"
                 style={{ height: `${((bar.a + bar.b) / top) * 100}%` }}

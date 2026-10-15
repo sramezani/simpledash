@@ -190,7 +190,10 @@ export async function loadSearch(
   try {
     latest = await latestDay(site, base, now);
   } catch (error) {
-    return { kind: "error", problem: (error as { problem?: SearchProblem }).problem ?? "unavailable" };
+    return {
+      kind: "error",
+      problem: (error as { problem?: SearchProblem }).problem ?? "unavailable",
+    };
   }
   const ctx = context(site, searchWindow(period, latest.day));
   const keys: Key[] = SEARCH_REPORTS.map((report) => ({
@@ -211,12 +214,15 @@ export async function loadSearch(
     for (const row of fetched.rows) rows.set(row.report, row);
     if (fetched.error) problem = await handle(site, fetched.error);
   }
-  if (SEARCH_REPORTS.some((r) => !rows.has(r))) return { kind: "error", problem: problem ?? "unavailable" };
+  if (SEARCH_REPORTS.some((r) => !rows.has(r)))
+    return { kind: "error", problem: problem ?? "unavailable" };
 
   const stale = SEARCH_REPORTS.filter((r) => !isFresh(rows.get(r)!, ctx.window, now));
   const refreshing = stale.length > 0 && !problem;
   if (refreshing) {
-    const staleKeys = keys.filter((k) => stale.includes(k.report as (typeof SEARCH_REPORTS)[number]));
+    const staleKeys = keys.filter((k) =>
+      stale.includes(k.report as (typeof SEARCH_REPORTS)[number]),
+    );
     cacheDeps.schedule(async () => {
       try {
         const leased = await store.lease(site.propertyId, rangeType, staleKeys);

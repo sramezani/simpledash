@@ -272,17 +272,17 @@ describe("Free's 30 days", () => {
     const w = rangeWindow("7d", "UTC", now);
     const menu = rangeMenu("7d", w, "/dashboard", {}, "7d", {
       firstDay: freeFirstDay(w.today),
-      upgradeHref: "/settings#billing",
+      upgradeHref: "/settings/billing",
     });
     expect(menu.presets.find((p) => p.value === "12m")).toMatchObject({
       locked: true,
-      href: "/settings#billing",
+      href: "/settings/billing",
     });
     expect(menu.presets.filter((p) => p.locked).map((p) => p.value)).toEqual(["12m"]);
     expect(menu.custom.firstDay).toBe("2026-09-11");
     expect(menu.limit).toEqual({
       note: "Free shows the last 30 days.",
-      href: "/settings#billing",
+      href: "/settings/billing",
     });
   });
 

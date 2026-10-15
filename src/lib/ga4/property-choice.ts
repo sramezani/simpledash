@@ -3,7 +3,8 @@
 export type PropertySummary = { propertyId: string; displayName: string; account: string };
 
 /** What the site picker's server action returns. `reconnect`: Google access ended. */
-export type PropertyList = { properties: PropertySummary[] } | { error: string; reconnect?: boolean };
+export type PropertyList =
+  { properties: PropertySummary[] } | { error: string; reconnect?: boolean };
 
 /** Index of the property with the most visitors. Failed checks (null) count as none; ties go to the first. */
 export function pickBusiest(counts: (number | null)[]): number {

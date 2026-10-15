@@ -35,27 +35,28 @@ export default function TermsPage() {
 
       <LegalSection title="Free">
         <p>
-          New accounts are on {free.name}: one site, the last {FREE_HISTORY_DAYS} days and a
-          public page, with no card and no time limit. We may change what {free.name} includes;
-          if we do, we&apos;ll tell you by email at least 30 days before.
+          New accounts are on {free.name}: all your sites, the last {FREE_HISTORY_DAYS} days and
+          public pages, with no card and no time limit. We may change what {free.name} includes; if
+          we do, we&apos;ll tell you by email at least 30 days before.
         </p>
       </LegalSection>
 
       <LegalSection title="Prices and billing">
         <ul>
           <li>
-            The {pro.name} plan costs {priceInWords("month")} or {priceInWords("year")}, for up to{" "}
-            {pro.limits.sites} sites, with 12 months and any dates, the Monday email, Google search
-            insights and revenue from Stripe. Prices include tax.
+            The {pro.name} plan costs {priceInWords("month")} or {priceInWords("year")}, and adds 12
+            months and any dates, the Monday email, Google search insights and revenue from Stripe.
+            Prices include tax.
           </li>
           <li>
             Launch price: if you subscribe at today&apos;s price, it stays the same for as long as
             your subscription runs without a break.
           </li>
           <li>
-            You can switch between monthly and yearly in Settings → Billing. Stripe shows the exact
-            amount for the rest of your period before you confirm. Going back to {free.name} keeps
-            your other sites and their settings, paused, until you upgrade again.
+            You can switch between monthly and yearly in Settings → Plan &amp; billing. Stripe shows
+            the exact amount for the rest of your period before you confirm. Going back to{" "}
+            {free.name} keeps your sites and their settings; {pro.name}&apos;s extras stop until you
+            upgrade again.
           </li>
           <li>
             Payments are handled by Stripe, which acts as the merchant of record: Stripe sells the
@@ -72,8 +73,8 @@ export default function TermsPage() {
       <LegalSection title="Cancelling and refunds">
         <ul>
           <li>
-            You can cancel at any time in Settings → Billing. Your plan stays active until the end
-            of the period you paid for, and it doesn&apos;t renew.
+            You can cancel at any time in Settings → Plan &amp; billing. Your plan stays active
+            until the end of the period you paid for, and it doesn&apos;t renew.
           </li>
           <li>Monthly payments aren&apos;t refunded for part of a month.</li>
           <li>

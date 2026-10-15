@@ -36,7 +36,7 @@ async function Content({ searchParams }: Pick<PageProps<"/email/unsubscribe">, "
         <h1 className="text-2xl font-semibold tracking-tight">You&apos;re unsubscribed</h1>
         <p className="text-muted-foreground">
           You won&apos;t get the Monday email any more. You can turn it back on in{" "}
-          <Link href="/settings" className="underline underline-offset-2">
+          <Link href="/settings/email" className="underline underline-offset-2">
             Settings
           </Link>
           .
@@ -51,7 +51,7 @@ async function Content({ searchParams }: Pick<PageProps<"/email/unsubscribe">, "
         <h1 className="text-2xl font-semibold tracking-tight">This link doesn&apos;t work</h1>
         <p className="text-muted-foreground">
           Turn the Monday email off in{" "}
-          <Link href="/settings" className="underline underline-offset-2">
+          <Link href="/settings/email" className="underline underline-offset-2">
             Settings
           </Link>{" "}
           instead.

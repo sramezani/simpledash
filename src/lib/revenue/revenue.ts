@@ -87,12 +87,14 @@ export async function syncRevenue(
     [reads, subscriptions] = await Promise.all([readSince(key, since), readSubscriptions(key)]);
   } catch (error) {
     const problem = readProblem(error);
-    if (problem === "unavailable") reportError("Stripe revenue sync failed", error, { siteId: owned.id });
+    if (problem === "unavailable")
+      reportError("Stripe revenue sync failed", error, { siteId: owned.id });
     await db
       .update(revenueSource)
       .set({
         ...(problem === "invalid" ? { status: "invalid" as const } : {}),
-        lastError: problem === "invalid" ? "Stripe no longer accepts this key" : "Stripe didn't answer",
+        lastError:
+          problem === "invalid" ? "Stripe no longer accepts this key" : "Stripe didn't answer",
       })
       .where(eq(revenueSource.siteId, owned.id));
     return problem;
@@ -107,11 +109,18 @@ export async function syncRevenue(
       .where(and(eq(revenueDay.siteId, owned.id), gte(revenueDay.day, from)));
     const snapshots = new Map(kept.filter((k) => k.mrr).map((k) => [k.day, k.mrr]));
     snapshots.set(today, snapshot.amounts);
-    await tx.delete(revenueDay).where(and(eq(revenueDay.siteId, owned.id), gte(revenueDay.day, from)));
+    await tx
+      .delete(revenueDay)
+      .where(and(eq(revenueDay.siteId, owned.id), gte(revenueDay.day, from)));
     const rows = new Map<string, typeof revenueDay.$inferInsert>();
     for (const [day, totals] of days) {
       if (day < from || day > today) continue;
-      rows.set(day, { siteId: owned.id, day, money: totals.money, newCustomers: totals.newCustomers });
+      rows.set(day, {
+        siteId: owned.id,
+        day,
+        money: totals.money,
+        newCustomers: totals.newCustomers,
+      });
     }
     for (const [day, amounts] of snapshots) {
       const row = rows.get(day) ?? { siteId: owned.id, day, money: {}, newCustomers: 0 };
@@ -199,5 +208,8 @@ export async function loadRevenue(
 
 /** True when the totals are older than an hour: the dashboard asks for a sync after the response. */
 export function needsSync(source: Pick<RevenueSource, "lastSyncAt" | "status">, now = new Date()) {
-  return source.status === "ok" && (!source.lastSyncAt || now.getTime() - source.lastSyncAt.getTime() > 60 * 60 * 1000);
+  return (
+    source.status === "ok" &&
+    (!source.lastSyncAt || now.getTime() - source.lastSyncAt.getTime() > 60 * 60 * 1000)
+  );
 }

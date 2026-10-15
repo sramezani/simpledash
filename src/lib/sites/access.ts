@@ -1,13 +1,10 @@
-import type { Entitlements } from "@/lib/billing/plan";
-
 /**
- * Which sites an account can open (docs/SPEC.md section 28.1). Pure, so it is tested.
+ * The user's sites (docs/SPEC.md section 28.1). Pure, so it is tested.
  *
  * - A site with `addedAt` set is in the user's list; `isActive` is the one the
  *   dashboard opens with (the one opened most recently).
- * - Pro opens every added site, up to its limit, in the order they were added.
- * - Free open only the active site. Sites added while on Pro stay in
- *   the list, paused, and open again after upgrading (Siamak, Oct 13, 2026).
+ * - Every site in the list opens, on Free and Pro alike: there is no site limit
+ *   (Siamak, Oct 15, 2026).
  */
 
 export type SiteRef = { id: string; isActive: boolean; addedAt: Date | null };
@@ -21,48 +18,26 @@ export function siteList<T extends SiteRef>(sites: T[]): T[] {
   return active && !added.includes(active) ? [active, ...added] : added;
 }
 
-/** The sites the plan lets the user open right now. */
-export function openableSites<T extends SiteRef>(
-  sites: T[],
-  ent: Pick<Entitlements, "sites">,
-): T[] {
-  const list = siteList(sites);
-  if (ent.sites <= 1) {
-    const active = list.find((s) => s.isActive) ?? list[0];
-    return active ? [active] : [];
-  }
-  return list.slice(0, ent.sites);
-}
-
-export type SiteChoice<T> =
-  /** Show this site. */
-  | { kind: "open"; site: T }
-  /** In the list, but the plan doesn't open it: show the upgrade panel. */
-  | { kind: "upgrade"; site: T }
-  /** Not the user's site, or not in the list. */
-  | { kind: "missing" };
-
 /**
  * The site a page should show: the one named in the address, or the active one.
- * An ID that isn't one of the user's listed sites is "missing", never someone else's.
+ * An ID that isn't one of the user's listed sites gives null, never someone else's site.
  */
 export function chooseSite<T extends SiteRef>(
   sites: T[],
-  ent: Pick<Entitlements, "sites">,
   requested: string | null | undefined,
-): SiteChoice<T> {
+): T | null {
   const list = siteList(sites);
-  const openable = openableSites(sites, ent);
   const site = requested
     ? list.find((s) => s.id === requested)
-    : (openable.find((s) => s.isActive) ?? openable[0]);
-  if (!site) return { kind: "missing" };
-  return openable.includes(site) ? { kind: "open", site } : { kind: "upgrade", site };
+    : (list.find((s) => s.isActive) ?? list[0]);
+  return site ?? null;
 }
 
-/** Whether one more site can be added: Pro below its limit. */
-export function canAddSite(sites: SiteRef[], ent: Pick<Entitlements, "sites">): boolean {
-  return ent.sites > 1 && sites.filter((s) => s.addedAt !== null).length < ent.sites;
+/** What a site's status means for its numbers, in plain words (or null when fine). */
+export function siteProblem(status: "ok" | "needs_reconnect" | "no_access"): string | null {
+  if (status === "needs_reconnect") return "Google access ended";
+  if (status === "no_access") return "No access to this site in Google Analytics";
+  return null;
 }
 
 /** A site ID as it can appear in an address or form: our IDs are UUIDs. */

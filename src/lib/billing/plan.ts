@@ -51,8 +51,8 @@ export function effectivePlan(state: PlanState): PlanId {
 export type Entitlements = PlanLimits & { plan: PlanId };
 
 /**
- * What the account may use. Every limit on the server comes from here: sites, how far
- * back, the Monday email, Search Console, revenue and the public page's link.
+ * What the account may use. Every limit on the server comes from here: how far back,
+ * the Monday email, Search Console, revenue and the public page's link.
  */
 export function entitlements(state: PlanState): Entitlements {
   const plan = effectivePlan(state);

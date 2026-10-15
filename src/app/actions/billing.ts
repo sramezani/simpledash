@@ -24,9 +24,9 @@ export async function upgrade(formData: FormData) {
       : await createCheckout(user, interval);
   } catch (error) {
     reportError("Checkout failed", error, { userId: user.id });
-    redirect("/settings?billing=error#billing");
+    redirect("/settings/billing?billing=error");
   }
-  redirect((url ?? "/settings") as Route);
+  redirect((url ?? "/settings/billing") as Route);
 }
 
 /** "Manage billing": the Stripe Customer Portal. */
@@ -37,7 +37,7 @@ export async function manageBilling() {
     url = await createPortal(user.id);
   } catch (error) {
     reportError("Billing portal failed", error, { userId: user.id });
-    redirect("/settings?billing=error#billing");
+    redirect("/settings/billing?billing=error");
   }
-  redirect((url ?? "/settings") as Route);
+  redirect((url ?? "/settings/billing") as Route);
 }

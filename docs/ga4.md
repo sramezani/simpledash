@@ -64,10 +64,11 @@ How states clear on their own:
 
 A user's sites are `site` rows; `added_at` set means the site is in their list and `is_active` marks the one the dashboard opens with (the one opened last). `src/lib/sites/` holds the rules:
 
-- `access.ts` (pure, tested): the list in the order added, which sites the plan opens (Pro: every listed site up to 10; Free: the active one), the site a page shows (`chooseSite`: the one in `?site=`, or the active one; an unlisted or unknown ID is "missing"), and whether one more can be added.
-- `sites.ts`: `getSiteContext(userId, requested)` (plan, list and choice, once per request), `markSiteOpened` (the dashboard calls it after the response), `removeSite`.
-- `requireSite(siteId)` (`src/lib/auth/session.ts`) uses them: every action and route handler that takes a site ID checks it is the user's own, listed and open on their plan.
-- Adding and switching go through `connectProperty(userId, propertyId, mode)` in `properties.ts`: `replace` (Free, the first site) takes the active site's place in the list; `add` (Pro) joins it, with the limit checked under a per-user advisory lock so two quick clicks can't pass it. Both check the property is in the user's own Google list first.
+- `access.ts` (pure, tested): the list in the order added (`siteList`; every listed site opens, with no limit on any plan since Oct 15, 2026), the site a page shows (`chooseSite`: the one in `?site=`, or the active one; an unlisted or unknown ID gives null), and `siteProblem` (the warning line under a site in the menu).
+- `menu.ts` (pure, tested): the site menu's rows, from Google's live list and the user's sites (`siteMenuGroups`, grouped by account, own sites linked by property), and its search (`filterSiteMenu`).
+- `sites.ts`: `getSiteContext(userId, requested)` (plan, list and the site to show, once per request), `markSiteOpened` (the dashboard calls it after the response), `removeSite`.
+- `requireSite(siteId)` (`src/lib/auth/session.ts`) uses them: every action and route handler that takes a site ID checks it is the user's own and listed.
+- Opening a site from the site menu (`openSite` in `src/app/actions/site.ts`) goes through `addProperty`, which checks the property is in the user's own Google list, then `connectProperty(userId, propertyId)` in `properties.ts`: the site joins the list and becomes active, under a per-user advisory lock so two quick clicks can't leave two active sites. The first site (`chooseFirstSite`) uses `connectProperty` the same way.
 
 ## Property choice
 
@@ -79,7 +80,7 @@ A user's sites are `site` rows; `added_at` set means the site is in their list a
 4. `getProperty` and `listDataStreams` give the time zone, creation date, currency, service level and the web stream's host name ("Showing: mysite.com").
 5. The site is saved as the user's one active site (a partial unique index allows only one).
 
-The switcher (`switchSite` server action) checks the property against the user's own live list before switching. Switching back to an old site keeps its notes and signup event.
+The site menu (`SiteSwitcher`, the same on Free and Pro) lists every property from `listAccountSummaries` through the `listMyProperties` action, and `openSite` checks the property against the user's own live list before opening it. Opening an old site again keeps its notes, signup event and settings.
 
 ## Jobs
 

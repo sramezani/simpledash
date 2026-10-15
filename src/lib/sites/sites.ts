@@ -5,7 +5,7 @@ import { getPlan } from "@/lib/billing/billing";
 import { entitlements, type Entitlements, type PlanState } from "@/lib/billing/plan";
 import { db } from "@/lib/db/client";
 import { site, type Site } from "@/lib/db/schema";
-import { chooseSite, openableSites, siteList, type SiteChoice } from "./access";
+import { chooseSite, siteList } from "./access";
 
 /** The user's sites in their list (added), plus the active one: everything a menu can show. */
 export function getUserSites(userId: string): Promise<Site[]> {
@@ -18,11 +18,10 @@ export function getUserSites(userId: string): Promise<Site[]> {
 export type SiteContext = {
   plan: PlanState;
   ent: Entitlements;
-  /** The list, in the order the sites were added. */
+  /** The list, in the order the sites were added. Every one of them opens. */
   sites: Site[];
-  /** The ones the plan opens now. */
-  openable: Site[];
-  choice: SiteChoice<Site>;
+  /** The site to show: the one in the address, or the active one. Null when it isn't theirs. */
+  site: Site | null;
 };
 
 /**
@@ -37,8 +36,7 @@ export const getSiteContext = cache(
       plan,
       ent,
       sites: siteList(rows),
-      openable: openableSites(rows, ent),
-      choice: chooseSite(rows, ent, requested),
+      site: chooseSite(rows, requested),
     };
   },
 );
@@ -74,8 +72,8 @@ export async function markSiteOpened(opened: Site, now: Date = new Date()) {
 }
 
 /**
- * Takes a site off a Pro user's list (Settings). Its notes and settings stay, so
- * adding it again restores them, and its public page pauses. The last site can't go.
+ * Takes a site off the user's list (Settings). Its notes and settings stay, so
+ * opening it again restores them, and its public page pauses. The last site can't go.
  */
 export async function removeSite(
   userId: string,
@@ -89,7 +87,8 @@ export async function removeSite(
       .orderBy(desc(site.addedAt));
     const target = listed.find((s) => s.id === siteId);
     if (!target) return { error: "That site isn't in your list." };
-    if (listed.length <= 1) return { error: "Your last site can't be removed. Add another first." };
+    if (listed.length <= 1)
+      return { error: "Your last site can't be removed. Open another first." };
     await tx.update(site).set({ addedAt: null, isActive: false }).where(eq(site.id, siteId));
     if (target.isActive) {
       // The most recently added of the others becomes the one the dashboard opens with.

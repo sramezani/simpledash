@@ -24,7 +24,7 @@ export async function createCheckout(
     subscription_data: { metadata: { userId: user.id } },
     ...(row.stripeCustomerId ? { customer: row.stripeCustomerId } : { customer_email: user.email }),
     success_url: `${env.APP_URL}/dashboard?upgraded=pro`,
-    cancel_url: `${env.APP_URL}/settings#billing`,
+    cancel_url: `${env.APP_URL}/settings/billing`,
     ...(env.STRIPE_MANAGED_PAYMENTS ? { managed_payments: { enabled: true } } : {}),
   };
   const session = await stripe.checkout.sessions.create(params);
@@ -38,7 +38,7 @@ export async function createPortal(userId: string): Promise<string | null> {
   if (!row.stripeCustomerId) return null;
   const session = await stripe.billingPortal.sessions.create({
     customer: row.stripeCustomerId,
-    return_url: `${env.APP_URL}/settings#billing`,
+    return_url: `${env.APP_URL}/settings/billing`,
   });
   return session.url;
 }

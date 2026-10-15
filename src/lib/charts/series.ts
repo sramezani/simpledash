@@ -82,7 +82,8 @@ export function withRevenue(
   if (granularity === "dateHour") return points;
   const sums = new Map<string, number>();
   for (const [day, amount] of byDay) {
-    const key = granularity === "yearMonth" ? day.slice(0, 7).replace("-", "") : day.replaceAll("-", "");
+    const key =
+      granularity === "yearMonth" ? day.slice(0, 7).replace("-", "") : day.replaceAll("-", "");
     sums.set(key, (sums.get(key) ?? 0) + amount);
   }
   return points.map((p) => ({ ...p, revenue: sums.get(p.key) ?? 0 }));

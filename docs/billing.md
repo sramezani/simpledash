@@ -6,7 +6,7 @@ How Free, Pro and Stripe work in the code. The plan is in `docs/SPEC.md` section
 
 | File | What it does | Tested |
 | --- | --- | --- |
-| `src/config/plans.ts` | Free and Pro: names, prices (USD), features and limits (`sites`, `fullHistory`, `weeklyEmail`, `searchConsole`, `revenue`, `poweredBy`), and `FREE_HISTORY_DAYS`. The only place they're written | |
+| `src/config/plans.ts` | Free and Pro: names, prices (USD), features and limits (`fullHistory`, `weeklyEmail`, `searchConsole`, `revenue`, `poweredBy`), and `FREE_HISTORY_DAYS`. The only place they're written | |
 | `src/lib/billing/plan.ts` | Plan state from a billing row: paid (Pro) or free; `entitlements()`, what the account may use | yes |
 | `src/lib/billing/prices.ts` | Prices in words, "2 months free" worked out from the prices, the plan in words for Settings | yes |
 | `src/lib/billing/billing.ts` | Database side: the Free row for new users, `getPlan`, saving a subscription state, paying users for Pro-only jobs | |
@@ -25,23 +25,24 @@ How Free, Pro and Stripe work in the code. The plan is in `docs/SPEC.md` section
 
   | | Free | Pro |
   | --- | --- | --- |
-  | Sites | 1 | 10 |
+  | Sites | All of them | All of them |
   | Ranges | Today, Yesterday, 7 and 30 days, custom days inside the last 30 | Everything |
   | Monday email | No | Yes |
   | Google search insights, revenue, sales by source | No | Yes |
   | Public page | Yes, with "Powered by SimpleDash" | Yes, without it |
 
-- **Nothing locks.** Going back to Free keeps everything: extra sites stay in the list, paused (their public pages pause too), Search Console and Stripe stay connected but hidden, and the Monday email stops until the next upgrade.
-- **Free's 30 days:** `rangeForPlan(range, fullHistory, timeZone)` swaps a longer range for Last 30 days on the dashboard (with a note), in CSV downloads and on public pages. The date menu marks "Last 12 months" with a Pro badge that opens Settings → Billing, and the calendar starts 30 days back.
+- **Nothing locks.** Going back to Free keeps everything: every site stays open with its public page, Search Console and Stripe stay connected but hidden, and the Monday email stops until the next upgrade.
+- **No site limit** on either plan (Siamak, Oct 15, 2026): the site menu opens any Google Analytics site in the account, and it joins the user's list.
+- **Free's 30 days:** `rangeForPlan(range, fullHistory, timeZone)` swaps a longer range for Last 30 days on the dashboard (with a note), in CSV downloads and on public pages. The date menu marks "Last 12 months" with a Pro badge that opens Settings → Plan & billing, and the calendar starts 30 days back.
 
 ## Upgrade
 
-Settings → Billing and the "part of Pro" panels (`UpgradePanel`: more sites, Google search insights, revenue, the Monday email) hold the same form (`UpgradeForm`): the Monthly / Yearly switch (a radio named `interval`) above Pro's compact card and "Upgrade to Pro". It posts to the `upgrade` server action, so it works without JavaScript.
+Settings → Plan & billing (`/settings/billing`) and the "part of Pro" panels (`UpgradePanel`: more sites, Google search insights, revenue, the Monday email) hold the same form (`UpgradeForm`): the Monthly / Yearly switch (a radio named `interval`) above Pro's compact card and "Upgrade to Pro". It posts to the `upgrade` server action, so it works without JavaScript.
 
 1. The action checks `interval` with Zod and picks `STRIPE_PRICE_MONTHLY` or `STRIPE_PRICE_YEARLY`. The browser never sends a price ID.
 2. **Someone already paying** gets the Customer Portal, where monthly and yearly can be switched.
 3. Checkout: subscription mode, no trial, `client_reference_id` and `metadata.userId` (on the session and the subscription), the existing customer or the user's email, `managed_payments: { enabled: true }` (unless `STRIPE_MANAGED_PAYMENTS=false`).
-4. Success → `/dashboard?upgraded=pro`: "Thank you! Pro is active." Cancel → `/settings#billing`. A Stripe error → `/settings?billing=error#billing`.
+4. Success → `/dashboard?upgraded=pro`: "Thank you! Pro is active." Cancel → `/settings/billing`. A Stripe error → `/settings/billing?billing=error`.
 
 Checked on Oct 14, 2026 in test mode: Checkout sessions for Pro with Managed Payments open at $9.00 monthly and $90.00 yearly (USD); they were expired again, nothing was paid.
 
@@ -56,7 +57,7 @@ Checked on Oct 14, 2026 in test mode: Checkout sessions for Pro with Managed Pay
 - A paid subscription on a price that isn't one of Pro's two (an old Starter or Growth test price) is still Pro, and is reported to Sentry.
 - Events for a deleted account are skipped. If that subscription is still running (someone paid in a Checkout tab after deleting the account), it is cancelled and reported to Sentry, so Siamak can refund it.
 
-## Settings → Billing
+## Settings → Plan & billing
 
 Shows the plan in plain words ("Free", "Pro · $90 a year · renews on 11 Oct 2027", "Pro · $9 a month · ends on 2 Nov 2026"), then "Upgrade to Pro" (Free) or "Manage billing" (the Portal). A failed payment shows a note to update the card. The weekly email section on Free says the Monday email is part of Pro.
 

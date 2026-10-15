@@ -8,6 +8,8 @@ describe("llmsText", () => {
     expect(text).toContain("- Free: $0, no card needed, no time limit.");
     expect(text).toContain("the last 30 days");
     expect(text).toContain("- Pro: $9 a month or $90 a year (2 months free), tax included.");
+    expect(text).toContain("All your GA4 sites, switched with one click");
+    expect(text).not.toMatch(/up to \d+ sites/i);
     expect(text).not.toContain("trial");
     expect(text).not.toContain("Starter");
     expect(text).not.toContain("Growth");

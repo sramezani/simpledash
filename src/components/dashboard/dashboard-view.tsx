@@ -32,6 +32,7 @@ import {
   type RangeWindow,
 } from "@/lib/ga4/ranges";
 import type { Payload, ReportName } from "@/lib/ga4/reports";
+import { settingsRoutes } from "@/lib/settings-routes";
 import { RefreshSoon } from "./refresh-soon";
 import { TopBar } from "./top-bar";
 
@@ -228,7 +229,7 @@ export function DashboardView(props: DashboardViewProps) {
     <>
       <TopBar
         basePath={props.basePath}
-        settingsHref={props.siteId ? (`/settings?site=${props.siteId}` as Route) : undefined}
+        settingsHref={props.siteId ? (settingsRoutes.site(props.siteId) as Route) : undefined}
       />
       <main id="main" className="pb-16">
         <Container className="flex flex-col gap-4 pt-5">

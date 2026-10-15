@@ -15,7 +15,7 @@ type ShareState = { url?: string; error?: string };
  */
 export function ShareCard({
   action,
-  settingsHref = "/settings#public",
+  settingsHref = "/settings",
 }: {
   action: () => Promise<ShareState>;
   /** This site's public page settings. */

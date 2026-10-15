@@ -23,6 +23,6 @@ export async function GET(request: Request) {
   redirect(
     (back === "dashboard"
       ? `/dashboard?site=${site.id}&search=${result}`
-      : `/settings?site=${site.id}&search=${result}#search`) as Route,
+      : `/settings/sites/${site.id}?search=${result}#search`) as Route,
   );
 }

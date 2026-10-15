@@ -26,12 +26,7 @@ export class SearchConsoleError extends Error {
 
 /** Why Search Console couldn't be asked, in our words. */
 export type SearchProblem =
-  | "revoked"
-  | "scope"
-  | "no_access"
-  | "quota"
-  | "unavailable"
-  | "bad_request";
+  "revoked" | "scope" | "no_access" | "quota" | "unavailable" | "bad_request";
 
 export function classifySearchError(error: unknown): SearchProblem {
   if (error instanceof GoogleAccessError) {
@@ -70,8 +65,11 @@ async function call<T>(userId: string, path: string, body?: unknown): Promise<T>
   }
   const json: unknown = await response.json().catch(() => null);
   if (!response.ok) {
-    const error = (json as { error?: { message?: string; status?: string; errors?: { reason?: string }[] } } | null)
-      ?.error;
+    const error = (
+      json as {
+        error?: { message?: string; status?: string; errors?: { reason?: string }[] };
+      } | null
+    )?.error;
     throw new SearchConsoleError(
       error?.message ?? `Search Console answered ${response.status}`,
       response.status,

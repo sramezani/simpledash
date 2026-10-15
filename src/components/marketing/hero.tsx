@@ -22,7 +22,7 @@ export function Hero() {
         <div className="flex flex-col items-center gap-2">
           <HeroCta startLabel="See my dashboard, free" />
           <p className="text-xs text-muted-foreground signed-in:hidden">
-            {plans.free.name} for one site · no card · read-only access · {plans.pro.name}{" "}
+            {plans.free.name} for all your sites · no card · read-only access · {plans.pro.name}{" "}
             {formatPrice(plans.pro.prices.month)} a month
           </p>
         </div>

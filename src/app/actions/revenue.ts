@@ -19,6 +19,7 @@ import { checkKey, RESOURCE_NAMES } from "@/lib/revenue/stripe-reader";
 import { keyKind } from "@/lib/revenue/totals";
 import { reportError } from "@/lib/report-error";
 import { getSiteContext } from "@/lib/sites/sites";
+import { settingsRoutes } from "@/lib/settings-routes";
 
 /**
  * Revenue and sales for one site (docs/SPEC.md section 28.3), Pro only. Each action
@@ -28,7 +29,7 @@ import { getSiteContext } from "@/lib/sites/sites";
 async function requireRevenueSite(siteId: string) {
   const found = await requireSite(siteId);
   const { ent } = await getSiteContext(found.user.id);
-  if (!ent.revenue) redirect(`/settings?site=${siteId}#revenue` as Route);
+  if (!ent.revenue) redirect(settingsRoutes.site(siteId, "revenue") as Route);
   return found;
 }
 
@@ -88,7 +89,7 @@ export async function saveStripeKeyAction(
 export async function removeStripeAction(siteId: string) {
   const { site } = await requireRevenueSite(siteId);
   await removeRevenue(site.id);
-  redirect(`/settings?site=${site.id}&revenue=removed#revenue` as Route);
+  redirect(`/settings/sites/${site.id}?revenue=removed#revenue` as Route);
 }
 
 const PAGE = /^\/[^\s?#]{0,200}$/;
@@ -118,5 +119,5 @@ export async function saveSaleAction(siteId: string, formData: FormData) {
   if (result === "saved") {
     await db.update(siteTable).set({ saleEvent, salePage }).where(eq(siteTable.id, site.id));
   }
-  redirect(`/settings?site=${site.id}&sale=${result}#sales` as Route);
+  redirect(`/settings/sites/${site.id}?sale=${result}#sales` as Route);
 }

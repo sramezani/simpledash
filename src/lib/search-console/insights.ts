@@ -161,9 +161,7 @@ export function whatChanged(
 
   const withQueries = (p: (typeof pages)[number]): ChangedPage => {
     const direction = Math.sign(delta(p));
-    const keys = new Set(
-      [...queriesNow, ...queriesThen].filter((r) => r.page === p.page).map(key),
-    );
+    const keys = new Set([...queriesNow, ...queriesThen].filter((r) => r.page === p.page).map(key));
     const queries = [...keys]
       .map((k) => {
         const a = qNow.get(k);
@@ -304,9 +302,11 @@ export function searchesToSignups(
 ): SignupRow[] {
   const norm = (path: string) => (path.length > 1 ? path.replace(/\/+$/, "") : path);
   const visitors = new Map<string, number>();
-  for (const r of landing.rows) visitors.set(norm(r.path), (visitors.get(norm(r.path)) ?? 0) + r.visitors);
+  for (const r of landing.rows)
+    visitors.set(norm(r.path), (visitors.get(norm(r.path)) ?? 0) + r.visitors);
   const counted = new Map<string, number>();
-  for (const r of signups?.rows ?? []) counted.set(norm(r.path), (counted.get(norm(r.path)) ?? 0) + r.signups);
+  for (const r of signups?.rows ?? [])
+    counted.set(norm(r.path), (counted.get(norm(r.path)) ?? 0) + r.signups);
   const clicks = new Map<string, number>();
   for (const p of pages) {
     if (p.clicks <= 0) continue;

@@ -78,8 +78,8 @@ export function Pricing() {
                   </Link>
                 </Button>
                 <p className="text-center text-sm text-pretty text-muted-foreground md:min-h-10">
-                  Launch price: it stays the same for as long as you&apos;re subscribed. Cancel
-                  any time.
+                  Launch price: it stays the same for as long as you&apos;re subscribed. Cancel any
+                  time.
                 </p>
               </div>
             }

@@ -16,7 +16,7 @@ import { mapLimit } from "@/lib/ga4/property-choice";
 import { lacksHistory, rangeWindow } from "@/lib/ga4/ranges";
 import type { ReportName } from "@/lib/ga4/reports";
 import { reportError } from "@/lib/report-error";
-import { openableSites } from "@/lib/sites/access";
+import { siteList } from "@/lib/sites/access";
 
 const EMAIL_REPORTS: ReportName[] = ["totals", "sources", "pages", "actions", "ai_sources"];
 
@@ -25,7 +25,7 @@ type Account = { userId: string; email: string; main: Site; sites: Site[] };
 
 /**
  * The accounts that get the email: Pro (the Monday email is a Pro feature), with it on
- * and at least one working site the plan opens. Their sites come in list order with the
+ * and at least one working site in their list. Their sites come in list order with the
  * main (active) one first.
  */
 async function accounts(): Promise<Account[]> {
@@ -51,12 +51,9 @@ async function accounts(): Promise<Account[]> {
   return people.flatMap((p) => {
     const ent = entitlements(planState(p.billing));
     if (!ent.weeklyEmail) return [];
-    const open = openableSites(
-      rows.filter((s) => s.userId === p.userId),
-      ent,
-    );
-    const main = open.find((s) => s.isActive) ?? open[0];
-    const sites = open.filter((s) => s.status === "ok");
+    const list = siteList(rows.filter((s) => s.userId === p.userId));
+    const main = list.find((s) => s.isActive) ?? list[0];
+    const sites = list.filter((s) => s.status === "ok");
     if (!main || sites.length === 0) return [];
     // The main site's block comes first.
     sites.sort((a, b) => Number(b.id === main.id) - Number(a.id === main.id));
@@ -118,7 +115,7 @@ export async function weeklyEmailJob(now: Date = new Date()) {
         const data = buildWeeklyEmail({
           sites,
           links: {
-            settings: `${env.APP_URL}/settings#email`,
+            settings: `${env.APP_URL}/settings/email`,
             unsubscribe: `${env.APP_URL}/email/unsubscribe?token=${encodeURIComponent(token)}`,
           },
         });

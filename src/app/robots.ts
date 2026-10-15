@@ -9,7 +9,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: ["/", "/privacy", "/terms", "/p/", "/llms.txt"],
       disallow: [
         "/dashboard",
-        "/sites",
         "/settings",
         "/admin",
         "/signin",

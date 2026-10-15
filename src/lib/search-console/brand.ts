@@ -11,7 +11,11 @@ export const MAX_BRAND_TERMS = 10;
 /** The name in a domain: "meetline.me" → "meetline", "blog.example.co.uk" → "example". */
 export function baseName(domain: string | null): string | null {
   if (!domain) return null;
-  const parts = domain.toLowerCase().replace(/^www\./, "").split(".").filter(Boolean);
+  const parts = domain
+    .toLowerCase()
+    .replace(/^www\./, "")
+    .split(".")
+    .filter(Boolean);
   if (parts.length < 2) return parts[0] ?? null;
   parts.pop(); // the top-level domain
   if (parts.length > 1 && SECOND_LEVEL.has(parts.at(-1)!)) parts.pop();

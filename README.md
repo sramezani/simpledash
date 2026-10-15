@@ -10,8 +10,8 @@ SimpleDash ([simpledash.app](https://simpledash.app)) takes the Google Analytics
 
 There is **no tracking script**. Everything comes from your own GA4 property through Google's read-only APIs, including the history GA4 already has. It's built for indie hackers and small SaaS or content sites that run GA4 and find it confusing.
 
-- **Free:** one site, the last 30 days, a public stats page. No card, no time limit.
-- **Pro:** $9 a month or $90 a year (tax included). Up to 10 sites, 12 months and any dates, the Monday email, Google search insights from Search Console, revenue from Stripe and sales by source.
+- **Free:** all your Google Analytics sites, the last 30 days, a public stats page per site. No card, no time limit.
+- **Pro:** $9 a month or $90 a year (tax included). Everything in Free, plus 12 months and any dates, the Monday email, Google search insights from Search Console, revenue from Stripe and sales by source.
 
 Use it at **[simpledash.app](https://simpledash.app)**. The code is open source under the [AGPL-3.0](LICENSE).
 
@@ -68,8 +68,10 @@ Pages:
 | `/demo` | The live demo: a real public stats page, set in `src/config/demo.ts` (sample data if that page is off) |
 | `/signin` | "Continue with Google" (needs `GOOGLE_CLIENT_ID` and the redirect URI on the Google client) |
 | `/dashboard` | The dashboard (signed in). `?site=<id>` names the site (default: the one opened last). `?range=today`, `yesterday`, `7d` (default), `30d`, `12m`, or a custom range like `?range=2026-09-01..2026-09-30`. On Free, anything older than 30 days shows Last 30 days |
-| `/sites` | All sites (Pro): each site's last 7 days. Free sees the upgrade panel (signed in) |
-| `/settings` | Account, weekly email, billing, sites, then the site settings for `?site=<id>` (public page), disconnect Google, delete account (signed in) |
+| `/settings` | Settings → Profile: your account, disconnect Google, delete account (signed in). A menu on the left links every settings page |
+| `/settings/billing` | Settings → Plan & billing: upgrade to Pro or manage billing (signed in) |
+| `/settings/email` | Settings → Monday email: on or off (signed in) |
+| `/settings/sites/<id>` | Settings for one of your sites: public page, Google search, revenue, sales, remove (signed in). The gear next to a site in the dashboard's site menu opens it |
 | `/admin` | Usage counts (only for `ADMIN_EMAILS`; a 404 for everyone else) |
 | `/p/<slug>` | A public stats page |
 | `/email/unsubscribe?token=…` | One-click unsubscribe from the weekly email |
@@ -77,8 +79,7 @@ Pages:
 | `/privacy`, `/terms` | Legal pages (details in `src/config/legal.ts`) |
 | `/ui-kit` | Every theme token and shared component (development only) |
 | `/ui-kit/dashboard?state=…` | The dashboard on sample data, in every state (development only) |
-| `/ui-kit/settings?state=…`, `/ui-kit/public?state=…` | Settings and a public page on sample data (development only) |
-| `/ui-kit/sites?state=…` | All sites on sample data: `pro`, `full`, `free`, `loading` (development only) |
+| `/ui-kit/settings?state=…&page=…`, `/ui-kit/public?state=…` | Settings (`page=account`, `billing`, `email` or `site`) and a public page on sample data (development only) |
 | `/ui-kit/email` | The weekly email on sample data (`?text=1` for the plain-text version, `?sites=3` for several sites; development only) |
 | `/api/health` | `{"status":"ok"}` when the database answers |
 | `/robots.txt`, `/sitemap.xml`, `/llms.txt` | SEO files |

@@ -87,7 +87,12 @@ describe("parseSearch", () => {
     const brand = parseSearch(
       "search_brand",
       [
-        { rows: [{ keys: ["2026-10-04"], clicks: 4 }, { keys: ["2026-10-06"], clicks: 6 }] },
+        {
+          rows: [
+            { keys: ["2026-10-04"], clicks: 4 },
+            { keys: ["2026-10-06"], clicks: 6 },
+          ],
+        },
         { rows: [{ keys: ["2026-10-04"], clicks: 20 }] },
         { rows: [{ clicks: 8 }] },
         { rows: [{ clicks: 25 }] },
@@ -104,7 +109,9 @@ describe("parseSearch", () => {
 describe("newest day and cache keys", () => {
   it("reads Google's newest finished day", () => {
     const now = new Date("2026-10-13T12:00:00Z");
-    expect(parseLatest({ rows: [{ keys: ["2026-10-09"] }, { keys: ["2026-10-10"] }] }, now)).toEqual({
+    expect(
+      parseLatest({ rows: [{ keys: ["2026-10-09"] }, { keys: ["2026-10-10"] }] }, now),
+    ).toEqual({
       day: "2026-10-10",
     });
   });

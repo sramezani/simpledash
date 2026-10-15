@@ -116,7 +116,7 @@ export const accountRelations = relations(account, ({ one }) => ({
 
 /**
  * A GA4 property connected by a user. `added_at` set means the site is in the user's
- * list (Free: one, Pro: up to 10); `is_active` is the one the dashboard opens with.
+ * list (no limit, on any plan); `is_active` is the one the dashboard opens with.
  * Rows that left the list keep their notes and settings, so adding the site again restores them.
  */
 export const site = pgTable(
@@ -146,7 +146,10 @@ export const site = pgTable(
     /** The Search Console property for Google search insights (Pro), e.g. sc-domain:example.com. */
     searchConsoleUrl: text("search_console_url"),
     /** Extra spellings of the site's name, for "Your name vs others" (at most 10). */
-    brandTerms: text("brand_terms").array().default(sql`'{}'::text[]`).notNull(),
+    brandTerms: text("brand_terms")
+      .array()
+      .default(sql`'{}'::text[]`)
+      .notNull(),
     /** What counts as a sale (Pro): a GA4 key event, or a "thank you" page path. */
     saleEvent: text("sale_event"),
     salePage: text("sale_page"),

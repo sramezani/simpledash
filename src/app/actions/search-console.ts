@@ -15,6 +15,7 @@ import {
   saveBrandTerms,
 } from "@/lib/search-console/connect";
 import { getSiteContext } from "@/lib/sites/sites";
+import { settingsRoutes } from "@/lib/settings-routes";
 
 /**
  * Google Search Console for one site (docs/SPEC.md section 28.2). Each action is
@@ -27,12 +28,12 @@ type Back = "dashboard" | "settings";
 const backTo = (siteId: string, back: Back, result: string) =>
   (back === "dashboard"
     ? `/dashboard?site=${siteId}&search=${result}`
-    : `/settings?site=${siteId}&search=${result}#search`) as Route;
+    : `/settings/sites/${siteId}?search=${result}#search`) as Route;
 
 async function requireProSite(siteId: string) {
   const found = await requireSite(siteId);
   const { ent } = await getSiteContext(found.user.id);
-  if (!ent.searchConsole) redirect(`/settings?site=${siteId}#search` as Route);
+  if (!ent.searchConsole) redirect(settingsRoutes.site(siteId, "search") as Route);
   return found;
 }
 

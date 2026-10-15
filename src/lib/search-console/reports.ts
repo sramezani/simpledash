@@ -102,7 +102,12 @@ export function latestRequest(ctx: Pick<SearchContext, "pageFilter">, now: Date)
 }
 
 export function parseLatest(response: ScResponse, now: Date): SearchPayloads["search_latest"] {
-  return { day: newestDay((response.rows ?? []).map((r) => r.keys?.[0] ?? ""), now) };
+  return {
+    day: newestDay(
+      (response.rows ?? []).map((r) => r.keys?.[0] ?? ""),
+      now,
+    ),
+  };
 }
 
 /** The requests behind one report. */
@@ -220,7 +225,12 @@ const parsers: Parsers = {
 
   search_brand(responses, ctx, days) {
     if (!ctx.brand) {
-      return { terms: [], days: [], current: { brand: 0, other: 0 }, previous: { brand: 0, other: 0 } };
+      return {
+        terms: [],
+        days: [],
+        current: { brand: 0, other: 0 },
+        previous: { brand: 0, other: 0 },
+      };
     }
     const brand = byDate(responses[0]);
     const other = byDate(responses[1]);
