@@ -13,6 +13,7 @@ import { rangeWindow } from "./ranges";
 
 const NOW = new Date("2026-10-11T12:00:00Z");
 const HOUR = 3_600_000;
+const MINUTE = 60_000;
 
 const site: Site = {
   id: "site_1",
@@ -99,13 +100,13 @@ function seed(deps: ReturnType<typeof makeDeps>, overrides: Partial<CacheRow> = 
   deps.rows.set("totals|-", {
     report: "totals",
     paramsHash: "-",
-    windowStart: "2026-10-04",
-    windowEnd: "2026-10-10",
+    windowStart: "2026-10-05",
+    windowEnd: "2026-10-11",
     payload: {
       current: { visitors: 1, pageViews: 1, engagementSeconds: 1 },
       previous: { visitors: 0, pageViews: 0, engagementSeconds: 0 },
     },
-    fetchedAt: new Date(NOW.getTime() - HOUR),
+    fetchedAt: new Date(NOW.getTime() - 10 * MINUTE),
     ...overrides,
   });
 }
@@ -143,8 +144,8 @@ describe("getReports", () => {
   it("treats yesterday's window as stale after the day turns", async () => {
     const deps = makeDeps();
     seed(deps, {
-      windowStart: "2026-10-03",
-      windowEnd: "2026-10-09",
+      windowStart: "2026-10-04",
+      windowEnd: "2026-10-10",
       fetchedAt: new Date(NOW.getTime() - 60_000),
     });
     const result = await getReports(site, "7d", ["totals"], deps, { now: NOW });
@@ -158,7 +159,7 @@ describe("getReports", () => {
     expect(deps.fetchBatch).toHaveBeenCalledTimes(1);
     expect(result.reports.totals.data?.current.visitors).toBe(10);
     expect(result.reports.totals.fresh).toBe(true);
-    expect(deps.rows.get("totals|-")?.windowEnd).toBe("2026-10-10");
+    expect(deps.rows.get("totals|-")?.windowEnd).toBe("2026-10-11");
   });
 
   it("batches at most 5 reports per call", async () => {
@@ -306,17 +307,14 @@ describe("cache only (no Google calls)", () => {
 });
 
 describe("freshness", () => {
-  it("is 3 hours for 7 and 30 days, 24 hours for 12 months, at least 12 hours for public pages", () => {
+  it("is half an hour for ranges that end today (an hour on public pages), longer for past ones", () => {
     const now = new Date("2026-10-11T12:00:00Z");
     const w = (range: Parameters<typeof rangeWindow>[0]) => rangeWindow(range, "UTC", now);
-    expect(maxAge(w("7d"), "owner")).toBe(3 * HOUR);
-    expect(maxAge(w("30d"), "owner")).toBe(3 * HOUR);
-    expect(maxAge(w("12m"), "owner")).toBe(24 * HOUR);
-    expect(maxAge(w("7d"), "public")).toBe(12 * HOUR);
-    expect(maxAge(w("12m"), "public")).toBe(24 * HOUR);
-    // Today keeps changing: fresh for half an hour, an hour on public pages.
-    expect(maxAge(w("today"), "owner")).toBe(HOUR / 2);
-    expect(maxAge(w("today"), "public")).toBe(HOUR);
+    // Every preset but Yesterday includes today, which keeps changing.
+    for (const range of ["today", "7d", "30d", "12m"] as const) {
+      expect(maxAge(w(range), "owner")).toBe(HOUR / 2);
+      expect(maxAge(w(range), "public")).toBe(HOUR);
+    }
     expect(maxAge(w("yesterday"), "owner")).toBe(3 * HOUR);
     // Custom: a finished past period won't change; one that ends today keeps changing.
     expect(maxAge(w("2026-09-01..2026-09-30"), "owner")).toBe(24 * HOUR);
@@ -326,7 +324,7 @@ describe("freshness", () => {
 
   it("lets a public page use a row a dashboard would refresh", async () => {
     const deps = makeDeps();
-    seed(deps, { fetchedAt: new Date(NOW.getTime() - 6 * HOUR) });
+    seed(deps, { fetchedAt: new Date(NOW.getTime() - 45 * MINUTE) });
     const result = await getReports(site, "7d", ["totals"], deps, { now: NOW, audience: "public" });
     expect(result.reports.totals.fresh).toBe(true);
   });

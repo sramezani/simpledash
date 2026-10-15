@@ -52,6 +52,17 @@ It is written for future Claude sessions: read the latest entry before starting 
   - On the previews: the Pro menu without a count, the Free menu at 375 px with the keyboard only, Free with three sites in settings, and the landing page's pricing text.
 - **For Siamak:** `docs/ROADMAP.md` still says one site on Free and 10 on Pro. No migration this time either.
 
+### End of the session: ranges include today
+
+- **Siamak's call:** Last 7 days, Last 30 days and Last 12 months end today, so far, on the dashboard and public pages (Plausible and DataFast do the same). Yesterday is unchanged; Today alone still isn't compared.
+- **`rangeWindow`:** 7 and 30 days end today, and 12 months is 11 full months plus this month. All are `endsToday`, so `comparisonGap` now only blocks single-day ranges that end today. Multi-day ranges are compared, so the change runs a little low until the day ends.
+- **No fake zero:** a daily or monthly series leaves today off until Google has a row for it (`parseReport`), like hourly charts already did.
+- **Free's 30 days:** `freeFirstDay` is today minus 29, the first day of Last 30 days.
+- **Monday email:** it used `"7d"` as "last week", which would now include Monday. It now uses `lastWeekRange` (last Monday to Sunday, as a custom range), and so does the `/ui-kit/email` preview. The `email_send` week key is unchanged.
+- **Cache:** reports for ranges that end today stay fresh for 30 minutes (1 hour on public pages), so 7 and 30 days refresh more often than before (it was 3 hours, or 12 hours on public pages). `warm-cache` still runs hourly for sites opened in the last 24 hours. The GA4 Data API has no per-call cost.
+- **Copy:** the visitors chart's help text, CLAUDE.md (the Dates rule), SPEC (sections 1, 8, 10, 16 and the facts table), ga4, email, CHECKLIST, DECISIONS.
+- **Checked:** 379 tests (the date fixtures moved by a day, plus new ones for `lastWeekRange` and today being left off). The real dashboard needs a signed-in check.
+
 ### Not checked
 
 - The live Google list and opening a real site, signed in. The preview's open button returns a fixed message. It needs a real account, locally or in production.

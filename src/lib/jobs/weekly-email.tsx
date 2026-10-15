@@ -13,7 +13,7 @@ import { WeeklyEmail } from "@/lib/email/weekly-email";
 import { env } from "@/lib/env";
 import { loadReports, warm } from "@/lib/ga4/data";
 import { mapLimit } from "@/lib/ga4/property-choice";
-import { lacksHistory, rangeWindow } from "@/lib/ga4/ranges";
+import { customDays, lacksHistory, lastWeekRange, type RangeType } from "@/lib/ga4/ranges";
 import type { ReportName } from "@/lib/ga4/reports";
 import { reportError } from "@/lib/report-error";
 import { siteList } from "@/lib/sites/access";
@@ -77,7 +77,10 @@ export async function weeklyEmailJob(now: Date = new Date()) {
   const prepared = (
     await mapLimit(due, 3, async (account): Promise<Prepared | null> => {
       const { userId } = account;
-      const weekStart = rangeWindow("7d", account.main.timeZone, now).current.start;
+      // Last Monday to Sunday, in the main site's time zone (the dashboard's "Last 7 days"
+      // includes today, so the email has its own week).
+      const week = lastWeekRange(account.main.timeZone, now);
+      const weekStart = customDays(week)!.start;
       // A claim without a message ID older than 30 minutes was left by a run that died
       // (a deploy, a crash) before sending: take it over.
       const claimed = await db
@@ -101,7 +104,7 @@ export async function weeklyEmailJob(now: Date = new Date()) {
         // Only last week's own numbers: if Google can't be asked for a site now, try
         // again next hour rather than send a cached copy of another week. In the last
         // hour of the window, that site is left out instead.
-        const warmed = await Promise.all(account.sites.map((s) => warm(s, "7d", EMAIL_REPORTS)));
+        const warmed = await Promise.all(account.sites.map((s) => warm(s, week, EMAIL_REPORTS)));
         const ready = account.sites.filter(
           (_, i) => warmed[i] === "warmed" || warmed[i] === "fresh",
         );
@@ -110,7 +113,7 @@ export async function weeklyEmailJob(now: Date = new Date()) {
           await release();
           return null;
         }
-        const sites = await Promise.all(ready.map((s) => siteWeek(s, now)));
+        const sites = await Promise.all(ready.map((s) => siteWeek(s, week, now)));
         const token = unsubscribeToken(userId, env.EMAIL_TOKEN_SECRET);
         const data = buildWeeklyEmail({
           sites,
@@ -174,8 +177,8 @@ export async function weeklyEmailJob(now: Date = new Date()) {
 }
 
 /** One site's last week, from the reports just warmed. */
-async function siteWeek(s: Site, now: Date): Promise<SiteWeekInput> {
-  const result = await loadReports(s, "7d", EMAIL_REPORTS, { now });
+async function siteWeek(s: Site, week: RangeType, now: Date): Promise<SiteWeekInput> {
+  const result = await loadReports(s, week, EMAIL_REPORTS, { now });
   return {
     siteLabel: s.domain ?? s.displayName,
     window: result.window,

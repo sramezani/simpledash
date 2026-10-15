@@ -1,7 +1,7 @@
 import { connection } from "next/server";
 import { buildWeeklyEmail, type SiteWeekInput } from "@/lib/email/content";
 import { uiKitEnabled } from "@/lib/env";
-import { rangeWindow } from "@/lib/ga4/ranges";
+import { lastWeekRange, rangeWindow } from "@/lib/ga4/ranges";
 import { sampleReports, SAMPLE_DOMAIN, SAMPLE_SIGNUP_EVENT } from "@/lib/ga4/sample/sample";
 import { renderEmail } from "@/lib/jobs/weekly-email";
 
@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   await connection();
   if (!uiKitEnabled) return new Response("Not found", { status: 404 });
   const search = new URL(request.url).searchParams;
-  const window = rangeWindow("7d", "UTC");
+  const window = rangeWindow(lastWeekRange("UTC"), "UTC");
   const r = sampleReports(window, ["totals", "sources", "pages", "actions", "ai_sources"]);
   const main: SiteWeekInput = {
     siteLabel: SAMPLE_DOMAIN,

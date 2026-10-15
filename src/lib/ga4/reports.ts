@@ -449,6 +449,10 @@ const parsers: { [R in ReportName]: (rows: Row[], window: RangeWindow) => Payloa
       // yet are left off rather than drawn as zeros.
       const last = points.findLastIndex((p) => values.has(p.key));
       points = points.slice(0, last + 1);
+    } else if (window.endsToday && !values.has(points.at(-1)?.key ?? "")) {
+      // The same for a range that ends today: no row for today yet means Google hasn't
+      // reported it, not zero visitors.
+      points = points.slice(0, -1);
     }
     return { granularity: window.granularity, points };
   },

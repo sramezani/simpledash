@@ -47,7 +47,7 @@ function tickLabel(key: string, granularity: Granularity, index: number, count: 
   return (count - 1 - index) % step === 0 ? formatDay(date) : "";
 }
 
-/** How many points at the end are still updating: yesterday, the month that ended yesterday, or this hour. */
+/** How many points at the end are still updating: today (or this month, or this hour), or yesterday. */
 export function pendingCount(lastPointPending: boolean): number {
   return lastPointPending ? 1 : 0;
 }

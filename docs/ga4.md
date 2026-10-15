@@ -38,7 +38,7 @@ What happens inside (`getReports` in `cache.ts`):
 
 1. Work out the window for the range in the site's time zone (`rangeWindow`).
 2. Read the cache rows. The key is property, report, range and `params_hash` (the signup event for Actions, the AI list version for the AI reports).
-3. A row is **fresh** when its window matches today's window and it was fetched within 3 hours (7 and 30 days), 24 hours (12 months) or 12 hours (public pages).
+3. A row is **fresh** when its window matches today's window and it was fetched within 30 minutes for a range that ends today (every preset but Yesterday; 1 hour on public pages), 3 hours for Yesterday (12 hours on public pages), or 24 hours for a custom range that ended before yesterday.
 4. **Missing** rows are fetched right away. **Stale** rows are shown at once, and a refresh is scheduled with `after()`. It takes a 30-second lease, so only one refresh runs at a time.
 5. Sites that can't be fetched (access ended, lost access, quota block, breaker open) are never sent to Google; their cached rows are still shown.
 

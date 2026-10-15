@@ -57,13 +57,13 @@ describe("hourly charts", () => {
 describe("periodLabel", () => {
   it("names one day, a run of days or a run of months", () => {
     expect(periodLabel(rangeWindow("yesterday", "UTC", now))).toBe("Sat 10 Oct");
-    expect(periodLabel(rangeWindow("7d", "UTC", now))).toBe("4 Oct – 10 Oct");
-    expect(periodLabel(rangeWindow("12m", "UTC", now))).toBe("Oct 2025 – Sep 2026");
+    expect(periodLabel(rangeWindow("7d", "UTC", now))).toBe("5 Oct – 11 Oct");
+    expect(periodLabel(rangeWindow("12m", "UTC", now))).toBe("Nov 2025 – Oct 2026");
   });
 });
 
 describe("chartPoints", () => {
-  it("dashes yesterday, joined to the solid line", () => {
+  it("dashes the newest day (today), joined to the solid line", () => {
     const { w, points } = series("7d");
     const out = chartPoints(points, w.granularity, w.includesYesterday);
     expect(out).toHaveLength(7);
@@ -77,13 +77,13 @@ describe("chartPoints", () => {
     const { w, points } = series("7d");
     const ticks = chartPoints(points, w.granularity, true).filter((p) => p.tick);
     expect(ticks.map((t) => t.tick)).toEqual([
-      "Sun 4",
       "Mon 5",
       "Tue 6",
       "Wed 7",
       "Thu 8",
       "Fri 9",
       "Sat 10",
+      "Sun 11",
     ]);
   });
 
@@ -97,9 +97,9 @@ describe("chartPoints", () => {
     expect(ticks.at(-1)!.key).toBe(out.at(-1)!.key);
   });
 
-  it("has no dashed part when the range doesn't include yesterday", () => {
+  it("has no dashed part when the newest point is settled", () => {
     const { w, points } = series("12m");
-    const out = chartPoints(points, w.granularity, w.includesYesterday);
+    const out = chartPoints(points, w.granularity, false);
     expect(out.every((p) => p.pending === null)).toBe(true);
     expect(out.map((p) => p.tick)).toContain("Oct");
     expect(pendingCount(false)).toBe(0);
@@ -110,8 +110,8 @@ describe("chartCaption", () => {
   it("describes the chart for screen readers", () => {
     const { w, points } = series("30d");
     const out = chartPoints(points, w.granularity, true);
-    expect(chartCaption(out, "date", "11 Sep – 10 Oct")).toBe(
-      "Visitors per day, 11 Sep – 10 Oct. Highest: 30 on Sat 10 Oct.",
+    expect(chartCaption(out, "date", "12 Sep – 11 Oct")).toBe(
+      "Visitors per day, 12 Sep – 11 Oct. Highest: 30 on Sun 11 Oct.",
     );
   });
 

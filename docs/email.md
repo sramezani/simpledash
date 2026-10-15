@@ -24,7 +24,7 @@ The `weekly-email` job runs every hour (`node scripts/run-job.mjs weekly-email`,
 - have at least one site with status `ok` in their list (every listed site gets a block; there is no site limit),
 - and whose main site's local time is Monday between 13:00 and 17:59. The main site is the active one (the one opened most recently).
 
-For each one it first **claims** a row in `email_send` (user and week). The key makes a second email in the same week impossible. Then it refreshes each site's 7-day reports (`totals`, `sources`, `pages`, `actions`, `ai_sources`, which also warms the dashboard), builds one block per site (the main site first) and sends the emails in batches.
+For each one it first **claims** a row in `email_send` (user and week). The key makes a second email in the same week impossible. Then it refreshes each site's reports for last Monday to Sunday (`lastWeekRange`, a custom range: the dashboard's Last 7 days includes today, so the email has its own week; `totals`, `sources`, `pages`, `actions`, `ai_sources`), builds one block per site (the main site first) and sends the emails in batches.
 
 - If Google can't be asked right now for one of the sites (quota, outage), the claim is released and the next hour tries again. In the last hour of the window (17:00), that site is left out instead, so the others still arrive. A cached copy of another week is never sent.
 - Sites with no visitors in either week are left out. With none left, or when the send fails, the claim is released.

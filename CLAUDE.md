@@ -80,7 +80,7 @@ deploy/setup.sh user@ip   # Siamak only: set up (or, with --from, move to) the p
 - **Components:** use server components by default. Use client components only for interaction: date switch, chart tooltips, globe and forms.
 - **Charts:** no chart JavaScript on landing or public pages, so those charts are server-rendered SVG.
 - **Tests:** put them next to the code (`*.test.ts`), using Vitest.
-- **Dates:** use calendar dates in the site's GA4 time zone. Ranges end yesterday, and yesterday is marked "still updating".
+- **Dates:** use calendar dates in the site's GA4 time zone. Ranges end today, so far (except Yesterday), and the newest point is marked "still updating". The Monday email covers last Monday to Sunday (`lastWeekRange`).
 - **Brand:** the name is always one word, SimpleDash. The logo and favicon are a "–" dash mark.
 - **Theme tokens only:** `src/config/theme.ts` is the only place for colours, radius, shadows and brand facts.
   - Use token classes such as `bg-primary` and `text-muted-foreground`.

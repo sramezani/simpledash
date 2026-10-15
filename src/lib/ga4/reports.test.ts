@@ -22,8 +22,8 @@ describe("buildRequest", () => {
     for (const report of REPORTS) {
       const req = buildRequest(report, window, params);
       expect(req.dateRanges?.[0]).toEqual({
-        startDate: "2026-10-04",
-        endDate: "2026-10-10",
+        startDate: "2026-10-05",
+        endDate: "2026-10-11",
         name: "current",
       });
       expect(req.metrics?.length).toBeGreaterThan(0);
@@ -36,8 +36,8 @@ describe("buildRequest", () => {
     expect(buildRequest("actions", window, params).dateRanges).toHaveLength(2);
     expect(buildRequest("pages", window, params).dateRanges).toHaveLength(1);
     expect(buildRequest("totals", window, params).dateRanges?.[1]).toEqual({
-      startDate: "2026-09-27",
-      endDate: "2026-10-03",
+      startDate: "2026-09-28",
+      endDate: "2026-10-04",
       name: "previous",
     });
   });
@@ -101,15 +101,22 @@ describe("parseReport", () => {
       ["date"],
       ["activeUsers"],
       [
-        ["20261004", 5],
-        ["20261010", 2],
+        ["20261005", 5],
+        ["20261011", 2],
       ],
     );
     const { points } = parseReport("series", res, window);
     expect(points).toHaveLength(7);
-    expect(points[0]).toEqual({ key: "20261004", visitors: 5 });
-    expect(points[1]).toEqual({ key: "20261005", visitors: 0 });
-    expect(points.at(-1)).toEqual({ key: "20261010", visitors: 2 });
+    expect(points[0]).toEqual({ key: "20261005", visitors: 5 });
+    expect(points[1]).toEqual({ key: "20261006", visitors: 0 });
+    expect(points.at(-1)).toEqual({ key: "20261011", visitors: 2 });
+  });
+
+  it("leaves today off a daily chart until Google has reported it", () => {
+    const res = response(["date"], ["activeUsers"], [["20261010", 4]]);
+    const { points } = parseReport("series", res, window);
+    expect(points).toHaveLength(6);
+    expect(points.at(-1)).toEqual({ key: "20261010", visitors: 4 });
   });
 
   it("leaves off today's latest hours that Google hasn't reported yet", () => {

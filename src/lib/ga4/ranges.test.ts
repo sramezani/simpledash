@@ -16,6 +16,7 @@ import {
   keyToDate,
   keyToHour,
   lacksHistory,
+  lastWeekRange,
   parseRange,
   rangeForPlan,
   rangeMenu,
@@ -55,46 +56,63 @@ describe("date arithmetic", () => {
 describe("rangeWindow", () => {
   const now = new Date("2026-10-11T12:00:00Z");
 
-  it("7 days ends yesterday, compared with the 7 days before, daily", () => {
+  it("7 days ends today, compared with the 7 days before, daily", () => {
     const w = rangeWindow("7d", "UTC", now);
-    expect(w.current).toEqual({ start: "2026-10-04", end: "2026-10-10" });
-    expect(w.previous).toEqual({ start: "2026-09-27", end: "2026-10-03" });
+    expect(w.current).toEqual({ start: "2026-10-05", end: "2026-10-11" });
+    expect(w.previous).toEqual({ start: "2026-09-28", end: "2026-10-04" });
     expect(w.granularity).toBe("date");
-    expect(w.includesYesterday).toBe(true);
+    expect(w.endsToday).toBe(true);
+    expect(w.lastPointPending).toBe(true);
     expect(daysIn(w.current)).toBe(7);
   });
 
-  it("30 days ends yesterday, daily", () => {
+  it("30 days ends today, daily", () => {
     const w = rangeWindow("30d", "UTC", now);
-    expect(w.current).toEqual({ start: "2026-09-11", end: "2026-10-10" });
-    expect(w.previous).toEqual({ start: "2026-08-12", end: "2026-09-10" });
+    expect(w.current).toEqual({ start: "2026-09-12", end: "2026-10-11" });
+    expect(w.previous).toEqual({ start: "2026-08-13", end: "2026-09-11" });
     expect(daysIn(w.previous)).toBe(30);
     expect(w.granularity).toBe("date");
   });
 
-  it("12 months is the last 12 full calendar months, monthly", () => {
+  it("12 months is 11 full months and this month so far, monthly", () => {
     const w = rangeWindow("12m", "UTC", now);
-    expect(w.current).toEqual({ start: "2025-10-01", end: "2026-09-30" });
-    expect(w.previous).toEqual({ start: "2024-10-01", end: "2025-09-30" });
+    expect(w.current).toEqual({ start: "2025-11-01", end: "2026-10-11" });
+    expect(w.previous).toEqual({ start: "2024-11-01", end: "2025-10-31" });
     expect(w.granularity).toBe("yearMonth");
-    expect(w.includesYesterday).toBe(false);
+    expect(w.endsToday).toBe(true);
   });
 
-  it("12 months includes yesterday on the first of the month", () => {
-    const w = rangeWindow("12m", "UTC", new Date("2026-11-01T12:00:00Z"));
-    expect(w.current.end).toBe("2026-10-31");
-    expect(w.includesYesterday).toBe(true);
+  it("yesterday stays one whole day", () => {
+    const w = rangeWindow("yesterday", "UTC", now);
+    expect(w.current).toEqual({ start: "2026-10-10", end: "2026-10-10" });
+    expect(w.endsToday).toBe(false);
   });
 
   it("follows the site's time zone around midnight", () => {
     const late = new Date("2026-10-11T23:30:00Z");
-    expect(rangeWindow("7d", "UTC", late).current.end).toBe("2026-10-10");
-    expect(rangeWindow("7d", "Europe/Amsterdam", late).current.end).toBe("2026-10-11");
+    expect(rangeWindow("7d", "UTC", late).current.end).toBe("2026-10-11");
+    expect(rangeWindow("7d", "Europe/Amsterdam", late).current.end).toBe("2026-10-12");
   });
 
   it("works across a new year", () => {
     const w = rangeWindow("7d", "UTC", new Date("2027-01-03T08:00:00Z"));
-    expect(w.current).toEqual({ start: "2026-12-27", end: "2027-01-02" });
+    expect(w.current).toEqual({ start: "2026-12-28", end: "2027-01-03" });
+  });
+});
+
+describe("lastWeekRange", () => {
+  it("is last Monday to Sunday, whatever the day", () => {
+    // Monday 12 Oct 2026: the week before is 5–11 Oct.
+    expect(lastWeekRange("UTC", new Date("2026-10-12T14:00:00Z"))).toBe("2026-10-05..2026-10-11");
+    expect(lastWeekRange("UTC", new Date("2026-10-15T14:00:00Z"))).toBe("2026-10-05..2026-10-11");
+    expect(lastWeekRange("UTC", new Date("2026-10-18T14:00:00Z"))).toBe("2026-10-05..2026-10-11");
+  });
+
+  it("uses the site's time zone", () => {
+    // Sunday 23:30 UTC is already Monday in Amsterdam.
+    const late = new Date("2026-10-11T23:30:00Z");
+    expect(lastWeekRange("UTC", late)).toBe("2026-09-28..2026-10-04");
+    expect(lastWeekRange("Europe/Amsterdam", late)).toBe("2026-10-05..2026-10-11");
   });
 });
 
@@ -102,13 +120,13 @@ describe("seriesKeys", () => {
   it("makes 7 daily keys for 7 days", () => {
     const keys = seriesKeys(rangeWindow("7d", "UTC", new Date("2026-10-11T12:00:00Z")));
     expect(keys).toEqual([
-      "20261004",
       "20261005",
       "20261006",
       "20261007",
       "20261008",
       "20261009",
       "20261010",
+      "20261011",
     ]);
   });
 
@@ -117,8 +135,8 @@ describe("seriesKeys", () => {
     expect(seriesKeys(rangeWindow("30d", "UTC", now))).toHaveLength(30);
     const months = seriesKeys(rangeWindow("12m", "UTC", now));
     expect(months).toHaveLength(12);
-    expect(months[0]).toBe("202510");
-    expect(months.at(-1)).toBe("202609");
+    expect(months[0]).toBe("202511");
+    expect(months.at(-1)).toBe("202610");
   });
 
   it("turns keys back into dates", () => {
@@ -225,8 +243,8 @@ describe("rangeMenu", () => {
     const { custom, label } = rangeMenu("2026-09-01..2026-09-30", w, "/dashboard");
     expect(label).toBe("1 Sep – 30 Sep");
     expect(custom).toMatchObject({
-      start: "2026-10-04",
-      end: "2026-10-10",
+      start: "2026-10-05",
+      end: "2026-10-11",
       firstDay: "2015-08-14",
       lastDay: "2026-10-11",
     });
@@ -238,7 +256,7 @@ describe("Free's 30 days", () => {
   const now = new Date("2026-10-11T12:00:00Z");
 
   it("starts on the first day of Last 30 days", () => {
-    expect(freeFirstDay(today)).toBe("2026-09-11");
+    expect(freeFirstDay(today)).toBe("2026-09-12");
     expect(rangeWindow("30d", "UTC", now).current.start).toBe(freeFirstDay(today));
   });
 
@@ -247,8 +265,8 @@ describe("Free's 30 days", () => {
       expect(fitsFreeHistory(r, today)).toBe(true);
     }
     expect(fitsFreeHistory("12m", today)).toBe(false);
-    expect(fitsFreeHistory("2026-09-11..2026-10-11", today)).toBe(true);
-    expect(fitsFreeHistory("2026-09-10..2026-09-20", today)).toBe(false);
+    expect(fitsFreeHistory("2026-09-12..2026-10-11", today)).toBe(true);
+    expect(fitsFreeHistory("2026-09-11..2026-09-20", today)).toBe(false);
   });
 
   it("swaps a longer range for Last 30 days on Free only", () => {
@@ -264,8 +282,9 @@ describe("Free's 30 days", () => {
   it("uses the site's own today", () => {
     // 01:00 on 12 Oct in Tokyo is still 11 Oct in UTC.
     const early = new Date("2026-10-11T16:00:00Z");
-    expect(rangeForPlan("2026-09-11..2026-09-12", false, "Asia/Tokyo", early).limited).toBe(true);
-    expect(rangeForPlan("2026-09-12..2026-09-13", false, "Asia/Tokyo", early).limited).toBe(false);
+    expect(rangeForPlan("2026-09-12..2026-09-13", false, "Asia/Tokyo", early).limited).toBe(true);
+    expect(rangeForPlan("2026-09-12..2026-09-13", false, "UTC", early).limited).toBe(false);
+    expect(rangeForPlan("2026-09-13..2026-09-14", false, "Asia/Tokyo", early).limited).toBe(false);
   });
 
   it("locks 12 months in the dashboard menu and stops the calendar 30 days back", () => {
@@ -279,7 +298,7 @@ describe("Free's 30 days", () => {
       href: "/settings/billing",
     });
     expect(menu.presets.filter((p) => p.locked).map((p) => p.value)).toEqual(["12m"]);
-    expect(menu.custom.firstDay).toBe("2026-09-11");
+    expect(menu.custom.firstDay).toBe("2026-09-12");
     expect(menu.limit).toEqual({
       note: "Free shows the last 30 days.",
       href: "/settings/billing",
@@ -329,14 +348,16 @@ describe("custom ranges", () => {
     expect(previousPeriodWords("2026-09-14..2026-09-14")).toBe("the day before");
   });
 
-  it("stops at today, and a range ending today isn't compared", () => {
+  it("stops at today, and is compared unless it is today alone", () => {
     const w = rangeWindow("2026-10-01..2026-12-31", "UTC", now);
     expect(w.current.end).toBe("2026-10-11");
     expect(w.endsToday).toBe(true);
     expect(w.includesYesterday).toBe(true);
-    expect(comparisonGap(w, null)).toBe("Today isn't over yet");
+    expect(comparisonGap(w, null)).toBeNull();
     expect(freshnessNote(w)).toMatch(/^Includes today so far/);
     const today = rangeWindow("2026-10-11..2026-10-11", "UTC", now);
+    expect(comparisonGap(today, null)).toBe("Today isn't over yet");
+    expect(comparisonGap(rangeWindow("today", "UTC", now), null)).toBe("Today isn't over yet");
     expect(today.granularity).toBe("dateHour");
     expect(today.lastHour).toBe(14);
   });
@@ -352,10 +373,11 @@ describe("freshnessNote", () => {
   const now = new Date("2026-10-11T12:00:00Z");
   it("says what is still coming in", () => {
     expect(freshnessNote(rangeWindow("today", "UTC", now))).toMatch(/^So far today/);
-    expect(freshnessNote(rangeWindow("7d", "UTC", now))).toBe(
+    expect(freshnessNote(rangeWindow("7d", "UTC", now))).toMatch(/^Includes today so far/);
+    expect(freshnessNote(rangeWindow("yesterday", "UTC", now))).toBe(
       "Google may still be adding to yesterday.",
     );
-    expect(freshnessNote(rangeWindow("12m", "UTC", now))).toBeNull();
+    expect(freshnessNote(rangeWindow("2026-09-01..2026-09-30", "UTC", now))).toBeNull();
   });
 });
 

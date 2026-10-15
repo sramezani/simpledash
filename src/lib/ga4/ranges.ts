@@ -4,8 +4,8 @@ import { formatDay, formatDayRange } from "@/lib/format";
 /**
  * Date ranges and comparisons (docs/SPEC.md section 8). All dates are calendar
  * dates (YYYY-MM-DD) in the site's GA4 time zone, worked out with Intl and
- * plain date arithmetic. Preset ranges are full days ending yesterday, except
- * "Today", which is today so far. A custom range is any run of days up to today.
+ * plain date arithmetic. Preset ranges end today, so far (Siamak, Oct 15, 2026),
+ * except "Yesterday". A custom range is any run of days up to today.
  */
 
 export const RANGE_PRESETS = ["today", "yesterday", "7d", "30d", "12m"] as const;
@@ -51,7 +51,7 @@ export type RangeWindow = {
   granularity: Granularity;
   /** The current period includes yesterday, which GA4 may still be adding to. */
   includesYesterday: boolean;
-  /** The current period ends today, which isn't over: no comparison, short cache. */
+  /** The current period ends today, which isn't over: short cache (and no comparison for Today alone). */
   endsToday: boolean;
   /** The chart's last point is still filling up: drawn dashed. */
   lastPointPending: boolean;
@@ -220,33 +220,41 @@ export function rangeWindow(
   }
 
   if (type === "12m") {
-    const start = addMonths(today, -12);
-    const end = addDays(addMonths(today, 0), -1); // last day of last month
-    const previousStart = addMonths(today, -24);
+    // Eleven full months and this month so far.
+    const start = addMonths(today, -11);
     return {
       ...base,
-      current: { start, end },
-      previous: { start: previousStart, end: addDays(start, -1) },
+      current: { start, end: today },
+      previous: { start: addMonths(today, -23), end: addDays(start, -1) },
       granularity: "yearMonth",
-      includesYesterday: end === yesterday,
-      endsToday: false,
-      lastPointPending: end === yesterday,
+      includesYesterday: true,
+      endsToday: true,
+      lastPointPending: true,
       lastHour: null,
     };
   }
 
+  // The last 7 or 30 days, today (so far) included.
   const days = type === "7d" ? 7 : 30;
-  const start = addDays(yesterday, -(days - 1));
+  const start = addDays(today, -(days - 1));
   return {
     ...base,
-    current: { start, end: yesterday },
+    current: { start, end: today },
     previous: { start: addDays(start, -days), end: addDays(start, -1) },
     granularity: "date",
     includesYesterday: true,
-    endsToday: false,
+    endsToday: true,
     lastPointPending: true,
     lastHour: null,
   };
+}
+
+/** Last Monday to Sunday in the site's time zone, as a custom range: the Monday email's week. */
+export function lastWeekRange(timeZone: string, now: Date = new Date()): CustomRange {
+  const today = todayIn(timeZone, now);
+  const weekday = toUtc(today).getUTCDay(); // 0 is Sunday
+  const end = addDays(today, -(weekday === 0 ? 7 : weekday)); // the last Sunday before today
+  return `${addDays(end, -6)}..${end}`;
 }
 
 /**
@@ -296,11 +304,12 @@ export function lacksHistory(
 
 /**
  * Why the numbers can't be compared with the period before, or null when they can.
- * Today isn't over, so a period that ends today would always read "down".
+ * Today alone isn't over, so it would always read "down" against a whole day. Longer
+ * periods that end today are compared (today is a small part of them).
  */
-/** The first day Free can see: 30 days before today, the start of "Last 30 days". */
+/** The first day Free can see: the start of "Last 30 days" (today and the 29 days before). */
 export function freeFirstDay(today: string): string {
-  return addDays(today, -FREE_HISTORY_DAYS);
+  return addDays(today, -(FREE_HISTORY_DAYS - 1));
 }
 
 /** Whether a range fits in Free's last 30 days: every preset but 12 months, and custom days inside them. */
@@ -329,7 +338,9 @@ export function comparisonGap(
   window: RangeWindow,
   propertyCreatedAt: Date | null | undefined,
 ): string | null {
-  if (window.endsToday) return "Today isn't over yet";
+  if (window.endsToday && window.current.start === window.current.end) {
+    return "Today isn't over yet";
+  }
   if (lacksHistory(window, propertyCreatedAt)) return "Not enough history to compare";
   return null;
 }

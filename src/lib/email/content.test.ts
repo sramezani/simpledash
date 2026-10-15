@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { rangeWindow } from "@/lib/ga4/ranges";
+import { lastWeekRange, rangeWindow } from "@/lib/ga4/ranges";
 import { buildWeeklyEmail, type SiteWeekInput } from "./content";
 
-const window = rangeWindow("7d", "UTC", new Date("2026-10-12T13:00:00Z")); // a Monday
+const monday = new Date("2026-10-12T13:00:00Z");
+const window = rangeWindow(lastWeekRange("UTC", monday), "UTC", monday);
 const totals = (c: number, p: number) => ({
   current: { visitors: c, pageViews: c * 2, engagementSeconds: c * 60 },
   previous: { visitors: p, pageViews: p * 2, engagementSeconds: p * 60 },

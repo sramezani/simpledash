@@ -52,7 +52,7 @@ export const cards = [
   {
     id: "chart",
     title: "Visitors over time",
-    help: `${COUNT_HELP} The last part is dashed while Google is still adding to yesterday.`,
+    help: `${COUNT_HELP} The last part is dashed while it is still filling up (today, or yesterday that Google is still adding to).`,
     csv: true,
     publicAllowed: true,
     publicDefault: true,

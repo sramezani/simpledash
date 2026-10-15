@@ -4,6 +4,8 @@ Oct 11, 2026 · Written by Claude Code from `docs/ROADMAP.md` · Status: approve
 
 **Updated Oct 11, 2026 (session 2):** a yearly price and Growth shown as "coming soon" (sections 16 and 17), one theme and brand file and a UI quality bar (section 18), and code structure and reuse rules (section 4).
 
+**Updated Oct 15, 2026 (session 13, end):** ranges end today (Siamak): Last 7 days, Last 30 days and Last 12 months include today so far, on the dashboard and public pages, and are compared with the period before. Free's 30 days start on the first day of Last 30 days. The Monday email keeps last Monday to Sunday with its own range (`lastWeekRange`). Reports for ranges that end today stay fresh for 30 minutes (an hour on public pages) (sections 8, 10, 14 and 16).
+
 **Updated Oct 15, 2026 (session 13, later):** no site limit on either plan. Free and Pro both open every Google Analytics site in the account, so paused sites, the "n of 10" count and the Free footer in the site menu are gone (sections 7, 15, 16 and 28.1).
 
 **Updated Oct 15, 2026 (session 13):** one site menu for every plan: it lists every Google Analytics site in the Google account, opens any of them with one click, and has a gear to each of the user's sites' settings. All sites (`/sites`) and the add or switch dialog are gone. Settings is split into pages with a menu on the left: Profile, Plan & billing, Monday email, and one page per site (sections 5, 7 and 28.1).
@@ -47,7 +49,7 @@ Out of scope:
 
 Siamak's decisions on Oct 11, 2026 (also in `docs/DECISIONS.md`):
 
-- **Date ranges** are made of full days ending yesterday. 12 months means the last 12 full months (section 8).
+- **Date ranges** end today, so far (since Oct 15, 2026; before, they ended yesterday). 12 months means 11 full months and this month so far (section 8).
 - **Better Auth** handles Google sign-in instead of Auth.js (section 6).
 - **Stripe Managed Payments** handles VAT and sales tax, with Stripe as the merchant of record (section 16).
 - ~~**When a trial ends unpaid**, the dashboard locks and the weekly email and public page pause too.~~ Since Oct 14 there's no trial and nothing locks: Free and Pro (section 16).
@@ -361,10 +363,10 @@ Stripe keeps its own payment records, because it is the merchant of record.
 | --- | --- | --- | --- |
 | **Today** | today so far | not compared: today isn't over, so the cards say "Today isn't over yet" | hourly (`dateHour`), midnight to the latest hour Google has reported |
 | **Yesterday** | yesterday | the day before | hourly (`dateHour`), 24 points |
-| **Last 7 days** (default) | the 7 days ending yesterday | the 7 days before that | daily (`date`), 7 points. Hourly was tried in Sprint 2 and read as noise over a week on small sites (see `docs/DECISIONS.md`) |
-| **Last 30 days** | the 30 days ending yesterday | the 30 days before that | daily (`date`), 30 points |
-| **Last 12 months** | the 12 full calendar months before this month | the 12 months before that | monthly (`yearMonth`), 12 points |
-| **Custom** | any run of whole days, from 14 Aug 2015 (GA4's first day) up to today, at most 5 years | the same number of days just before | hourly for one day, daily up to 92 days, monthly after |
+| **Last 7 days** (default) | the 7 days ending today (six full days and today so far) | the 7 days before that (today being partial, the change reads a little low until the day ends) | daily (`date`), 7 points; today is dashed, and left off until Google has reported it. Hourly was tried in Sprint 2 and read as noise over a week on small sites (see `docs/DECISIONS.md`) |
+| **Last 30 days** | the 30 days ending today | the 30 days before that | daily (`date`), 30 points, today as in Last 7 days |
+| **Last 12 months** | the 11 full calendar months before this month, and this month so far | the 12 months before that | monthly (`yearMonth`), 12 points; this month is dashed |
+| **Custom** | any run of whole days, from 14 Aug 2015 (GA4's first day) up to today, at most 5 years | the same number of days just before (not compared when it is today alone) | hourly for one day, daily up to 92 days, monthly after |
 
 **Where ranges live:**
 
@@ -379,7 +381,7 @@ Stripe keeps its own payment records, because it is the merchant of record.
 - The calendar's code loads the first time "Custom" is pointed at or chosen, so pages don't carry it otherwise.
 - With a custom range, the button shows its days ("1 Sep – 30 Sep") and the period isn't repeated next to it.
 - The weekly email uses the 7-day range computed on a Monday, which is exactly last Monday to Sunday (section 14).
-- **Free's 30 days** (section 16): on Free, "Last 12 months" shows a "Pro" badge and opens Settings → Plan & billing, the calendar starts 30 days before today (`freeFirstDay`), and a note under the menu says "Free shows the last 30 days. Pro shows everything." An address with an older range shows Last 30 days instead (`rangeForPlan`), on the dashboard, CSV downloads and public pages. A Free owner's public page leaves 12 months out of its menu.
+- **Free's 30 days** (section 16): on Free, "Last 12 months" shows a "Pro" badge and opens Settings → Plan & billing, the calendar starts on the first day of Last 30 days (`freeFirstDay`: today and the 29 days before), and a note under the menu says "Free shows the last 30 days. Pro shows everything." An address with an older range shows Last 30 days instead (`rangeForPlan`), on the dashboard, CSV downloads and public pages. A Free owner's public page leaves 12 months out of its menu.
 
 **Still updating:**
 
@@ -536,10 +538,9 @@ Channel names are mapped to plain words in section 11.4.
 
 1. **Read** the cache row for each property, report, range type and params. There is one row per report, always holding the newest fetch.
 2. **Decide if it's fresh.** A row is fresh when its window matches the current window and `fetched_at` is newer than:
-   - 30 minutes for any period that ends today (1 hour on a public page), because today keeps changing
-   - 3 hours for Yesterday, 7 days, 30 days and custom ranges that include yesterday
-   - 24 hours for 12 months and for custom ranges that ended before yesterday (they won't change)
-   - 12 hours when the reader is a public page (Today excepted)
+   - 30 minutes for any period that ends today (1 hour on a public page), because today keeps changing: Today, 7 days, 30 days, 12 months and custom ranges up to today
+   - 3 hours for Yesterday and custom ranges that end yesterday (12 hours on a public page)
+   - 24 hours for custom ranges that ended before yesterday (they won't change)
 3. **Act on it:**
    - **Fresh:** return it.
    - **Stale** (old window or old fetch): return it right away and schedule a refresh with `after()`. A new day changes the window, so the first view after midnight shows yesterday's numbers while the new ones load.
@@ -1402,7 +1403,7 @@ Vitest unit tests only. The roadmap rules out end-to-end tests.
 | Key events | `keyEvents` only counts from when an event was marked key. Older data doesn't change | [API schema](https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema) | Signups uses `eventCount` (section 11.2) |
 | Realtime | Last 30 minutes (60 on 360). Dimensions include `city`, `country`, `countryId` and `unifiedScreenName`, but **no `pagePath`** | [Realtime schema](https://developers.google.com/analytics/devguides/reporting/data/v1/realtime-api-schema), [basics](https://developers.google.com/analytics/devguides/reporting/data/v1/realtime-basics) | Live pages show page titles. The globe uses a lookup table |
 | Quotas | Per standard property: 200,000 tokens a day, 40,000 an hour, 14,000 per project per property per hour, 10 concurrent requests, and **10 server errors per project per property per hour** (then requests are blocked). `returnPropertyQuota` shows what's left | [Quotas](https://developers.google.com/analytics/devguides/reporting/data/v1/quotas) | Cache, batch, limit concurrency, careful retries (section 10.4) |
-| Freshness | Realtime: minutes. Standard intraday: 2–6 hours. Daily: about 12 hours. "Data processing can take 24-48 hours" | [Data freshness](https://support.google.com/analytics/answer/11198161) | Ranges end yesterday, marked "still updating". The email goes out Monday at 13:00 |
+| Freshness | Realtime: minutes. Standard intraday: 2–6 hours. Daily: about 12 hours. "Data processing can take 24-48 hours" | [Data freshness](https://support.google.com/analytics/answer/11198161) | Ranges end today, so far, with the newest point marked "still updating" (yesterday until Oct 15, 2026). The email goes out Monday at 13:00 |
 | OAuth Testing status | Refresh tokens expire in 7 days in "Testing". They also stop after 6 months unused, on revocation, or when time-limited access expires | [OAuth 2.0](https://developers.google.com/identity/protocols/oauth2#expiration) | Publish "In production" early, and handle `invalid_grant` |
 | Unverified apps | Capped at 100 new users. Verification needs a verified domain, privacy policy and demo video, and takes 3–5 business days (from the roadmap) | [Unverified apps](https://support.google.com/cloud/answer/7454865), [sensitive scopes](https://developers.google.com/identity/protocols/oauth2/production-readiness/sensitive-scope-verification) | Submit in Sprint 3 |
 | Admin API | v1beta has `accountSummaries`, `properties` (`timeZone`, `createTime`, `serviceLevel`), `dataStreams` and `keyEvents` | [Admin API](https://developers.google.com/analytics/devguides/config/admin/v1/rest) | Property choice (section 7) and the signup picker |

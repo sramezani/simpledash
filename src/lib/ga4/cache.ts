@@ -87,8 +87,9 @@ export const paramsFor = (site: Site): ReportParams => ({
 });
 
 /**
- * How long a cached report counts as fresh. A period that ends today keeps changing,
- * so it goes stale soonest; one that ended before yesterday won't change any more.
+ * How long a cached report counts as fresh. A period that ends today (every preset but
+ * Yesterday) keeps changing, so it goes stale soonest; one that ended before yesterday
+ * won't change any more.
  */
 export function maxAge(
   window: Pick<RangeWindow, "type" | "endsToday" | "includesYesterday">,

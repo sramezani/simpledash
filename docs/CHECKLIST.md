@@ -290,6 +290,8 @@ What's done and what's next, in plain words.
 - [x] No site limit: Free and Pro both open every Google Analytics site, and the menu is the same on both ("n of 10 in use" and the Free footer gone). Paused sites, "Show … instead" and the "Several sites are part of Pro" panel removed, with their code. Pricing, hero, FAQ, terms and `llms.txt` updated (15 Oct)
   - Checked on the `/ui-kit` previews (Pro menu, Free menu at 375 px with the keyboard, Free with three sites in settings) and the landing page's pricing text.
 - [ ] Siamak: update `docs/ROADMAP.md` (Free was one site, Pro up to 10 sites)
+- [x] Ranges end today: Last 7 days, 30 days and 12 months include today so far (dashboard and public pages), compared with the period before; today is dashed and left off the chart until Google reports it. The Monday email keeps last Monday to Sunday (15 Oct)
+  - Unit tested (`ranges`, `reports`, `cache`, `series`, email content).
 - [ ] **Done when:** Siamak opens another site from the menu on Free and on Pro, and the gear opens that site's settings.
 
 ## V3: later (postponed 13 Oct; `docs/SPEC.md` section 29)
