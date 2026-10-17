@@ -1,0 +1,23 @@
+---
+title: The summary line
+description: "How SimpleDash writes the one-line summary in the Monday email: built only from the numbers, with clear rules, and never a guess about why something changed."
+updated: 2026-10-16
+---
+
+Each site's block in the [Monday email](/docs/monday-email) starts with one sentence that says what changed, such as "Visitors up 23% vs the week before, mostly from Google." It's built from the numbers with fixed rules, and it never guesses why.
+
+## The rules
+
+1. **Visitors.** A change under 3% either way reads "Visitors about the same as the week before". Otherwise: "Visitors up 23%" or "Visitors down 12%".
+2. **Where the change came from.** If one source made up at least half of the change, in the same direction, it adds "mostly from Google". Otherwise nothing is added.
+3. **No comparison possible.** If there's no honest comparison (a new property), it gives the total instead: "1,234 visitors in the last 7 days".
+4. **Signups.** If you've [chosen a signup action](/docs/signups) and there were signups in either week: "12 signups, up from 8."
+
+## Why it never says why
+
+The numbers can say *what* changed, not *why*. A drop in visitors could be a holiday, a lost ranking, a broken tracking tag or a slow week. Guessing would sound helpful and often be wrong, so SimpleDash doesn't. If you know why, add a [chart note](/docs/dashboard#chart-notes) to remember it.
+
+## Related
+
+- [The Monday email](/docs/monday-email)
+- [Find what changed when traffic drops](/guides/traffic-dropped)

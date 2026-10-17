@@ -1,0 +1,115 @@
+---
+title: How to add Google Analytics 4 to a Next.js site
+menuTitle: "Next.js"
+seoTitle: Add Google Analytics 4 to Next.js (App Router)
+description: Add GA4 to a Next.js App Router site with the official @next/third-parties package or next/script, keep the ID in an environment variable, and track signups.
+updated: 2026-10-16
+---
+
+The simplest way to add Google Analytics 4 to Next.js is the official `@next/third-parties` package: install it, then add `<GoogleAnalytics gaId="G-…" />` to your root layout. Page changes are counted automatically by GA4's enhanced measurement, so you don't need any routing code.
+
+## 1. Install the package
+
+```bash
+npm install @next/third-parties
+```
+
+## 2. Add the ID to your environment
+
+```bash title=".env.local"
+NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
+```
+
+Add it to your hosting provider's environment variables too (on Vercel: Project → Settings → Environment Variables), then redeploy.
+
+## 3. Add GoogleAnalytics to the root layout
+
+```tsx title="app/layout.tsx"
+import { GoogleAnalytics } from "@next/third-parties/google";
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+      {process.env.NEXT_PUBLIC_GA_ID ? (
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+      ) : null}
+    </html>
+  );
+}
+```
+
+The component loads Google's tag after the page is interactive, so it doesn't slow down the first paint. Without the variable (for example in local development), nothing is loaded.
+
+## Without the package: next/script
+
+If you'd rather not add a dependency, load the tag with `next/script`:
+
+```tsx title="app/layout.tsx"
+import Script from "next/script";
+
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        {children}
+        {GA_ID ? (
+          <>
+            <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
+            <Script id="ga4" strategy="afterInteractive">
+              {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${GA_ID}');`}
+            </Script>
+          </>
+        ) : null}
+      </body>
+    </html>
+  );
+}
+```
+
+## Page changes in the App Router
+
+Navigating with `<Link>` doesn't reload the page, but GA4 still counts it: **enhanced measurement** sends a page view when the browser's history changes. Check it's on in GA4: Admin → Data streams → your stream → Enhanced measurement → **Page views** → _Page changes based on browser history events_.
+
+## Track a signup
+
+In a client component, after the signup succeeds, use the package's `sendGAEvent`:
+
+```tsx
+"use client";
+import { sendGAEvent } from "@next/third-parties/google";
+
+// after the server confirms the signup:
+sendGAEvent("event", "sign_up", { method: "Email" });
+```
+
+With the `next/script` setup instead, call `window.gtag("event", "sign_up", { method: "Email" })`. Then [mark `sign_up` as a key event](/guides/ga4-key-events).
+
+## Pages Router
+
+In `pages/_app.tsx`, render `<GoogleAnalytics gaId={…} />` (from the same package) next to `<Component {...pageProps} />`.
+
+## Check it works
+
+Deploy, open your site and look at GA4's **Realtime overview**, or filter your browser's network tab for `collect`. [More ways to check](/guides/check-ga4-is-working).
+
+<InSimpleDash>
+  simpledash.app itself is a Next.js site on GA4. Once your tag is live, sign in to SimpleDash with
+  the same Google account to see visitors, sources, pages, AI traffic and live visitors on one page,
+  with nothing else to install.
+</InSimpleDash>
+
+## Related
+
+- [Cookie banners and Consent Mode](/guides/ga4-cookie-consent)
+- [Use an AI coding agent to add GA4](/guides/add-google-analytics-with-ai-coding-agent)
+
+## Sources
+
+- Next.js: [Third-party libraries: Google Analytics](https://nextjs.org/docs/app/guides/third-party-libraries#google-analytics)
+- Google: [Enhanced measurement events](https://support.google.com/analytics/answer/9216061)

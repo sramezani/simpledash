@@ -1,0 +1,63 @@
+---
+title: How to add Google Analytics 4 to a Carrd site
+menuTitle: "Carrd"
+seoTitle: How to add Google Analytics 4 to a Carrd site
+description: "Add GA4 to your Carrd site with Carrd's Site Analytics setting: choose Google Analytics as the provider, paste your G- Measurement ID and enable it."
+updated: 2026-10-16
+---
+
+Carrd connects Google Analytics through its **Site Analytics** setting: in your Carrd dashboard, open the site's **Manage** page, choose **Analytics**, select **Google Analytics** as the provider, add your GA4 Measurement ID (`G-…`) and enable it. It needs Carrd Pro Standard or higher.
+
+## Add Google Analytics
+
+<Steps>
+<Step>
+
+Open your Carrd **Dashboard** and the **Sites** tab.
+
+</Step>
+<Step>
+
+Find your site and click its **Manage** icon.
+
+</Step>
+<Step>
+
+In the sidebar, click **Analytics**. Under **Site Analytics**, click **Select Provider** and choose **Google Analytics**.
+
+</Step>
+<Step>
+
+Enter your Measurement ID, which starts with `G-`, and click **Enable**.
+
+</Step>
+</Steps>
+
+<ImageSlot
+  id="carrd-site-analytics"
+  alt="Carrd's Site Analytics settings with Google Analytics selected as the provider and a GA4 Measurement ID"
+>
+  In the Carrd dashboard, open a site's Manage page → Analytics → Select Provider → Google
+  Analytics. Capture the form with a placeholder G-XXXXXXXXXX ID before enabling.
+</ImageSlot>
+
+## Count signups from a Carrd form
+
+Carrd elements have **Events** (select an element → Settings → Events), which can run code such as a `gtag('event', 'sign_up')` call when a form is submitted. Then [mark `sign_up` as a key event](/guides/ga4-key-events).
+
+## Check it works
+
+Open your published page in a private window and GA4's **Realtime overview**. [More ways to check](/guides/check-ga4-is-working).
+
+<InSimpleDash>
+  A one-page Carrd site plus SimpleDash is a neat launch setup: see visitors, sources and signups on
+  one page, and share a public stats page while you validate the idea.
+</InSimpleDash>
+
+## Related
+
+- [UTM links for your launch posts](/guides/utm-links)
+
+## Sources
+
+- Carrd: [Setting up Site Analytics](https://carrd.com/docs/sites/setting-up-site-analytics)

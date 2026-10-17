@@ -1,0 +1,96 @@
+---
+title: How to see ChatGPT, Perplexity and Claude traffic in GA4
+menuTitle: "AI assistant traffic"
+seoTitle: See ChatGPT, Perplexity and Claude traffic in GA4
+description: Find visitors from ChatGPT, Perplexity, Claude, Gemini and Copilot in Google Analytics 4, build an AI channel that groups them, and know what GA4 can't see.
+updated: 2026-10-16
+---
+
+Visits from AI assistants show up in Google Analytics 4 as referrals from their websites, such as `chatgpt.com`, `perplexity.ai` and `claude.ai`. GA4 also groups many of them under an **AI Assistant** channel. To see them all in one place, filter Traffic acquisition by source, or create a custom channel group with a short rule.
+
+## Quick look: filter by source
+
+<Steps>
+<Step>
+
+Open Reports → Acquisition → **Traffic acquisition**.
+
+</Step>
+<Step>
+
+Change the table's first column to **Session source** (the dropdown above the first column).
+
+</Step>
+<Step>
+
+In the table's search box, type `chatgpt`, then `perplexity`, `claude`, `gemini` and `copilot` one at a time.
+
+</Step>
+</Steps>
+
+## The sources to look for
+
+| Assistant               | Source in GA4                                        |
+| ----------------------- | ---------------------------------------------------- |
+| ChatGPT                 | `chatgpt.com`, older visits `chat.openai.com`        |
+| Perplexity              | `perplexity.ai`, `www.perplexity.ai`                 |
+| Claude                  | `claude.ai`                                          |
+| Gemini                  | `gemini.google.com` (older: `bard.google.com`)       |
+| Copilot                 | `copilot.microsoft.com`                              |
+| DeepSeek, Grok, Meta AI | `chat.deepseek.com`, `grok.com`, `meta.ai`           |
+| Others                  | `chat.mistral.ai`, `you.com`, `phind.com`, `poe.com` |
+
+ChatGPT also adds `utm_source=chatgpt.com` to many links it shows, so those visits show `chatgpt.com` as their source even when the browser doesn't pass a referrer.
+
+## See them all at once: an AI channel group [#ai-channel-group]
+
+GA4's default channels include **AI Assistant** for many of these. To make sure all of them are grouped, including newer assistants, create your own channel group:
+
+<Steps>
+<Step>
+
+Admin → Data display → **Channel groups** → **Create new channel group**. Name it, for example, "Channels with AI".
+
+</Step>
+<Step>
+
+Choose **Add new channel**, name it "AI assistants", and add the condition **Source** · **matches regex** ·
+
+```text
+chatgpt|openai|perplexity|claude|gemini|bard|copilot|deepseek|grok|meta\.ai|mistral|you\.com|phind|poe\.com
+```
+
+</Step>
+<Step>
+
+Save, then use **Reorder** to move "AI assistants" **above Referral**, or GA4 sorts these visits into Referral first.
+
+</Step>
+<Step>
+
+In Traffic acquisition, switch the first column to your new channel group.
+
+</Step>
+</Steps>
+
+## What GA4 can't see
+
+- **Google's AI Overviews and AI Mode** count as Google organic search. Google doesn't report them separately in GA4; their clicks are in Search Console's performance report, together with other Google results.
+- **Apps that hide the referrer.** Some visits from AI apps arrive without a referrer and show up as **Direct**. [Why direct traffic is high](/guides/ga4-direct-traffic).
+- **Answers without a click.** If an assistant mentions your site but nobody clicks, there's no visit to count.
+
+<InSimpleDash>
+  SimpleDash's **AI traffic** card does all of this for you: visitors from ChatGPT, Perplexity,
+  Claude, Gemini, Copilot and more, split by assistant, with the pages they landed on. It's on every
+  plan, and you can show it on your public stats page.
+</InSimpleDash>
+
+## Related
+
+- [Why is direct traffic so high?](/guides/ga4-direct-traffic)
+- [Channels in plain words](/glossary/default-channel-group)
+
+## Sources
+
+- Google: [Default channel group](https://support.google.com/analytics/answer/9756891)
+- Google: [Custom channel groups](https://support.google.com/analytics/answer/13051316)

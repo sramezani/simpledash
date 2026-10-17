@@ -1,0 +1,98 @@
+---
+title: Troubleshooting
+description: Every message SimpleDash can show, what it means and how to fix it, from "No Google Analytics site found" to "Google access ended" and missing emails.
+updated: 2026-10-16
+---
+
+Each heading below is the exact message SimpleDash shows, so you can find yours quickly. Most fixes take a minute; if yours doesn't, email <SupportEmail /> with the message and the site.
+
+## No Google Analytics site found [#no-google-analytics-site]
+
+**What it means:** the Google account you signed in with can't see any Google Analytics 4 property.
+
+**How to fix it:**
+
+1. If you have GA4 on another Google account, sign out and sign in with that one.
+2. If someone else owns the property, ask them to add your account in GA4 (Admin → Property access management, the Viewer role is enough).
+3. If you don't have GA4 yet, [add it to your website](/guides/add-google-analytics-to-website). It takes about five minutes. Until then, SimpleDash shows sample data so you can look around.
+
+## SimpleDash needs read-only access to Google Analytics [#allow-analytics-access]
+
+**What it means:** on Google's sign-in screen, the box for Google Analytics was left unticked, so SimpleDash can't read your reports.
+
+**How to fix it:** choose **Allow access** and tick the Google Analytics box this time. The access is read-only. [What SimpleDash can see](/docs/google-access).
+
+## Google Analytics hasn't recorded any visits for this site in this period [#no-visits]
+
+**What it means:** GA4 has no visits for this site and these dates. That's GA4's data, not a SimpleDash problem.
+
+**How to fix it:**
+
+- Try a longer range, such as the last 30 days.
+- If GA4 was added recently, wait a few hours: Google adds visits late.
+- If you expected visits, check the tag is working: [Check GA4 is collecting data](/guides/check-ga4-is-working).
+
+## Google access ended. Reconnect to see fresh numbers [#google-access-ended]
+
+**What it means:** Google stopped accepting SimpleDash's access. This happens if you removed SimpleDash from your Google account, changed your Google password, or Google ended the access after a long time unused.
+
+**How to fix it:** choose **Reconnect** and sign in again. Older numbers stay visible until then, marked as not fresh.
+
+## You no longer have access to this Google Analytics site [#no-access-to-site]
+
+**What it means:** your Google account lost access to this one property in GA4 (for example, someone removed you), while your other sites still work.
+
+**How to fix it:** ask the property's owner to add your account back, or open another site from the site menu. Your notes and settings for this site are kept.
+
+## Google Analytics isn't answering right now [#google-not-answering]
+
+**What it means:** Google's API didn't answer in time. It's usually brief.
+
+**How to fix it:** wait a few minutes and reload. Cached numbers show in the meantime, if there are any. If it lasts more than an hour, email us.
+
+## Google's hourly limit for this site was reached [#google-hourly-limit]
+
+**What it means:** Google limits how many reports can be read per property per hour, and this site reached it (often because other tools read the same property). The message says when numbers refresh.
+
+**How to fix it:** nothing to do. The cards keep their latest numbers and refresh after the time shown.
+
+## Not enough history to compare [#not-enough-history]
+
+**What it means:** the period before started before your GA4 property existed, so there's nothing honest to compare with.
+
+**How to fix it:** nothing to fix. Choose a shorter range, or wait until the property is older.
+
+## Google's "unverified app" screen [#unverified-app]
+
+**What it means:** Google shows this for apps it hasn't finished checking yet. While Google reviews SimpleDash, you may see it when signing in.
+
+**How to fix it:** choose **Advanced**, then continue to SimpleDash. The access is still read-only. This screen goes away once Google's check is complete.
+
+## Search Console: no matching property [#search-console-no-match]
+
+**What it means:** your Google account has no Search Console property for this site's domain.
+
+**How to fix it:** [add and verify the site in Search Console](/guides/add-site-to-search-console), then choose **Connect Search Console** again. If you have a property under another address, pick it in the site's settings.
+
+## Stripe key rejected [#stripe-key-rejected]
+
+**What it means:** the key you pasted isn't a restricted key with the right permissions, or Stripe doesn't accept it.
+
+**How to fix it:**
+
+- Use a **restricted key** (it starts with `rk_live_` or `rk_test_`). Secret keys are refused on purpose.
+- Give it **Read** on Charges, Refunds, Customers and Subscriptions. The message names any that are missing.
+- [Create the key step by step](/guides/stripe-restricted-key).
+
+## The Monday email didn't arrive [#monday-email-missing]
+
+**How to fix it:**
+
+1. Check you're on [Pro](/docs/plans).
+2. Check Settings → Monday email is on.
+3. Look in spam or promotions, and add <SupportEmail /> to your contacts.
+4. Remember it arrives Monday between 13:00 and 18:00 in your main site's time zone, and is skipped when no site had visitors.
+
+## Something else?
+
+Email <SupportEmail />. A screenshot and the site's address help us answer fast.

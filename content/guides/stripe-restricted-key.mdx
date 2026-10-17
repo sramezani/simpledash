@@ -1,0 +1,85 @@
+---
+title: How to create a read-only restricted key in Stripe
+menuTitle: "Read-only Stripe key"
+seoTitle: Create a read-only restricted API key in Stripe
+description: Create a Stripe restricted key that can only read charges, refunds, customers and subscriptions, to share revenue numbers safely with another app.
+updated: 2026-10-16
+---
+
+A restricted key is a Stripe API key with only the permissions you choose. To share revenue numbers safely with an app like SimpleDash, create a key with custom permissions: **Read** access to Charges, Refunds, Customers and Subscriptions, and **None** for everything else. It can't charge cards, refund payments or change your account.
+
+## Why a restricted key, not your secret key
+
+Your **secret key** (`sk_live_…`) can do anything in your Stripe account, including moving money. Never paste it into another service. A **restricted key** (`rk_live_…`) can do only what you allow, and you can delete it at any time without affecting anything else.
+
+## Create the key
+
+<Steps>
+<Step>
+
+Sign in to the [Stripe Dashboard](https://dashboard.stripe.com) and open **Developers** → **API keys**.
+
+</Step>
+<Step>
+
+Choose **Create secret key**. On **Assign permissions to your key**, choose **custom permissions**. Don't choose full access, which creates an unrestricted secret key.
+
+</Step>
+<Step>
+
+In **Key name**, name it after the app you'll give it to, for example "SimpleDash", so you'll know later what it's for.
+
+</Step>
+<Step>
+
+Set these four to **Read**:
+
+- **Charges**
+- **Refunds**
+- **Customers**
+- **Subscriptions**
+
+Leave every other permission on **None**.
+
+</Step>
+<Step>
+
+Choose **Create key** and complete Stripe's two-factor check. Then click the key to copy it. It starts with `rk_live_` (or `rk_test_` in a sandbox or test mode). Copy it now: Stripe won't show it again.
+
+</Step>
+</Steps>
+
+<ImageSlot
+  id="stripe-restricted-key-permissions"
+  alt="Stripe's restricted key form with Charges, Refunds, Customers and Subscriptions set to Read"
+>
+  In the Stripe Dashboard (a sandbox is fine), Developers → API keys → Create secret key → custom
+  permissions. Name it SimpleDash, set Charges, Refunds, Customers and Subscriptions to Read, and
+  capture the permissions list. Don't show a real key.
+</ImageSlot>
+
+## Keep it safe
+
+- Paste it only into the app it's for. Don't share it in chats or email.
+- To stop the app's access, delete the key in Developers → API keys. Nothing else is affected.
+- If you think it leaked, delete it and create a new one.
+
+## Try it in a sandbox first?
+
+Create the key in a Stripe **sandbox** (or test mode) to try things out with test payments. Those keys start with `rk_test_`.
+
+<InSimpleDash>
+  With Pro, paste the key under **Revenue from Stripe** in your site's settings and choose **Check
+  and save**. SimpleDash checks the four permissions, stores the key encrypted, and shows revenue,
+  MRR and new customers next to your visitors. It refuses secret keys on purpose. [Revenue from
+  Stripe](/docs/revenue).
+</InSimpleDash>
+
+## Related
+
+- [What MRR means](/guides/stripe-mrr)
+- [Which traffic brings paying customers](/guides/traffic-to-revenue)
+
+## Sources
+
+- Stripe: [Restricted API keys](https://docs.stripe.com/keys/restricted-api-keys)

@@ -1,0 +1,58 @@
+---
+title: What does "Unassigned" mean in GA4?
+menuTitle: "Unassigned traffic"
+seoTitle: What does Unassigned traffic mean in GA4? How to fix it
+description: Unassigned in GA4 means a visit didn't match any channel rule, usually because of an unusual UTM medium. How to find the cause and fix your links.
+updated: 2026-10-16
+---
+
+**Unassigned** in Google Analytics 4 means a visit had information about where it came from, but it didn't match any of GA4's channel rules. Most often the link's `utm_medium` was an unusual word GA4 doesn't recognise. Fix your UTM tags and new visits land in the right channel.
+
+## Find what's unassigned
+
+<Steps>
+<Step>
+
+Open Reports → Acquisition → **Traffic acquisition**.
+
+</Step>
+<Step>
+
+Click **Unassigned** in the table to filter to it, or add a filter on **Session default channel group** = Unassigned.
+
+</Step>
+<Step>
+
+Change the first column to **Session source / medium**. The values tell you what went wrong.
+
+</Step>
+</Steps>
+
+## Common causes and fixes
+
+| You see                                   | Why                                                   | Fix                                                                   |
+| ----------------------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------- |
+| `newsletter / weekly-mail`                | The medium isn't a standard word                      | Use `utm_medium=email`                                                |
+| `x / post` or `linkedin / organic-social` | Social medium spelled differently                     | Use `utm_medium=social`                                               |
+| `partner / link`                          | Unusual referral medium                               | Use `utm_medium=referral` or `affiliate`                              |
+| `(not set) / (not set)`                   | Events without a session start, or sent from a server | Check your tag fires on page load; see [(not set)](/glossary/not-set) |
+
+GA4 recognises mediums like `email`, `social`, `referral`, `affiliate`, `cpc`, `display` and `organic`. Stick to these in your [UTM links](/guides/utm-links).
+
+## Past data
+
+Fixing your links changes new visits only. For old ones, you can create a custom channel group with your own rules (Admin → Data display → Channel groups), which also applies to past data in reports.
+
+<InSimpleDash>
+  SimpleDash shows Unassigned as **Unknown** in the Channels tab, and the raw sources one tab over,
+  so you can spot a badly tagged newsletter at a glance.
+</InSimpleDash>
+
+## Related
+
+- [Channels in plain words](/glossary/default-channel-group)
+- [Why direct traffic is high](/guides/ga4-direct-traffic)
+
+## Sources
+
+- Google: [Default channel group](https://support.google.com/analytics/answer/9756891)

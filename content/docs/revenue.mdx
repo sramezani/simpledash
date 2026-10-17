@@ -1,0 +1,54 @@
+---
+title: Revenue from Stripe
+description: With Pro, connect Stripe with a read-only key to see revenue, MRR and new customers next to your visitors. SimpleDash can read, never charge or change.
+updated: 2026-10-16
+---
+
+With Pro, you can connect your Stripe account with a **restricted read-only key**. SimpleDash then shows revenue, MRR and new customers next to your visitors, with a bar for each day's revenue under the visitors chart. The key can read four things and can't charge, refund or change anything.
+
+## Connect Stripe
+
+<Steps>
+<Step>
+
+In Stripe, create a key with custom permissions (a restricted key): **Charges**, **Refunds**, **Customers** and **Subscriptions** set to **Read**, and everything else set to **None**. [Step-by-step guide](/guides/stripe-restricted-key).
+
+</Step>
+<Step>
+
+In SimpleDash, open the site's settings (the gear in the site menu), paste the key under **Revenue from Stripe**, and choose **Check and save**.
+
+</Step>
+<Step>
+
+SimpleDash checks that the key can read each of the four, saves it encrypted, and fetches your history in the background.
+
+</Step>
+</Steps>
+
+Only restricted keys are accepted (they start with `rk_live_` or `rk_test_`). A secret key (`sk_…`) is refused, because it can change your Stripe account.
+
+## What you'll see
+
+- **Revenue**: what customers paid minus refunds, before Stripe's fees, in your main currency. Other currencies are listed separately, never converted.
+- **MRR**: the monthly price of active and past-due subscriptions, before discounts, at the last sync.
+- **New customers**: customers Stripe created in the period, with "1 per 412 visitors" (visitors divided by new customers, for the same days).
+- **Revenue bars** under the visitors chart: one per day, or per month on 12 months.
+
+Days follow your site's time zone. A test key shows "test mode".
+
+## How fresh it is
+
+SimpleDash syncs with Stripe every hour, and when you open the dashboard if the last sync is more than an hour old. The first sync goes back about two years, so 12 months can be compared with the 12 before.
+
+## What's stored, and removing it
+
+The key is stored **encrypted**, with daily totals only: amounts charged and refunded, new customers and MRR. No customer names, emails or IDs. Revenue never appears on public pages.
+
+To remove it, choose **Remove** under Revenue from Stripe. The key and every stored total for that site are deleted. You can also delete the key in Stripe.
+
+## Related
+
+- [Create a read-only Stripe key](/guides/stripe-restricted-key)
+- [What counts as a sale](/docs/what-counts-as-a-sale)
+- [Which traffic brings paying customers](/guides/traffic-to-revenue)

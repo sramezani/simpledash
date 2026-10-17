@@ -1,3 +1,4 @@
+import type { Route } from "next";
 import Link from "next/link";
 import { Container } from "@/components/shared/container";
 import { Logo } from "@/components/shared/logo";
@@ -12,6 +13,18 @@ export function SiteHeader() {
           <Logo />
         </Link>
         <nav aria-label="Main" className="ml-auto flex items-center gap-1 sm:gap-2">
+          <Link
+            href={"/guides" as Route}
+            className="hidden h-9 items-center rounded-lg px-3 text-sm text-muted-foreground hover:text-foreground sm:inline-flex pointer-coarse:h-11"
+          >
+            Guides
+          </Link>
+          <Link
+            href={"/docs" as Route}
+            className="hidden h-9 items-center rounded-lg px-3 text-sm text-muted-foreground hover:text-foreground sm:inline-flex pointer-coarse:h-11"
+          >
+            Docs
+          </Link>
           <Link
             href="/#pricing"
             className="inline-flex h-9 items-center rounded-lg px-3 text-sm text-muted-foreground hover:text-foreground pointer-coarse:h-11"

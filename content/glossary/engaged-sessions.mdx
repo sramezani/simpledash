@@ -1,0 +1,42 @@
+---
+title: Engaged sessions, engagement rate and bounce rate in GA4
+menuTitle: "Engaged sessions"
+seoTitle: Engaged sessions, engagement rate and bounce rate in GA4
+description: GA4 counts a visit as engaged if it lasts over 10 seconds, has a key event or views 2+ pages. Engagement rate and bounce rate follow from that.
+updated: 2026-10-16
+---
+
+An **engaged session** is a visit that lasted longer than 10 seconds, had a key event, or viewed at least two pages. **Engagement rate** is the share of sessions that were engaged, and GA4's **bounce rate** is simply the opposite: the share that weren't.
+
+## The rule for an engaged session
+
+A session is engaged if **any** of these is true:
+
+- it lasted **longer than 10 seconds** (with the page in view), or
+- it had a **key event**, or
+- it had **two or more page or screen views**.
+
+You can raise the 10 seconds (up to 60) in your data stream's tag settings (Adjust timer for engaged sessions).
+
+## Engagement rate and bounce rate
+
+- **Engagement rate** = engaged sessions ÷ all sessions.
+- **Bounce rate** = 100% − engagement rate.
+
+So if 60% of sessions were engaged, the bounce rate is 40%.
+
+## Why GA4's bounce rate isn't the old one
+
+In Universal Analytics, a bounce was a single-page visit, even if someone read for five minutes. In GA4, that same visit counts as engaged (over 10 seconds), so it's not a bounce. GA4 bounce rates are usually lower, and more meaningful, than the old ones.
+
+## Is my bounce rate good?
+
+Compare it with itself over time and between your own pages, not with numbers from other sites. A blog post that answers a question in one page can have a high bounce rate and still do its job.
+
+## In SimpleDash
+
+SimpleDash shows **Avg. time** rather than bounce rate, because "how long people stayed with the page in view" is easier to read. [Average engagement time](/glossary/engagement-time).
+
+## Sources
+
+- Google: [Engagement rate and bounce rate](https://support.google.com/analytics/answer/12195621)

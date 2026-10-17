@@ -1,0 +1,57 @@
+---
+title: How to add Google Analytics 4 to a Lovable app
+menuTitle: "Lovable, Bolt, v0"
+seoTitle: Add Google Analytics 4 to Lovable, Bolt or v0 apps
+description: "Add GA4 to an app built with Lovable or another AI app builder: ask the builder's chat with a precise prompt, or paste the Google tag into index.html yourself."
+updated: 2026-10-16
+---
+
+Apps built with Lovable are React apps with an `index.html` file. To add Google Analytics 4, ask Lovable's chat to put the Google tag in the `<head>` of `index.html` with your Measurement ID, or paste it there yourself. Page changes inside the app are counted by GA4's enhanced measurement.
+
+## Option 1: ask the builder
+
+Paste this into Lovable's chat (replace the ID):
+
+```text title="Prompt"
+Add Google Analytics 4 to this app. Put the official Google tag (gtag.js) for
+Measurement ID G-XXXXXXXXXX in the <head> of index.html, once. Don't add any
+analytics package and don't add page_view code on route changes: GA4's
+enhanced measurement counts them.
+```
+
+Then publish, and check the change: open `index.html` and make sure the tag is there exactly once.
+
+## Option 2: paste the tag yourself
+
+Open your project's code (in the builder's code view, or the connected GitHub repository), open `index.html` at the root, and paste the Google tag from GA4 (Admin → Data streams → your stream → View tag instructions → Install manually) right after `<head>`. Publish.
+
+<ImageSlot
+  id="lovable-index-html"
+  alt="index.html in a Lovable project with the Google tag in the head"
+>
+  In a Lovable project's code view, open index.html and capture the head with the Google tag added
+  (placeholder G-XXXXXXXXXX ID).
+</ImageSlot>
+
+## Other AI app builders
+
+- **Bolt.new and Replit:** the same idea: ask the chat with the prompt above, or add the tag to the main HTML file.
+- **v0 and other Next.js projects:** follow [Add GA4 to Next.js](/guides/add-google-analytics-to-nextjs), or give the builder that page's steps.
+
+## Make sure page changes are counted
+
+These apps change pages without reloading. In GA4, check Admin → Data streams → your stream → Enhanced measurement → **Page views** → _Page changes based on browser history events_ is on (it is by default).
+
+## Check it works
+
+Open your published app and GA4's **Realtime overview**, then click to another page in the app and check it appears too. [More ways to check](/guides/check-ga4-is-working).
+
+<InSimpleDash>
+  Shipping fast with an AI builder? SimpleDash shows if anyone came, from where, and whether they
+  signed up, on one page, without opening GA4. Add a chart note when you ship something big.
+</InSimpleDash>
+
+## Related
+
+- [Use an AI coding agent to add GA4](/guides/add-google-analytics-with-ai-coding-agent)
+- [Track signups](/guides/track-signups-ga4)

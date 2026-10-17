@@ -294,6 +294,22 @@ What's done and what's next, in plain words.
   - Unit tested (`ranges`, `reports`, `cache`, `series`, email content).
 - [ ] **Done when:** Siamak opens another site from the menu on Free and on Pro, and the gear opens that site's settings.
 
+## Content: docs, guides and comparisons (15–16 Oct; `docs/CONTENT-PLAN.md`, `docs/SPEC.md` section 30)
+
+- [x] Content plan written and approved (15 Oct); changelog skipped for now, one early comparison
+- [x] Launch kit brought up to date: no trial, all sites on Free, today "still updating" (15 Oct)
+- [x] Docs system with Fumadocs: menu, scroll-following "On this page", search, breadcrumbs, metadata, JSON-LD, social images, Markdown copies, `llms.txt` and `llms-full.txt`, sitemap (16 Oct)
+- [x] All pages written: 23 docs, 46 guides, 14 glossary pages, 11 comparisons (16 Oct)
+  - Every outside link opened and checked; the Framer, Carrd, Webflow, Squarespace, Wix, WordPress.com, Ghost, Stripe key and Next.js steps checked against their own help pages.
+  - Content tests: frontmatter, links and anchors, menus, no typed prices, screenshot list.
+  - Production build with an empty environment: every page, Markdown copy and social image prerendered. Checked at 375 px with a keyboard pass (skip link, search with Ctrl+K).
+- [x] Landing page header and footer link the docs and guides; the app's help links for "no GA4 site", "no key events" and "no purchase values" go to our guides (16 Oct)
+- [ ] Siamak: add the 28 screenshots listed in `docs/CONTENT-IMAGES.md`
+- [ ] Siamak: walk through the GA4 menus in the setup guides once on your own property (they're written from Google's current help pages; screens change)
+- [ ] Siamak: Cloudflare → Security settings → Configure AI bot policies (Search and Agent allowed; Training your call)
+- [ ] Siamak: Search Console domain property with the sitemap; Bing Webmaster Tools (import from Search Console); Cloudflare Crawler Hints on
+- [ ] Lighthouse on `/docs` and a guide on the live site (not installed here)
+
 ## V3: later (postponed 13 Oct; `docs/SPEC.md` section 29)
 
 - X mentions on the chart · Ask your data in plain English · Milestone images · Hacker News and Product Hunt markers · "Tracking looks broken" alert

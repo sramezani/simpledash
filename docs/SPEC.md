@@ -1585,3 +1585,47 @@ Not planned yet; Siamak picks from this list after V2.
 - **Hacker News and Product Hunt launches** marked on the chart.
 - **"Tracking looks broken" alert** (all events at zero).
 - **Not decided yet:** an alert email when traffic drops sharply, a "new site linked to you" heads-up when a new source appears, and a signup funnel built from the key-event counts we already fetch (not GA4's v1alpha funnel API).
+
+## 30. Docs, guides, glossary and comparisons (Siamak, Oct 15, 2026)
+
+What and why: `docs/CONTENT-PLAN.md`, including the rules for keeping pages right (section 15 there). This section is how it is built.
+
+**Content source.** MDX files in `content/` with one folder per section: `docs`, `guides`, `glossary` and `compare`. Each folder has a `meta.json` (title, `root: true`, page order with separators) and an `index.mdx` (the hub); `content/meta.json` names the whole tree "SimpleDash". Fumadocs MDX reads them through its Macro API in `src/lib/content/collections.ts` (`defineDocs` kept alone there, because the macro evaluates the whole module that defines it). `src/lib/content/source.ts` builds one Fumadocs `loader` with base URL `/`: the pages, the menu tree (`menuTree()`, with short `menuTitle` labels) and the Markdown copies. The four folders are root folders, so they show as tabs above the menu.
+
+**Frontmatter**, checked with Zod at build time:
+
+| Field | Rule |
+| --- | --- |
+| `title` | The H1, in the searcher's words |
+| `seoTitle` | Optional `<title>` when the H1 is too long (60 characters at most; " · SimpleDash" is added) |
+| `menuTitle` | Optional short label for the menu on the left (36 characters at most) |
+| `description` | 70 to 160 characters: the meta description and the line under the H1 |
+| `updated` | `YYYY-MM-DD`, moved only when the page was really changed |
+
+**Routes.** `src/app/(content)/{docs,guides,glossary,compare}/[[...slug]]/page.tsx`, all prerendered (`generateStaticParams`); the page reads its address inside a Suspense boundary (`ContentRoute`), as Cache Components asks. One layout, `src/app/(content)/layout.tsx`: Fumadocs' `RootProvider` (theme switching off: light only) and `DocsLayout`: the section tabs and the menu on the left, the page in the middle and "On this page" on the right, which follows the scroll. On phones the menu is a drawer and "On this page" folds into a button. Search (Ctrl/⌘ K) asks `/api/search`, built from the same pages.
+
+**Each page has:**
+
+- One H1 (the title), the description under it, then H2 and H3 headings for the questions it answers.
+- Metadata: the title, description, canonical address, Open Graph and Twitter cards with a page image from `/content-og/<page>/image.png` (a static route, because Next.js allows no image file under a catch-all route), drawn like the landing page's.
+- JSON-LD: `TechArticle` (docs) or `Article` (the rest), plus `BreadcrumbList`.
+- "Copy Markdown" and "Open" (in ChatGPT, Claude and others, and as Markdown), "Edit on GitHub" and the last updated date.
+- Previous and next links, and breadcrumbs.
+
+**For AI assistants:**
+
+- Every page has a Markdown copy at its address plus `.md` (`/docs/plans.md`), served by `src/app/llms.mdx/[...slug]/route.ts` through rewrites in `next.config.ts`. `contentToMarkdown` (`src/lib/content/markdown.ts`, tested) writes our components out as text: prices and other code facts as their values, screenshots left out, other components as their text.
+- `/llms.txt` lists every page with its Markdown address, and `/llms-full.txt` holds every page in one file.
+- Every page is in `sitemap.xml`, with its updated date.
+
+**Components in content** (`src/components/content/`, registered in `getMDXComponents`): Fumadocs' `Callout`, `Steps`/`Step`, `Tabs`/`Tab`, `Accordions`/`Accordion`, `Cards`/`Card`, plus ours:
+
+- `Price`, `FreeDays`, `MonthsFree` and `PlanFeatures` read `src/config/plans.ts`, so content never types a price. `Freshness` reads `src/lib/ga4/freshness.ts` (the cache times), `Scope` the Google scopes, `PlainWordsTable` `src/config/plain-words.ts`, and `SupportEmail` and `SourceRepo` the theme file.
+- `InSimpleDash`: the one product block per guide, with "Start free" (or "Open dashboard" when signed in) and the live demo.
+- `ImageSlot`: a screenshot by name from `public/content/<name>.webp`. Until the file exists, it renders nothing in production and a dashed box with the instructions in development. Every slot is listed with exact instructions in `docs/CONTENT-IMAGES.md`, which a test keeps in step.
+
+**Theme.** Fumadocs' layout CSS is imported in `globals.css` without its colours, and its `fd-*` colours are mapped onto our theme tokens there, so the docs look like the rest of SimpleDash and still follow the token rules.
+
+**Tests** (`src/lib/content/content.test.ts`): every page's frontmatter follows the rules; no SimpleDash price or section sign typed in content; every internal link goes to a page, route or `#heading` that exists; every page is in its folder's `meta.json`; every `ImageSlot` is listed in `docs/CONTENT-IMAGES.md` (made by `npm run content:images`).
+
+**In the app:** the "No Google Analytics site found" notice links to `/guides/add-google-analytics-to-website`, the Signups card's "no key events" state to `/guides/ga4-key-events`, and the sales card's "no purchase values" note to `/guides/track-purchases-ga4`. The landing page's top bar links Guides and Docs, and its footer all four sections.

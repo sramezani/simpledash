@@ -1,0 +1,35 @@
+---
+title: What are data thresholds in GA4?
+menuTitle: "Data thresholds"
+seoTitle: "Data thresholds in GA4: why small numbers are hidden"
+description: GA4 sometimes hides small numbers so people can't be identified. When thresholds apply, how to tell, and the reporting setting that usually avoids them.
+updated: 2026-10-16
+---
+
+**Data thresholds** are GA4 hiding rows or numbers in a report when they're so small that someone might be identified, for example when demographics or Google signals are involved. You'll see an orange triangle or a warning that data was withheld. It mostly affects small sites and narrow date ranges.
+
+## When thresholds apply
+
+- **Google signals** is on, and the report uses data from it.
+- The report includes **demographics** (age, gender, interests).
+- The numbers are **small**: a few users for a row.
+
+## How to tell
+
+Look for an orange triangle or a "thresholds applied" notice next to the report's title. Some rows may be missing, and totals may not add up.
+
+## How to avoid them
+
+- **Reporting identity:** Admin → Data display → **Reporting identity**. Choosing **Device-based** usually removes thresholds, because it doesn't use Google signals.
+- **Wider date ranges** make rows bigger than the threshold.
+- **Fewer dimensions** in a report mean bigger rows.
+
+Changing reporting identity only changes how reports are shown, not the data collected, and you can switch back.
+
+## In SimpleDash
+
+SimpleDash doesn't ask GA4 for demographics, so thresholds rarely affect it. If a list looks shorter than expected, a wider date range usually helps.
+
+## Sources
+
+- Google: [Data thresholds](https://support.google.com/analytics/answer/9383630)

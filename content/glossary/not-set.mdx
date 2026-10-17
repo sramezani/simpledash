@@ -1,0 +1,38 @@
+---
+title: What does (not set) mean in GA4?
+menuTitle: "(not set)"
+seoTitle: What does (not set) mean in Google Analytics 4?
+description: (not set) means GA4 had no value for that dimension. The common causes for landing pages, sources, countries and cities, and when it's worth fixing.
+updated: 2026-10-16
+---
+
+**(not set)** in Google Analytics 4 means GA4 had no value for that dimension for some of your data. It isn't an error on its own: a small share is normal. A large share usually points to a tagging problem worth fixing.
+
+## Common places you'll see it
+
+| Where                       | Usual cause                                                                                          |
+| --------------------------- | ---------------------------------------------------------------------------------------------------- |
+| **Landing page**            | The session had no page view: it started with another event, or the tag fired after the visitor left |
+| **Session source / medium** | Events sent without a session start (for example from a server), or a tag that loads late            |
+| **Country or city**         | Google couldn't place the visitor's network                                                          |
+| **Page title**              | The page has no `<title>`, or the event had none                                                     |
+| **Campaign**                | No UTM campaign tag (normal for untagged visits)                                                     |
+
+## When to fix it
+
+- **Under a few percent:** usually normal. Leave it.
+- **A large share of landing pages:** make sure the Google tag runs on page load, in the `<head>`, on every page.
+- **Lots of sources:** check you're not sending events from a server without a session, and that your consent banner doesn't block the tag until after the first events.
+
+## In SimpleDash
+
+SimpleDash shows (not set) in plain words: **Unknown** for browsers, systems and channels, and as one "Unknown" row for cities Google couldn't place, without a made-up location.
+
+## Related
+
+- [Landing page](/glossary/landing-page)
+- [Unassigned traffic](/guides/ga4-unassigned-traffic)
+
+## Sources
+
+- Google: [The value (not set)](https://support.google.com/analytics/answer/13504892)

@@ -1,0 +1,67 @@
+---
+title: How to add Google Analytics 4 to a Framer site
+menuTitle: "Framer"
+seoTitle: How to add Google Analytics 4 to a Framer site
+description: Add GA4 to your Framer site by pasting your G- Measurement ID into Framer's Site Settings, then publish and check visits arrive in GA4's Realtime report.
+updated: 2026-10-16
+---
+
+To add Google Analytics 4 to Framer, copy your Measurement ID (it starts with `G-`) from GA4, paste it into **Site Settings → Google Analytics Measurement ID** in your Framer project, save and publish. No code needed.
+
+## Before you start
+
+Create a GA4 property and web stream, and copy its Measurement ID. [How](/guides/add-google-analytics-to-website). You'll find it again in GA4 under Admin → Data streams → your stream.
+
+## Add your Measurement ID
+
+<Steps>
+<Step>
+
+In Framer, open your project's **Site Settings**.
+
+</Step>
+<Step>
+
+Paste your Measurement ID into **Google Analytics Measurement ID**.
+
+</Step>
+<Step>
+
+Save, then **Publish** your site. The tag is added to the published site, not to Framer's editor.
+
+</Step>
+</Steps>
+
+<ImageSlot
+  id="framer-google-analytics"
+  alt="Framer's Site Settings with a GA4 Measurement ID in the Google Analytics Measurement ID field"
+>
+  In a Framer project, open Site Settings and capture the "Google Analytics Measurement ID" field
+  with a placeholder G-XXXXXXXXXX ID.
+</ImageSlot>
+
+## Need the full Google tag?
+
+If you want to add Consent Mode or other settings, paste the full Google tag into **Custom Code** (in the head section) instead, and leave the Measurement ID field empty, so the tag isn't loaded twice.
+
+## Page changes
+
+Framer sites change pages without a full reload. GA4's **enhanced measurement** counts those page changes automatically, as long as _Page changes based on browser history events_ is on (Admin → Data streams → your stream → Enhanced measurement → Page views).
+
+## Check it works
+
+Open your published site and GA4's **Realtime overview**. [More ways to check](/guides/check-ga4-is-working).
+
+<InSimpleDash>
+  Once visits arrive, sign in to SimpleDash with the same Google account to see your Framer site's
+  visitors, sources and top pages on one page, plus a public stats page you can share in one click.
+</InSimpleDash>
+
+## Related
+
+- [Cookie banners and GA4](/guides/ga4-cookie-consent)
+- [Track signups](/guides/track-signups-ga4)
+
+## Sources
+
+- Framer: [Setting up Google Analytics](https://www.framer.com/help/articles/how-to-set-up-google-analytics/)

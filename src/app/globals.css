@@ -1,6 +1,13 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+/* Docs, guides, glossary and comparisons (docs/SPEC.md section 30): Fumadocs' layout styles,
+   without its colour files. Its fd-* colours are mapped onto our tokens below. */
+@import "fumadocs-ui/css/lib/base.css";
+@import "fumadocs-ui/css/lib/shiki.css";
+@import "fumadocs-ui/css/generated/docs.css";
+@import "fumadocs-ui/css/generated/shared.css";
+@plugin "../../node_modules/fumadocs-ui/dist/tailwind/typography.js";
 
 /*
  * This file holds no colour values. The values live in src/config/theme.ts and
@@ -68,6 +75,34 @@
   --color-window-close: var(--window-close);
   --color-window-minimize: var(--window-minimize);
   --color-window-zoom: var(--window-zoom);
+
+  /* Fumadocs' colours, on the same tokens (docs/SPEC.md section 30). */
+  --color-fd-background: var(--background);
+  --color-fd-foreground: var(--foreground);
+  --color-fd-muted: var(--muted);
+  --color-fd-muted-foreground: var(--muted-foreground);
+  --color-fd-popover: var(--popover);
+  --color-fd-popover-foreground: var(--popover-foreground);
+  --color-fd-card: var(--card);
+  --color-fd-card-foreground: var(--card-foreground);
+  --color-fd-border: var(--border);
+  --color-fd-primary: var(--primary);
+  --color-fd-primary-foreground: var(--primary-foreground);
+  --color-fd-secondary: var(--secondary);
+  --color-fd-secondary-foreground: var(--secondary-foreground);
+  --color-fd-accent: var(--accent);
+  --color-fd-accent-foreground: var(--accent-foreground);
+  --color-fd-ring: var(--ring);
+  --color-fd-overlay: var(--overlay);
+  --color-fd-info: var(--primary);
+  --color-fd-warning: var(--warning);
+  --color-fd-error: var(--destructive);
+  --color-fd-success: var(--positive);
+  --color-fd-idea: var(--warning);
+  --color-fd-diff-add: var(--positive);
+  --color-fd-diff-add-symbol: var(--positive);
+  --color-fd-diff-remove: var(--negative);
+  --color-fd-diff-remove-symbol: var(--negative);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

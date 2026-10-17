@@ -1,0 +1,75 @@
+---
+title: What are key events in GA4, and how to mark one
+menuTitle: "Key events"
+seoTitle: "GA4 key events: what they are and how to mark one"
+description: Key events are GA4's new name for conversions. What they are, how to mark an event as a key event in a minute, and the counting setting most people miss.
+updated: 2026-10-16
+---
+
+Key events are the events that matter most to your business, such as a signup or a purchase. They're what Google Analytics 4 called **conversions** until March 2024. To mark one, go to Admin → Data display → **Events** and turn on **Mark as key event** next to it.
+
+## Key events vs conversions
+
+In March 2024, Google renamed GA4's "conversions" to **key events**. The word "conversion" now means a key event that's also used in Google Ads. If you don't run Google Ads, think of key events as your conversions: signups, purchases, demo requests, newsletter signups.
+
+## Mark an existing event as a key event
+
+<Steps>
+<Step>
+
+In [Google Analytics](https://analytics.google.com), open **Admin** (the gear at the bottom left).
+
+</Step>
+<Step>
+
+Under **Data display**, choose **Events**. You'll see every event your site has sent recently.
+
+</Step>
+<Step>
+
+Find your event (for example `sign_up`) and turn on the switch or star in the **Mark as key event** column.
+
+</Step>
+</Steps>
+
+<ImageSlot
+  id="ga4-mark-key-event"
+  alt="GA4's Events list in Admin, with the 'Mark as key event' switch turned on for sign_up"
+>
+  In GA4, open Admin → Data display → Events on a property that has a sign_up (or similar) event.
+  Capture the list with the "Mark as key event" column, the switch on for sign_up.
+</ImageSlot>
+
+## Mark an event that hasn't happened yet
+
+The Events list only shows events GA4 has received. To set one up in advance:
+
+1. Admin → Data display → **Key events** → **New key event**.
+2. Type the exact event name, for example `sign_up` (names are case-sensitive).
+3. Save. It counts from the first time the event arrives.
+
+## Choose how it's counted
+
+Each key event has a counting method: **Once per event** (the default: every signup counts) or **Once per session** (at most one per visit). Find it in Admin → Data display → Key events → the three dots next to the event → **Change counting method**. For signups and purchases, once per event is usually right.
+
+## Good to know
+
+- **Key event totals start from the day you mark them.** GA4's key event reports don't go back before that day, even though the event was sent earlier.
+- **Up to 30 key events** per standard property.
+- **No event to mark?** You need to send one first. [Track signups](/guides/track-signups-ga4) or [track purchases](/guides/track-purchases-ga4).
+
+<InSimpleDash>
+  SimpleDash's **Signups** number lets you pick any key event as your signup. It counts every time
+  the event happened, so the history goes back past the day you marked it, and it never shows a fake
+  zero. [Choose your signup action](/docs/signups).
+</InSimpleDash>
+
+## Related
+
+- [Track signups in GA4](/guides/track-signups-ga4)
+- [Count sales from a thank-you page](/guides/thank-you-page-conversions)
+- [Events in plain words](/glossary/events)
+
+## Sources
+
+- Google: [Mark events as key events](https://support.google.com/analytics/answer/13128484)

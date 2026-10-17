@@ -1,0 +1,60 @@
+---
+title: How to use UTM links to see which launch posts worked
+menuTitle: "UTM links"
+seoTitle: "UTM links: see which launch posts brought visitors"
+description: Add UTM tags to the links you share on Product Hunt, X, newsletters and communities, so GA4 shows exactly which post, email or campaign brought each visitor.
+updated: 2026-10-16
+---
+
+UTM tags are labels you add to the end of a link, like `?utm_source=x&utm_medium=social&utm_campaign=launch`, so Google Analytics knows exactly where a visit came from. Use them on links you share in newsletters, social posts and communities; without them, many of those visits show up as "Direct" or as a vague referrer.
+
+## The five tags
+
+| Tag            | What it says                     | Examples                                   |
+| -------------- | -------------------------------- | ------------------------------------------ |
+| `utm_source`   | **Who** sent the visit           | `x`, `producthunt`, `newsletter`, `reddit` |
+| `utm_medium`   | **What kind** of link            | `social`, `email`, `referral`, `cpc`       |
+| `utm_campaign` | **Which** campaign               | `launch`, `black-friday`, `oct-update`     |
+| `utm_content`  | Which link or version (optional) | `header-link`, `video-post`                |
+| `utm_term`     | A paid keyword (optional)        | `ga4-dashboard`                            |
+
+`utm_source` is required for GA4 to use the others. Use lowercase and dashes, and stick to the same words every time: GA4 treats `X` and `x` as two sources.
+
+## Example: a launch week
+
+```text
+Product Hunt:  https://mysite.com/?utm_source=producthunt&utm_medium=referral&utm_campaign=launch
+X post:        https://mysite.com/?utm_source=x&utm_medium=social&utm_campaign=launch
+Newsletter:    https://mysite.com/?utm_source=newsletter&utm_medium=email&utm_campaign=launch
+```
+
+## Pick the medium carefully
+
+GA4 sorts visits into channels (Search, Social, Email and so on) using the medium. Use the common values, `social`, `email`, `referral`, `cpc`, `affiliate`, or the visit can end up as **Unassigned**. [Why traffic is Unassigned](/guides/ga4-unassigned-traffic).
+
+## Build links without typos
+
+Google's free [Campaign URL Builder](https://ga-dev-tools.google/campaign-url-builder/) fills in the tags for you. Keep a small spreadsheet of the links you've used so your naming stays the same.
+
+## When not to use UTM tags
+
+**Never on links within your own site.** A UTM tag starts a new visit with that source, which breaks the original source of the visitor. Use them only on links that point to your site from somewhere else.
+
+## Where to see the results
+
+In GA4: Reports → Acquisition → **Traffic acquisition**, and change the table's first column to **Session source / medium** or **Session campaign**.
+
+<InSimpleDash>
+  SimpleDash's **Sources** card shows your `utm_source` values next to everything else
+  (`producthunt`, `newsletter`, `x`), with **Channels** one tab away. Add a chart note on launch day
+  to remember what happened when.
+</InSimpleDash>
+
+## Related
+
+- [Why direct traffic is high](/guides/ga4-direct-traffic)
+- [Source and medium in plain words](/glossary/source-medium)
+
+## Sources
+
+- Google: [Collect campaign data with custom URLs](https://support.google.com/analytics/answer/10917952)

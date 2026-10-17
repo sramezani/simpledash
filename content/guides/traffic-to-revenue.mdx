@@ -1,0 +1,62 @@
+---
+title: Which traffic sources bring paying customers?
+menuTitle: "Traffic to revenue"
+seoTitle: Which traffic sources bring paying customers?
+description: "Connect visits to sales without guessing: send purchases to GA4, fix payment-page referrals, then read sales by source and landing page. With the limits."
+updated: 2026-10-16
+---
+
+To know which sources bring paying customers, GA4 has to see the sale: send a `purchase` event (or count a thank-you page), stop payment pages taking the credit, then read purchases by session source and landing page. Stripe tells you how much money came in; GA4 tells you where buyers came from.
+
+## The setup, in order
+
+<Steps>
+<Step>
+
+**Send the sale to GA4.** A [purchase event](/guides/track-purchases-ga4) with value and currency, or, without code, views of your [thank-you page](/guides/thank-you-page-conversions).
+
+</Step>
+<Step>
+
+**Mark it as a key event.** [How](/guides/ga4-key-events).
+
+</Step>
+<Step>
+
+**Stop payment pages taking the credit.** Add Stripe, PayPal and other payment pages to [unwanted referrals](/guides/ga4-unwanted-referrals-stripe). Otherwise many sales show as coming from `checkout.stripe.com`.
+
+</Step>
+<Step>
+
+**Tag the links you control.** Newsletters, posts and ads with [UTM links](/guides/utm-links).
+
+</Step>
+</Steps>
+
+## Read it in GA4
+
+Reports → Acquisition → **Traffic acquisition**, then choose your purchase key event in the **Key events** column (the dropdown under its heading). Switch the first column between **Session source / medium** and **Session default channel group**. For pages, use Reports → Engagement → **Landing page**.
+
+## What it can and can't tell you
+
+- **It shows the source of the visit where the sale happened.** If someone read your blog from Google, came back a week later by typing your address and bought, GA4's session view credits Direct.
+- **Not every buyer is tracked.** Buyers who block GA4 still pay. Stripe's total will be higher than GA4's.
+- **Revenue in GA4 comes from your event**, not from Stripe. If they disagree, Stripe is right about money.
+
+So use GA4 to compare sources with each other, and Stripe for your real revenue.
+
+## Avoid made-up numbers
+
+It's tempting to divide revenue by visitors per source to get "revenue per visitor from X". Unless GA4 actually recorded the sale for that source, that number is a guess. Keep to sales GA4 recorded, and revenue Stripe recorded.
+
+<InSimpleDash>
+  With Pro, SimpleDash shows **Sales and signups by source** and **by landing page** from GA4 (with
+  GA4's own revenue when it has it), and **Revenue**, **MRR** and **New customers** from your Stripe
+  account, side by side and never mixed into an estimate. It also warns you when a payment page
+  shows up as a source.
+</InSimpleDash>
+
+## Related
+
+- [Create a read-only Stripe key](/guides/stripe-restricted-key)
+- [What counts as a sale](/docs/what-counts-as-a-sale)

@@ -37,9 +37,26 @@ describe("globals.css (guard 3: nothing missing)", () => {
   });
 
   it("only maps tokens that exist, under the same name", () => {
+    // Fumadocs' fd-* colours (the docs layout) take our token of the same name, or the
+    // closest one for the few it names differently.
+    const fdAliases: Record<string, string> = {
+      info: "primary",
+      error: "destructive",
+      success: "positive",
+      idea: "warning",
+      "diff-add": "positive",
+      "diff-add-symbol": "positive",
+      "diff-remove": "negative",
+      "diff-remove-symbol": "negative",
+    };
     for (const [, utility, token] of mapped) {
       expect(tokens, `mapping "--color-${utility}" points at a missing token`).toContain(token);
-      expect(utility).toBe(token);
+      if (utility!.startsWith("fd-")) {
+        const name = utility!.slice(3);
+        expect(token).toBe(fdAliases[name] ?? name);
+      } else {
+        expect(utility).toBe(token);
+      }
     }
   });
 

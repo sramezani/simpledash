@@ -1,0 +1,75 @@
+---
+title: How to add Google Analytics 4 with Google Tag Manager
+menuTitle: "Google Tag Manager"
+seoTitle: Add Google Analytics 4 with Google Tag Manager
+description: "Install GA4 through Google Tag Manager: add a Google tag with your G- ID, fire it on all pages, preview, publish, and send signup events from the data layer."
+updated: 2026-10-16
+---
+
+With Google Tag Manager, add GA4 as a **Google tag**: create a new tag of that type, enter your Measurement ID (`G-…`), set it to fire on **Initialization – All Pages**, then preview and **Submit** to publish. Don't also paste the gtag code on your site, or visits are counted twice.
+
+## Before you start
+
+You need a GTM container installed on your site (the two snippets from tagmanager.google.com, one in `<head>`, one after `<body>`), and your GA4 Measurement ID. [Create GA4](/guides/add-google-analytics-to-website).
+
+## Add the Google tag
+
+<Steps>
+<Step>
+
+In [Tag Manager](https://tagmanager.google.com), open your container and choose **Tags → New**.
+
+</Step>
+<Step>
+
+Choose **Tag configuration → Google Tag**, and enter your Measurement ID as the **Tag ID**.
+
+</Step>
+<Step>
+
+Choose **Triggering → Initialization – All Pages**.
+
+</Step>
+<Step>
+
+Name it "GA4 – Google tag" and **Save**.
+
+</Step>
+<Step>
+
+Choose **Preview**, open your site in the Tag Assistant window and check the tag fires. Then choose **Submit → Publish**.
+
+</Step>
+</Steps>
+
+<ImageSlot
+  id="gtm-google-tag"
+  alt="Google Tag Manager's tag editor: a Google Tag with a G- Tag ID, firing on Initialization – All Pages"
+>
+  In Google Tag Manager, create a Google Tag with a placeholder G-XXXXXXXXXX ID and the
+  Initialization – All Pages trigger. Capture the tag editor before saving.
+</ImageSlot>
+
+## Send a signup event
+
+When signup succeeds, push an event to the data layer from your site:
+
+```js
+window.dataLayer = window.dataLayer || [];
+window.dataLayer.push({ event: "sign_up", method: "Email" });
+```
+
+In GTM, create a **Custom Event** trigger with event name `sign_up`, and a **Google Analytics: GA4 Event** tag with event name `sign_up` that fires on it. Publish, then [mark `sign_up` as a key event](/guides/ga4-key-events).
+
+## Check it works
+
+After publishing, open your site and GA4's **Realtime overview**. [More ways to check](/guides/check-ga4-is-working).
+
+<InSimpleDash>
+  However you install GA4, SimpleDash reads the result. Pick `sign_up` as your signup action and it
+  shows signups next to visitors, compared with the period before.
+</InSimpleDash>
+
+## Sources
+
+- Google: [Set up Google Analytics in Tag Manager](https://support.google.com/tagmanager/answer/9442095)

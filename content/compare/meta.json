@@ -1,0 +1,19 @@
+{
+  "title": "Compare",
+  "description": "SimpleDash next to other tools",
+  "root": true,
+  "pages": [
+    "index",
+    "simpledash-vs-google-analytics",
+    "simpledash-vs-looker-studio",
+    "simpledash-vs-plausible",
+    "simpledash-vs-fathom",
+    "simpledash-vs-simple-analytics",
+    "simpledash-vs-umami",
+    "simpledash-vs-datafast",
+    "simpledash-vs-vercel-analytics",
+    "---Lists---",
+    "best-google-analytics-dashboards",
+    "simple-analytics-for-indie-hackers"
+  ]
+}

@@ -1,0 +1,73 @@
+---
+title: How to add Google Analytics 4 to a Webflow site
+menuTitle: "Webflow"
+seoTitle: How to add Google Analytics 4 to a Webflow site
+description: Connect GA4 to Webflow with the built-in Google Analytics setting, or with custom code. Paste your G- Measurement ID, publish, and check Realtime.
+updated: 2026-10-16
+---
+
+Webflow has a built-in Google Analytics setting: open **Site settings → Integrations**, paste your GA4 Measurement ID (`G-…`) into Google Analytics, save and publish. No code needed.
+
+## Before you start
+
+Create a GA4 property and web stream, and copy its Measurement ID. [How](/guides/add-google-analytics-to-website).
+
+## Add GA4 with the built-in setting
+
+<Steps>
+<Step>
+
+In Webflow, open your site's **Site settings**.
+
+</Step>
+<Step>
+
+Go to **Integrations** and find **Google Analytics**.
+
+</Step>
+<Step>
+
+Paste your Measurement ID (it starts with `G-`) and choose **Save changes**.
+
+</Step>
+<Step>
+
+**Publish** your site. The tag is added to the published site.
+
+</Step>
+</Steps>
+
+<ImageSlot
+  id="webflow-google-analytics"
+  alt="Webflow's Site settings, Integrations, with a GA4 Measurement ID in the Google Analytics field"
+>
+  In Webflow, Site settings → Integrations → Google Analytics. Capture the field with a placeholder
+  G-XXXXXXXXXX ID before saving.
+</ImageSlot>
+
+## Or: custom code
+
+If you need the full Google tag (for example, to add Consent Mode), paste it in **Site settings → Custom code → Head code** instead, and leave the built-in field empty so the tag isn't loaded twice. Custom code needs a paid site plan.
+
+## Or: Google's site tools app
+
+Webflow also has an official **Google site tools** app that connects GA4, Tag Manager and Search Console, and shows some numbers inside Webflow. Use either the app or the Measurement ID field, not both.
+
+## Check it works
+
+Open your published site and GA4's **Realtime overview**. [More ways to check](/guides/check-ga4-is-working).
+
+<InSimpleDash>
+  Sign in to SimpleDash with the same Google account and your Webflow site's visitors, sources, top
+  pages and live visitors are on one page. Running several Webflow sites? Switch between them in one
+  click, on every plan.
+</InSimpleDash>
+
+## Related
+
+- [Track form submissions as signups](/guides/track-signups-ga4)
+- [Cookie banners and GA4](/guides/ga4-cookie-consent)
+
+## Sources
+
+- Webflow: [How do I connect my Webflow site to Google Analytics?](https://help.webflow.com/hc/en-us/articles/33961293143059-How-do-I-connect-my-Webflow-site-to-Google-Analytics)

@@ -1,0 +1,102 @@
+---
+title: Set up Google Analytics 4 properly, start to finish
+menuTitle: "Setup checklist"
+seoTitle: Google Analytics 4 setup checklist for small sites
+description: "The complete GA4 setup for a small site, in order: create the property, add the tag, check it, exclude yourself, track signups and sales, and fix referrals."
+updated: 2026-10-16
+---
+
+A good Google Analytics 4 setup for a small site takes about an hour, done in this order: create the property and add the tag, check it works, exclude your own visits, set data retention, add consent if you need it, then track signups and sales and fix payment-page referrals. Each step below links to a full guide.
+
+## The checklist
+
+<Steps>
+<Step>
+
+**Create a GA4 property and add the tag** (10 minutes). [Add GA4 to your website](/guides/add-google-analytics-to-website), or use the guide for your platform below.
+
+</Step>
+<Step>
+
+**Check it collects data** (2 minutes). Realtime, DebugView, network tab. [Check GA4 works](/guides/check-ga4-is-working).
+
+</Step>
+<Step>
+
+**Exclude your own visits** (5 minutes). [Exclude internal traffic](/guides/exclude-internal-traffic-ga4).
+
+</Step>
+<Step>
+
+**Set data retention to 14 months** (1 minute). [Data retention](/guides/ga4-data-retention).
+
+</Step>
+<Step>
+
+**Add a cookie banner and Consent Mode**, if your visitors need it (15 minutes). [Cookie banners and GA4](/guides/ga4-cookie-consent).
+
+</Step>
+<Step>
+
+**Track signups** and mark them as a key event (10 minutes). [Track signups](/guides/track-signups-ga4) · [Key events](/guides/ga4-key-events).
+
+</Step>
+<Step>
+
+**Track purchases**, if you sell (15 minutes). [Track purchases](/guides/track-purchases-ga4), or [count a thank-you page](/guides/thank-you-page-conversions).
+
+</Step>
+<Step>
+
+**Stop payment pages taking the credit** (2 minutes). [Unwanted referrals](/guides/ga4-unwanted-referrals-stripe).
+
+</Step>
+<Step>
+
+**Tag the links you share** from now on. [UTM links](/guides/utm-links).
+
+</Step>
+<Step>
+
+**Add your site to Search Console**, to see Google search too (10 minutes). [Add your site to Search Console](/guides/add-site-to-search-console).
+
+</Step>
+</Steps>
+
+## Add GA4 to your platform
+
+<Cards>
+  <Card title="Next.js" href="/guides/add-google-analytics-to-nextjs" />
+  <Card title="WordPress" href="/guides/add-google-analytics-to-wordpress" />
+  <Card title="Webflow" href="/guides/add-google-analytics-to-webflow" />
+  <Card title="Framer" href="/guides/add-google-analytics-to-framer" />
+  <Card title="Shopify" href="/guides/add-google-analytics-to-shopify" />
+  <Card title="Ghost" href="/guides/add-google-analytics-to-ghost" />
+  <Card title="Lovable, Bolt and v0" href="/guides/add-google-analytics-to-lovable" />
+  <Card title="Squarespace" href="/guides/add-google-analytics-to-squarespace" />
+  <Card title="Wix" href="/guides/add-google-analytics-to-wix" />
+  <Card title="Carrd" href="/guides/add-google-analytics-to-carrd" />
+  <Card title="Astro" href="/guides/add-google-analytics-to-astro" />
+  <Card title="Plain HTML" href="/guides/add-google-analytics-to-html" />
+  <Card title="Google Tag Manager" href="/guides/add-google-analytics-with-google-tag-manager" />
+  <Card title="With an AI coding agent" href="/guides/add-google-analytics-with-ai-coding-agent" />
+</Cards>
+
+## Two domains?
+
+If your app and marketing site are on different domains, [set up cross-domain measurement](/guides/ga4-cross-domain). Subdomains don't need it.
+
+## What not to bother with yet
+
+For a small site, you can skip these until you need them: custom dimensions, audiences, BigQuery export, Google signals and attribution settings. They add complexity without answering the questions that matter early on.
+
+<InSimpleDash>
+  Once the checklist is done, SimpleDash turns it into one page: visitors, sources, landing pages,
+  AI traffic and signups, with sales by source and Stripe revenue on Pro. Sign in with the same
+  Google account; there's nothing to install.
+</InSimpleDash>
+
+## Related
+
+- [Understand your website traffic](/guides/understand-website-traffic)
+- [GA4 in plain words](/glossary)

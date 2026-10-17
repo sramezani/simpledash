@@ -1,0 +1,46 @@
+---
+title: Data and security
+description: What SimpleDash stores, what it never stores, how Google tokens and Stripe keys are protected, how backups work and how to report a security problem.
+updated: 2026-10-16
+---
+
+SimpleDash stores as little as possible, and never data about individual visitors: no IP addresses, no visitor IDs, no single visits. Google tokens and Stripe keys are encrypted, access to Google is read-only, and the code is open for anyone to check.
+
+## What we store
+
+| What | Details | Kept for |
+| --- | --- | --- |
+| Your account | Name, email and picture from Google; sign-in sessions (no IP addresses) | Until you delete the account; sessions until they expire |
+| Google access | Access and refresh tokens, **encrypted** | Until you disconnect Google or delete the account |
+| Your sites | Name, domain, time zone, your signup and sale choices, the Search Console property | Until you remove the site or delete the account |
+| Report copies | Copies of report **totals** from Google (visitors per day, top pages, sources, countries, top searches with Search Console) so pages open fast | 7 days without use; never in backups |
+| Your choices | Chart notes, the Monday email switch, public page settings | Until you delete them |
+| Billing | Plan, Stripe customer and subscription IDs, renewal date. Card details stay with Stripe | Until you delete the account |
+| Stripe totals (Pro, if connected) | Your read-only key, **encrypted**, and daily totals: charged, refunded, new customers, MRR. No customer names, emails or IDs | Until you remove Stripe |
+
+## What we never store
+
+- Anything about individual visitors: IP addresses, visitor IDs, single visits or journeys.
+- Your card details (Stripe holds them).
+- Customer names, emails or IDs from Stripe.
+
+## How it's protected
+
+- **Read-only access.** SimpleDash asks Google only for <Scope name="analytics" />, and <Scope name="search-console" /> if you connect Search Console. Stripe keys must be restricted read-only keys.
+- **Encryption.** Google tokens and Stripe keys are encrypted before they're stored.
+- **Checks on every request.** Every signed-in page and action checks on the server that the site belongs to you. Your site's data is never shared with another account.
+- **Backups.** The database is backed up every night, without report copies and sign-in sessions, and backups are deleted after 30 days.
+- **Open source.** You can read exactly how it works in <SourceRepo />.
+
+## Our own analytics
+
+simpledash.app uses Google Analytics too, only after you choose **Accept** in the cookie banner. The [privacy policy](/privacy) explains what's counted.
+
+## Report a security problem
+
+Email <SupportEmail /> with "Security" in the subject: what the problem is, how to reproduce it, and what someone could do with it. Please don't open a public issue. We'll reply quickly and credit you if you'd like.
+
+## Related
+
+- [What SimpleDash can see in your Google account](/docs/google-access)
+- [Privacy policy](/privacy)

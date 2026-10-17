@@ -1,0 +1,83 @@
+---
+title: Why Stripe gets the credit for your sales in GA4, and how to fix it
+menuTitle: "Stripe taking the credit"
+seoTitle: Stripe showing as a referral in GA4? How to fix it
+description: When checkout.stripe.com shows up as a source in GA4, your sales are credited to Stripe. Add payment pages to GA4's list of unwanted referrals in two minutes.
+updated: 2026-10-16
+---
+
+When a buyer goes from your site to Stripe Checkout and comes back, GA4 can start a new visit with `checkout.stripe.com` as its source, so the sale is credited to Stripe instead of Google, X or wherever the buyer came from. The fix takes two minutes: add the payment page to GA4's **List unwanted referrals**.
+
+## Do you have this problem?
+
+In GA4, open Reports → Acquisition → **Traffic acquisition** and look for these sources:
+
+- `checkout.stripe.com`
+- `paypal.com`, `www.paypal.com`
+- `checkout.paddle.com`, Paddle
+- `lemonsqueezy.com` or your store's `*.lemonsqueezy.com` address
+- `polar.sh`
+
+If any of them brings visitors or key events, your sales are being misattributed.
+
+## Fix it
+
+<Steps>
+<Step>
+
+In GA4, open Admin → Data collection and modification → **Data streams**, and choose your web stream.
+
+</Step>
+<Step>
+
+Under **Google tag**, choose **Configure tag settings**, then **Show more** (or **Show all**).
+
+</Step>
+<Step>
+
+Choose **List unwanted referrals**.
+
+</Step>
+<Step>
+
+Add a condition: match type **Referral domain contains**, domain `checkout.stripe.com`. Add a row for each payment provider you use, for example `paypal.com`.
+
+</Step>
+<Step>
+
+Choose **Save**.
+
+</Step>
+</Steps>
+
+<ImageSlot
+  id="ga4-unwanted-referrals"
+  alt="GA4's 'List unwanted referrals' settings with a 'Referral domain contains checkout.stripe.com' condition"
+>
+  In GA4: Admin → Data streams → web stream → Configure tag settings → List unwanted referrals. Add
+  "Referral domain contains" checkout.stripe.com (and paypal.com) and capture the screen before
+  saving.
+</ImageSlot>
+
+## What changes
+
+From now on, a visit that returns from the payment page keeps its original source, so the purchase is credited to where the buyer really came from. It only affects new visits: past data stays as it was.
+
+## Don't add your own domain
+
+GA4 already ignores moves within your own site, and between the domains you've set up for cross-domain measurement. Adding your own domain as an unwanted referral can hide real tagging problems. If your shop or app lives on another domain of yours, set up [cross-domain measurement](/guides/ga4-cross-domain) instead.
+
+<InSimpleDash>
+  SimpleDash's **Sources** card warns you when a payment page like `checkout.stripe.com`, PayPal,
+  Paddle, Lemon Squeezy or Polar shows up as a source, and links back to this fix. The warning is
+  only on your dashboard, never on public pages.
+</InSimpleDash>
+
+## Related
+
+- [Track purchases in GA4](/guides/track-purchases-ga4)
+- [Which traffic brings paying customers](/guides/traffic-to-revenue)
+
+## Sources
+
+- Google: [Identify unwanted referrals](https://support.google.com/analytics/answer/10327750)

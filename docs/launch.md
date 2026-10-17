@@ -26,11 +26,11 @@ Product Hunt's gallery wants 1270 × 760; the desktop shots are exactly that at 
 
 **Description** (260 characters at most):
 
-> SimpleDash turns the GA4 data you already have into one plain dashboard: visitors, where they came from, top pages, signups, a live globe. Plus a Monday email and an optional public stats page. No tracking script to add. Read-only. 14 days free, no card.
+> SimpleDash turns the GA4 data you already have into one plain dashboard: visitors, where they came from, top pages, signups, a live globe. Plus a Monday email and an optional public stats page. No tracking script to add. Read-only. Free for all your sites.
 
 **Topics:** Analytics, SaaS, Developer Tools, Indie Hackers (pick the 3 that exist).
 
-**Pricing:** Free, with a paid plan. Free: one site and the last 30 days. Pro: $9 a month or $90 a year (tax included).
+**Pricing:** Free, with a paid plan. Free: all your sites and the last 30 days. Pro: $9 a month or $90 a year (tax included).
 
 **First comment (from the maker):**
 
@@ -50,9 +50,9 @@ Product Hunt's gallery wants 1270 × 760; the desktop shots are exactly that at 
 >
 > - **No new tracking script.** It reads the data GA4 already has, with read-only access.
 > - **Little stored.** Your settings, encrypted Google tokens and short-lived report caches. Nothing about individual visitors.
-> - **Honest numbers.** Missing data says so instead of showing a zero, and yesterday is marked "still updating".
+> - **Honest numbers.** Missing data says so instead of showing a zero, and today is marked "still updating".
 >
-> It's free for one site and the last 30 days, no card. Pro is $9 a month (or $90 a year) for more sites, 12 months, a Monday email with last week's numbers, Google search insights and revenue from Stripe. You can share a public stats page if you build in public.
+> It's free for all your sites and the last 30 days, no card. Pro is $9 a month (or $90 a year) for 12 months and any dates, a Monday email with last week's numbers, Google search insights and revenue from Stripe. You can share a public stats page if you build in public.
 >
 > I'd love to hear what you'd want on the page, and what you'd remove. [link]
 
@@ -75,17 +75,17 @@ Product Hunt's gallery wants 1270 × 760; the desktop shots are exactly that at 
 > **How it works:**
 >
 > - It reads GA4 through Google's Data and Admin APIs with read-only access. There's no script to add to your site.
-> - Reports are cached for a few hours and refreshed in the background, so the page opens fast and stays well inside Google's quotas.
+> - Reports are cached and refreshed in the background (every half hour while a range includes today), so the page opens fast and stays well inside Google's quotas.
 > - It stores your settings, encrypted Google tokens and short-lived caches. Nothing about individual visitors.
 > - Stack: Next.js 16, Postgres, Better Auth, Stripe, Resend, on one server with Docker Compose behind Cloudflare.
 >
-> **Pricing:** free for one site and 30 days; Pro is $9 a month or $90 a year. I wanted it cheap enough that it's an easy yes for a side project, and it's built to cost well under $1 per customer per month to run.
+> **Pricing:** free for all your sites and 30 days; Pro is $9 a month or $90 a year. I wanted it cheap enough that it's an easy yes for a side project, and it's built to cost well under $1 per customer per month to run.
 >
 > **What I learned building it:**
 >
 > - GA4's hourly data is a comb of zeros and ones on small sites, so the 7-day chart is daily.
 > - "Average engagement time" confuses everyone; it's "Avg. time" here, with a one-line explanation.
-> - Never show a fake zero: if GA4 hasn't processed yesterday yet, the page says so.
+> - Never show a fake zero: if GA4 hasn't reported today yet, the chart leaves it out instead of drawing a zero.
 >
 > I'd love feedback, especially from anyone who also gave up on the GA4 interface. What would you want on the one page?
 
@@ -118,7 +118,7 @@ Product Hunt's gallery wants 1270 × 760; the desktop shots are exactly that at 
 > [03-dashboard-live.png]
 
 4/
-> Every Monday you get last week's numbers by email.
+> On Pro, every Monday you get last week's numbers by email.
 >
 > It only says what changed. It never guesses why.
 >
@@ -132,7 +132,7 @@ Product Hunt's gallery wants 1270 × 760; the desktop shots are exactly that at 
 6/
 > Read-only Google access. Nothing stored about your visitors. Open source (AGPL-3.0).
 >
-> Free for one site, no card. Pro: $9 a month or $90 a year.
+> Free for all your sites, no card. Pro: $9 a month or $90 a year.
 >
 > [link]
 

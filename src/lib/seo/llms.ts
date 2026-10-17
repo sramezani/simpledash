@@ -3,8 +3,33 @@ import { brand } from "@/config/theme";
 import { formatPrice } from "@/lib/format";
 import { monthsFreeOnYearly } from "@/lib/billing/prices";
 
+/** A docs page, guide, glossary term or comparison, as llms.txt lists it. */
+export type LlmsContentPage = { section: string; title: string; url: string; description: string };
+
+const SECTION_TITLES: Record<string, string> = {
+  docs: "Docs: how SimpleDash works",
+  guides: "Guides: Google Analytics, Search Console and Stripe",
+  glossary: "Glossary: GA4 terms in plain words",
+  compare: "Compare",
+};
+
+/** The content pages, grouped by section, each with its Markdown copy (docs/SPEC.md section 30). */
+function contentSections(appUrl: string, pages: LlmsContentPage[]): string {
+  return Object.entries(SECTION_TITLES)
+    .map(([section, heading]) => {
+      const inSection = pages.filter((p) => p.section === section);
+      if (inSection.length === 0) return "";
+      const lines = inSection.map(
+        (p) =>
+          `- [${p.title}](${appUrl}${p.url}) ([Markdown](${appUrl}${p.url}.md)): ${p.description}`,
+      );
+      return `\n## ${heading}\n\n${lines.join("\n")}\n`;
+    })
+    .join("");
+}
+
 /** llms.txt (docs/SPEC.md section 17): a short plain-text summary for AI assistants. */
-export function llmsText(appUrl: string): string {
+export function llmsText(appUrl: string, pages: LlmsContentPage[] = []): string {
   const { free, pro } = plans;
   return `# ${brand.name}
 
@@ -44,5 +69,6 @@ Users and settings, encrypted Google access tokens, chart notes, public page set
 - [Privacy policy](${appUrl}/privacy): what is stored and what is read from Google
 - [Terms](${appUrl}/terms): billing, cancelling and refunds
 - [Contact](mailto:${brand.supportEmail}): ${brand.supportEmail}
-`;
+- [Everything in one file](${appUrl}/llms-full.txt): every docs page and guide as Markdown
+${contentSections(appUrl, pages)}`;
 }

@@ -1,0 +1,41 @@
+---
+title: What are events in GA4?
+menuTitle: "Events"
+seoTitle: "Events in GA4 explained: automatic, recommended, custom"
+description: "In GA4, everything is an event: page views, clicks, signups, purchases. The four kinds of events, which you get automatically, and how they become key events."
+updated: 2026-10-16
+---
+
+In Google Analytics 4, everything that's recorded is an **event**: a page view, a scroll, a click on an outside link, a signup, a purchase. Some events are collected automatically, some you turn on with enhanced measurement, and some you send yourself. The important ones you mark as **key events**.
+
+## The four kinds
+
+| Kind                        | Examples                                                                                         | How you get them                            |
+| --------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------- |
+| **Automatically collected** | `session_start`, `first_visit`, `user_engagement`                                                | Always, with the Google tag                 |
+| **Enhanced measurement**    | `page_view`, `scroll`, `click` (outbound), `file_download`, `form_submit`, `view_search_results` | A switch in your data stream, on by default |
+| **Recommended**             | `sign_up`, `login`, `purchase`, `generate_lead`                                                  | You send them, using Google's names         |
+| **Custom**                  | Anything else you name                                                                           | You send them, with your own names          |
+
+Use the recommended names when one fits: GA4 understands them better than custom ones.
+
+## Event parameters
+
+Events can carry extra details called parameters, such as `method` for `sign_up` or `value` and `currency` for `purchase`.
+
+## Where to see them
+
+Reports → Engagement → **Events** lists every event with its count. Admin → Data display → **Events** is where you mark key events and create new events from existing ones.
+
+## In SimpleDash
+
+The **Actions** card shows downloads, outbound clicks, form submits and your signups. **Signups** counts the event you choose. With Pro, **Sales and signups by source** uses your signup and sale events.
+
+## Related
+
+- [Key events](/guides/ga4-key-events)
+- [Track signups](/guides/track-signups-ga4)
+
+## Sources
+
+- Google: [About events](https://support.google.com/analytics/answer/9322688)

@@ -1,0 +1,56 @@
+---
+title: What is direct traffic in GA4, and why is mine so high?
+menuTitle: "Direct traffic"
+seoTitle: Why is direct traffic so high in GA4?
+description: Direct traffic means GA4 couldn't tell where a visit came from. The common causes, from apps and emails to your own visits, and what you can actually fix.
+updated: 2026-10-16
+---
+
+"Direct" in Google Analytics 4 means GA4 couldn't tell where a visit came from. Some of it is real (people typing your address or using a bookmark), but a lot is visits from apps, emails and documents that don't pass on where the click happened. You can't make it zero, but tagged links and a few settings bring it down.
+
+## What GA4 counts as direct
+
+A visit is **Direct** (source `(direct)`, medium `(none)`) when the browser sends no referrer and the link has no UTM tags. That happens when someone:
+
+- types your address or uses a bookmark or the browser's autocomplete
+- clicks a link in an app that hides the referrer: WhatsApp, Slack, Discord, Telegram, many email apps, some AI assistant apps
+- clicks a link in a PDF, a Word document or a desktop app
+- follows a redirect that drops the referrer
+- comes from an `https` page to an `http` page
+
+## Common reasons it's high on small sites
+
+1. **Your own visits.** On a small site, you and your team can be a big share. [Exclude internal traffic](/guides/exclude-internal-traffic-ga4).
+2. **Newsletters and messages.** Links in emails and chats often arrive without a referrer. Tag them with [UTM links](/guides/utm-links).
+3. **Shared links.** When your link spreads in group chats, it shows as direct.
+4. **New tracking.** In the first days after adding GA4, returning visitors with bookmarks make direct look big.
+
+## What you can fix
+
+| Cause                                     | Fix                                                                                    |
+| ----------------------------------------- | -------------------------------------------------------------------------------------- |
+| Your own visits                           | [Define internal traffic and turn the filter on](/guides/exclude-internal-traffic-ga4) |
+| Emails, newsletters, ads, links you share | Add [UTM tags](/guides/utm-links)                                                      |
+| Payment pages taking over visits          | [List unwanted referrals](/guides/ga4-unwanted-referrals-stripe)                       |
+| Redirects dropping the referrer           | Link straight to the final address                                                     |
+
+What you can't fix: people who type your address, and apps that hide where a click came from. That part of direct is normal, and often a good sign (people remember your name).
+
+## Is "Direct" bad?
+
+Not on its own. A growing direct share can mean people remember your site. It's a problem only when it hides a source you care about, like a newsletter you'd want to measure.
+
+<InSimpleDash>
+  SimpleDash shows Direct as its own row in **Sources**, with the help text "Direct means they typed
+  your address or used a bookmark", next to every tagged source like `newsletter` or `producthunt`.
+  Switch to **Channels** to see direct against Search, Social and AI assistants.
+</InSimpleDash>
+
+## Related
+
+- [What does Unassigned mean?](/guides/ga4-unassigned-traffic)
+- [Source and medium in plain words](/glossary/source-medium)
+
+## Sources
+
+- Google: [Default channel group](https://support.google.com/analytics/answer/9756891)

@@ -1,0 +1,46 @@
+---
+title: Why GA4 shows today's numbers late, or not at all
+menuTitle: "Why GA4 is late"
+seoTitle: Why is GA4 data delayed? Today's numbers explained
+description: Google Analytics 4 takes hours to process visits, so today's numbers start low and yesterday can still change. How long the delay is and what to do about it.
+updated: 2026-10-16
+---
+
+Google Analytics 4 doesn't show visits in its standard reports straight away: it processes them first, which usually takes several hours and can take a day or more. That's why today's numbers start low, why yesterday can still change, and why only the Realtime report is truly live.
+
+## How long the delay is
+
+Google's own figures for standard (free) properties, from its [data freshness](https://support.google.com/analytics/answer/11198161) page:
+
+- **Realtime report:** within minutes, covering the last 30 minutes.
+- **Intraday data:** usually 2 to 6 hours.
+- **Daily data:** about 12 hours, and processing "can take 24–48 hours".
+
+So a day's numbers keep growing for a while after the day ends. Comparing "today so far" with a full day will always look like a drop.
+
+## What this means for you
+
+- **Check launches in Realtime**, not in the standard reports. [How](/guides/check-ga4-is-working).
+- **Wait before judging a day.** Look at yesterday's numbers in the afternoon, not first thing in the morning.
+- **Compare like with like.** Today so far against a whole day isn't a fair comparison.
+
+## Other reasons numbers look low
+
+- **Consent.** Visitors who decline cookies aren't counted the same way. [Cookie banners and GA4](/guides/ga4-cookie-consent).
+- **Ad blockers** stop GA4 for some visitors, more on tech-savvy audiences.
+- **Thresholds.** GA4 can hide small numbers in some reports to protect privacy. [Data thresholds](/glossary/data-thresholds).
+
+<InSimpleDash>
+  SimpleDash draws the part of the chart that's still filling up as a **dashed line**, labelled
+  "Still updating", and leaves today off until Google has reported it, so you never see a fake drop
+  to zero. Ranges that include today say "Includes today so far" next to the dates.
+</InSimpleDash>
+
+## Related
+
+- [How fresh SimpleDash's numbers are](/docs/freshness-and-limits)
+- [Realtime in plain words](/glossary/realtime)
+
+## Sources
+
+- Google: [Data freshness](https://support.google.com/analytics/answer/11198161)

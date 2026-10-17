@@ -1,0 +1,61 @@
+---
+title: Get started with SimpleDash
+description: Sign in with Google, let SimpleDash find your Google Analytics site, and see your visitors on one page in under a minute. No setup and no tracking code.
+updated: 2026-10-16
+---
+
+To start, sign in with the Google account that can see your Google Analytics 4 property, and allow read-only access. SimpleDash finds your site on its own and shows its numbers straight away, with the history GA4 already has.
+
+## Before you start
+
+You need a website that already sends data to **Google Analytics 4**. If it doesn't yet, follow [Add Google Analytics 4 to your website](/guides/add-google-analytics-to-website) first: it takes about five minutes, and SimpleDash shows numbers as soon as GA4 has some.
+
+You don't need to add any code for SimpleDash itself.
+
+## 1. Sign in with Google
+
+Open [simpledash.app](https://simpledash.app) and choose **See my dashboard, free**. Google asks which account to use, then shows what SimpleDash may do.
+
+<ImageSlot id="google-consent-screen" alt="Google's consent screen for SimpleDash, asking for read-only access to Google Analytics">
+Sign in to simpledash.app with a test Google account and capture Google's consent screen (the one listing "See and download your Google Analytics data"). Crop to the dialog. Blur the email address.
+</ImageSlot>
+
+Make sure the box for Google Analytics is ticked. It asks for one permission: <Scope name="analytics" />, which can only **read**. SimpleDash can't change your GA4 settings, add users or delete anything. [What SimpleDash can see](/docs/google-access) explains it in full.
+
+## 2. Let SimpleDash find your site
+
+If your Google account can see one GA4 property, SimpleDash opens it.
+
+If it can see several, SimpleDash compares the visitors of the last 7 days for up to 20 of them and opens the busiest. The site's name comes from its web stream, so you see "mysite.com" rather than "Property 123456".
+
+You can open any other site from the site menu at the top of the dashboard. See [Switch between your sites](/docs/sites).
+
+<Callout title="No Google Analytics site found?">
+The Google account you used can't see a GA4 property. Sign in with the account that owns it, ask the owner to add you as a Viewer in GA4, or [set up GA4](/guides/add-google-analytics-to-website).
+</Callout>
+
+## 3. Read your dashboard
+
+The top of the page shows four numbers for the last 7 days (today included), each compared with the 7 days before:
+
+- **Visitors**: people Google Analytics counted.
+- **Page views**: how many times your pages were viewed.
+- **Avg. time**: how long a visitor spends with your site open and in view.
+- **Signups**: how many times the action you pick happened (see below).
+
+Under them is a chart of visitors per day, and below that the lists: where visitors came from, top pages, AI assistants, countries, devices and who is on your site right now. [The dashboard, card by card](/docs/dashboard) explains each one.
+
+<ImageSlot id="dashboard-overview" alt="The SimpleDash dashboard: four numbers, the visitors chart and the lists below">
+Full-width screenshot of the dashboard (desktop, 1440 px wide) on a real site with some traffic, Last 7 days. Show the four numbers, the chart and the first row of cards. Hide or blur anything private.
+</ImageSlot>
+
+## 4. Two things worth doing first
+
+1. **Choose your signup action.** GA4 doesn't know which event means "someone signed up". In the Signups number, pick the event that does. [How to choose it](/docs/signups).
+2. **Share your stats, if you like.** Turn on a [public stats page](/docs/public-page) to share your numbers when you build in public. Notes and anything private never appear on it.
+
+## What's next
+
+- [Switch between your sites](/docs/sites) if you have more than one.
+- [Date ranges](/docs/date-ranges): Today, the last 7 or 30 days, 12 months and any dates you pick.
+- [Free and Pro](/docs/plans): what Pro adds, including the Monday email.

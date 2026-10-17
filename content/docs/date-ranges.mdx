@@ -1,0 +1,61 @@
+---
+title: Date ranges and comparisons
+description: "How SimpleDash date ranges work: Today, the last 7 or 30 days and 12 months include today, how numbers are compared, custom dates, and the keyboard keys."
+updated: 2026-10-16
+---
+
+Every range except Yesterday ends today, so far: "Last 7 days" is the six full days before today plus today. Numbers are compared with the same number of days just before, and today's part of the chart is dashed while it's still filling up.
+
+## The ranges
+
+| Range | Covers | Compared with | Chart |
+| --- | --- | --- | --- |
+| **Today** | Today so far | Not compared (today isn't over) | Hourly |
+| **Yesterday** | Yesterday | The day before | Hourly |
+| **Last 7 days** | The 6 days before today, and today | The 7 days before that | Daily |
+| **Last 30 days** | The 29 days before today, and today | The 30 days before that | Daily |
+| **Last 12 months** | The 11 months before this one, and this month so far | The 12 months before that | Monthly |
+| **Custom** | Any days you pick, up to about 5 years | The same number of days just before | Hourly for one day, daily up to 92 days, monthly after |
+
+Last 7 days is the default. On Free, ranges go back <FreeDays /> days; [Pro](/docs/plans) adds 12 months and any dates.
+
+## Why today's numbers look low
+
+Google Analytics adds visits a few hours late, and today isn't over. So today's point on the chart is dashed, and early in the day it can be missing until Google reports it, rather than showing a zero that isn't true. Comparisons for ranges that end today run slightly low until the day ends. [Why GA4 data is delayed](/guides/ga4-data-delay).
+
+## How comparisons read
+
+Each number shows its change against the period before: "↑ 23%" or "↓ 12%". When there's nothing honest to compare with, it says why instead of showing a number:
+
+- **"Today isn't over yet"**: Today alone isn't compared with a whole day.
+- **"Not enough history to compare"**: the period before started before your GA4 property existed.
+
+## Custom dates
+
+Choose **Custom…** in the date menu. A calendar opens: click the first day, then the last. You can also type the dates. Days after today, and before GA4 started (14 Aug 2015), can't be picked. One day on its own shows hourly.
+
+The range is in the page's address (`?range=2026-09-01..2026-09-30`), so you can bookmark it or share it.
+
+## Keyboard keys
+
+While the date menu is open, press a key to jump to a range:
+
+| Key | Range |
+| --- | --- |
+| T | Today |
+| Y | Yesterday |
+| W | Last 7 days |
+| M | Last 30 days |
+| L | Last 12 months |
+| C | Custom |
+
+The keys only work while the menu is open, so typing elsewhere never changes your range.
+
+## Time zone
+
+Days follow your GA4 property's time zone (Admin → Property details), not your computer's. "Today" means today where your site's analytics are set.
+
+## Related
+
+- [Why a number can differ from GA4](/docs/numbers-differ-from-ga4)
+- [How fresh the numbers are](/docs/freshness-and-limits)

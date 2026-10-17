@@ -1,0 +1,68 @@
+---
+title: How to add Google Analytics 4 to an Astro site
+menuTitle: "Astro"
+seoTitle: How to add Google Analytics 4 to an Astro site
+description: Add GA4 to Astro with inline scripts in your base layout, keep the ID in an environment variable, and make sure view transitions still count page views.
+updated: 2026-10-16
+---
+
+To add Google Analytics 4 to Astro, put the Google tag in the `<head>` of your base layout with `is:inline` scripts, so Astro leaves them as they are. Read the Measurement ID from an environment variable, and GA4's enhanced measurement counts page changes, including view transitions.
+
+## 1. Add the ID to your environment
+
+```bash title=".env"
+PUBLIC_GA_ID=G-XXXXXXXXXX
+```
+
+## 2. Add the tag to your base layout
+
+```astro title="src/layouts/Layout.astro"
+---
+const gaId = import.meta.env.PUBLIC_GA_ID;
+---
+<html lang="en">
+  <head>
+    {gaId && (
+      <>
+        <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}></script>
+        <script is:inline define:vars={{ gaId }}>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', gaId);
+        </script>
+      </>
+    )}
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
+```
+
+`is:inline` stops Astro from bundling the scripts, and `define:vars` passes the ID in. Make sure every page uses this layout.
+
+## View transitions
+
+With Astro's view transitions (`<ClientRouter />`), pages change without a full reload. GA4's enhanced measurement counts these through browser history changes; check it's on in GA4: Admin → Data streams → your stream → Enhanced measurement → Page views → _Page changes based on browser history events_. Then click between pages and watch GA4's Realtime report.
+
+## Optional: Partytown
+
+To move the tag off the main thread, add `@astrojs/partytown` (`npx astro add partytown`), set the scripts' `type` to `text/partytown`, and forward `dataLayer.push` in the integration's config. Test carefully afterwards: some setups need extra configuration.
+
+## Check it works
+
+Build and open your site, then GA4's **Realtime overview**. [More ways to check](/guides/check-ga4-is-working).
+
+<InSimpleDash>
+  Astro sites are fast, so keep your analytics view fast too: SimpleDash shows visitors, sources,
+  pages and live visitors on one page, with nothing added to your site beyond GA4.
+</InSimpleDash>
+
+## Related
+
+- [Cookie banners and Consent Mode](/guides/ga4-cookie-consent)
+
+## Sources
+
+- Astro: [Partytown integration](https://docs.astro.build/en/guides/integrations-guide/partytown/)

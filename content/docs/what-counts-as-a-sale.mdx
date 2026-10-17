@@ -1,0 +1,42 @@
+---
+title: What counts as a sale
+description: With Pro, tell SimpleDash which GA4 event or thank-you page means a sale, to see which sources and landing pages bring signups and sales.
+updated: 2026-10-16
+---
+
+With Pro, the **Sales and signups by source** card shows which sources and landing pages bring signups and sales. For sales, tell SimpleDash what counts as one: a GA4 key event like `purchase`, or views of a thank-you page.
+
+## Choose it
+
+Open the site's settings (the gear in the site menu) and find **What counts as a sale?**
+
+- **Nothing yet**: the card shows signups only.
+- **A key event**: pick one of your GA4 key events, usually `purchase`.
+- **Views of a page**: type the path of the page people see after paying, such as `/thank-you`.
+
+Then choose **Save**.
+
+<ImageSlot id="what-counts-as-a-sale" alt="The 'What counts as a sale?' setting with three choices: nothing yet, a key event, or views of a page">
+Capture the "What counts as a sale?" section in a site's settings, with "A key event" selected and purchase chosen.
+</ImageSlot>
+
+## Which one to pick
+
+- If your checkout sends GA4's `purchase` event, pick it. It's the most accurate.
+- If it doesn't, and buyers land on a thank-you page afterwards, use that page. [Count sales from a thank-you page](/guides/thank-you-page-conversions).
+- If neither exists yet, [track purchases in GA4](/guides/track-purchases-ga4) first.
+
+## The card
+
+**By source** and **By landing page**, each with Visitors, Signups and Sales for the period. A **Revenue** column appears only when GA4 itself has purchase values for the period (GA4's own sums, in your property's currency). Nothing is estimated.
+
+A dash (—) means that source or page wasn't in GA4's top list of visitors, so its visitors are unknown, not zero.
+
+## Sales going to Stripe or PayPal?
+
+If your sales show up under `checkout.stripe.com` or another payment page, GA4 is crediting the payment page instead of where the buyer came from. [Fix it in two minutes](/guides/ga4-unwanted-referrals-stripe).
+
+## Related
+
+- [Choose what counts as a signup](/docs/signups)
+- [Revenue from Stripe](/docs/revenue)

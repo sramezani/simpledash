@@ -1,0 +1,76 @@
+---
+title: Add Google Analytics 4 with an AI coding agent
+menuTitle: "With an AI coding agent"
+seoTitle: Add GA4 with Claude Code, Cursor or Copilot
+description: "A ready prompt for Claude Code, Cursor, Copilot or any AI coding agent to add Google Analytics 4 correctly: one tag, an env variable, consent and a check."
+updated: 2026-10-16
+---
+
+AI coding agents can add Google Analytics 4 in a minute, but left alone they often hard-code the ID, load the tag twice or skip consent. Give your agent the prompt below: it asks for one Google tag in the shared layout, the Measurement ID in an environment variable, optional consent, and a way to check it works.
+
+## Before you start
+
+Create your GA4 property and copy the **Measurement ID** (`G-…`). [How](/guides/add-google-analytics-to-website).
+
+## The prompt
+
+Copy this into Claude Code, Cursor, GitHub Copilot, Windsurf or another agent, and replace the ID:
+
+```text title="Prompt"
+Add Google Analytics 4 to this project.
+
+Measurement ID: G-XXXXXXXXXX
+
+Requirements:
+1. Read the ID from an environment variable (NEXT_PUBLIC_GA_ID for Next.js,
+   PUBLIC_GA_ID for Astro, VITE_GA_ID for Vite, or this project's convention).
+   Add it to .env.example with an empty value. Never hard-code it.
+2. Load the official Google tag (gtag.js) exactly once, in the shared layout or
+   document head, so it runs on every page. Use the framework's own way when
+   there is one (for example @next/third-parties/google in Next.js).
+3. Only load it when the variable is set, so local development sends nothing.
+4. Don't add a separate page_view event on route changes: GA4's enhanced
+   measurement already counts single-page app navigations.
+5. If the project has a cookie consent banner, load GA4 only after the visitor
+   accepts, or use Google Consent Mode with analytics_storage "denied" by
+   default and "granted" after accepting.
+6. Don't install any other analytics package.
+
+When you're done, tell me:
+- which files you changed,
+- how to check it in GA4's Realtime report,
+- and how to see the request to google-analytics.com/g/collect in the
+  browser's network tab.
+```
+
+## Check what it did
+
+1. **One tag only.** Search the project for `googletagmanager.com/gtag/js`: there should be one place that loads it.
+2. **No hard-coded ID.** Search for your `G-…` ID: it should only be in your `.env` file, not in the code.
+3. **It works.** Run the site with the variable set, open it, and look at GA4's Realtime overview. [More ways to check](/guides/check-ga4-is-working).
+
+## Ask for signups too
+
+Once GA4 works, a second prompt adds signup tracking:
+
+```text title="Prompt"
+When a user successfully finishes signing up (after the server confirms it,
+not when the form is submitted), send the GA4 recommended event:
+gtag('event', 'sign_up', { method: '<how they signed up>' }).
+Only send it in the browser, only when gtag is available, and only once per
+signup.
+```
+
+Then [mark `sign_up` as a key event](/guides/ga4-key-events) in GA4.
+
+<InSimpleDash>
+  When the tag is live, sign in to SimpleDash with the same Google account: no code to add for
+  SimpleDash itself. Your agent can read these guides as Markdown too: add `.md` to any page's
+  address.
+</InSimpleDash>
+
+## Related
+
+- [Add GA4 to a Next.js site](/guides/add-google-analytics-to-nextjs)
+- [Track signups in GA4](/guides/track-signups-ga4)
+- [Cookie banners and Consent Mode](/guides/ga4-cookie-consent)

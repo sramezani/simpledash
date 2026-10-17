@@ -20,4 +20,22 @@ describe("llmsText", () => {
     expect(text).toContain("[Privacy policy](https://simpledash.app/privacy)");
     expect(text.startsWith("# SimpleDash")).toBe(true);
   });
+
+  it("lists content pages by section, each with its Markdown copy", () => {
+    const withPages = llmsText("https://simpledash.app", [
+      { section: "docs", title: "Plans", url: "/docs/plans", description: "Free and Pro." },
+      {
+        section: "guides",
+        title: "AI traffic",
+        url: "/guides/ga4-ai-traffic",
+        description: "See it.",
+      },
+    ]);
+    expect(withPages).toContain("## Docs: how SimpleDash works");
+    expect(withPages).toContain(
+      "- [Plans](https://simpledash.app/docs/plans) ([Markdown](https://simpledash.app/docs/plans.md)): Free and Pro.",
+    );
+    expect(withPages).toContain("[Everything in one file](https://simpledash.app/llms-full.txt)");
+    expect(text).not.toContain("## Glossary");
+  });
 });

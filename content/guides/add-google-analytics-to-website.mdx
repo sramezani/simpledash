@@ -1,0 +1,141 @@
+---
+title: How to add Google Analytics 4 to your website
+menuTitle: "Add GA4 to your website"
+seoTitle: How to add Google Analytics 4 to your website
+description: "Set up Google Analytics 4 in about five minutes: create an account and property, add a web stream, and put the Google tag on every page of your site."
+updated: 2026-10-16
+---
+
+To add Google Analytics 4, create a GA4 account and property at analytics.google.com, add a web data stream for your site, then paste the Google tag (a short script with your Measurement ID, `G-…`) into the `<head>` of every page. It takes about five minutes, and visits start showing within a minute in GA4's Realtime report.
+
+## What you need
+
+- A Google account (the one you want to own the analytics).
+- Access to your site's code, or to its builder's settings (Webflow, WordPress, Framer and so on).
+
+If your site runs on a builder, the platform guides below are quicker: most have a field where you paste the Measurement ID.
+
+## 1. Create a Google Analytics account and property
+
+<Steps>
+<Step>
+
+Go to [analytics.google.com](https://analytics.google.com) and choose **Start measuring**.
+
+</Step>
+<Step>
+
+**Account:** give it a name, usually your company or your own name. One account can hold many sites.
+
+</Step>
+<Step>
+
+**Property:** name it after your site (for example "mysite.com"), and set the **time zone** and **currency** you work in. The time zone decides when your days start and end, in GA4 and in SimpleDash.
+
+</Step>
+<Step>
+
+Answer the questions about your business and goals. They only change which reports GA4 suggests.
+
+</Step>
+</Steps>
+
+<ImageSlot
+  id="ga4-create-property"
+  alt="Google Analytics' property setup: property name, reporting time zone and currency"
+>
+  In analytics.google.com, start creating a new property and capture the "Property details" step
+  showing the name, reporting time zone and currency fields.
+</ImageSlot>
+
+## 2. Add a web data stream
+
+<Steps>
+<Step>
+
+When GA4 asks where to collect data, choose **Web**.
+
+</Step>
+<Step>
+
+Enter your site's address (for example `mysite.com`) and a stream name.
+
+</Step>
+<Step>
+
+Leave **Enhanced measurement** on. It counts page views, scrolls, outbound clicks, file downloads, form interactions and site searches without extra code.
+
+</Step>
+<Step>
+
+Choose **Create stream** (or **Create & continue**). GA4 shows your **Measurement ID**, which starts with `G-`.
+
+</Step>
+</Steps>
+
+You can find the Measurement ID again any time in Admin → Data collection and modification → **Data streams** → your stream.
+
+## 3. Add the Google tag to every page
+
+GA4 shows installation instructions. Choose **Install manually** and copy the code, which looks like this (with your own ID instead of `G-XXXXXXXXXX`):
+
+```html title="Paste right after <head>"
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() {
+    dataLayer.push(arguments);
+  }
+  gtag("js", new Date());
+
+  gtag("config", "G-XXXXXXXXXX");
+</script>
+```
+
+Paste it right after the opening `<head>` tag on **every page** of your site. On most sites that means one shared layout or header file.
+
+### On a website builder or framework
+
+<Cards>
+  <Card title="Next.js" href="/guides/add-google-analytics-to-nextjs" />
+  <Card title="WordPress" href="/guides/add-google-analytics-to-wordpress" />
+  <Card title="Webflow" href="/guides/add-google-analytics-to-webflow" />
+  <Card title="Framer" href="/guides/add-google-analytics-to-framer" />
+  <Card title="Shopify" href="/guides/add-google-analytics-to-shopify" />
+  <Card title="Ghost" href="/guides/add-google-analytics-to-ghost" />
+  <Card title="Lovable and AI app builders" href="/guides/add-google-analytics-to-lovable" />
+  <Card title="Squarespace" href="/guides/add-google-analytics-to-squarespace" />
+  <Card title="Wix" href="/guides/add-google-analytics-to-wix" />
+  <Card title="Carrd" href="/guides/add-google-analytics-to-carrd" />
+  <Card title="Astro" href="/guides/add-google-analytics-to-astro" />
+  <Card title="Plain HTML" href="/guides/add-google-analytics-to-html" />
+  <Card title="Google Tag Manager" href="/guides/add-google-analytics-with-google-tag-manager" />
+</Cards>
+
+Using an AI coding agent like Claude Code or Cursor? [Give it this ready prompt](/guides/add-google-analytics-with-ai-coding-agent).
+
+## 4. Check it works
+
+Open your site in another tab, then open GA4's **Reports → Realtime overview**. You should appear within a minute. If you don't, see [Check that GA4 is collecting data](/guides/check-ga4-is-working).
+
+## Do you need a cookie banner?
+
+If your visitors are in the EU, the UK or another place with similar rules, you usually need consent before GA4 sets its cookies. [Cookie banners and Consent Mode for GA4](/guides/ga4-cookie-consent) explains the options. This isn't legal advice.
+
+## Next steps
+
+1. [Stop counting your own visits](/guides/exclude-internal-traffic-ga4).
+2. [Count signups](/guides/track-signups-ga4) and [mark them as key events](/guides/ga4-key-events).
+3. If you take payments, [stop Stripe or PayPal taking credit for your sales](/guides/ga4-unwanted-referrals-stripe).
+
+<InSimpleDash>
+  Once GA4 has data, sign in to SimpleDash with the same Google account. It finds your new property
+  on its own and shows visitors, sources, top pages and who's on your site right now on one page,
+  with no extra code.
+</InSimpleDash>
+
+## Sources
+
+- Google: [Set up Analytics for a website and/or app](https://support.google.com/analytics/answer/9304153)
+- Google: [Enhanced measurement events](https://support.google.com/analytics/answer/9216061)

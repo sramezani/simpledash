@@ -1,0 +1,39 @@
+---
+title: What are source and medium in GA4?
+menuTitle: "Source and medium"
+seoTitle: Source and medium in GA4, explained simply
+description: Source is who sent a visit (google, newsletter); medium is how (organic, referral, email). How GA4 sets them, and how to control them with UTM tags.
+updated: 2026-10-16
+---
+
+**Source** is where a visit came from, such as `google`, `x.com` or `newsletter`. **Medium** is what kind of link it was, such as `organic` (unpaid search), `referral` (a link on another site) or `email`. GA4 often shows them together as **source / medium**: `google / organic`.
+
+## Common values
+
+| Source / medium                   | Means                                                           |
+| --------------------------------- | --------------------------------------------------------------- |
+| `google / organic`                | Unpaid Google search                                            |
+| `google / cpc`                    | Google Ads                                                      |
+| `(direct) / (none)`               | No referrer and no tags: typed, bookmarked, or hidden by an app |
+| `news.ycombinator.com / referral` | A link on another site                                          |
+| `newsletter / email`              | A link you tagged with UTM tags                                 |
+| `chatgpt.com / referral`          | A link in ChatGPT                                               |
+
+## How GA4 sets them
+
+1. If the link has **UTM tags**, GA4 uses them: `utm_source` and `utm_medium`.
+2. Otherwise, GA4 reads the **referrer** (the page the visitor came from) and decides: a search engine becomes `organic`, other sites become `referral`.
+3. With neither, the visit is `(direct) / (none)`.
+
+## Session, first user and event
+
+GA4 has several versions: **Session source** (where this visit came from), **First user source** (where the person first came from) and plain **Source** (used for key event credit). Traffic acquisition uses session source; User acquisition uses first user source.
+
+## In SimpleDash
+
+The **Sources** card shows session source, and **Channels** groups them. [Default channel group](/glossary/default-channel-group).
+
+## Related
+
+- [UTM links](/guides/utm-links)
+- [Direct traffic](/guides/ga4-direct-traffic)

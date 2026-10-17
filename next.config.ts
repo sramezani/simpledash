@@ -1,3 +1,4 @@
+import { createMDX } from "fumadocs-mdx/next";
 import type { NextConfig } from "next";
 
 // Basic security headers (docs/SPEC.md section 19). HSTS is set at Cloudflare.
@@ -28,6 +29,14 @@ const nextConfig: NextConfig = {
     "@google-analytics/admin",
     "google-auth-library",
   ],
+  // Every docs, guides, glossary and compare page has a Markdown copy for AI assistants at its
+  // address plus ".md" (docs/SPEC.md section 30).
+  async rewrites() {
+    return ["docs", "guides", "glossary", "compare"].flatMap((section) => [
+      { source: `/${section}.md`, destination: `/llms.mdx/${section}/content.md` },
+      { source: `/${section}/:slug*.md`, destination: `/llms.mdx/${section}/:slug*/content.md` },
+    ]);
+  },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },
@@ -46,4 +55,8 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Content collections are defined with Fumadocs MDX's Macro API (src/lib/content/source.ts).
+// Only modules that import "fumadocs-mdx/macro" are transformed.
+const withMDX = createMDX();
+
+export default withMDX(nextConfig);

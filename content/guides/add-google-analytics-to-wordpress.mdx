@@ -1,0 +1,72 @@
+---
+title: How to add Google Analytics 4 to WordPress
+menuTitle: "WordPress"
+seoTitle: How to add Google Analytics 4 to WordPress
+description: Add GA4 to WordPress with Google's official Site Kit plugin, a header code plugin or WordPress.com's built-in setting, then check visits arrive in Realtime.
+updated: 2026-10-16
+---
+
+On a self-hosted WordPress site, the easiest way is Google's official **Site Kit by Google** plugin: install it, sign in with Google and connect your GA4 property. On WordPress.com, paste your Measurement ID in the built-in setting (on plans that allow it).
+
+## Option 1: Site Kit by Google (self-hosted)
+
+<Steps>
+<Step>
+
+In WordPress admin, go to **Plugins → Add New**, search for **Site Kit by Google**, then **Install** and **Activate**.
+
+</Step>
+<Step>
+
+Choose **Start setup** and sign in with the Google account that owns (or should own) your analytics.
+
+</Step>
+<Step>
+
+When asked, connect **Analytics**: pick your existing GA4 property, or let Site Kit create one.
+
+</Step>
+<Step>
+
+Finish the setup. Site Kit adds the Google tag to every page.
+
+</Step>
+</Steps>
+
+## Option 2: paste the tag with a header plugin
+
+If you'd rather not use Site Kit, install a plugin that adds code to your site's `<head>` (such as WPCode), and paste the Google tag from GA4 (Admin → Data streams → your stream → View tag instructions → Install manually). Don't use both options at once, or visits are counted twice.
+
+Avoid pasting the tag into your theme's `header.php`: a theme update can remove it.
+
+## Option 3: WordPress.com
+
+On WordPress.com plans that allow it, paste your Measurement ID (`G-…`) into the Google Analytics setting in your site's settings, and save. WordPress.com's own [support page](https://wordpress.com/support/google-analytics/) shows exactly where it is on your plan.
+
+<ImageSlot
+  id="wordpress-site-kit"
+  alt="Site Kit by Google's setup screen in WordPress, connecting Google Analytics"
+>
+  On a WordPress test site, install Site Kit by Google and capture the setup step where you connect
+  Analytics (choosing a GA4 property).
+</ImageSlot>
+
+## Check it works
+
+Open your site in a private window and GA4's **Realtime overview**. If you're logged in to WordPress, some setups don't track admins: test in a private window. [More ways to check](/guides/check-ga4-is-working).
+
+<InSimpleDash>
+  Site Kit shows some numbers inside WordPress. SimpleDash shows the rest on one fast page, in plain
+  words: sources, AI traffic, landing pages, live visitors, and signups once you pick your signup
+  event. No plugin needed.
+</InSimpleDash>
+
+## Related
+
+- [Track signups](/guides/track-signups-ga4)
+- [Exclude your own visits](/guides/exclude-internal-traffic-ga4)
+
+## Sources
+
+- Google: [Site Kit by Google](https://sitekit.withgoogle.com)
+- WordPress.com: [Connect to Google Analytics](https://wordpress.com/support/google-analytics/)

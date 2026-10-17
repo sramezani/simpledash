@@ -1,0 +1,64 @@
+---
+title: How to track purchases and revenue in Google Analytics 4
+menuTitle: "Track purchases"
+seoTitle: How to track purchases and revenue in GA4
+description: Send GA4's purchase event with a value, currency and transaction ID, including after Stripe Checkout or Payment Links, so GA4 shows sales and revenue by source.
+updated: 2026-10-16
+---
+
+To count sales and revenue in Google Analytics 4, send the recommended `purchase` event when a payment succeeds, with `transaction_id`, `value` and `currency`. GA4 then shows purchases and revenue by source and landing page, and the transaction ID stops the same sale being counted twice.
+
+## The purchase event
+
+Run this on the page people see after paying, once per payment:
+
+```js
+gtag("event", "purchase", {
+  transaction_id: "T_12345", // your order or Stripe session ID
+  value: 29.0, // the amount paid
+  currency: "USD", // ISO currency code
+  items: [{ item_id: "pro-monthly", item_name: "Pro (monthly)", price: 29.0, quantity: 1 }],
+});
+```
+
+- **`transaction_id`** must be unique per sale. GA4 drops a second purchase with the same ID, so a reload of the thank-you page doesn't double-count.
+- **`value` and `currency`** give GA4 the revenue. Without them you get a purchase count but no revenue.
+- **`items`** is optional for a simple product, but GA4's ecommerce reports use it.
+
+Then mark `purchase` as a key event: Admin → Data display → Events → **Mark as key event**. [How](/guides/ga4-key-events).
+
+## After Stripe Checkout
+
+Stripe Checkout sends buyers to your `success_url`. Add the session ID to it, then send the purchase event on that page:
+
+1. When creating the Checkout Session, set `success_url` to something like `https://mysite.com/thank-you?session_id={CHECKOUT_SESSION_ID}`. Stripe fills in the ID.
+2. On the thank-you page, use the `session_id` as the `transaction_id`, and the amount (from your server, or a fixed price) as `value`.
+
+## After a Stripe Payment Link
+
+In Stripe, edit the Payment Link → **After payment** → **Don't show confirmation page** → redirect to your own page, for example `https://mysite.com/thank-you?session_id={CHECKOUT_SESSION_ID}`. Then send the purchase event there, as above.
+
+## Can't add code to the thank-you page?
+
+Count views of it as sales instead. It's less precise (no revenue, and a reload counts again), but it needs no code: [count sales from a thank-you page](/guides/thank-you-page-conversions).
+
+## Fix this first: payment pages taking the credit
+
+When buyers go to `checkout.stripe.com` and come back, GA4 may credit the sale to Stripe instead of the place the buyer first came from. [List payment pages as unwanted referrals](/guides/ga4-unwanted-referrals-stripe) before you trust revenue by source.
+
+<InSimpleDash>
+  With Pro, pick `purchase` as what counts as a sale. **Sales and signups by source** then shows
+  sales per source and landing page, with GA4's own revenue when it has it. Connect Stripe too and
+  you'll see Stripe revenue, MRR and new customers next to your visitors, straight from your Stripe
+  account.
+</InSimpleDash>
+
+## Related
+
+- [Count sales from a thank-you page](/guides/thank-you-page-conversions)
+- [Which traffic brings paying customers](/guides/traffic-to-revenue)
+
+## Sources
+
+- Google: [Measure ecommerce: purchase](https://developers.google.com/analytics/devguides/collection/ga4/ecommerce)
+- Stripe: [Customize redirect behavior](https://docs.stripe.com/payments/checkout/custom-success-page)

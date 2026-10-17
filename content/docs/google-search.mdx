@@ -1,0 +1,67 @@
+---
+title: Google search insights
+description: With Pro, connect Search Console to see clicks from Google, searches close to page 1, what changed, your name vs new people and pages seen but not clicked.
+updated: 2026-10-16
+---
+
+With Pro, SimpleDash adds a Google search card from your own Search Console data: how many people clicked through from Google, the searches you're almost on page 1 for, what changed, and which pages are seen but not clicked. Connecting asks Google for one more read-only permission, only when you choose to.
+
+## Connect Search Console
+
+<Steps>
+<Step>
+
+Your site needs to be in [Google Search Console](https://search.google.com/search-console) first. If it isn't, [add and verify it](/guides/add-site-to-search-console).
+
+</Step>
+<Step>
+
+In SimpleDash, open the site's settings (the gear in the site menu) and choose **Connect Search Console** in the Google Search Console section. You can also start from the dashboard's "Connect Search Console" card.
+
+</Step>
+<Step>
+
+Google asks you to allow <Scope name="search-console" />: read-only access to Search Console.
+
+</Step>
+<Step>
+
+SimpleDash picks the matching property: your site's domain property first, then a URL-prefix property, then a parent domain property. You can choose another one in the site's settings.
+
+</Step>
+</Steps>
+
+## The card
+
+The top shows **Clicks** (visits from Google search), **Seen** (impressions: how often your pages appeared in results), **Click rate** and average **Position**, compared with the period before. Then five views:
+
+### Close to page 1
+
+Searches where your pages rank around positions 8 to 15, most seen first, grouped by page. A small improvement here can move a search onto page 1. [How to use this list](/guides/keywords-close-to-page-1).
+
+### What changed
+
+The pages whose Google clicks rose or fell the most against the period before, with the searches behind each change: clicks and position then and now. Facts only, never a reason. [Find what changed](/guides/google-clicks-what-changed).
+
+### Your name vs new people
+
+Clicks from searches that contain your site's name, against all other searches, over time. The name comes from your domain, and you can add spellings in the site's settings. The two don't add up to all your Google clicks, because Google leaves out searches made by very few people. [Branded vs non-branded traffic](/guides/branded-vs-non-branded-traffic).
+
+### Seen, not clicked
+
+Pages that appear often but get clicked less than your own pages at about the same position. Compared only with your own site, never with an industry number. [Pages seen but not clicked](/guides/low-click-rate-pages).
+
+### Leads to signups
+
+Landing pages that people reach from Google search, with the signups that followed, from GA4. Needs a [signup action](/docs/signups).
+
+## Good to know
+
+- **Google is 2 to 3 days behind.** Search Console's newest data is usually two or three days old, so the card shows its own dates and moves the period back to match.
+- **16 months.** Search Console keeps 16 months of data, so older periods can't be compared.
+- **Disconnect** in the site's settings. It stops the card for that site only; to end the permission for every site, remove SimpleDash from your Google account.
+
+## Related
+
+- [Using Search Console to grow Google traffic](/guides/google-search-console)
+- [Search Console in plain words](/docs/plain-words)

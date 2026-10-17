@@ -1,0 +1,41 @@
+---
+title: SimpleDash vs Umami
+menuTitle: "vs Umami"
+seoTitle: "SimpleDash vs Umami Analytics: an honest comparison"
+description: Umami is open-source analytics you host yourself, with its own script; SimpleDash is an open-source dashboard for the GA4 data you already have.
+updated: 2026-10-16
+---
+
+Both are open source, but they solve different problems. **Umami** is a tracker: you add its script (to your own server or its cloud) and it replaces Google Analytics. **SimpleDash** is a dashboard: it reads the Google Analytics 4 data you already have and shows it on one page.
+
+## Side by side
+
+|                                            | Umami                       | SimpleDash               |
+| ------------------------------------------ | --------------------------- | ------------------------ |
+| Tracking                                   | Its own script              | None: reads your GA4     |
+| Hosting                                    | Self-host, or Umami's cloud | Hosted at simpledash.app |
+| Open source                                | Yes                         | Yes (AGPL-3.0)           |
+| Your existing GA4 history                  | Not read                    | Read directly            |
+| Live visitors                              | Yes                         | Right now card           |
+| Public stats page                          | Share links                 | Yes                      |
+| Search Console and Stripe on the same page | No                          | Yes (Pro)                |
+| Weekly email                               | Check Umami's site          | The Monday email (Pro)   |
+
+Check [Umami's site](https://umami.is) for its current plans and features.
+
+## Choose Umami if
+
+you want to own your analytics data on your own server and leave Google Analytics, and you're comfortable running it.
+
+## Choose SimpleDash if
+
+you want to keep GA4 (free, with its history) without running anything yourself, and want a simple page, a Monday email and a public stats page.
+
+<InSimpleDash title="Open source, nothing to host">
+  SimpleDash is open source too, but you don't have to run it: sign in with Google and it reads your
+  GA4 with read-only access.
+</InSimpleDash>
+
+## Related
+
+- [Open source](/docs/open-source)

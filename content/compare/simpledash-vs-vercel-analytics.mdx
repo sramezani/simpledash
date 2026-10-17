@@ -1,0 +1,40 @@
+---
+title: SimpleDash vs Vercel Web Analytics
+menuTitle: "vs Vercel Web Analytics"
+seoTitle: SimpleDash vs Vercel Web Analytics for Next.js sites
+description: Vercel Web Analytics is built into Vercel with its own script; SimpleDash reads Google Analytics 4 wherever your site is hosted. Which to use, or both.
+updated: 2026-10-16
+---
+
+**Vercel Web Analytics** is built into Vercel: turn it on in your project and add its package, and it counts visitors with its own privacy-friendly script. **SimpleDash** reads Google Analytics 4, wherever your site is hosted, and shows it on one page. Many Next.js sites on Vercel can use both.
+
+## Side by side
+
+|                   | Vercel Web Analytics                                    | SimpleDash                                                       |
+| ----------------- | ------------------------------------------------------- | ---------------------------------------------------------------- |
+| Tracking          | Its own script (`@vercel/analytics`)                    | None: reads your GA4                                             |
+| Works for         | Sites hosted on Vercel                                  | Any site with GA4                                                |
+| Cookies           | No cookies                                              | GA4's (with your consent banner)                                 |
+| History           | From when you turn it on, as long as your plan keeps it | Everything GA4 has (Pro)                                         |
+| Signups and sales | Custom events on some plans                             | Signups on every plan; sales by source and Stripe revenue on Pro |
+| Search Console    | No                                                      | Yes (Pro)                                                        |
+| Public stats page | No                                                      | Yes                                                              |
+
+Check [Vercel's docs](https://vercel.com/docs/analytics) for its current plans and limits.
+
+## Why the numbers differ
+
+Vercel Analytics and GA4 count with different scripts and rules (cookies, consent, ad blockers), so their visitor counts won't match. Compare each with itself over time. [Why tools disagree](/guides/ga4-numbers-differ).
+
+## Choose Vercel Web Analytics if
+
+your site is on Vercel and you want quick, cookie-free numbers without setting up GA4.
+
+## Choose SimpleDash if
+
+you run GA4 (on any host) and want sources, signups, Search Console and Stripe on one page, plus a Monday email and a public stats page.
+
+<InSimpleDash>
+  On Next.js? [Add GA4 to Next.js](/guides/add-google-analytics-to-nextjs) in a few lines, then sign
+  in to SimpleDash with the same Google account.
+</InSimpleDash>

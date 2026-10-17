@@ -1,0 +1,56 @@
+---
+title: How to add Google Analytics 4 to a plain HTML site
+menuTitle: "Plain HTML"
+seoTitle: Add Google Analytics 4 to an HTML website
+description: Add GA4 to a static HTML site by pasting the Google tag into the head of every page. Includes the exact code, where it goes, and how to check it works.
+updated: 2026-10-16
+---
+
+For a plain HTML site, paste the Google tag into the `<head>` of **every** HTML page, right after the opening `<head>` tag. If your pages share a template or include file, put it there once.
+
+## The code
+
+Copy your own tag from GA4 (Admin → Data streams → your stream → View tag instructions → Install manually). It looks like this:
+
+```html title="index.html"
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "G-XXXXXXXXXX");
+    </script>
+
+    <meta charset="utf-8" />
+    <title>My site</title>
+  </head>
+  <body>
+    …
+  </body>
+</html>
+```
+
+## Every page, not just the homepage
+
+A page without the tag isn't counted. On a site with many files, use your editor's find-in-files to check every `.html` file contains `gtag/js?id=`. Static site generators (Hugo, Jekyll, Eleventy) have a base layout or head partial: put it there.
+
+## Check it works
+
+Upload the pages, open your site in a private window and look at GA4's **Realtime overview**. [More ways to check](/guides/check-ga4-is-working).
+
+<InSimpleDash>
+  No build tools, no dashboards to configure: once GA4 has visits, sign in to SimpleDash with the
+  same Google account and your numbers are on one page.
+</InSimpleDash>
+
+## Related
+
+- [Track signups](/guides/track-signups-ga4)
+- [Exclude your own visits](/guides/exclude-internal-traffic-ga4)

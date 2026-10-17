@@ -1,0 +1,77 @@
+---
+title: How to exclude your own visits from Google Analytics 4
+menuTitle: "Exclude your own visits"
+seoTitle: Exclude internal traffic (your own visits) in GA4
+description: "Stop GA4 counting you and your team: define internal traffic by IP address, then turn the internal traffic filter from Testing to Active. With checks."
+updated: 2026-10-16
+---
+
+To stop Google Analytics 4 counting your own visits, define your IP address as **internal traffic** in your data stream's tag settings, then turn GA4's **Internal Traffic** filter from Testing to **Active**. It matters most on small sites, where your own visits can be a big share of the total.
+
+## 1. Find your IP address
+
+Search "what is my IP" in Google, or ask your network admin for your office's address. Home connections often change their IP from time to time, so note when you set it.
+
+## 2. Define internal traffic
+
+<Steps>
+<Step>
+
+In GA4, open Admin → Data collection and modification → **Data streams**, and choose your web stream.
+
+</Step>
+<Step>
+
+Under **Google tag**, choose **Configure tag settings**, then **Show more** and **Define internal traffic**.
+
+</Step>
+<Step>
+
+Choose **Create**. Name the rule (for example "Home"), keep `traffic_type` as `internal`, and add **IP address equals** your IP. You can add several addresses or ranges.
+
+</Step>
+<Step>
+
+**Create** to save.
+
+</Step>
+</Steps>
+
+## 3. Turn the filter on
+
+The rule only labels your visits. To exclude them:
+
+1. Admin → Data collection and modification → **Data filters**.
+2. Open **Internal Traffic** and change its state from **Testing** to **Active**, then save.
+
+<ImageSlot
+  id="ga4-internal-traffic-filter"
+  alt="GA4's Data filters with the Internal Traffic filter set to Active"
+>
+  In GA4, Admin → Data filters → Internal Traffic. Capture the filter's settings with the "Active"
+  filter state selected.
+</ImageSlot>
+
+Once active, the filter is permanent for new data: excluded visits can't be brought back. Testing first lets you check it matches the right visits.
+
+## Check it works
+
+While the filter is in **Testing**, open Reports → Realtime and add a comparison on **Test data filter name** to see your own visits labelled. Once active, your visits stop appearing in Realtime.
+
+## Changing IP addresses
+
+If your IP changes often, also exclude yourself with a browser extension that blocks Google Analytics on your own site, or keep the filter's rule updated. Don't rely on just one method.
+
+<InSimpleDash>
+  On a small site, your own visits can make a quiet week look busy. With them excluded, SimpleDash's
+  numbers and Monday email show what real visitors did.
+</InSimpleDash>
+
+## Related
+
+- [Why direct traffic is high](/guides/ga4-direct-traffic)
+- [Check GA4 is collecting data](/guides/check-ga4-is-working)
+
+## Sources
+
+- Google: [Filter out internal traffic](https://support.google.com/analytics/answer/10104470)

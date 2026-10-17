@@ -41,6 +41,50 @@ export function softwareApplication(appUrl: string) {
   };
 }
 
+/** A docs page or guide as schema.org JSON-LD (docs/SPEC.md section 30). */
+export function contentArticle(input: {
+  appUrl: string;
+  url: string;
+  title: string;
+  description: string;
+  updated: string;
+  /** Docs pages are technical articles; guides, glossary and comparisons are articles. */
+  technical: boolean;
+}) {
+  const publisher = {
+    "@type": "Organization",
+    name: brand.name,
+    url: input.appUrl,
+    logo: `${input.appUrl}/icon`,
+  };
+  return {
+    "@context": "https://schema.org",
+    "@type": input.technical ? "TechArticle" : "Article",
+    headline: input.title,
+    description: input.description,
+    url: `${input.appUrl}${input.url}`,
+    mainEntityOfPage: `${input.appUrl}${input.url}`,
+    dateModified: input.updated,
+    inLanguage: "en",
+    author: publisher,
+    publisher,
+  };
+}
+
+/** Breadcrumbs as schema.org JSON-LD: home, then each step down to the page. */
+export function breadcrumbList(appUrl: string, items: { name: string; url: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [{ name: brand.name, url: "/" }, ...items].map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      item: `${appUrl}${item.url}`,
+    })),
+  };
+}
+
 /** JSON for a <script> tag: `<` is escaped so the text can't close the tag. */
 export function jsonLd(data: unknown): string {
   return JSON.stringify(data).replace(/</g, "\\u003c");

@@ -1,0 +1,56 @@
+---
+title: Why a number can differ from Google Analytics
+menuTitle: "Numbers vs GA4"
+seoTitle: Why SimpleDash numbers can differ from GA4
+description: SimpleDash and GA4 read the same data, so numbers should match. When they don't, here's why, and exactly where to compare each number in Google Analytics 4.
+updated: 2026-10-16
+---
+
+SimpleDash reads the same data as Google Analytics 4, so the same number for the same days should match. When it doesn't, it's almost always the dates, the time zone, a different metric with a similar name, or numbers from a few minutes apart.
+
+## Compare the same thing
+
+Use the same dates in both (in GA4, the date picker at the top right of a report), then look here:
+
+| SimpleDash | Where to find it in GA4 |
+| --- | --- |
+| Visitors | **Active users** (Reports → Acquisition overview, or any report's "Active users") |
+| Page views | **Views** in Reports → Engagement → Pages and screens |
+| Avg. time | **Average engagement time per active user** |
+| Signups | **Event count** of that event in Reports → Engagement → Events |
+| Sources | **Active users** by **Session source** in Reports → Acquisition → Traffic acquisition |
+| Countries | **Active users** by **Country** in Reports → User attributes → Demographic details |
+| Devices | **Active users** by **Device category** in Reports → Tech → Tech details |
+
+## Common reasons they differ
+
+### Different days
+
+"Last 7 days" in SimpleDash includes today. GA4's own "Last 7 days" preset ends yesterday. Pick custom dates in both to compare exactly.
+
+### A different time zone
+
+SimpleDash uses your GA4 property's time zone. If you compare with another tool that uses your computer's time zone, days start and end at different hours.
+
+### Similar names, different metrics
+
+- **Users vs active users.** GA4's "Total users" counts everyone with any event; SimpleDash shows active users, GA4's main user number.
+- **Average engagement time per session** is a different number from *per active user*. SimpleDash shows the per active user one.
+- **Key events vs event count.** GA4's key event totals start on the day an event was marked as a key event. SimpleDash counts every time the event happened. [More on this](/docs/signups#event-count).
+
+### Numbers from a few minutes apart
+
+SimpleDash keeps a copy of each report so pages open fast. For a range that includes today, the copy is at most <Freshness kind="endsToday" audience="owner" /> old. Google is still adding to today and yesterday, so two checks a few minutes apart can differ. [How fresh the numbers are](/docs/freshness-and-limits).
+
+### Rows outside the top of a list
+
+Lists show the top rows that Google returns. A source or page outside that list shows "—" (unknown) in some views, never a made-up zero.
+
+## Still different?
+
+Email <SupportEmail /> with the site, the dates, the number in SimpleDash and the number in GA4 (a screenshot helps). We'd rather fix a real difference than leave it.
+
+## Related
+
+- [GA4 terms in plain words](/docs/plain-words)
+- [Why GA4, Stripe and Search Console show different numbers](/guides/ga4-numbers-differ)

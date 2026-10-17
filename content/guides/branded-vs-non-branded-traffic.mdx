@@ -1,0 +1,66 @@
+---
+title: "Branded vs non-branded traffic: who's finding you on Google?"
+menuTitle: "Your name vs new people"
+seoTitle: Branded vs non-branded search traffic, explained
+description: Separate Google clicks from people searching your name from clicks from new people, with a regex filter in Search Console, and why the two don't add up.
+updated: 2026-10-16
+---
+
+Branded searches contain your site's name ("simpledash login"); non-branded ones don't ("simple ga4 dashboard"). Branded clicks show people who already know you; non-branded clicks show new people finding you, which is what SEO is meant to grow. In Search Console, split them with a **query filter** that uses a regex of your name.
+
+## Split them in Search Console
+
+<Steps>
+<Step>
+
+Open Search Console → **Performance → Search results**.
+
+</Step>
+<Step>
+
+Choose **+ Add filter → Query → Custom (regex)**.
+
+</Step>
+<Step>
+
+Choose **Matches regex** and enter your name and its common spellings, for example:
+
+```text
+simple ?dash|simpledash\.app
+```
+
+That's your branded traffic.
+
+</Step>
+<Step>
+
+Edit the filter to **Doesn't match regex** with the same pattern: that's your non-branded traffic.
+
+</Step>
+</Steps>
+
+Add misspellings and your product names to the pattern. `?` makes the space optional, and `|` means "or".
+
+## Why the two don't add up to your total
+
+Google leaves out searches made by very few people ("anonymized queries") from any query-filtered view. So branded plus non-branded is less than your total clicks, sometimes much less on small sites. Compare each one with itself over time rather than adding them up.
+
+## What to look for
+
+- **Non-branded growing**: your content is reaching new people.
+- **Branded growing**: more people know your name, often after a launch or press.
+- **Branded falling** while non-branded holds: fewer people looking for you directly.
+
+<InSimpleDash>
+  With Pro, SimpleDash's **Your name vs others** view does the split over time, with your name
+  worked out from your domain. Add other spellings in your site's settings. It also says plainly
+  that the two don't add up to all Google clicks, and why.
+</InSimpleDash>
+
+## Related
+
+- [Use Search Console to grow Google traffic](/guides/google-search-console)
+
+## Sources
+
+- Google: [Performance report: filtering data](https://support.google.com/webmasters/answer/7576553)

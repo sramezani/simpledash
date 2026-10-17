@@ -1,0 +1,24 @@
+{
+  "title": "Glossary",
+  "description": "GA4 terms in plain words",
+  "root": true,
+  "pages": [
+    "index",
+    "---Visitors and visits---",
+    "active-users",
+    "sessions",
+    "engaged-sessions",
+    "engagement-time",
+    "views",
+    "events",
+    "---Where visitors come from---",
+    "source-medium",
+    "default-channel-group",
+    "landing-page",
+    "attribution",
+    "---Data quirks---",
+    "not-set",
+    "data-thresholds",
+    "realtime"
+  ]
+}

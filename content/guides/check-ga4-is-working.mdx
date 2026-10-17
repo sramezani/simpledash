@@ -1,0 +1,70 @@
+---
+title: How to check that Google Analytics 4 is collecting data
+menuTitle: "Check GA4 works"
+seoTitle: Is GA4 working? How to check it collects data
+description: Three quick ways to check that GA4 is working on your site, Realtime, DebugView and your browser's network tab, plus the five most common reasons it isn't.
+updated: 2026-10-16
+---
+
+The quickest check: open your site in one tab and GA4's **Reports → Realtime overview** in another. If you appear within a minute or two, GA4 is collecting data. If you don't, the cause is almost always an ad blocker, a cookie banner, a wrong Measurement ID or a tag that isn't on the page.
+
+## 1. Realtime
+
+<Steps>
+<Step>
+
+In [Google Analytics](https://analytics.google.com), open **Reports → Realtime overview**.
+
+</Step>
+<Step>
+
+In another tab (ideally a private window with no ad blocker), open your site and click to a second page.
+
+</Step>
+<Step>
+
+Within a minute or two you should see at least one user in the last 30 minutes, and your pages in the list.
+
+</Step>
+</Steps>
+
+## 2. DebugView, for events
+
+DebugView shows each event as it arrives, which helps when you're setting up signups or purchases.
+
+1. Install Google's [Tag Assistant](https://tagassistant.google.com) or open your site through it: enter your site's address and choose **Connect**.
+2. In GA4, open Admin → Data display → **DebugView**.
+3. Use your site: page views, clicks and your own events appear in a timeline within seconds.
+
+## 3. Your browser's network tab
+
+1. Open your site, then your browser's developer tools (**F12**, or **⌥⌘I** on a Mac) → **Network**.
+2. Type `collect` in the filter box and reload the page.
+3. You should see requests to `google-analytics.com/g/collect` with your `G-…` ID in them. If there are none, the tag isn't running.
+
+## Not showing up? The usual reasons
+
+| Reason                                 | How to check                                                    | Fix                                                                                 |
+| -------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| An ad blocker or privacy browser       | Try a private window with extensions off, or another browser    | Nothing to fix: those visitors aren't counted, by design                            |
+| The cookie banner                      | Did you accept cookies on your own site?                        | Accept, then reload. With Consent Mode, declined visits aren't counted the same way |
+| A wrong Measurement ID                 | Compare the `G-…` in your page source with Admin → Data streams | Paste the right ID                                                                  |
+| The tag isn't on every page            | View the page source (**Ctrl/⌘ U**) and search for `gtag`       | Put the tag in the shared layout or header                                          |
+| Your internal traffic filter is active | Admin → Data filters → is "Internal Traffic" **Active**?        | Expected: your own visits are excluded on purpose                                   |
+
+If you just added GA4, give standard reports a few hours: only Realtime is immediate. [Why GA4 data is delayed](/guides/ga4-data-delay).
+
+<InSimpleDash>
+  The **Right now** card in SimpleDash shows the same live visitors on a small globe, with the pages
+  they're on, without opening GA4. Handy for checking a launch or a tag change.
+</InSimpleDash>
+
+## Related
+
+- [Add Google Analytics 4 to your website](/guides/add-google-analytics-to-website)
+- [Exclude your own visits](/guides/exclude-internal-traffic-ga4)
+
+## Sources
+
+- Google: [Realtime report](https://support.google.com/analytics/answer/9271392)
+- Google: [Monitor events in DebugView](https://support.google.com/analytics/answer/7201382)

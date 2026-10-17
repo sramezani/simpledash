@@ -1,0 +1,58 @@
+---
+title: How to add Google Analytics 4 to Shopify
+menuTitle: "Shopify"
+seoTitle: How to add Google Analytics 4 to a Shopify store
+description: Connect GA4 to your Shopify store with the Google & YouTube app, which also sends purchases and other store events. Then check them in GA4's Realtime report.
+updated: 2026-10-16
+---
+
+The recommended way to add Google Analytics 4 to Shopify is the free **Google & YouTube** app from Shopify: install it, connect your Google account, and choose your GA4 property. It adds the tag and sends store events like add-to-cart and purchases, so you don't need to edit your theme.
+
+## Connect GA4
+
+<Steps>
+<Step>
+
+In Shopify admin, install the **Google & YouTube** app from the Shopify App Store.
+
+</Step>
+<Step>
+
+Open the app and connect the Google account that owns your GA4 property.
+
+</Step>
+<Step>
+
+In the app's settings, connect **Google Analytics** and choose your GA4 property (or create one).
+
+</Step>
+</Steps>
+
+<ImageSlot
+  id="shopify-google-youtube"
+  alt="Shopify's Google & YouTube app with a Google Analytics 4 property connected"
+>
+  In a Shopify development store, open the Google & YouTube app and capture the settings showing a
+  connected Google Analytics property.
+</ImageSlot>
+
+## Don't add the tag twice
+
+If your theme or an older app already has a GA4 tag, remove it after connecting the app, or visits and purchases are counted twice. Check by searching your theme code (Online Store → Themes → Edit code) for `gtag`.
+
+## Purchases
+
+The app sends GA4's ecommerce events, including `purchase` with the order value, so GA4 shows revenue by source. Mark `purchase` as a key event if it isn't already. [Key events](/guides/ga4-key-events).
+
+## Check it works
+
+Visit your store in a private window and look at GA4's **Realtime overview**. A test order shows up as a purchase event. [More ways to check](/guides/check-ga4-is-working).
+
+<InSimpleDash>
+  With Pro, pick `purchase` as what counts as a sale, and SimpleDash's **Sales and signups by
+  source** shows which sources and landing pages bring orders, with GA4's own revenue.
+</InSimpleDash>
+
+## Related
+
+- [Which traffic brings paying customers](/guides/traffic-to-revenue)

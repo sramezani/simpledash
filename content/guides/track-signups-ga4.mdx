@@ -1,0 +1,100 @@
+---
+title: How to track signups in Google Analytics 4
+menuTitle: "Track signups"
+seoTitle: How to track signups in GA4 (with or without code)
+description: "Two ways to count signups in GA4: send a sign_up event from your code, or create one from your welcome page with no code at all. Then mark it as a key event."
+updated: 2026-10-16
+---
+
+There are two ways to count signups in Google Analytics 4. If you can edit your code, send GA4's recommended `sign_up` event when someone finishes signing up. If you can't, create a `sign_up` event in GA4 from views of the page people see right after signing up. Either way, then mark it as a key event.
+
+## Which way to choose
+
+|            | Send an event from code                                        | Create an event from a page                               |
+| ---------- | -------------------------------------------------------------- | --------------------------------------------------------- |
+| Needs code | Yes, one line                                                  | No                                                        |
+| Works when | Signup happens without a new page (a modal, a single-page app) | People land on a page only new users see, like `/welcome` |
+| Accuracy   | Best: fires exactly when signup succeeds                       | Good, if that page is only reached after signing up       |
+
+## Way 1: send a sign_up event from your code [#code]
+
+Right after a signup succeeds (not when the form is submitted, which might fail), run:
+
+```js
+gtag("event", "sign_up", {
+  method: "Google", // or 'Email', 'GitHub': how they signed up
+});
+```
+
+`sign_up` is one of GA4's recommended event names, so GA4 knows what it means. The `method` parameter is optional.
+
+If your site uses Google Tag Manager instead of `gtag`, push a dataLayer event and send it with a GA4 Event tag:
+
+```js
+window.dataLayer = window.dataLayer || [];
+window.dataLayer.push({ event: "sign_up", method: "Email" });
+```
+
+## Way 2: create the event from your welcome page (no code) [#no-code]
+
+<Steps>
+<Step>
+
+In GA4, open Admin → Data display → **Events** → **Create event** → **Create**.
+
+</Step>
+<Step>
+
+Name the new event `sign_up`.
+
+</Step>
+<Step>
+
+Add two matching conditions:
+
+- `event_name` **equals** `page_view`
+- `page_location` **contains** `/welcome` (use your own page's path)
+
+</Step>
+<Step>
+
+Leave **Copy parameters from the source event** on, and choose **Create**.
+
+</Step>
+</Steps>
+
+<ImageSlot
+  id="ga4-create-event-signup"
+  alt="GA4's Create event form: a sign_up event made from page_view where page_location contains /welcome"
+>
+  In GA4, Admin → Data display → Events → Create event → Create. Fill in the custom event name
+  sign_up and the two conditions (event_name equals page_view, page_location contains /welcome) and
+  capture the form before saving.
+</ImageSlot>
+
+GA4 creates `sign_up` from then on. It can't create it for visits before today.
+
+## Then: mark it as a key event
+
+Admin → Data display → Events → turn on **Mark as key event** for `sign_up`. If it isn't in the list yet, add it under Key events → **New key event**. [Key events, step by step](/guides/ga4-key-events).
+
+## Check it works
+
+Sign up on your own site (or reach the welcome page), then look in GA4's **Realtime overview** under events, or in **DebugView**. [How to check](/guides/check-ga4-is-working).
+
+<InSimpleDash>
+  In SimpleDash, pick `sign_up` as your signup action once. The **Signups** number then shows
+  signups next to visitors, compared with the period before, and the Monday email (Pro) includes
+  them. With Pro, **Sales and signups by source** shows which sources and landing pages bring
+  signups.
+</InSimpleDash>
+
+## Related
+
+- [Key events in GA4](/guides/ga4-key-events)
+- [Track purchases in GA4](/guides/track-purchases-ga4)
+
+## Sources
+
+- Google: [Recommended events: sign_up](https://developers.google.com/analytics/devguides/collection/ga4/reference/events#sign_up)
+- Google: [Rename and generate new events](https://support.google.com/analytics/answer/10085872)

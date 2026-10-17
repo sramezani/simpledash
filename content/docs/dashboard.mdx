@@ -1,0 +1,92 @@
+---
+title: The SimpleDash dashboard, card by card
+menuTitle: "The dashboard"
+seoTitle: The SimpleDash dashboard, card by card
+description: What every number, chart and list on the SimpleDash dashboard means, which Google Analytics 4 metric is behind it, and where to find it in GA4.
+updated: 2026-10-16
+---
+
+The dashboard is one page: four numbers and a chart at the top, then lists of where visitors came from, what they read and where they are. Every number comes from your Google Analytics 4 property, in plain words, with the same number one click away in GA4 if you want to check.
+
+## The four numbers
+
+Each number is compared with the period before (for example the 7 days before), with an arrow and a word, never only a colour.
+
+| Number | What it means | The GA4 metric |
+| --- | --- | --- |
+| **Visitors** | People Google Analytics counted. People who refuse cookies or block GA aren't included. | Active users |
+| **Page views** | How many times your pages were viewed. One visitor can view many pages. | Views |
+| **Avg. time** | How long a visitor spends with your site open and in view, on average. | User engagement duration ÷ active users |
+| **Signups** | How many times the action you chose as a signup happened. | Event count of that event |
+
+Signups stays empty, never a fake zero, until you choose an action. See [Choose what counts as a signup](/docs/signups).
+
+## Visitors over time
+
+A chart of visitors per day (per hour for Today and Yesterday, per month for 12 months). The last part is **dashed** while it's still filling up: today, or a day Google is still adding to. Hover or tab to a point to see its number, or choose **View as table**.
+
+### Chart notes
+
+Add a note to a day ("Launched on Product Hunt") with **+ Add note**, or by picking a point on the chart. Notes are short (80 characters), show as small markers, and are only yours: they never appear on public pages and are never sent to Google.
+
+## Sources and Channels
+
+Where visitors came from. **Sources** shows the site or app (Google, X, a newsletter, chatgpt.com). **Channels** groups them:
+
+| In SimpleDash | GA4's channel |
+| --- | --- |
+| Direct | Direct |
+| Search | Organic Search |
+| Social | Organic Social |
+| Other sites | Referral |
+| Email | Email |
+| AI assistants | AI Assistant |
+| Video | Organic Video |
+| Search ads, Social ads, Display ads, Other ads | Paid channels |
+| Unknown | Unassigned |
+
+**Direct** means GA4 couldn't tell where the visit came from: a typed address, a bookmark, or a link in an app that hides it. [Why direct traffic is high](/guides/ga4-direct-traffic).
+
+If a payment page such as Stripe Checkout shows up as a source, the card warns you: GA4 is giving your sales to the payment page. [How to fix it](/guides/ga4-unwanted-referrals-stripe).
+
+## AI traffic
+
+Visitors who came from AI assistants such as ChatGPT, Perplexity, Claude, Gemini and Copilot, split by assistant, and the pages they landed on. Google's AI Overviews count as Google search, because Google reports them that way. [How AI traffic is counted](/guides/ga4-ai-traffic).
+
+## Pages and Landing pages
+
+**Top pages** shows the pages viewed most, with views and visitors. **Landing pages** shows where visits started: the page someone saw first.
+
+## Countries
+
+**Country** and **City**, by visitors. Places come from the visitor's network, so a city can be a nearby one. Cities Google couldn't place are grouped as "Unknown".
+
+## Devices
+
+**Browser**, **OS** and **Device** (desktop, mobile, tablet), as Google Analytics names them. In-app browsers, like Instagram's, are listed on their own.
+
+## Actions
+
+Downloads, outbound clicks, form submits and your signups, as GA4 recorded them. GA4 counts the first three only when **Enhanced measurement** is on in its data stream settings, so the card says so if they're all empty.
+
+## Right now
+
+Visitors in the last 30 minutes, on a small globe, with the pages they're on. Google's realtime data has page titles rather than page addresses, so the list shows titles. It updates about every 45 seconds while the tab is open.
+
+## More, and CSV
+
+Each list shows its top 10. **More** opens the whole list with a search box and a CSV download. The overview's download menu exports the chart and the four numbers.
+
+## Pro cards
+
+With [Pro](/docs/plans), the dashboard also shows:
+
+- **Revenue** and **New customers** from your Stripe account, with revenue bars under the visitors chart. [Revenue from Stripe](/docs/revenue).
+- **Sales and signups by source**: which sources and landing pages bring signups and sales. [What counts as a sale](/docs/what-counts-as-a-sale).
+- **Google search**: clicks from Google, searches close to page 1, what changed and more. [Google search insights](/docs/google-search).
+
+## Related
+
+- [Date ranges and comparisons](/docs/date-ranges)
+- [Why a number can differ from GA4](/docs/numbers-differ-from-ga4)
+- [GA4 terms in plain words](/docs/plain-words)

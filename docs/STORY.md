@@ -4,6 +4,55 @@ A dated log with one entry per session. **Newest entry first.**
 
 It is written for future Claude sessions: read the latest entry before starting work. Ideas that fall outside the roadmap go here too (Working rule 5).
 
+## 2026-10-16 · Session 14 · Docs, guides, glossary and comparisons
+
+### Done
+
+- **Fumadocs** (core and UI 16.15.17, MDX 15.4.5), in `src/app/(content)/` and `src/components/content/`:
+  - One loader over `content/{docs,guides,glossary,compare}`, defined with the Macro API in `src/lib/content/collections.ts`.
+  - Layout: the section tabs, a menu with short `menuTitle` labels, the page in the middle, "On this page" on the right, and Ctrl/⌘ K search. Light only, on our theme tokens (the `fd-*` colours are mapped in `globals.css`, and the theme test allows them).
+  - Each page has its title, description, canonical address, a social image of its own (`/content-og/<page>/image.png`), Article and Breadcrumb JSON-LD, "Copy Markdown" and "Open in ChatGPT / Claude", "Edit on GitHub" and the last updated date.
+- **For AI assistants:**
+  - A Markdown copy of every page at its address plus `.md`, through rewrites to `/llms.mdx/…`.
+  - `contentToMarkdown` (tested) writes prices and other code facts as their values and leaves screenshots out.
+  - `/llms.txt` lists every page; `/llms-full.txt` has them all. Every page is in the sitemap.
+- **Facts from the code:**
+  - Components `Price`, `FreeDays`, `MonthsFree`, `PlanFeatures`, `Freshness`, `Scope`, `PlainWordsTable`, `SupportEmail` and `SourceRepo`.
+  - The cache times moved to `src/lib/ga4/freshness.ts`, and the plain-words table to `src/config/plain-words.ts`.
+- **Screenshots:** 28 `ImageSlot`s. Each renders nothing in production until `public/content/<id>.webp` exists, and a dashed box with the instructions in development. `npm run content:images` writes `docs/CONTENT-IMAGES.md`.
+- **94 pages:** 23 docs, 46 guides, 14 glossary pages and 11 comparisons, following the plan's rules (answer first, headings as questions, sources linked, honest comparisons with no competitor prices typed).
+- **Checked:**
+  - All 50 outside links opened. Six source labels were updated to Google's and Stripe's current page titles.
+  - Platform steps checked against the vendors' help pages. Three were wrong and are rewritten: Framer has a Measurement ID field, Carrd moved Google Analytics under Manage → Analytics, and Webflow's tab is now "Integrations".
+  - Stripe's key creation is now Create secret key → custom permissions → two-factor. The guide, the revenue docs and the app's own settings text are updated.
+- **Links in:** the landing header (Guides, Docs) and footer (all four sections), and the app's help links for "no GA4 site", "no key events" and "no purchase values" now go to our guides.
+- **Tests:** `src/lib/content/content.test.ts` checks frontmatter (description 70 to 160 characters, titles or `seoTitle` up to 60), links and `#anchors`, menus, no typed prices or section signs, and the screenshot list. Also tests for `contentToMarkdown`, the freshness times, structured data and `llms.txt`.
+
+- **Final checks:**
+  - The production build was run exactly as Docker does: no `.env`, only `APP_URL`. Earlier scratch builds had a stray `.env` copy, so they weren't truly empty; that is fixed now.
+  - The content root is named "SimpleDash", so search shows "SimpleDash › Docs › Help".
+  - Markdown copies drop the indentation Prettier adds inside components (it read as code blocks) and use absolute links.
+  - A test now fails on unquoted `: ` in frontmatter, which breaks the YAML (the build caught one first).
+
+### Learned
+
+- The Macro API evaluates the whole module that defines a collection, so keep `defineDocs` alone in its module.
+- The production server checks every secret at startup, so a local `next start` needs dummy values. The build itself needs only `APP_URL`.
+- Next.js allows no `opengraph-image` under a catch-all route; a static route handler works instead.
+- Typed routes don't accept an optional catch-all's bare address (`/docs`), so those links are cast.
+- Fumadocs adds about 80 KB of gzipped JavaScript to content pages compared with the landing page. It loads after the static HTML, with no layout shift.
+
+### Not checked
+
+- Lighthouse (not installed here): run it on `/docs` and a guide after deploy.
+- The GA4 menus in the guides were written from Google's current help pages, not clicked through on a real property.
+
+### Next (Siamak)
+
+- Add the screenshots in `docs/CONTENT-IMAGES.md`.
+- Cloudflare AI bot policies, the Search Console sitemap, Bing Webmaster Tools and Crawler Hints (CHECKLIST).
+- After deploy, share one guide a week on X (the plan's distribution section).
+
 ## 2026-10-15 · Session 13 · One-click site menu and settings pages
 
 ### Done
@@ -62,6 +111,23 @@ It is written for future Claude sessions: read the latest entry before starting 
 - **Cache:** reports for ranges that end today stay fresh for 30 minutes (1 hour on public pages), so 7 and 30 days refresh more often than before (it was 3 hours, or 12 hours on public pages). `warm-cache` still runs hourly for sites opened in the last 24 hours. The GA4 Data API has no per-call cost.
 - **Copy:** the visitors chart's help text, CLAUDE.md (the Dates rule), SPEC (sections 1, 8, 10, 16 and the facts table), ga4, email, CHECKLIST, DECISIONS.
 - **Checked:** 379 tests (the date fixtures moved by a day, plus new ones for `lastWeekRange` and today being left off). The real dashboard needs a signed-in check.
+
+### Content plan
+
+- **`docs/CONTENT-PLAN.md`** (a proposal; docs and guides aren't in the roadmap yet). It covers:
+  - who we write for, and the one definition used everywhere
+  - how a topic earns a page (fit, demand, win chance)
+  - five site sections: `/guides`, `/glossary`, `/docs`, `/compare` and `/changelog`
+  - eight clusters with about 95 pages in four phases, and the first ten pages
+  - page templates, AI assistants and agents, distribution, measurement with a monthly prompt check, and how it would be built
+- **Checked on official pages today:**
+  - Google: no special files or markup are needed for AI Overviews and AI Mode, and crawling must be allowed by the CDN too.
+  - Google: FAQ rich results stopped in May 2026, and `llms.txt` neither helps nor hurts in Google Search.
+  - Google's generative AI content guidance was updated on Oct 1, 2026.
+  - Cloudflare: its AI bot policies have Search, Agent and Training categories, with new defaults since Sept 15, 2026.
+  - WebSearch wasn't available, so these were read in the browser.
+- **The launch kit had outdated claims,** now fixed: "14 days free", "free for one site", Pro "for more sites", "yesterday is marked still updating". The Product Hunt description is within 260 characters again (256).
+- **README's docs table** lists the plan, and the billing row no longer says "Trial".
 
 ### Not checked
 

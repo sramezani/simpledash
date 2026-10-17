@@ -1,0 +1,52 @@
+---
+title: Set up cross-domain measurement in GA4
+menuTitle: "Cross-domain"
+seoTitle: "GA4 cross-domain tracking: app and site on two domains"
+description: When your site and your app or shop are on different domains, set up GA4 cross-domain measurement so one visit isn't counted as two. Subdomains need nothing.
+updated: 2026-10-16
+---
+
+If your marketing site and your app or shop are on **different domains** (for example `mysite.com` and `mysiteapp.com`), set up cross-domain measurement in your GA4 data stream, so a visitor moving between them stays one visit with its original source. **Subdomains** of the same domain (`mysite.com` and `app.mysite.com`) work without it.
+
+## Do you need it?
+
+| Your setup                                              | Need cross-domain?                                                          |
+| ------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `mysite.com` and `app.mysite.com`                       | No: subdomains share GA4's cookie automatically                             |
+| `mysite.com` and `mysite.io`                            | Yes                                                                         |
+| `mysite.com` and a checkout on Stripe, PayPal or Paddle | No: use [unwanted referrals](/guides/ga4-unwanted-referrals-stripe) instead |
+
+## Set it up
+
+<Steps>
+<Step>
+
+Put the **same** GA4 tag (same Measurement ID) on both domains.
+
+</Step>
+<Step>
+
+In GA4, open Admin → Data streams → your web stream → **Configure tag settings** → **Configure your domains**.
+
+</Step>
+<Step>
+
+Add a condition for each domain, for example **Contains** `mysite.com` and **Contains** `mysite.io`. Save.
+
+</Step>
+</Steps>
+
+GA4 then adds a short `_gl=` parameter to links between the domains, which carries the visitor across.
+
+## Check it works
+
+Click a link from one domain to the other: the address should include `_gl=`. In GA4's Realtime report, the visit keeps its original source instead of showing your other domain as a referral.
+
+<InSimpleDash>
+  With both domains on one GA4 property, SimpleDash shows them as one site, with sources and landing
+  pages across both.
+</InSimpleDash>
+
+## Sources
+
+- Google: [Set up cross-domain measurement](https://support.google.com/analytics/answer/10071811)

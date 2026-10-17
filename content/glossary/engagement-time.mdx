@@ -1,0 +1,43 @@
+---
+title: What is average engagement time in GA4?
+menuTitle: "Engagement time"
+seoTitle: Average engagement time in GA4, explained simply
+description: Average engagement time is how long your site was open and in view, on average. How GA4 measures it, how it differs from session duration, and where to see it.
+updated: 2026-10-16
+---
+
+**Average engagement time per active user** is how long, on average, people had your site open and in view (the tab in front, not hidden behind others). It's GA4's replacement for the old "average session duration", and it's more honest, because time in a background tab doesn't count. SimpleDash calls it **Avg. time**.
+
+## How GA4 measures it
+
+GA4 adds up the time each page was in the foreground (`user_engagement` events) and divides by active users. If someone opens your page, switches to another tab for ten minutes and comes back for one, only the time in view counts.
+
+## Per active user vs per session
+
+GA4 has two versions:
+
+- **Average engagement time per active user**: total engagement ÷ active users. This is what most reports show, and what SimpleDash shows.
+- **Average engagement time per session**: total engagement ÷ sessions. Lower, if people visit more than once.
+
+When comparing with SimpleDash, use the per active user one.
+
+## Where to find it
+
+Reports → Engagement → **Overview**, or the "Average engagement time per active user" column in Pages and screens.
+
+## What's a good number?
+
+It depends on the page: a docs page that answers a question in 30 seconds is doing well; a long guide with 20 seconds isn't. Compare your own pages and periods.
+
+## In SimpleDash
+
+**Avg. time** is shown like "1m 23s", compared with the period before, with the help text "How long a visitor spends with your site open and in view, on average."
+
+## Related
+
+- [Engaged sessions](/glossary/engaged-sessions)
+- [Views](/glossary/views)
+
+## Sources
+
+- Google: [User engagement](https://support.google.com/analytics/answer/11109416)

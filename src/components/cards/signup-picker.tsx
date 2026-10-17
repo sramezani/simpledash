@@ -9,7 +9,8 @@ type SignupPickerProps = {
   action: (state: SignupPickState, formData: FormData) => Promise<SignupPickState>;
 };
 
-const HOW_TO = "https://support.google.com/analytics/answer/12844695";
+/** Our guide to marking a key event in GA4 (docs/SPEC.md section 30). */
+const HOW_TO = "/guides/ga4-key-events";
 
 /**
  * "Which action means a signup?" (docs/SPEC.md section 11.2). A picker of the
@@ -29,13 +30,8 @@ export function SignupPicker({ keyEvents, current, action }: SignupPickerProps) 
         <p>
           In Google Analytics, go to Admin → Events and mark your signup event as a key event. Then
           reload this page and pick it here.{" "}
-          <a
-            href={HOW_TO}
-            target="_blank"
-            rel="noreferrer"
-            className="font-medium text-primary underline-offset-2 hover:underline"
-          >
-            Google&apos;s how-to
+          <a href={HOW_TO} className="font-medium text-primary underline-offset-2 hover:underline">
+            How to mark a key event
           </a>
         </p>
       </EmptyState>

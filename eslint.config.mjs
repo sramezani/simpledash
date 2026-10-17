@@ -69,6 +69,7 @@ const featureFolders = [
   "dashboard",
   "public-page",
   "search",
+  "content",
 ];
 
 export default defineConfig([

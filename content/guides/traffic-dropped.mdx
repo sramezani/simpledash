@@ -1,0 +1,56 @@
+---
+title: Your traffic dropped? How to find what changed
+menuTitle: "Traffic dropped?"
+seoTitle: Website traffic dropped? How to find what changed
+description: "A step-by-step check for a traffic drop in GA4: rule out tracking problems, then find which source, page, device or country fell, and what Search Console shows."
+updated: 2026-10-16
+---
+
+When traffic drops, first check it's real: tracking breaks more often than traffic does. Then narrow it down: which source fell, which pages, which devices or countries, and, for Google, which searches. That tells you _what_ changed; the _why_ usually becomes obvious from there.
+
+## 1. Rule out a tracking problem
+
+- **Is GA4 still running?** Open your site and check GA4's Realtime report. [How](/guides/check-ga4-is-working).
+- **Did anything change on your site?** A redesign, a new cookie banner, a new theme or a removed plugin can drop the tag.
+- **Is the day complete?** Today and yesterday are still filling up. [Why GA4 is late](/guides/ga4-data-delay).
+
+If every source fell at once, on one day, to near zero, it's almost always tracking.
+
+## 2. Compare the right periods
+
+Compare the same length of time, and the same days of the week. A Monday-to-Sunday week against the week before is fair; a weekend against weekdays isn't. For seasonal sites, also compare with the same period last year.
+
+## 3. Find which source fell
+
+In GA4: Reports → Acquisition → **Traffic acquisition**, with **Compare** on (the date picker → Compare). Sort by the change. Usually one or two sources explain most of the drop.
+
+| The drop is mostly in   | Look at                                                                     |
+| ----------------------- | --------------------------------------------------------------------------- |
+| Organic search (Google) | Search Console: which pages and searches lost clicks (step 5)               |
+| Referral                | Did a site that linked to you remove the link, or did a post stop trending? |
+| Social                  | Did a post bring a spike last period?                                       |
+| Direct                  | Did a newsletter or chat share happen last period?                          |
+| Everything at once      | Tracking (step 1), or the site was down                                     |
+
+## 4. Find which pages fell
+
+Reports → Engagement → **Landing page**, compared with the period before. A single page losing most of its visits points to a ranking change or a lost link for that page.
+
+## 5. Check Search Console for Google drops
+
+In Search Console → Performance → Search results, compare the two periods and sort pages by the change in clicks. For each page, check whether **position** fell (a ranking change) or **impressions** fell (fewer searches, or seasonal). [Find which searches changed](/guides/google-clicks-what-changed).
+
+## 6. Write down what you find
+
+Add a note on the day it started, so next time you remember what happened.
+
+<InSimpleDash>
+  SimpleDash puts the comparison next to every number, and with Pro its **What changed** view lists
+  the pages whose Google clicks fell most, with the searches behind each change: clicks and position
+  then and now. It states the facts and never guesses why. Add a chart note on the day.
+</InSimpleDash>
+
+## Related
+
+- [Understand your website traffic](/guides/understand-website-traffic)
+- [The summary line](/docs/summary-line)

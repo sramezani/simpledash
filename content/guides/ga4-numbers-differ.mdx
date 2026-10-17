@@ -1,0 +1,53 @@
+---
+title: Why GA4, Stripe, Search Console and your host show different numbers
+menuTitle: "Why tools disagree"
+seoTitle: Why GA4, Stripe and Search Console numbers differ
+description: GA4 visitors, Stripe sales, Search Console clicks and your host's analytics never match exactly. What each one counts, why they differ and which to trust.
+updated: 2026-10-16
+---
+
+Google Analytics, Stripe, Search Console and your hosting provider's analytics each count something different, in a different way, so their numbers never match exactly. GA4 counts visitors who allowed it to run; Stripe counts every payment; Search Console counts clicks on Google; your host counts requests to its servers. Use each for what it measures best.
+
+## What each one counts
+
+| Tool                                                | Counts                                                                 | Misses                                                                    |
+| --------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| **Google Analytics 4**                              | Visits from browsers where its tag ran (and, with a banner, consented) | Ad-blocker users, declined consent, people who leave before the tag loads |
+| **Stripe**                                          | Every successful payment and refund                                    | Nothing about where the buyer came from                                   |
+| **Search Console**                                  | Clicks and impressions on Google search                                | Every other source; anonymized rare searches in per-search lists          |
+| **Hosting analytics** (Vercel, Cloudflare, Netlify) | Requests or visits by their own method                                 | Often counts bots, or counts differently; no link to signups              |
+
+## GA4 vs Stripe
+
+- **Not every buyer is tracked.** A buyer who blocks GA4 still pays: Stripe counts them, GA4 doesn't.
+- **Time zones.** Stripe's reports may use a different time zone from your GA4 property, so sales move between days.
+- **Refunds and failed payments.** Stripe nets refunds; GA4 only knows what your tag sent.
+
+Trust **Stripe for money**, and GA4 for where buyers came from.
+
+## GA4 vs Search Console
+
+- **Clicks aren't visits.** A Search Console click becomes a GA4 visit only if the tag runs and the visitor consents.
+- **Different counting.** Search Console counts clicks by the page in Google's results; GA4 counts the page visitors landed on, which can differ after redirects.
+- **Delay.** Search Console is usually 2 to 3 days behind.
+
+Trust **Search Console for Google search**, and GA4 for what happened on your site after.
+
+## GA4 vs your host's analytics
+
+Hosting analytics often count every request, including bots, prefetches and visitors who block GA4. They can be higher or lower depending on their method. Compare trends, not totals.
+
+## Which to trust?
+
+Each is right about what it measures. Pick one source per question and compare it with itself over time: GA4 for visitors and sources, Stripe for revenue, Search Console for Google search.
+
+<InSimpleDash>
+  SimpleDash keeps each number tied to its source and says which: visitors from GA4, revenue from
+  Stripe, clicks from Search Console. It never mixes them into a guess like "revenue per visitor
+  from Google".
+</InSimpleDash>
+
+## Related
+
+- [Why a SimpleDash number can differ from GA4](/docs/numbers-differ-from-ga4)
+- [Cookie banners and GA4](/guides/ga4-cookie-consent)

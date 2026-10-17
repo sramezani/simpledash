@@ -72,6 +72,8 @@ Pages:
 | `/settings/billing` | Settings → Plan & billing: upgrade to Pro or manage billing (signed in) |
 | `/settings/email` | Settings → Monday email: on or off (signed in) |
 | `/settings/sites/<id>` | Settings for one of your sites: public page, Google search, revenue, sales, remove (signed in). The gear next to a site in the dashboard's site menu opens it |
+| `/docs`, `/guides`, `/glossary`, `/compare` | Docs, Google Analytics guides, GA4 terms in plain words and comparisons, from the MDX files in `content/` (Fumadocs). Add `.md` to any page's address for its Markdown copy |
+| `/llms-full.txt` | Every docs page and guide in one Markdown file, for AI assistants (`/llms.txt` lists them) |
 | `/admin` | Usage counts (only for `ADMIN_EMAILS`; a 404 for everyone else) |
 | `/p/<slug>` | A public stats page |
 | `/email/unsubscribe?token=…` | One-click unsubscribe from the weekly email |
@@ -90,6 +92,15 @@ Pages:
 | `/api/search-console/connected?site=` | Where Google returns after granting Search Console access; picks the property (signed in) |
 | `/api/email/unsubscribe` | One-click unsubscribe for mail apps (`List-Unsubscribe-Post`) |
 | `/api/icon/<domain>` | Cached site icons for Sources |
+
+## Docs and guides
+
+The pages at `/docs`, `/guides`, `/glossary` and `/compare` are MDX files in `content/`, one folder per section, rendered with [Fumadocs](https://fumadocs.dev) (`docs/SPEC.md` section 30).
+
+- **Add a page:** create `content/<section>/<slug>.mdx` with `title`, `description` (70 to 160 characters), `updated` and, for long titles, `seoTitle` and `menuTitle`, then add the slug to that folder's `meta.json`.
+- **Prices and plan facts** come from components (`<Price plan="pro" interval="month" />`, `<FreeDays />`, `<PlanFeatures plan="free" />`), never typed.
+- **Screenshots:** `<ImageSlot id="…" alt="…">what to capture</ImageSlot>`, then `npm run content:images`. A slot shows nothing in production until `public/content/<id>.webp` exists.
+- `npm test` checks every page's frontmatter, links and anchors, menus and screenshot list.
 
 ## Scheduled jobs
 
@@ -116,6 +127,7 @@ node scripts/run-job.mjs revenue-sync   # hourly at :20 (Pro sites with Stripe c
 | `npm test` | Vitest unit tests |
 | `npm run db:generate` | Writes a SQL migration into `drizzle/` from changes in `src/lib/db/schema.ts` |
 | `npm run db:migrate` | Applies the migrations to `DATABASE_URL` |
+| `npm run content:images` | Rewrites `docs/CONTENT-IMAGES.md`: every screenshot slot in `content/`, and which are still missing |
 | `node scripts/copy-flags.mjs` | Rebuilds `public/flags` (SVG) from country-flag-icons, after upgrading it |
 | `node scripts/copy-tech-icons.mjs` | Rebuilds `public/icons/tech` (browser, OS and device icons) from the two Iconify sets, after changing the list or upgrading them |
 | `node scripts/build-places.mjs` | Rebuilds the globe's place table from GeoNames (all-the-cities) |
@@ -182,13 +194,15 @@ deploy/setup.sh azureuser@<new-ip> --from azureuser@<old-ip>  # move to a new se
 | [docs/ga4.md](docs/ga4.md) | The GA4 data layer: reports, cache, errors, property choice, jobs |
 | [docs/auth.md](docs/auth.md) | Sign-in, sessions, Google tokens and access checks |
 | [docs/google-verification.md](docs/google-verification.md) | Google's OAuth app verification: what to set up, the scope justification, the demo video script |
-| [docs/billing.md](docs/billing.md) | Trial, plan states, Checkout, the Portal, the webhook and Stripe setup |
+| [docs/billing.md](docs/billing.md) | Free and Pro, plan states, Checkout, the Portal, the webhook and Stripe setup |
 | [docs/search-console.md](docs/search-console.md) | Google search insights: connecting Search Console, the window, the five views, errors |
 | [docs/revenue.md](docs/revenue.md) | Revenue from Stripe (the pasted key, daily totals, MRR, the sync) and sales by source |
 | [docs/email.md](docs/email.md) | The Monday email: when it's sent, content, unsubscribe, Resend setup |
 | [docs/public-page.md](docs/public-page.md) | Public stats pages: settings, caching, what's shown and what never is |
 | [docs/backup.md](docs/backup.md) | Nightly backups to R2 and how to restore one |
 | [docs/launch.md](docs/launch.md) | Launch kit: Product Hunt, Indie Hackers, X thread, screenshots |
+| [docs/CONTENT-PLAN.md](docs/CONTENT-PLAN.md) | Content plan: who the docs and guides are for, the clusters, and the rules for keeping them right |
+| [docs/CONTENT-IMAGES.md](docs/CONTENT-IMAGES.md) | Every screenshot slot in the docs and guides, with what to capture (made by `npm run content:images`) |
 | [CLAUDE.md](CLAUDE.md) | Brief and working rules for Claude Code |
 
 ## License

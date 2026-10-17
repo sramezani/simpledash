@@ -10,8 +10,8 @@ import { sourceDomain } from "@/lib/ga4/labels";
 import type { Payloads } from "@/lib/ga4/reports";
 import { ListCard, type ListExport } from "./list-card";
 
-const GA4_PURCHASE_GUIDE =
-  "https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtag#make_a_purchase_or_issue_a_refund";
+/** Our guide to sending GA4's purchase event (docs/SPEC.md section 30). */
+const GA4_PURCHASE_GUIDE = "/guides/track-purchases-ga4";
 
 type Goal = {
   /** Null when the source isn't in the period's visitor list (it lists the top ones). */
@@ -170,8 +170,6 @@ export function SalesCard({
           GA4 has no purchase values in this period, so revenue per source isn&apos;t shown.{" "}
           <a
             href={GA4_PURCHASE_GUIDE}
-            target="_blank"
-            rel="noreferrer"
             className="font-medium text-primary underline-offset-2 hover:underline"
           >
             How to send them

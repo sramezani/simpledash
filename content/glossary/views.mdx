@@ -1,0 +1,36 @@
+---
+title: What are views in GA4?
+menuTitle: "Views"
+seoTitle: "Views in GA4: page views explained"
+description: Views in GA4 count every time a page is viewed, including repeat views by the same person. How they differ from users and sessions, and where to find them.
+updated: 2026-10-16
+---
+
+**Views** in Google Analytics 4 count every time a page (or app screen) was viewed, including when the same person views it again. One visitor reading five pages makes five views. SimpleDash calls them **Page views**.
+
+## How views are counted
+
+GA4 counts a view for each `page_view` event (and `screen_view` in apps). With enhanced measurement on, a page view is also sent when a single-page app changes the address without reloading.
+
+Reloading a page counts as another view. So does coming back to it later.
+
+## Views vs users vs sessions
+
+|          | 1 person reads 3 pages, comes back tomorrow for 2 more |
+| -------- | ------------------------------------------------------ |
+| Users    | 1                                                      |
+| Sessions | 2                                                      |
+| Views    | 5                                                      |
+
+## Views per page
+
+Reports → Engagement → **Pages and screens** shows views for each page, along with users and engagement time. Switch the first column to **Page path and screen class** to see addresses rather than titles.
+
+## In SimpleDash
+
+**Page views** is GA4's views for the period, and the **Pages** card lists the top pages by views, with visitors next to them.
+
+## Related
+
+- [Active users](/glossary/active-users)
+- [Landing page](/glossary/landing-page)

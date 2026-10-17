@@ -1,0 +1,48 @@
+---
+title: What SimpleDash can see in your Google account
+menuTitle: "What SimpleDash can see"
+seoTitle: What SimpleDash can see in your Google account
+description: SimpleDash asks Google only for read-only access to Google Analytics. What it can and can't see, why Google calls it sensitive, and how to remove it.
+updated: 2026-10-16
+---
+
+SimpleDash asks Google for one permission: read-only access to Google Analytics. It can read the reports GA4 already has, and it can't change, add or delete anything in your Google account.
+
+## The exact permission
+
+When you sign in, Google asks you to allow:
+
+| Permission | What it allows | When it's asked |
+| --- | --- | --- |
+| <Scope name="analytics" /> | Read your Google Analytics reports and settings | When you sign in |
+| <Scope name="search-console" /> | Read your Search Console data | Only if you connect Search Console (Pro) |
+
+Google also shares your name, email address and profile picture, so we can create your account. Nothing else.
+
+## What SimpleDash can't do
+
+- Change any GA4 setting, add users or delete data.
+- Read your Gmail, Drive, Calendar or any other Google service.
+- See individual visitors. GA4's reports are totals ("120 visitors from Google"), and that is all SimpleDash asks for.
+
+## Why does Google call it "sensitive"?
+
+Google labels access to Analytics data as a **sensitive** permission, because analytics data belongs to your business. It isn't a warning about SimpleDash in particular: every app that reads GA4 asks for the same permission. Google checks such apps before they can be used by everyone.
+
+## What we store
+
+We keep the Google access token, **encrypted**, so the dashboard can fetch fresh numbers without asking you to sign in again. We also keep short-lived copies of report totals, so pages open fast. Never anything about individual visitors. The full list is in [Data and security](/docs/data-and-security).
+
+## How to remove access
+
+You can end SimpleDash's access at any time, in either place:
+
+- **In SimpleDash:** Settings → Profile → **Disconnect Google**. This revokes the token at Google and signs you out. Your settings and notes stay, so signing in again restores everything.
+- **In your Google account:** go to [myaccount.google.com/connections](https://myaccount.google.com/connections), choose SimpleDash and remove its access.
+
+To delete everything instead, see [Disconnect Google or delete your account](/docs/delete-account).
+
+## Related
+
+- [Data and security](/docs/data-and-security)
+- [Open source](/docs/open-source): read exactly what the code does.

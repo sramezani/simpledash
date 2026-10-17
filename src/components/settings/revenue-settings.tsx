@@ -72,8 +72,8 @@ export function RevenueSettings({
                 Developers → API keys
                 <ExternalLinkIcon className="size-3.5" aria-hidden="true" />
               </a>{" "}
-              and click <strong className="text-foreground">Create restricted key</strong>. Name it
-              SimpleDash.
+              and click <strong className="text-foreground">Create secret key</strong>. Choose
+              custom permissions (not full access), and name it SimpleDash.
             </li>
             <li>
               Set <strong className="text-foreground">Charges</strong>,{" "}

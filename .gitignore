@@ -31,3 +31,4 @@ npm-debug.log*
 /.codegraph/
 /.lighthouse/
 /.vitest/
+.source

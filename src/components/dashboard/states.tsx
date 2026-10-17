@@ -30,14 +30,12 @@ export function NoPropertyNotice() {
     <Notice
       title="No Google Analytics site found. Here's how to add GA4 in 5 minutes."
       action={
-        <a
-          href="https://support.google.com/analytics/answer/9304153"
-          target="_blank"
-          rel="noreferrer"
+        <Link
+          href="/guides/add-google-analytics-to-website"
           className="inline-flex h-11 items-center rounded-lg border bg-card px-4 text-sm font-medium hover:bg-muted"
         >
-          Google&apos;s setup guide
-        </a>
+          Step-by-step guide
+        </Link>
       }
     >
       <ol className="mt-1 list-decimal space-y-1 pl-5">

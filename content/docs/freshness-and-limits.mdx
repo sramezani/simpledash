@@ -1,0 +1,46 @@
+---
+title: How fresh the numbers are, and Google's limits
+menuTitle: "Freshness and limits"
+seoTitle: How fresh SimpleDash numbers are, and limits
+description: How often SimpleDash refreshes your numbers, how late Google Analytics adds visits, Google's hourly limits, and what Free and Pro include.
+updated: 2026-10-16
+---
+
+SimpleDash keeps a copy of each report so pages open instantly, and refreshes it in the background. For any range that includes today, the copy is at most <Freshness kind="endsToday" audience="owner" /> old; Google itself adds visits a few hours late, so today is always still filling up.
+
+## How often SimpleDash refreshes
+
+| Range | Dashboard | Public pages |
+| --- | --- | --- |
+| Ends today (every range except Yesterday) | Every <Freshness kind="endsToday" audience="owner" /> | Every <Freshness kind="endsToday" audience="public" /> |
+| Includes yesterday | Every <Freshness kind="recent" audience="owner" /> | Every <Freshness kind="recent" audience="public" /> |
+| Ended before yesterday | Every <Freshness kind="settled" audience="owner" /> | Every <Freshness kind="settled" audience="public" /> |
+
+When you open a page, you see the latest copy at once. If it's older than the time above, SimpleDash fetches a new one in the background and the next visit has it. The **Right now** card is separate: it updates about every 45 seconds while the page is open.
+
+## How late Google adds visits
+
+Google Analytics usually takes a few hours to process visits, and can take longer for a full day to settle. That's why today's part of the chart is dashed, and why it can be missing early in the day rather than showing a zero. Google's own page on [data freshness](https://support.google.com/analytics/answer/11198161) has the details. [More on GA4 delays](/guides/ga4-data-delay).
+
+Search Console data (Pro) is usually 2 to 3 days behind, and the Google search card says so.
+
+## Google's limits
+
+Google limits how much each property can be read per hour and per day. SimpleDash stays well inside them by caching reports and asking for several cards in one request. If a property hits the hourly limit (often because other tools read it too), the dashboard shows the latest numbers and says when they'll refresh.
+
+Public pages fetch at most 20 new custom date ranges per site per hour, so a stranger typing dates into your public page's address can't use up your limit.
+
+## Plan limits
+
+| | Free | Pro |
+| --- | --- | --- |
+| Sites | No limit | No limit |
+| How far back | The last <FreeDays /> days | Everything GA4 has |
+| Monday email, Google search, revenue | No | Yes |
+
+There's no limit on traffic: SimpleDash reads totals, so a site with a million visitors costs the same to show as one with ten.
+
+## Related
+
+- [Date ranges and comparisons](/docs/date-ranges)
+- [Free and Pro](/docs/plans)

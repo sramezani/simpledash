@@ -1,0 +1,60 @@
+---
+title: "GA4 data retention: what it is and what to set"
+menuTitle: "Data retention"
+seoTitle: "GA4 data retention: 2 or 14 months? What to set"
+description: GA4's data retention setting keeps detailed data for 2 or 14 months. What it affects (explorations), what it doesn't (standard reports), and why to choose 14.
+updated: 2026-10-16
+---
+
+GA4's data retention setting decides how long Google keeps detailed, user-level data: 2 months by default, or 14 months on standard properties. It affects **explorations**, not the standard reports, which keep their totals. Set it to 14 months: there's no downside for most sites.
+
+## Change it to 14 months
+
+<Steps>
+<Step>
+
+In GA4, open Admin → Data collection and modification → **Data retention**.
+
+</Step>
+<Step>
+
+Set **Event data retention** to **14 months**.
+
+</Step>
+<Step>
+
+Choose **Save**.
+
+</Step>
+</Steps>
+
+<ImageSlot
+  id="ga4-data-retention"
+  alt="GA4's Data retention settings with event data retention set to 14 months"
+>
+  In GA4, Admin → Data retention. Capture the settings with "14 months" selected for event data
+  retention.
+</ImageSlot>
+
+## What it affects
+
+|                                                      | Affected                                      | Not affected              |
+| ---------------------------------------------------- | --------------------------------------------- | ------------------------- |
+| Explorations (funnels, path analysis, free-form)     | Yes: older than the setting can't be explored |                           |
+| Standard reports (Acquisition, Engagement, Realtime) |                                               | No: their totals are kept |
+| The GA4 Data API's standard reports                  |                                               | No                        |
+
+So the setting doesn't delete your visitor totals. It limits how far back you can dig into detailed data in explorations.
+
+## Reset on new activity
+
+The **Reset user data on new activity** switch restarts the retention clock for a user each time they come back. Leaving it on is fine for most sites.
+
+<InSimpleDash>
+  SimpleDash reads GA4's standard reports, so its history (12 months and custom dates on Pro) isn't
+  limited by this setting. Still worth switching to 14 months for your own explorations in GA4.
+</InSimpleDash>
+
+## Sources
+
+- Google: [Data retention](https://support.google.com/analytics/answer/7667196)

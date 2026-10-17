@@ -1,0 +1,85 @@
+---
+title: Do you need a cookie banner for Google Analytics 4?
+menuTitle: "Cookie banners and consent"
+seoTitle: Cookie banner for GA4? Consent Mode explained
+description: When GA4 needs cookie consent, what Google Consent Mode does, basic vs advanced mode, and the code to set it up. In plain words, and not legal advice.
+updated: 2026-10-16
+---
+
+If people visit your site from the EU, the UK or other places with similar privacy rules, you generally need their consent before Google Analytics sets its cookies. The usual setup is a cookie banner plus Google **Consent Mode**, which tells GA4 whether the visitor said yes. This page explains how it works; it isn't legal advice.
+
+## Why GA4 needs consent in many places
+
+GA4 sets cookies (`_ga`, `_ga_…`) to recognise returning visitors. Under the EU's ePrivacy rules and GDPR, and similar laws elsewhere, analytics cookies usually need consent first. Rules differ by country, so check what applies to you.
+
+## What Consent Mode does
+
+Consent Mode is a small piece of code that tells Google's tags what the visitor agreed to:
+
+- **`analytics_storage`**: may GA4 use cookies?
+- **`ad_storage`, `ad_user_data`, `ad_personalization`**: may ads use data? (Matters only if you run Google Ads.)
+
+You set them to `denied` by default, then to `granted` when the visitor accepts.
+
+## Basic or advanced
+
+|                   | Basic                                 | Advanced                                             |
+| ----------------- | ------------------------------------- | ---------------------------------------------------- |
+| Before consent    | Google's tags don't load at all       | Tags load, but send cookieless pings                 |
+| Declined visitors | Not counted                           | Not counted with cookies; GA4 can model some of them |
+| Simplicity        | Simplest: nothing loads without a yes | More setup, more data                                |
+
+Basic mode is the simplest and the most conservative.
+
+## The code
+
+Put this **before** the Google tag, so the defaults apply first:
+
+```html
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() {
+    dataLayer.push(arguments);
+  }
+  gtag("consent", "default", {
+    analytics_storage: "denied",
+    ad_storage: "denied",
+    ad_user_data: "denied",
+    ad_personalization: "denied",
+  });
+</script>
+```
+
+When the visitor accepts in your banner:
+
+```js
+gtag("consent", "update", { analytics_storage: "granted" });
+```
+
+Remember their choice (for example in `localStorage`) and send the update on later visits too. If you use a consent tool (a CMP), it does this for you; Google lists certified ones for sites that run ads in Europe.
+
+## Make the banner fair
+
+- **Equal choices.** "Decline" should be as easy as "Accept": same size, same place.
+- **Plain words.** Say what you count and why.
+- **Let people change their mind**, for example with a "Cookie settings" link in the footer.
+
+## What it means for your numbers
+
+Visitors who decline aren't counted with cookies, so GA4 shows fewer visitors than really came. That's expected. Compare periods with each other rather than with server logs.
+
+<InSimpleDash>
+  SimpleDash reads whatever GA4 counted, consent included, and says so in its help text: "People who
+  refuse cookies or block GA aren't included." simpledash.app itself uses basic consent: Google's
+  tag loads only after you choose Accept.
+</InSimpleDash>
+
+## Related
+
+- [Why GA4 shows fewer visits than other tools](/guides/ga4-numbers-differ)
+- [Add GA4 to your website](/guides/add-google-analytics-to-website)
+
+## Sources
+
+- Google: [Consent mode overview](https://developers.google.com/tag-platform/security/concepts/consent-mode)
+- Google: [Set up consent mode on websites](https://developers.google.com/tag-platform/security/guides/consent)

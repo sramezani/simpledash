@@ -1,6 +1,7 @@
 import type { protos } from "@google-analytics/data";
 import type { Site } from "@/lib/db/schema";
 import { classifyError, quotaBlockedUntil, type Ga4Problem } from "./errors";
+import { FRESHNESS } from "./freshness";
 import { isBreakerOpen, isQuotaLow } from "./limiter";
 import { rangeWindow, type RangeType, type RangeWindow } from "./ranges";
 import {
@@ -77,8 +78,6 @@ export type ReportsResult<R extends ReportName> = {
   quotaUntil: Date | null;
 };
 
-const HOUR = 60 * 60 * 1000;
-
 /** A site's report inputs: the signup event, and what counts as a sale. */
 export const paramsFor = (site: Site): ReportParams => ({
   signupEvent: site.signupEvent,
@@ -95,10 +94,9 @@ export function maxAge(
   window: Pick<RangeWindow, "type" | "endsToday" | "includesYesterday">,
   audience: Audience,
 ): number {
-  if (window.endsToday) return audience === "public" ? HOUR : HOUR / 2;
+  if (window.endsToday) return FRESHNESS.endsToday[audience];
   const settled = window.type === "12m" || !window.includesYesterday;
-  const base = settled ? 24 * HOUR : 3 * HOUR;
-  return audience === "public" ? Math.max(base, 12 * HOUR) : base;
+  return FRESHNESS[settled ? "settled" : "recent"][audience];
 }
 
 function isFresh(row: CacheRow, window: RangeWindow, audience: Audience, now: Date) {

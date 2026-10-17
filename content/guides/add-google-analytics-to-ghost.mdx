@@ -1,0 +1,60 @@
+---
+title: How to add Google Analytics 4 to a Ghost site
+menuTitle: "Ghost"
+seoTitle: How to add Google Analytics 4 to a Ghost site
+description: "Add GA4 to your Ghost publication with code injection: paste the Google tag into the site header, save, and track newsletter signups as key events."
+updated: 2026-10-16
+---
+
+To add Google Analytics 4 to Ghost, copy the Google tag from GA4 and paste it into **Settings → Code injection → Site header** in Ghost Admin, then save. It's added to every page of your publication straight away.
+
+## Add the tag
+
+<Steps>
+<Step>
+
+In GA4, open Admin → Data streams → your stream → **View tag instructions** → **Install manually**, and copy the code.
+
+</Step>
+<Step>
+
+In Ghost Admin, open **Settings** and find **Code injection** (under Advanced).
+
+</Step>
+<Step>
+
+Paste the code into **Site header** and choose **Save**.
+
+</Step>
+</Steps>
+
+<ImageSlot
+  id="ghost-code-injection"
+  alt="Ghost Admin's Code injection settings with the Google tag in the Site header field"
+>
+  In Ghost Admin, Settings → Code injection. Capture the Site header field with the Google tag
+  pasted (placeholder G-XXXXXXXXXX ID).
+</ImageSlot>
+
+## Count newsletter signups
+
+Ghost sends new members to a confirmation flow. A simple, code-free way to count signups is to create a `sign_up` event in GA4 from views of the page members land on after signing up. [Track signups without code](/guides/track-signups-ga4#no-code).
+
+## Check it works
+
+Open your site in a private window and GA4's **Realtime overview**. [More ways to check](/guides/check-ga4-is-working).
+
+<InSimpleDash>
+  SimpleDash shows which posts readers land on, where they come from (newsletters, Google, X, AI
+  assistants) and how many sign up, on one page. A public stats page lets you share your
+  publication's growth with readers.
+</InSimpleDash>
+
+## Related
+
+- [Share your stats publicly](/guides/public-analytics-page)
+- [UTM links for your newsletter](/guides/utm-links)
+
+## Sources
+
+- Ghost: [Google Analytics integration](https://ghost.org/integrations/google/)

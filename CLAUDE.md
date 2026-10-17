@@ -91,6 +91,7 @@ deploy/setup.sh user@ip   # Siamak only: set up (or, with --from, move to) the p
   - Prefer platform APIs (`Intl`, `URL`) and the packages we already have over new ones.
 - **Layers:** `src/config` → `components/ui` → `components/shared` → feature folders → `src/app`. Each imports only from its own folder and the layers before it, and shared blocks never fetch data. Plans and prices come only from `src/config/plans.ts`, the card list only from `src/config/cards.ts`, and settings addresses only from `src/lib/settings-routes.ts`. Details are in `docs/SPEC.md` section 4.
 - **UI quality:** mobile first. Cards use container queries and the shared `CardShell` states, with no layout shift. Before ticking a UI task, check it at 375 px and 1440 px and do a keyboard-only pass. The bar is DataFast-level polish with our own design (`docs/SPEC.md` section 18).
+- **Docs and guides (`content/`):** a change to a feature updates its page in `content/` in the same change, following the rules in `docs/CONTENT-PLAN.md` section 15 (removed pages get a permanent redirect, never a 404). Prices and plan facts come from components, never typed.
 - **Docs:** use plain words in the docs too. Refer to a part of a doc as "section 16", never with symbols such as the section sign.
 - **Plain words on screen:**
 

@@ -1,0 +1,45 @@
+---
+title: What is attribution in GA4?
+menuTitle: "Attribution"
+seoTitle: "Attribution in GA4: which source gets credit for a sale"
+description: Attribution decides which source gets credit for a signup or sale when someone visited several times. GA4's models in plain words, and where they apply.
+updated: 2026-10-16
+---
+
+**Attribution** is how Google Analytics decides which source gets the credit for a signup or a sale, when the person visited several times from different places before converting. GA4 uses **data-driven** attribution by default for key events, and you can switch to **last click**.
+
+## An example
+
+Someone finds your blog on Google, comes back from your newsletter a week later, and finally types your address and buys. Which source "made" the sale?
+
+- **Last click** gives it all to the last non-direct source: the newsletter.
+- **Data-driven** shares it between Google and the newsletter, based on patterns GA4 sees across your conversions.
+
+## Which models GA4 has
+
+Admin → Data display → **Attribution settings**:
+
+- **Data-driven** (the default): credit is shared using your own data.
+- **Paid and organic last click**: all credit to the last non-direct click.
+- **Google paid channels last click**: for Google Ads users.
+
+Older models like first click and linear were removed in 2023.
+
+## Which reports use it
+
+- **Advertising** reports and key event credit by source use your attribution model.
+- **Traffic acquisition** shows each session's own source, so a conversion appears under the source of the visit where it happened.
+
+That's why the same sale can show under different sources in different reports.
+
+## For small sites
+
+With few conversions, data-driven attribution has little to learn from, and the session view is easier to read: "this visit, from this source, ended in a signup". Read sources as a guide, not an exact split of credit.
+
+## In SimpleDash
+
+With Pro, **Sales and signups by source** uses each visit's own source and landing page, so it reads like GA4's Traffic acquisition report: no model to configure.
+
+## Sources
+
+- Google: [Select attribution settings](https://support.google.com/analytics/answer/10597962)

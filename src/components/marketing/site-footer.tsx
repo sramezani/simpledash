@@ -1,3 +1,4 @@
+import type { Route } from "next";
 import Link from "next/link";
 import { CookieSettingsButton } from "@/components/shared/consent";
 import { Container } from "@/components/shared/container";
@@ -16,6 +17,18 @@ export function SiteFooter() {
         <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
           <Link href="/#pricing" className="text-muted-foreground hover:text-foreground">
             Pricing
+          </Link>
+          <Link href={"/docs" as Route} className="text-muted-foreground hover:text-foreground">
+            Docs
+          </Link>
+          <Link href={"/guides" as Route} className="text-muted-foreground hover:text-foreground">
+            Guides
+          </Link>
+          <Link href={"/glossary" as Route} className="text-muted-foreground hover:text-foreground">
+            GA4 glossary
+          </Link>
+          <Link href={"/compare" as Route} className="text-muted-foreground hover:text-foreground">
+            Compare
           </Link>
           <Link href="/privacy" className="text-muted-foreground hover:text-foreground">
             Privacy

@@ -1,0 +1,48 @@
+---
+title: What is MRR, and how is it worked out from Stripe?
+menuTitle: "What is MRR"
+seoTitle: What is MRR? Monthly recurring revenue from Stripe
+description: "MRR is monthly recurring revenue: what your active subscriptions bring in each month. How it's calculated, what to leave out, and where to see it in Stripe."
+updated: 2026-10-16
+---
+
+MRR (monthly recurring revenue) is how much your active subscriptions bring in each month. Add up every active subscription's price as a monthly amount: a $20 monthly plan counts $20, and a $240 yearly plan also counts $20 ($240 ÷ 12). One-off payments don't count.
+
+## How to calculate it
+
+1. Take every active subscription.
+2. Turn each price into a monthly amount: yearly ÷ 12, quarterly ÷ 3, weekly × 52 ÷ 12.
+3. Multiply by quantity (for per-seat plans) and add them up.
+
+**Example:** 40 customers on a $20 monthly plan and 10 on a $240 yearly plan:
+40 × $20 + 10 × ($240 ÷ 12) = $800 + $200 = **$1,000 MRR**.
+
+## What to include, and what not
+
+| Include                                                                    | Leave out                             |
+| -------------------------------------------------------------------------- | ------------------------------------- |
+| Active subscriptions                                                       | One-off payments and setup fees       |
+| Subscriptions in a payment retry (past due), if you expect them to recover | Cancelled subscriptions               |
+|                                                                            | Usage-based charges you can't predict |
+|                                                                            | Taxes                                 |
+
+Discounts are a choice: some count the list price, some the discounted price. Pick one and stay consistent.
+
+## MRR vs revenue
+
+Revenue is money that came in during a period, including one-off payments, minus refunds. MRR is a snapshot of what's recurring right now. A yearly plan brings in its full price on one day, but only 1/12 of it counts towards MRR.
+
+## Where to see it in Stripe
+
+Stripe's **Billing** overview shows MRR and subscription numbers for your account, calculated its own way. Small differences from your own calculation usually come from discounts, past-due subscriptions or currency conversion.
+
+<InSimpleDash>
+  With Pro and Stripe connected, SimpleDash shows **MRR** under Revenue: the monthly list price of
+  active and past-due subscriptions, before discounts, at the last sync. Usage-based prices can't be
+  counted, so they're named rather than guessed. Other currencies are listed, never converted.
+</InSimpleDash>
+
+## Related
+
+- [Create a read-only Stripe key](/guides/stripe-restricted-key)
+- [Revenue from Stripe in SimpleDash](/docs/revenue)

@@ -1,0 +1,81 @@
+---
+title: How to add and verify your site in Google Search Console
+menuTitle: "Add your site"
+seoTitle: Add and verify your site in Google Search Console
+description: Add your site to Google Search Console in a few minutes. Domain or URL-prefix property, how to verify with DNS or your GA4 tag, and what to do next.
+updated: 2026-10-16
+---
+
+To add your site to Google Search Console, go to search.google.com/search-console, add a **Domain** property for your whole domain and verify it with a DNS record, or add a **URL prefix** property and verify it with your existing Google Analytics tag. Data starts appearing within a few days.
+
+## Domain or URL prefix?
+
+|             | Domain property                                                                                     | URL prefix property                                                                   |
+| ----------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Covers      | Every subdomain and protocol: `mysite.com`, `www.mysite.com`, `blog.mysite.com`, `http` and `https` | Only addresses that start with exactly what you enter, like `https://www.mysite.com/` |
+| Verify with | A DNS record at your domain provider                                                                | An HTML file, a meta tag, your GA4 tag or Google Tag Manager                          |
+| Best for    | Most sites                                                                                          | When you can't change DNS                                                             |
+
+Choose **Domain** if you can: it sees all your traffic in one place.
+
+## Add a Domain property
+
+<Steps>
+<Step>
+
+Open [Google Search Console](https://search.google.com/search-console), choose **Add property**, and enter your domain without `https://` or `www`, for example `mysite.com`.
+
+</Step>
+<Step>
+
+Google shows a **TXT record** like `google-site-verification=…`. If your domain is at a provider Google recognises (Cloudflare, for example), it can offer to add the record for you: follow its button and sign in to your provider.
+
+</Step>
+<Step>
+
+Otherwise, copy the record, open your domain provider's DNS settings, and add a **TXT** record for the root of your domain (often written as `@`) with that value.
+
+</Step>
+<Step>
+
+Back in Search Console, choose **Verify**. DNS changes can take a few minutes to a few hours; if it fails, wait and try again.
+
+</Step>
+</Steps>
+
+<ImageSlot
+  id="search-console-add-property"
+  alt="Search Console's 'Select property type' dialog with Domain and URL prefix options"
+>
+  In Google Search Console, choose Add property and capture the "Select property type" dialog with
+  the Domain and URL prefix options. Use an example domain.
+</ImageSlot>
+
+## Add a URL prefix property (with your GA4 tag)
+
+1. Choose **Add property** → **URL prefix**, and enter your full address, for example `https://www.mysite.com/`.
+2. Choose **Google Analytics** as the verification method. It works if your homepage has the GA4 tag and your Google account can edit that GA4 property.
+3. Choose **Verify**.
+
+## What happens next
+
+- **Data takes a few days** to appear, and Search Console then shows up to 16 months.
+- **Submit your sitemap:** Indexing → Sitemaps → enter `sitemap.xml` (or your sitemap's address).
+- **Look at Performance → Search results** to see clicks, impressions, click rate and position for your searches and pages.
+
+<InSimpleDash>
+  With Pro, connect Search Console in your site's settings and SimpleDash finds the matching
+  property on its own. You'll see clicks from Google, searches close to page 1, what changed and
+  pages seen but not clicked, on the same page as your visitors. [Google search
+  insights](/docs/google-search).
+</InSimpleDash>
+
+## Related
+
+- [Use Search Console to grow Google traffic](/guides/google-search-console)
+- [Find searches close to page 1](/guides/keywords-close-to-page-1)
+
+## Sources
+
+- Google: [Add a website property to Search Console](https://support.google.com/webmasters/answer/34592)
+- Google: [Verify your site ownership](https://support.google.com/webmasters/answer/9008080)

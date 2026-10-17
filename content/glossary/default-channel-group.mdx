@@ -1,0 +1,42 @@
+---
+title: What is the default channel group in GA4?
+menuTitle: "Default channel group"
+seoTitle: "GA4 default channel group: every channel explained"
+description: GA4 sorts every visit into a channel, such as Organic Search, Direct, Referral or Email, using rules on source and medium. Each channel in plain words.
+updated: 2026-10-16
+---
+
+The **default channel group** is GA4's way of sorting visits into a few buckets, such as Organic Search, Direct, Referral and Email, using rules on each visit's source and medium. It gives you a quick overview where the full list of sources would be too long.
+
+## The channels, in plain words
+
+| GA4 channel      | Means                                | SimpleDash calls it |
+| ---------------- | ------------------------------------ | ------------------- |
+| Direct           | No referrer and no tags              | Direct              |
+| Organic Search   | Unpaid search engine results         | Search              |
+| Organic Social   | Unpaid links from social sites       | Social              |
+| Referral         | Links on other sites                 | Other sites         |
+| Email            | Links tagged with `utm_medium=email` | Email               |
+| AI Assistant     | Visits from AI assistants            | AI assistants       |
+| Organic Video    | Unpaid video sites                   | Video               |
+| Organic Shopping | Unpaid shopping sites                | Shopping            |
+| Paid Search      | Search ads                           | Search ads          |
+| Paid Social      | Social ads                           | Social ads          |
+| Display          | Display ads                          | Display ads         |
+| Unassigned       | Didn't match any rule                | Unknown             |
+
+## How the rules work
+
+GA4 looks at the source, the medium and sometimes the campaign name. For example, a medium of `email` makes a visit Email, and a known social site with no paid medium makes it Organic Social. A visit with an unusual medium may match nothing and become [Unassigned](/guides/ga4-unassigned-traffic).
+
+## Your own channel groups
+
+You can't edit the default group, but you can create your own (Admin → Data display → Channel groups), for example to group all AI assistants together. [How](/guides/ga4-ai-traffic#ai-channel-group).
+
+## In SimpleDash
+
+The **Sources** card has a **Channels** tab with these channels in plain words.
+
+## Sources
+
+- Google: [Default channel group](https://support.google.com/analytics/answer/9756891)
