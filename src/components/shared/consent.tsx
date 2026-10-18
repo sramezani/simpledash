@@ -53,6 +53,9 @@ function allowedHere(): boolean {
 
 const isLiveHost = () => window.location.hostname === analytics.host;
 
+/** Key events sent before Google's script was ready (or before a choice): sent once it loads. */
+let pending: [string, Record<string, unknown>][] = [];
+
 // A tiny store, so the banner and the "Cookie settings" buttons agree without a context.
 let asking = false;
 let sessionChoice: Choice | null = null;
@@ -110,6 +113,25 @@ function loadAnalytics() {
   script.async = true;
   script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(analytics.measurementId)}`;
   document.head.appendChild(script);
+  for (const [name, params] of pending) window.gtag("event", name, params);
+  pending = [];
+}
+
+/**
+ * Sends one of SimpleDash's key events (src/lib/analytics/events.ts) to its own Google
+ * Analytics, only with consent: sent at once when Google's script runs, kept until the
+ * visitor chooses when they haven't yet, and dropped after "Decline". Off the live host it
+ * is only written to the console, so development never sends anything.
+ */
+export function trackEvent(name: string, params: Record<string, unknown>) {
+  const state = snapshot();
+  if (state === "off" || state === "denied") return;
+  if (!isLiveHost()) {
+    if (process.env.NODE_ENV !== "production") console.info("[analytics]", name, params);
+    return;
+  }
+  if (window.gtag) window.gtag("event", name, params);
+  else pending.push([name, params]);
 }
 
 /** Removes Google Analytics' cookies (_ga, _ga_<id>) from this host and the parent domain. */
@@ -129,6 +151,7 @@ function choose(choice: Choice) {
   saveChoice(choice);
   sessionChoice = choice;
   asking = false;
+  if (choice === "denied") pending = [];
   emit();
   if (choice === "denied" && was === "granted") {
     clearAnalyticsCookies();

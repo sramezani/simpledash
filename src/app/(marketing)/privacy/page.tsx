@@ -108,7 +108,9 @@ export default function PrivacyPage() {
           <li>
             <strong>What it records:</strong> the pages you open, where you came from, your browser
             and device type, and your approximate location (city or country). Google uses your IP
-            address to work out the location and doesn&apos;t store it.
+            address to work out the location and doesn&apos;t store it. It also notes four moments:
+            signing up, signing in, starting a checkout and buying {plans.pro.name}, with the plan
+            and price but never your name, email or account.
           </li>
           <li>
             <strong>Cookies:</strong> <code>_ga</code> and <code>_ga_…</code>, which tell your

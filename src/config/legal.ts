@@ -10,7 +10,7 @@ export const legal = {
   country: "[COUNTRY]",
   contactEmail: brand.supportEmail,
   /** YYYY-MM-DD. Shown at the top of both pages and used in the sitemap. Update it whenever either page changes. */
-  lastUpdated: "2026-10-14",
+  lastUpdated: "2026-10-18",
   /** Yearly plans: a full refund if asked within this many days of a yearly payment. */
   yearlyRefundDays: 14,
 } as const;

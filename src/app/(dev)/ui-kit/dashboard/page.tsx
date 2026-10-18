@@ -48,6 +48,8 @@ import {
 } from "@/lib/ga4/sample/sample";
 import { SalesCard } from "@/components/cards/sales-card";
 import { WhatChangedCard } from "@/components/cards/what-changed-card";
+import { SendEvents } from "@/components/dashboard/analytics-events";
+import { AUTH_PARAM, authEvent } from "@/lib/analytics/events";
 import { metricChanges } from "@/lib/changes/breakdown";
 import { formatDayRange } from "@/lib/format";
 import { revenueMetrics } from "@/components/dashboard/revenue-metrics";
@@ -305,8 +307,12 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
     previous: { visitors: 0, pageViews: 0, engagementSeconds: 0 },
   };
 
+  // `?auth=signup|login` previews the sign-in events (written to the console in development).
+  const signedIn = authEvent(params[AUTH_PARAM]);
+
   return (
     <>
+      <SendEvents events={signedIn ? [signedIn] : []} clearParams={[AUTH_PARAM]} />
       <PreviewNav state={state} range={range} />
       <DashboardView
         basePath="/ui-kit/dashboard"

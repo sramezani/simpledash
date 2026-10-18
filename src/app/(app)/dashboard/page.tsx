@@ -70,6 +70,9 @@ import { formatDayRange } from "@/lib/format";
 import { goalEvents, REPORTS, type ReportName } from "@/lib/ga4/reports";
 import { paramsFor } from "@/lib/ga4/cache";
 import { SalesCard } from "@/components/cards/sales-card";
+import { SendEvents } from "@/components/dashboard/analytics-events";
+import { AUTH_PARAM, authEvent, purchaseEvent } from "@/lib/analytics/events";
+import { checkoutPurchase } from "@/lib/billing/checkout";
 import { WhatChangedCard } from "@/components/cards/what-changed-card";
 import { metricChanges } from "@/lib/changes/breakdown";
 import { revenueMetrics } from "@/components/dashboard/revenue-metrics";
@@ -101,26 +104,40 @@ async function Dashboard({ searchParams }: Pick<PageProps<"/dashboard">, "search
   // `?upgraded=pro` after Checkout.
   const upgraded = params.upgraded ? <UpgradedNotice /> : null;
 
-  const account = await getGoogleAccount(user.id);
-  if (!hasAnalyticsScope(account?.scope)) return <AccessNotGranted signIn={allowAnalyticsAccess} />;
+  const [account, purchase] = await Promise.all([
+    getGoogleAccount(user.id),
+    checkoutPurchase(user.id, params.session_id),
+  ]);
+  // SimpleDash's own key events: signing up or in (`?auth=`), and Pro bought (`?session_id=`).
+  const signedIn = authEvent(params[AUTH_PARAM]);
+  const events = [...(signedIn ? [signedIn] : []), ...(purchase ? [purchaseEvent(purchase)] : [])];
+  const tracked = (page: React.ReactNode) => (
+    <>
+      {page}
+      <SendEvents events={events} clearParams={[AUTH_PARAM, "session_id"]} />
+    </>
+  );
+
+  if (!hasAnalyticsScope(account?.scope))
+    return tracked(<AccessNotGranted signIn={allowAnalyticsAccess} />);
 
   if (ctx.site) {
-    return (
+    return tracked(
       <SiteDashboard
         site={ctx.site}
         ctx={ctx}
         range={range}
         extra={upgraded}
         searchResult={typeof params.search === "string" ? params.search : null}
-      />
+      />,
     );
   }
   // An old link to a site that left the list: open the dashboard as usual.
   if (requested) redirect("/dashboard");
-  return (
+  return tracked(
     <Suspense fallback={<DashboardSkeleton message="Finding your Google Analytics site…" />}>
       <FirstVisit userId={user.id} range={range} />
-    </Suspense>
+    </Suspense>,
   );
 }
 

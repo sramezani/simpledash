@@ -19,8 +19,16 @@ It is written for future Claude sessions: read the latest entry before starting 
   - Images show at their natural width, capped at the column, with no layout shift.
   - New `caption` and `eager` props. Specific alt texts for the 11, with captions that say "sample data".
 
+- **SimpleDash's own key events** (Google's recommended names; `docs/SPEC.md` section 17):
+  - `sign_up` and `login` come from Better Auth's `newUserCallbackURL` vs `callbackURL` (`?auth=`).
+  - `begin_checkout` is sent when the upgrade form is submitted.
+  - `purchase` is sent only for a Stripe Checkout Session the server confirmed (the user's, complete, paid), with Stripe's amounts.
+  - All behind the same consent: queued until the visitor chooses, dropped on Decline, never any personal data. The privacy page now says so (updated 18 Oct).
+  - Checked in headless Chrome: granted logs `sign_up` and tidies the address; denied logs nothing; the yearly upgrade logs `begin_checkout` at 90 USD. The browser pane stopped hydrating pages this session (headless Chrome is fine), so use headless checks when that happens.
+
 ### Learned
 
+- Next.js copies the address back from its own state: clear search params with `history.replaceState(null, …)` (not the current state) and a tick after mount, or the router puts them back.
 - Reading a file while a Cache Components page prerenders fails with a confusing "`Date.now()`" error. Keep build-time facts in a generated JSON file instead.
 - `captureBeyondViewport` resizes the page for the shot, which moves anchored popovers and menus. Only use it when the crop is below the fold.
 - Node 22.18 and later imports `.ts` files directly (type stripping), so scripts can reuse small typed helpers.
@@ -29,6 +37,7 @@ It is written for future Claude sessions: read the latest entry before starting 
 ### Next
 
 - Siamak: the 20 remaining screenshots (Google, Stripe, site builders), then `npm run content:images`.
+- Next step (Siamak asked to wait): in GA4, mark `sign_up` and `purchase` as key events once they've arrived, and check them in DebugView.
 
 ## 2026-10-17 · Session 15 · Why people pay: customers, changes and one search fix a week
 

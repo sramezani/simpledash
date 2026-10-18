@@ -15,7 +15,13 @@ import { SIGNED_IN_HINT } from "@/lib/auth/signed-in-hint";
  */
 export async function signInWithGoogle() {
   const { url } = await auth.api.signInSocial({
-    body: { provider: "google", callbackURL: "/dashboard", errorCallbackURL: "/signin" },
+    body: {
+      provider: "google",
+      // The marker tells SimpleDash's own analytics a new account from a returning one.
+      callbackURL: "/dashboard?auth=login",
+      newUserCallbackURL: "/dashboard?auth=signup",
+      errorCallbackURL: "/signin",
+    },
     headers: await headers(),
   });
   if (!url) redirect("/signin?error=start");

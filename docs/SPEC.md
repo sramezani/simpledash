@@ -1023,6 +1023,18 @@ Both are static, in plain English. Claude drafts them, Siamak reviews them (this
   - Never inside a frame (the landing page's demo) or on `/email/*` (the unsubscribe address holds a token).
   - Ads features off: ad storage and personalisation denied, no Google signals.
   - The ID is `NEXT_PUBLIC_GA_MEASUREMENT_ID` (public, written in at build time; `deploy/setup.sh` copies it to the GitHub variable `GA_MEASUREMENT_ID`, passed as a build argument). Empty means no banner and no analytics. Google loads only on the live host, never in development.
+  - **Key events** (Siamak, Oct 18, 2026), with Google's recommended names and parameters (`src/lib/analytics/events.ts`, tested), only these four:
+
+    | Event | When | Parameters |
+    | --- | --- | --- |
+    | `sign_up` | Google sign-in created the account: Better Auth's `newUserCallbackURL` returns to `/dashboard?auth=signup` | `method: "Google"` |
+    | `login` | A returning account signed in (or reconnected): `callbackURL` `/dashboard?auth=login` | `method: "Google"` |
+    | `begin_checkout` | "Upgrade to Pro" was submitted (`CheckoutEvent` in the upgrade form) | `currency`, `value` (the interval's price from `plans.ts`), `items` (`pro_month` or `pro_year`) |
+    | `purchase` | Stripe returned to `/dashboard?upgraded=pro&session_id=…`, and the server read that Checkout Session from Stripe: the signed-in user's, complete and paid (`checkoutPurchase`, `purchaseFromSession`) | `transaction_id` (the session ID; GA4 counts it once), `value` (before tax), `tax`, `currency`, `items` |
+
+  - **How they're sent:** `trackEvent()` in `consent.tsx` sends at once when Google's script runs, keeps events until the visitor chooses when they haven't yet (sent if they accept, dropped if they decline), and drops them after "Decline". Off the live host it only writes `[analytics] …` to the console in development. `SendEvents` (dashboard) sends once, then takes `auth` and `session_id` out of the address a tick later (after the router's own effect), with `history.replaceState(null, …)` so the router keeps the new address.
+  - **Never sent:** names, emails, user or account IDs. The purchase itself is still handled only by the Stripe webhook; the event is for counting.
+  - **Not tracked:** `refund` (it would need Google's Measurement Protocol from the webhook) and `generate_lead` (SimpleDash has no lead form). Marking `sign_up` and `purchase` as key events in GA4 is the next step.
 - **Contact.**
 
 **The terms cover:**

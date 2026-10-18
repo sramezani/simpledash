@@ -1,4 +1,5 @@
 import { ArrowRightIcon } from "lucide-react";
+import { CheckoutEvent } from "@/components/dashboard/analytics-events";
 import { BillingSwitch } from "@/components/shared/billing-switch";
 import { PlanCard } from "@/components/shared/plan-card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ export function UpgradeForm({
   const { pro } = plans;
   return (
     <form action={action} className={cn("group/billing @container flex flex-col gap-4", className)}>
+      <CheckoutEvent />
       <BillingSwitch
         yearlyLabel={yearlyLabel()}
         defaultValue={defaultInterval}
