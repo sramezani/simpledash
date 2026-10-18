@@ -26,6 +26,11 @@ It is written for future Claude sessions: read the latest entry before starting 
   - All behind the same consent: queued until the visitor chooses, dropped on Decline, never any personal data. The privacy page now says so (updated 18 Oct).
   - Checked in headless Chrome: granted logs `sign_up` and tidies the address; denied logs nothing; the yearly upgrade logs `begin_checkout` at 90 USD. The browser pane stopped hydrating pages this session (headless Chrome is fine), so use headless checks when that happens.
 
+- **Privacy and terms:** no more `[...]` placeholders (SimpleDash, Amsterdam, the Netherlands; `operator()` in `src/config/legal.ts`, tested).
+  - The terms now cover: information not advice, Google and Stripe, public pages, claims from misuse, wider liability limits (as is, a cap of 12 months' fees or $50, no indirect losses, one-year claims), ending the agreement, events outside our control, and Dutch law with the Amsterdam court.
+  - The privacy page now has legal bases, security, children and the Autoriteit Persoonsgegevens.
+  - Both pages updated 18 Oct.
+
 ### Learned
 
 - Next.js copies the address back from its own state: clear search params with `history.replaceState(null, …)` (not the current state) and a tick after mount, or the router puts them back.

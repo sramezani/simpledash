@@ -104,7 +104,7 @@ What's done and what's next, in plain words.
 - [x] CSV export on every card (2026-10-11)
 - [x] Landing page with a demo dashboard on sample data, statically generated (2026-10-11)
 - [x] Privacy policy and terms pages (2026-10-11)
-  - Legal details are placeholders in `src/config/legal.ts` until Siamak fills them in. Siamak reviews the text (not legal advice).
+  - Legal details are in `src/config/legal.ts` (SimpleDash, Amsterdam, the Netherlands since 18 Oct); a test fails on any `[...]` placeholder. Siamak reviews the text (not legal advice).
 - [x] SEO basics: unique titles and descriptions, canonical URLs, Open Graph images, and structured data (`SoftwareApplication`) on the landing page (2026-10-11)
 - [x] `robots.txt`: allow the landing, legal and public pages; block the app, settings and API routes (2026-10-11)
 - [x] `sitemap.xml`: landing and legal pages (public stats pages are added in Sprint 4) (2026-10-11)
@@ -117,7 +117,9 @@ What's done and what's next, in plain words.
 
 **Siamak's part**
 
-- [ ] Legal details for the privacy policy and terms: business name, address, country and contact email
+- [x] Legal details for the privacy policy and terms: SimpleDash, Amsterdam, the Netherlands, hello@simpledash.app (18 Oct)
+  - Terms strengthened: information not advice, third-party services, public pages, a claims clause, wider liability limits (cap, no indirect losses, one-year claims), ending the agreement, events outside our control, Dutch law and the court in Amsterdam. Privacy: legal bases, security, children, the Dutch authority.
+- [ ] Siamak: when SimpleDash is registered (KvK) or has a street address, put the registered name and full address in `src/config/legal.ts`, and have a Dutch lawyer read both pages once before launch
 - [x] Decide whether the prices (€9 a month, €90 a year) include VAT (2026-10-11)
   - Yes, VAT included.
 - [x] Decide the refund rule for yearly plans (for the terms) (2026-10-11)

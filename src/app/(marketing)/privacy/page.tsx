@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { LegalPage, LegalSection } from "@/components/marketing/legal-page";
 import { CookieSettingsButton } from "@/components/shared/consent";
-import { legal } from "@/config/legal";
+import { legal, operator } from "@/config/legal";
 import { plans } from "@/config/plans";
 import { brand } from "@/config/theme";
 
@@ -21,8 +21,11 @@ export default function PrivacyPage() {
     >
       <LegalSection title="Who we are">
         <p>
-          {brand.name} ({brand.url.replace("https://", "")}) is run by {legal.businessName},{" "}
-          {legal.address}, {legal.country}. We are the controller of your account data. Questions:{" "}
+          {brand.name} ({brand.url.replace("https://", "")}){" "}
+          {legal.businessName && legal.businessName !== brand.name
+            ? `is run by ${operator()}.`
+            : `is based in ${[legal.address, legal.country].filter(Boolean).join(", ") || "the EU"}.`}{" "}
+          We are the controller of your account data. For anything about your data, email{" "}
           <a href={`mailto:${email}`}>{email}</a>.
         </p>
       </LegalSection>
@@ -169,6 +172,37 @@ export default function PrivacyPage() {
         </ul>
       </LegalSection>
 
+      <LegalSection title="Why we may use your data (legal bases)">
+        <ul>
+          <li>
+            <strong>To provide {brand.name}</strong> (your account, the dashboard, the Monday email,
+            public pages you turn on, and billing): it&apos;s needed for our agreement with you.
+          </li>
+          <li>
+            <strong>Connections you choose</strong> (Google Analytics, Search Console, Stripe) and{" "}
+            <strong>Google Analytics on simpledash.app</strong>: your consent, which you can take
+            back at any time by disconnecting or in cookie settings.
+          </li>
+          <li>
+            <strong>Keeping {brand.name} safe and working</strong> (error reports, backups, stopping
+            abuse): our legitimate interest in a secure, reliable service.
+          </li>
+          <li>
+            <strong>Tax and accounting records</strong>, kept by Stripe as merchant of record: legal
+            obligations.
+          </li>
+        </ul>
+      </LegalSection>
+
+      <LegalSection title="How we protect it">
+        <p>
+          Everything travels over HTTPS. Google tokens and Stripe keys are stored encrypted, Google
+          access is read-only, and backups are kept private. No system is perfectly secure, but if a
+          breach ever affects your data, we&apos;ll tell you and the authorities as the law
+          requires.
+        </p>
+      </LegalSection>
+
       <LegalSection title="How long we keep it, and how to delete it">
         <ul>
           <li>
@@ -202,7 +236,15 @@ export default function PrivacyPage() {
         <p>
           You can ask to see, correct, export or delete your data, or object to how we use it. Email{" "}
           <a href={`mailto:${email}`}>{email}</a>. If you&apos;re in the EU or UK, you can also
-          complain to your data protection authority.
+          complain to your data protection authority; in the Netherlands, that&apos;s the Autoriteit
+          Persoonsgegevens.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="Children">
+        <p>
+          {brand.name} is for businesses and adults. It isn&apos;t meant for anyone under 16, and we
+          don&apos;t knowingly collect their data.
         </p>
       </LegalSection>
 
