@@ -57,6 +57,13 @@
       "when": 1791982035327,
       "tag": "0007_pro_plan",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792269164771,
+      "tag": "0008_search_action_notes",
+      "breakpoints": true
     }
   ]
 }

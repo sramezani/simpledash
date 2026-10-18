@@ -24,6 +24,7 @@ import type { SiteBlock, WeeklyEmailData } from "./content";
 const c = colors.light;
 const font = '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif';
 const muted = { color: c["muted-foreground"], fontSize: "13px", margin: 0 };
+const body = { margin: "0 0 4px", fontSize: "14px", lineHeight: "20px", color: c.foreground };
 
 function Change({ change }: { change: number | null }) {
   if (change === null) return <span style={{ color: c["muted-foreground"] }}>—</span>;
@@ -106,12 +107,44 @@ function Block({ block, several }: { block: SiteBlock; several: boolean }) {
         </Row>
       </Section>
 
+      {block.moved.length ? (
+        <Section style={{ marginTop: "20px" }}>
+          <Text style={{ ...muted, marginBottom: "6px" }}>What moved</Text>
+          {block.moved.map((text) => (
+            <Text key={text} style={body}>
+              {text}
+            </Text>
+          ))}
+        </Section>
+      ) : null}
+      {block.found ? <Text style={{ ...body, marginTop: "16px" }}>{block.found}</Text> : null}
+
       <List title="Top sources" rows={block.sources} />
       <List title="Top pages (views)" rows={block.pages} />
       {block.aiVisitors ? (
         <Text style={{ fontSize: "14px", color: c.foreground, marginTop: "16px" }}>
           {block.aiVisitors} visitors came from AI assistants such as ChatGPT and Perplexity.
         </Text>
+      ) : null}
+
+      {block.action ? (
+        <Section
+          style={{
+            marginTop: "20px",
+            backgroundColor: c.muted,
+            borderRadius: "8px",
+            padding: "12px 14px",
+          }}
+        >
+          <Text style={{ ...body, fontWeight: 600 }}>{block.action.title}</Text>
+          <Text style={body}>{block.action.fact}</Text>
+          <Link
+            href={`${block.dashboard}#search`}
+            style={{ color: c.primary, fontSize: "14px", fontWeight: 600, textDecoration: "none" }}
+          >
+            See what to do →
+          </Link>
+        </Section>
       ) : null}
 
       <Section style={{ marginTop: "20px" }}>

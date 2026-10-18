@@ -18,6 +18,15 @@ export const cards = [
     publicDefault: false,
   },
   {
+    // Owner only, under the four numbers (docs/SPEC.md section 31.2).
+    id: "what-changed",
+    title: "What changed",
+    help: "Which sources moved a number against the period before, and the landing pages behind each move. For Google, the searches whose clicks moved, from Search Console (a few days behind). Counts from Google only; no guesses about why.",
+    csv: false,
+    publicAllowed: false,
+    publicDefault: false,
+  },
+  {
     id: "visitors",
     title: "Visitors",
     help: COUNT_HELP,
@@ -124,8 +133,8 @@ export const cards = [
   },
   {
     id: "sales",
-    title: "Sales and signups by source",
-    help: "Signups and sales that Google Analytics recorded, by where the visit came from and the page it started on. Revenue per source is GA4's own purchase value, shown only when GA4 has one.",
+    title: "What brings customers",
+    help: "Signups and sales that Google Analytics recorded. First: where the person came from the first time GA4 saw their browser. Last: where the visit with the signup or sale came from; GA4 skips direct visits there when it knows an earlier source. Someone who changes device or clears cookies starts over. Revenue is GA4's own purchase value, shown only when GA4 has one.",
     csv: false,
     publicAllowed: false,
     publicDefault: false,

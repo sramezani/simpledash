@@ -4,6 +4,78 @@ A dated log with one entry per session. **Newest entry first.**
 
 It is written for future Claude sessions: read the latest entry before starting work. Ideas that fall outside the roadmap go here too (Working rule 5).
 
+## 2026-10-18 · Session 15, continued · Migrations on deploy, screenshots
+
+### Done
+
+- **Migrations:** production already applies new migrations when the container starts. `scripts/migrate.mjs` now says "applied N new migrations" or "nothing new". It was checked on a throwaway Postgres going from 0007 to 0008, then run again with nothing new. Docs and checklist no longer ask Siamak to run them on the server.
+- **Honesty fixes after a review:** "Exact counts from GA4" in the sale setting became "as Google Analytics counts them". The What brings customers page now says GA4 itself can hold back small numbers or model for people who decline cookies.
+- **11 docs screenshots** of SimpleDash's own screens, from the `/ui-kit` previews on sample data:
+  - Each one is cropped to the part its page explains (a card, a menu, a settings section, the email), at twice screen size, as WebP (592 KB for all 11).
+  - The dev address shows as `simpledash.app`, and neighbouring cards are hidden.
+  - `npm run content:screenshots` retakes them, or one with `-- <id>`.
+- **ImageSlot:**
+  - Real sizes come from `image-sizes.json` (written by `npm run content:images`, tested against the files).
+  - Images show at their natural width, capped at the column, with no layout shift.
+  - New `caption` and `eager` props. Specific alt texts for the 11, with captions that say "sample data".
+
+### Learned
+
+- Reading a file while a Cache Components page prerenders fails with a confusing "`Date.now()`" error. Keep build-time facts in a generated JSON file instead.
+- `captureBeyondViewport` resizes the page for the shot, which moves anchored popovers and menus. Only use it when the crop is below the fold.
+- Node 22.18 and later imports `.ts` files directly (type stripping), so scripts can reuse small typed helpers.
+- npm adds `-- args` to the last command of an `&&` chain.
+
+### Next
+
+- Siamak: the 20 remaining screenshots (Google, Stripe, site builders), then `npm run content:images`.
+
+## 2026-10-17 · Session 15 · Why people pay: customers, changes and one search fix a week
+
+### Done
+
+Siamak's feedback was that SimpleDash only repeated GA4, Search Console and Stripe ("as a user I still don't see why I should pay"). He approved a plan for three features, all from read-only data, whole counts only, never "because" (`docs/SPEC.md` section 31):
+
+- **What brings customers** (Pro; replaces "Sales and signups by source", same card id `sales`):
+  - Signups | Sales switch, with First visit (GA4 `firstUserSource`) next to Last visit (`sessionSource`) per source.
+  - A Paths tab ("reddit.com → Google"), "Time from first visit" groups and landing pages.
+  - Up to two highlight lines (`src/lib/customers/highlights.ts`), with the counting shared with the email (`counts.ts`).
+  - New reports: `first_goals`, `goal_paths`, `goal_days`, `first_purchase` and their thank-you page versions, loaded in three separate calls so a GA4 refusal hides nothing.
+- **What changed and where** (every plan; Signups and Sales on Pro), a card under the overview (`what-changed-card.tsx`, `src/lib/changes/breakdown.ts`):
+  - A headline and the 3 biggest source moves, each a `<details>` row opening onto its landing pages.
+  - For Google: Search Console's clicks and the searches' positions then and now, matched by page.
+  - New reports: `change_paths`, `change_goals`, `change_sale_page`. Search Console is loaded once per request (`cache()`), shared with the search card.
+- **Brings signups and This week** (Pro with Search Console):
+  - `search_insights` now carries `pageQueries` (searches per page, then and now; cache key `v=2`).
+  - The **Brings signups** tab is first when a signup event is set, with a Slipping tag.
+  - A **This week** panel picks one page from the last 28 days, cached per week under `week:<Monday>` (`src/lib/search-console/action.ts`), with facts, fixed steps and a guide link.
+  - **Show another** (a client part) and **Mark as done**: the server checks the page is this week's candidate, then adds a chart note with `search_page` and `search_query` (migration `0008`).
+  - A follow-up shows how the last page did since (`search_followup`, per note).
+- **Monday email:** What moved (up to 3 lines), the 30-day customer line, and This week on Google search.
+- **Copy and docs:**
+  - Plan features, the Pro teaser ("See what really brings your customers"), settings text and `llms.txt` updated.
+  - Spec section 31, decisions, checklist, README, and the search console, revenue and email docs updated.
+  - New docs pages `what-brings-customers` and `what-changed`, and a guide, `first-user-source-vs-session-source`. 17 existing pages updated, and 3 new screenshot slots added (31 in all).
+- **Checked:**
+  - `npm run check` passes (54 files, 429 tests).
+  - The `/ui-kit/dashboard` previews (`state=pro`, `normal`, `no-history`, the new `search-done`) at 375 and 1440 px, with a keyboard pass (switch with arrows, rows open with Enter, visible focus).
+  - `/ui-kit/email` as HTML and plain text.
+
+### Learned
+
+- **GA4 already credits a direct return visit to the earlier source.** Session and first-user scopes use "paid and organic channels last click". So "came from X, came back direct, bought" is already X in the old card. What was missing is the first source when the return visit came through another real channel, such as a Google search for the brand. Event-scoped attribution gives fractions, so we don't use it.
+- A batched GA4 request fails as a whole, so new dimension combinations go in their own `loadReports` call.
+- Nested CSS-radio switches can't use `data-option-index` selectors (the inner tabs have them too). The metric switches select on `[name=…][value=…]:checked` instead.
+- Turbopack won't build through a symlinked `node_modules` outside the project, so the clean build copy uses an APFS clone (`cp -Rc`).
+
+### Next
+
+- Migration `0008` needs nothing on the server: the container applies new migrations when it starts. Siamak runs `npm run db:migrate` locally only. `scripts/migrate.mjs` now says what it did ("applied 1 new migration" or "nothing new"), checked on a throwaway Postgres going from 0007 to 0008.
+- Siamak: do the 2-minute GA4 Explore check (First user source × Session source).
+- After deploy: compare the First column's total with Signups on a real property, and try Mark as done.
+- Siamak: the 3 new screenshots (`what-brings-customers-card`, `what-changed-card`, `search-this-week`).
+- Ideas (not in the roadmap): a "found you" line on the public page (opt-in); a weekly-pick history list in Settings.
+
 ## 2026-10-16 · Session 14 · Docs, guides, glossary and comparisons
 
 ### Done

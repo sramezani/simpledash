@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const RESULTS: Record<string, { tone: "info" | "warning"; title: string } | undefined> = {
-  saved: { tone: "info", title: "Saved. Sales by source now count this." },
+  saved: { tone: "info", title: "Saved. What brings customers now counts this." },
   google: {
     tone: "warning",
     title: "Couldn't check your key events with Google. Please try again.",
@@ -39,8 +39,9 @@ export function SaleSettings({
     <form action={action} className="flex flex-col gap-3">
       {notice ? <Notice tone={notice.tone} title={notice.title} /> : null}
       <p className="text-sm text-pretty text-muted-foreground">
-        Sales by source counts this in Google Analytics, next to visitors and signups. Exact counts
-        from GA4, per source and landing page.
+        What brings customers counts this in Google Analytics, next to signups: where the people
+        first found you, the visit it happened on, and the landing page, as Google Analytics counts
+        them.
       </p>
       <fieldset className="flex flex-col gap-2.5">
         <legend className="sr-only">What counts as a sale?</legend>

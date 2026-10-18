@@ -3,7 +3,7 @@ title: How to track purchases and revenue in Google Analytics 4
 menuTitle: "Track purchases"
 seoTitle: How to track purchases and revenue in GA4
 description: Send GA4's purchase event with a value, currency and transaction ID, including after Stripe Checkout or Payment Links, so GA4 shows sales and revenue by source.
-updated: 2026-10-16
+updated: 2026-10-17
 ---
 
 To count sales and revenue in Google Analytics 4, send the recommended `purchase` event when a payment succeeds, with `transaction_id`, `value` and `currency`. GA4 then shows purchases and revenue by source and landing page, and the transaction ID stops the same sale being counted twice.
@@ -47,10 +47,10 @@ Count views of it as sales instead. It's less precise (no revenue, and a reload 
 When buyers go to `checkout.stripe.com` and come back, GA4 may credit the sale to Stripe instead of the place the buyer first came from. [List payment pages as unwanted referrals](/guides/ga4-unwanted-referrals-stripe) before you trust revenue by source.
 
 <InSimpleDash>
-  With Pro, pick `purchase` as what counts as a sale. **Sales and signups by source** then shows
-  sales per source and landing page, with GA4's own revenue when it has it. Connect Stripe too and
-  you'll see Stripe revenue, MRR and new customers next to your visitors, straight from your Stripe
-  account.
+  With Pro, pick `purchase` as what counts as a sale. **What brings customers** then shows where
+  your buyers first found you and the visit they bought on, with GA4's own revenue when it has it.
+  Connect Stripe too and you'll see Stripe revenue, MRR and new customers next to your visitors,
+  straight from your Stripe account.
 </InSimpleDash>
 
 ## Related

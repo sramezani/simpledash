@@ -4,14 +4,14 @@
 
 SimpleDash ([simpledash.app](https://simpledash.app)) takes the Google Analytics 4 data a site already has and turns it into:
 
-- one simple dashboard page, in plain words instead of GA jargon
+- one simple dashboard page, in plain words instead of GA jargon, that also shows what changed and where
 - a Monday email with last week's numbers
 - an optional public stats page
 
 There is **no tracking script**. Everything comes from your own GA4 property through Google's read-only APIs, including the history GA4 already has. It's built for indie hackers and small SaaS or content sites that run GA4 and find it confusing.
 
 - **Free:** all your Google Analytics sites, the last 30 days, a public stats page per site. No card, no time limit.
-- **Pro:** $9 a month or $90 a year (tax included). Everything in Free, plus 12 months and any dates, the Monday email, Google search insights from Search Console, revenue from Stripe and sales by source.
+- **Pro:** $9 a month or $90 a year (tax included). Everything in Free, plus 12 months and any dates, the Monday email, what brings customers (where the people behind your signups and sales first found you, next to the visit it happened on), Google search insights from Search Console with one page to work on each week, and revenue from Stripe.
 
 Use it at **[simpledash.app](https://simpledash.app)**. The code is open source under the [AGPL-3.0](LICENSE).
 
@@ -25,7 +25,7 @@ As little as possible, and never data about individual visitors: no IP addresses
 | `account` | Google access and refresh tokens, **encrypted** | Until Google is disconnected or the account is deleted |
 | `site` | The GA4 properties you added: name, domain, time zone, your chosen signup and sale events, the Search Console property | Until removed or the account is deleted |
 | `report_cache` | Copies of report **totals** from Google (visitors per day, top pages, sources, countries, and top searches when Search Console is on), so pages open fast and stay within Google's limits | 7 days without use; never in backups |
-| `chart_note`, `user_settings`, `public_page` | Your notes on the chart, the email switch, public page choices | Until deleted |
+| `chart_note`, `user_settings`, `public_page` | Your notes on the chart (a note from the weekly Google search pick also keeps that page's address and the search), the email switch, public page choices | Until deleted |
 | `billing`, `stripe_event` | Plan, Stripe customer and subscription IDs, renewal date. Card details stay with Stripe | Until the account is deleted |
 | `email_send` | Which week's Monday email went out, so it's never sent twice | Until the account is deleted |
 | `revenue_source`, `revenue_day` | Pro, only if you connect Stripe: your read-only key, **encrypted**, and daily totals (charged, refunded, new customers, MRR). No customer names, emails or IDs | Until Stripe is removed in Settings |
@@ -99,7 +99,7 @@ The pages at `/docs`, `/guides`, `/glossary` and `/compare` are MDX files in `co
 
 - **Add a page:** create `content/<section>/<slug>.mdx` with `title`, `description` (70 to 160 characters), `updated` and, for long titles, `seoTitle` and `menuTitle`, then add the slug to that folder's `meta.json`.
 - **Prices and plan facts** come from components (`<Price plan="pro" interval="month" />`, `<FreeDays />`, `<PlanFeatures plan="free" />`), never typed.
-- **Screenshots:** `<ImageSlot id="…" alt="…">what to capture</ImageSlot>`, then `npm run content:images`. A slot shows nothing in production until `public/content/<id>.webp` exists.
+- **Screenshots:** `<ImageSlot id="…" alt="…">what to capture</ImageSlot>`, then `npm run content:images`. A slot shows nothing in production until `public/content/<id>.webp` (or `.png`) exists and `npm run content:images` has recorded its size. Screens of SimpleDash itself are retaken from the previews with `npm run content:screenshots` (dev server running).
 - `npm test` checks every page's frontmatter, links and anchors, menus and screenshot list.
 
 ## Scheduled jobs
@@ -126,8 +126,9 @@ node scripts/run-job.mjs revenue-sync   # hourly at :20 (Pro sites with Stripe c
 | `npm run format` | Prettier, with the Tailwind class sorter |
 | `npm test` | Vitest unit tests |
 | `npm run db:generate` | Writes a SQL migration into `drizzle/` from changes in `src/lib/db/schema.ts` |
-| `npm run db:migrate` | Applies the migrations to `DATABASE_URL` |
-| `npm run content:images` | Rewrites `docs/CONTENT-IMAGES.md`: every screenshot slot in `content/`, and which are still missing |
+| `npm run db:migrate` | Applies new migrations to `DATABASE_URL` (local; production runs them itself when the app starts) |
+| `npm run content:images` | Rewrites `docs/CONTENT-IMAGES.md` (every screenshot slot in `content/`, and which are still missing) and `src/lib/content/image-sizes.json` (each screenshot's size) |
+| `npm run content:screenshots` | Retakes the screenshots of SimpleDash itself from the `/ui-kit` previews with the Mac's Chrome, as WebP (needs `npm run dev`; `-- <id>` for one) |
 | `node scripts/copy-flags.mjs` | Rebuilds `public/flags` (SVG) from country-flag-icons, after upgrading it |
 | `node scripts/copy-tech-icons.mjs` | Rebuilds `public/icons/tech` (browser, OS and device icons) from the two Iconify sets, after changing the list or upgrading them |
 | `node scripts/build-places.mjs` | Rebuilds the globe's place table from GeoNames (all-the-cities) |
@@ -195,8 +196,8 @@ deploy/setup.sh azureuser@<new-ip> --from azureuser@<old-ip>  # move to a new se
 | [docs/auth.md](docs/auth.md) | Sign-in, sessions, Google tokens and access checks |
 | [docs/google-verification.md](docs/google-verification.md) | Google's OAuth app verification: what to set up, the scope justification, the demo video script |
 | [docs/billing.md](docs/billing.md) | Free and Pro, plan states, Checkout, the Portal, the webhook and Stripe setup |
-| [docs/search-console.md](docs/search-console.md) | Google search insights: connecting Search Console, the window, the five views, errors |
-| [docs/revenue.md](docs/revenue.md) | Revenue from Stripe (the pasted key, daily totals, MRR, the sync) and sales by source |
+| [docs/search-console.md](docs/search-console.md) | Google search insights: connecting Search Console, the window, the five views, the weekly pick, errors |
+| [docs/revenue.md](docs/revenue.md) | Revenue from Stripe (the pasted key, daily totals, MRR, the sync), what brings customers and what changed |
 | [docs/email.md](docs/email.md) | The Monday email: when it's sent, content, unsubscribe, Resend setup |
 | [docs/public-page.md](docs/public-page.md) | Public stats pages: settings, caching, what's shown and what never is |
 | [docs/backup.md](docs/backup.md) | Nightly backups to R2 and how to restore one |

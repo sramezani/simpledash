@@ -43,18 +43,18 @@ ${brand.name} is for indie hackers, solo founders and small SaaS or content site
 - AI traffic: visitors from ChatGPT, Perplexity, Claude, Gemini and other assistants, and the pages they landed on.
 - Actions: downloads, outbound clicks, form submits and signups.
 - A live globe of visitors right now.
-- A plain-words summary of what changed, built only from the numbers.
+- What changed and where: the sources and landing pages behind a change, built only from the numbers.
 - Chart notes and CSV download on every card.
 - A Monday email with last week's numbers, one block per site.
 - An optional public stats page per site.
-- On ${pro.name}: 12 months and any dates, the Monday email, Google search insights (searches close to page 1, what changed, your name vs new people, pages seen but not clicked, searches that lead to signups), revenue and new customers from Stripe, and sales by source.
+- On ${pro.name}: 12 months and any dates, the Monday email, what brings customers (where the people behind signups and sales first found you, next to the visit it happened on), what moved signups and sales, Google search insights (pages that bring signups and their searches, searches close to page 1, what changed, your name vs new people, pages seen but not clicked) with one page to work on each week, and revenue and new customers from Stripe.
 - Zero setup: sign in with Google and ${brand.name} picks your GA4 site, with the history GA4 already has.
 - Open source under the AGPL-3.0 license.
 
 ## Pricing
 
 - ${free.name}: ${formatPrice(0)}, no card needed, no time limit. All your GA4 sites, switched with one click, the last ${FREE_HISTORY_DAYS} days, no traffic limits, a public stats page.
-- ${pro.name}: ${formatPrice(pro.prices.month)} a month or ${formatPrice(pro.prices.year)} a year (${monthsFreeOnYearly()} months free), tax included. Everything in ${free.name}, plus 12 months and any dates, the Monday email, Google search insights from Search Console, revenue from Stripe (read-only) and sales by source.
+- ${pro.name}: ${formatPrice(pro.prices.month)} a month or ${formatPrice(pro.prices.year)} a year (${monthsFreeOnYearly()} months free), tax included. Everything in ${free.name}, plus 12 months and any dates, the Monday email, what brings customers (first and last visit), Google search insights from Search Console with one page to work on each week, and revenue from Stripe (read-only).
 
 ## What ${brand.name} stores
 

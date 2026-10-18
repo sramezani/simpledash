@@ -68,6 +68,8 @@ type DashboardViewProps = {
   notesPanel?: ReactNode;
   /** The "Right now" card (it loads on its own). */
   live?: ReactNode;
+  /** What changed and where, right under the four numbers (it loads on its own). */
+  changes?: ReactNode;
   /** Show "Download CSV" on the cards. */
   csv?: boolean;
   /** Free's 30 days: the date menu marks longer ranges "Pro" and the calendar stops there. */
@@ -76,7 +78,7 @@ type DashboardViewProps = {
   footer?: ReactNode;
   /** The Google search card (Pro), or its teaser, under the list cards. */
   search?: ReactNode;
-  /** Sales and signups by source (Pro), under the list cards. */
+  /** What brings customers (Pro), under the list cards. */
   sales?: ReactNode;
   /** Revenue and New customers (Pro), after the four numbers. */
   extraMetrics?: OverviewMetric[];
@@ -178,6 +180,7 @@ export function DashboardView(props: DashboardViewProps) {
             : undefined
         }
       />
+      {props.changes}
       {props.live}
       <div className="grid gap-3 md:grid-cols-2">
         <SourcesCard

@@ -70,12 +70,12 @@ export function SearchTeaser({ href }: { href: string }) {
         <SearchIcon className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
         <div className="flex flex-col gap-1">
           <h2 id="search-title" className="text-sm font-semibold">
-            Which Google searches and sources bring your sales?
+            See what really brings your customers
           </h2>
           <p className="text-sm text-pretty text-muted-foreground">
-            {plans.pro.name} adds Google search insights (searches close to page 1, what changed,
-            pages people see but don&apos;t click), revenue from Stripe next to your visitors, and
-            sales by source.
+            {plans.pro.name} shows where the people behind your signups and sales first found you,
+            which Google searches lead to signups, one page to work on each week, and revenue from
+            Stripe next to your visitors.
           </p>
         </div>
       </div>

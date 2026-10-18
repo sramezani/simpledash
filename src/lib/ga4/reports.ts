@@ -45,13 +45,25 @@ export const REPORTS = [
 export const EXTRA_REPORTS = [
   "search_landing",
   "search_signups",
-  // Sales and signups by source (docs/SPEC.md section 28.3).
+  // What brings customers, by last visit and landing page (docs/SPEC.md section 28.3).
   "goals_sources",
   "goals_landing",
   "sale_page_sources",
   "sale_page_landing",
   "purchase_sources",
   "purchase_landing",
+  // What brings customers: first visit, paths and days to the signup or sale (section 31.1).
+  "first_goals",
+  "first_sale_page",
+  "first_purchase",
+  "goal_paths",
+  "sale_page_paths",
+  "goal_days",
+  "sale_page_days",
+  // What changed and where: sources and landing pages, then and now (section 31.2).
+  "change_paths",
+  "change_goals",
+  "change_sale_page",
 ] as const;
 export const ALL_REPORTS = [...REPORTS, ...EXTRA_REPORTS] as const;
 export type ReportName = (typeof ALL_REPORTS)[number];
@@ -60,6 +72,10 @@ export type ReportName = (typeof ALL_REPORTS)[number];
 export const SEARCH_LANDING_LIMIT = 250;
 /** The most rows asked for in the sales reports. */
 export const SALES_LIMIT = 250;
+/** The most rows asked for in the days-to-signup reports: one per first day, day and event. */
+export const DAYS_LIMIT = 10_000;
+/** The most rows asked for in What changed's reports (rows of both periods together). */
+export const CHANGE_LIMIT = 500;
 
 /** Events counted by the Actions card. The signup event is added when one is chosen. */
 export const ACTION_EVENTS = ["file_download", "click", "form_submit"] as const;
@@ -74,6 +90,19 @@ export type ReportParams = {
 // ── Payloads: aggregated rows only, never visitor-level data ──────────────
 
 export type Totals = { visitors: number; pageViews: number; engagementSeconds: number };
+/** Days from someone's first visit to their signup or sale, counted in groups. */
+export type DayBuckets = {
+  sameDay: number;
+  week: number;
+  month: number;
+  later: number;
+  /** GA4 had no first-visit day for these. */
+  unknown: number;
+};
+/** Where someone first came from, and where the visit with the signup or sale came from. */
+export type PathKey = { first: string; firstLabel: string; last: string; lastLabel: string };
+/** A source and landing page, with a count in this period and the one before. */
+export type ChangeCell = { source: string; path: string; now: number; then: number };
 export type Payloads = {
   totals: { current: Totals; previous: Totals };
   series: { granularity: Granularity; points: { key: string; visitors: number }[] };
@@ -100,6 +129,30 @@ export type Payloads = {
   /** GA4's own purchase revenue (in the property's currency, major units). */
   purchase_sources: { rows: { source: string; label: string; revenue: number }[]; total: number };
   purchase_landing: { rows: { path: string; revenue: number }[]; total: number };
+  /** The same counts by where each person first came from (GA4's first user source). */
+  first_goals: { rows: { source: string; label: string; events: Record<string, number> }[] };
+  first_sale_page: { rows: { source: string; label: string; views: number }[] };
+  first_purchase: { rows: { source: string; label: string; revenue: number }[]; total: number };
+  /** First visit → the visit with the signup or sale. */
+  goal_paths: { rows: (PathKey & { events: Record<string, number> })[]; complete: boolean };
+  sale_page_paths: { rows: (PathKey & { views: number })[]; complete: boolean };
+  /** Days from the first visit, per event. Only the groups are kept. */
+  goal_days: { events: Record<string, DayBuckets>; complete: boolean };
+  sale_page_days: { days: DayBuckets; complete: boolean };
+  /** Visitors per source and landing page, then and now. */
+  change_paths: { rows: ChangeCell[]; complete: boolean };
+  /** Signup and sale events per source and landing page, then and now. */
+  change_goals: {
+    rows: {
+      source: string;
+      path: string;
+      now: Record<string, number>;
+      then: Record<string, number>;
+    }[];
+    complete: boolean;
+  };
+  /** Thank-you page views per source and landing page, then and now. */
+  change_sale_page: { rows: ChangeCell[]; complete: boolean };
 };
 export type Payload<R extends ReportName> = Payloads[R];
 
@@ -164,22 +217,70 @@ export function actionEvents(params: ReportParams): string[] {
   return events;
 }
 
-/** The cache key part for a report's extra inputs (docs/SPEC.md section 9). */
 /** The events the sales reports count: the signup event and the sale event. */
 export function goalEvents(params: ReportParams): string[] {
   return [...new Set([params.signupEvent, params.saleEvent].filter((e): e is string => !!e))];
 }
 
+/** Reports that count the signup and sale events, and reports of thank-you page views. */
+const GOAL_REPORTS = new Set<ReportName>([
+  "goals_sources",
+  "goals_landing",
+  "first_goals",
+  "goal_paths",
+  "goal_days",
+  "change_goals",
+]);
+const SALE_PAGE_REPORTS = new Set<ReportName>([
+  "sale_page_sources",
+  "sale_page_landing",
+  "first_sale_page",
+  "sale_page_paths",
+  "sale_page_days",
+  "change_sale_page",
+]);
+
+const goalFilter = (params: ReportParams): FilterExpression => ({
+  filter: { fieldName: "eventName", inListFilter: { values: goalEvents(params) } },
+});
+
+const salePageFilter = (params: ReportParams): FilterExpression => ({
+  filter: {
+    fieldName: "pagePath",
+    stringFilter: { matchType: "EXACT", value: params.salePage ?? "" },
+  },
+});
+
+/** The cache key part for a report's extra inputs (docs/SPEC.md section 9). */
 export function paramsKey(report: ReportName, params: ReportParams): string {
   if (report === "actions" || report === "search_signups")
     return `signup=${params.signupEvent ?? ""}`;
-  if (report === "goals_sources" || report === "goals_landing")
-    return `goals=${goalEvents(params).join(",")}`;
-  if (report === "sale_page_sources" || report === "sale_page_landing")
-    return `page=${params.salePage ?? ""}`;
+  if (GOAL_REPORTS.has(report)) return `goals=${goalEvents(params).join(",")}`;
+  if (SALE_PAGE_REPORTS.has(report)) return `page=${params.salePage ?? ""}`;
   if (report === "ai_sources" || report === "ai_pages") return `ai=v${AI_LIST_VERSION}`;
   return "-";
 }
+
+/**
+ * What the sales reports break their counts down by. "Last visit" is GA4's session
+ * source, which already skips direct visits when it knows an earlier source; "first
+ * visit" is the first user source, which never changes for a person.
+ */
+const BREAKDOWN = {
+  goals_sources: ["sessionSource"],
+  goals_landing: ["landingPage"],
+  first_goals: ["firstUserSource"],
+  goal_paths: ["firstUserSource", "sessionSource"],
+  goal_days: ["firstSessionDate", "date"],
+  sale_page_sources: ["sessionSource"],
+  sale_page_landing: ["landingPage"],
+  first_sale_page: ["firstUserSource"],
+  sale_page_paths: ["firstUserSource", "sessionSource"],
+  sale_page_days: ["firstSessionDate", "date"],
+  purchase_sources: ["sessionSource"],
+  purchase_landing: ["landingPage"],
+  first_purchase: ["firstUserSource"],
+} satisfies Partial<Record<ReportName, string[]>>;
 
 export function buildRequest(
   report: ReportName,
@@ -334,39 +435,62 @@ export function buildRequest(
       };
     case "goals_sources":
     case "goals_landing":
+    case "first_goals":
+    case "goal_paths":
+    case "goal_days":
       return {
         dateRanges: dateRanges(window, "current"),
-        dimensions: [
-          dimension(report === "goals_sources" ? "sessionSource" : "landingPage"),
-          dimension("eventName"),
-        ],
+        dimensions: [...BREAKDOWN[report].map(dimension), dimension("eventName")],
         metrics: [metric("eventCount")],
-        dimensionFilter: {
-          filter: { fieldName: "eventName", inListFilter: { values: goalEvents(params) } },
-        },
+        dimensionFilter: goalFilter(params),
         orderBys: [desc("eventCount")],
-        limit: SALES_LIMIT,
+        limit: report === "goal_days" ? DAYS_LIMIT : SALES_LIMIT,
       };
     case "sale_page_sources":
     case "sale_page_landing":
+    case "first_sale_page":
+    case "sale_page_paths":
+    case "sale_page_days":
       return {
         dateRanges: dateRanges(window, "current"),
-        dimensions: [dimension(report === "sale_page_sources" ? "sessionSource" : "landingPage")],
+        dimensions: BREAKDOWN[report].map(dimension),
         metrics: [metric("screenPageViews")],
-        dimensionFilter: {
-          filter: {
-            fieldName: "pagePath",
-            stringFilter: { matchType: "EXACT", value: params.salePage ?? "" },
-          },
-        },
+        dimensionFilter: salePageFilter(params),
         orderBys: [desc("screenPageViews")],
-        limit: SALES_LIMIT,
+        limit: report === "sale_page_days" ? DAYS_LIMIT : SALES_LIMIT,
+      };
+    case "change_paths":
+      return {
+        dateRanges: dateRanges(window, "both"),
+        dimensions: [dimension("sessionSource"), dimension("landingPage")],
+        metrics: [metric("activeUsers")],
+        orderBys: [desc("activeUsers")],
+        limit: CHANGE_LIMIT,
+      };
+    case "change_goals":
+      return {
+        dateRanges: dateRanges(window, "both"),
+        dimensions: [dimension("sessionSource"), dimension("landingPage"), dimension("eventName")],
+        metrics: [metric("eventCount")],
+        dimensionFilter: goalFilter(params),
+        orderBys: [desc("eventCount")],
+        limit: CHANGE_LIMIT,
+      };
+    case "change_sale_page":
+      return {
+        dateRanges: dateRanges(window, "both"),
+        dimensions: [dimension("sessionSource"), dimension("landingPage")],
+        metrics: [metric("screenPageViews")],
+        dimensionFilter: salePageFilter(params),
+        orderBys: [desc("screenPageViews")],
+        limit: CHANGE_LIMIT,
       };
     case "purchase_sources":
     case "purchase_landing":
+    case "first_purchase":
       return {
         dateRanges: dateRanges(window, "current"),
-        dimensions: [dimension(report === "purchase_sources" ? "sessionSource" : "landingPage")],
+        dimensions: BREAKDOWN[report].map(dimension),
         metrics: [metric("purchaseRevenue")],
         orderBys: [desc("purchaseRevenue")],
         limit: SALES_LIMIT,
@@ -595,16 +719,8 @@ const parsers: { [R in ReportName]: (rows: Row[], window: RangeWindow) => Payloa
   },
 
   goals_sources(rows) {
-    const bySource = new Map<string, Record<string, number>>();
-    for (const r of rows) {
-      const source = r.dims.sessionSource ?? "";
-      const events = bySource.get(source) ?? {};
-      const name = r.dims.eventName ?? "";
-      events[name] = (events[name] ?? 0) + (r.metrics.eventCount ?? 0);
-      bySource.set(source, events);
-    }
     return {
-      rows: [...bySource].map(([source, events]) => ({
+      rows: [...eventsBy(rows, (r) => r.dims.sessionSource ?? "")].map(([source, events]) => ({
         source,
         label: sourceLabel(source),
         events,
@@ -613,24 +729,59 @@ const parsers: { [R in ReportName]: (rows: Row[], window: RangeWindow) => Payloa
   },
 
   goals_landing(rows) {
-    const byPath = new Map<string, Record<string, number>>();
-    for (const r of rows) {
-      const path = plainValue(r.dims.landingPage);
-      const events = byPath.get(path) ?? {};
-      const name = r.dims.eventName ?? "";
-      events[name] = (events[name] ?? 0) + (r.metrics.eventCount ?? 0);
-      byPath.set(path, events);
-    }
+    const byPath = eventsBy(rows, (r) => plainValue(r.dims.landingPage));
     return { rows: [...byPath].map(([path, events]) => ({ path, events })) };
   },
 
+  first_goals(rows) {
+    return {
+      rows: [...eventsBy(rows, (r) => r.dims.firstUserSource ?? "")].map(([source, events]) => ({
+        source,
+        label: sourceLabel(source),
+        events,
+      })),
+    };
+  },
+
+  goal_paths(rows) {
+    return {
+      rows: [...eventsBy(rows, pathKey)].map(([key, events]) => ({ ...splitPath(key), events })),
+      complete: rows.length < SALES_LIMIT,
+    };
+  },
+
+  goal_days(rows) {
+    const events: Record<string, DayBuckets> = {};
+    for (const r of rows) {
+      const name = r.dims.eventName ?? "";
+      events[name] ??= emptyBuckets();
+      addToBucket(events[name], r, r.metrics.eventCount ?? 0);
+    }
+    return { events, complete: rows.length < DAYS_LIMIT };
+  },
+
   sale_page_sources(rows) {
-    const values = sumBy(rows, (r) => r.dims.sessionSource ?? "", "screenPageViews");
+    return { rows: viewsBySource(rows, "sessionSource") };
+  },
+
+  first_sale_page(rows) {
+    return { rows: viewsBySource(rows, "firstUserSource") };
+  },
+
+  sale_page_paths(rows) {
+    const values = sumBy(rows, pathKey, "screenPageViews");
     return {
       rows: [...values]
-        .map(([source, views]) => ({ source, label: sourceLabel(source), views }))
+        .map(([key, views]) => ({ ...splitPath(key), views }))
         .sort((a, b) => b.views - a.views),
+      complete: rows.length < SALES_LIMIT,
     };
+  },
+
+  sale_page_days(rows) {
+    const days = emptyBuckets();
+    for (const r of rows) addToBucket(days, r, r.metrics.screenPageViews ?? 0);
+    return { days, complete: rows.length < DAYS_LIMIT };
   },
 
   sale_page_landing(rows) {
@@ -641,12 +792,35 @@ const parsers: { [R in ReportName]: (rows: Row[], window: RangeWindow) => Payloa
   },
 
   purchase_sources(rows) {
-    const values = sumBy(rows, (r) => r.dims.sessionSource ?? "", "purchaseRevenue");
-    const list = [...values]
-      .filter(([, revenue]) => revenue > 0)
-      .map(([source, revenue]) => ({ source, label: sourceLabel(source), revenue }))
-      .sort((a, b) => b.revenue - a.revenue);
-    return { rows: list, total: list.reduce((a, r) => a + r.revenue, 0) };
+    return revenueBySource(rows, "sessionSource");
+  },
+
+  change_paths(rows) {
+    return { rows: changeCells(rows, "activeUsers"), complete: rows.length < CHANGE_LIMIT };
+  },
+
+  change_goals(rows) {
+    const cells = new Map<string, { now: Record<string, number>; then: Record<string, number> }>();
+    for (const r of rows) {
+      const key = cellKey(r);
+      const cell = cells.get(key) ?? { now: {}, then: {} };
+      const side = r.period === "current" ? cell.now : cell.then;
+      const name = r.dims.eventName ?? "";
+      side[name] = (side[name] ?? 0) + (r.metrics.eventCount ?? 0);
+      cells.set(key, cell);
+    }
+    return {
+      rows: [...cells].map(([key, cell]) => ({ ...splitCell(key), ...cell })),
+      complete: rows.length < CHANGE_LIMIT,
+    };
+  },
+
+  change_sale_page(rows) {
+    return { rows: changeCells(rows, "screenPageViews"), complete: rows.length < CHANGE_LIMIT };
+  },
+
+  first_purchase(rows) {
+    return revenueBySource(rows, "firstUserSource");
   },
 
   purchase_landing(rows) {
@@ -681,6 +855,82 @@ const parsers: { [R in ReportName]: (rows: Row[], window: RangeWindow) => Payloa
     };
   },
 };
+
+/** Event counts per key and event name. */
+function eventsBy(rows: Row[], key: (row: Row) => string): Map<string, Record<string, number>> {
+  const out = new Map<string, Record<string, number>>();
+  for (const r of rows) {
+    const k = key(r);
+    const events = out.get(k) ?? {};
+    const name = r.dims.eventName ?? "";
+    events[name] = (events[name] ?? 0) + (r.metrics.eventCount ?? 0);
+    out.set(k, events);
+  }
+  return out;
+}
+
+function viewsBySource(rows: Row[], field: "sessionSource" | "firstUserSource") {
+  const values = sumBy(rows, (r) => r.dims[field] ?? "", "screenPageViews");
+  return [...values]
+    .map(([source, views]) => ({ source, label: sourceLabel(source), views }))
+    .sort((a, b) => b.views - a.views);
+}
+
+function revenueBySource(rows: Row[], field: "sessionSource" | "firstUserSource") {
+  const values = sumBy(rows, (r) => r.dims[field] ?? "", "purchaseRevenue");
+  const list = [...values]
+    .filter(([, revenue]) => revenue > 0)
+    .map(([source, revenue]) => ({ source, label: sourceLabel(source), revenue }))
+    .sort((a, b) => b.revenue - a.revenue);
+  return { rows: list, total: list.reduce((a, r) => a + r.revenue, 0) };
+}
+
+/** A first source and a last source in one map key (a tab never appears in a source). */
+const pathKey = (r: Row) => `${r.dims.firstUserSource ?? ""}\t${r.dims.sessionSource ?? ""}`;
+
+function splitPath(key: string): PathKey {
+  const [first = "", last = ""] = key.split("\t");
+  return { first, firstLabel: sourceLabel(first), last, lastLabel: sourceLabel(last) };
+}
+
+/** A source and a landing page in one map key; the shown path, so "(not set)" reads "Unknown". */
+const cellKey = (r: Row) => `${r.dims.sessionSource ?? ""}\t${plainValue(r.dims.landingPage)}`;
+
+function splitCell(key: string): { source: string; path: string } {
+  const [source = "", path = ""] = key.split("\t");
+  return { source, path };
+}
+
+/** One metric per source and landing page, this period and the one before. */
+function changeCells(rows: Row[], metricName: string): ChangeCell[] {
+  const now = sumBy(rows, cellKey, metricName, "current");
+  const then = sumBy(rows, cellKey, metricName, "previous");
+  return [...new Set([...now.keys(), ...then.keys()])].map((key) => ({
+    ...splitCell(key),
+    now: now.get(key) ?? 0,
+    then: then.get(key) ?? 0,
+  }));
+}
+
+const emptyBuckets = (): DayBuckets => ({ sameDay: 0, week: 0, month: 0, later: 0, unknown: 0 });
+
+/** Days between two GA4 dates (YYYYMMDD), or null when either isn't a date. */
+export function daysBetween(from: string, to: string): number | null {
+  const time = (d: string) =>
+    /^\d{8}$/.test(d) ? Date.UTC(+d.slice(0, 4), +d.slice(4, 6) - 1, +d.slice(6, 8)) : NaN;
+  const days = Math.round((time(to) - time(from)) / 86_400_000);
+  return Number.isFinite(days) && days >= 0 ? days : null;
+}
+
+/** Adds a row's count to its group: same day, 1–7 days, 8–30 days or later. */
+function addToBucket(buckets: DayBuckets, row: Row, count: number) {
+  const days = daysBetween(row.dims.firstSessionDate ?? "", row.dims.date ?? "");
+  if (days === null) buckets.unknown += count;
+  else if (days === 0) buckets.sameDay += count;
+  else if (days <= 7) buckets.week += count;
+  else if (days <= 30) buckets.month += count;
+  else buckets.later += count;
+}
 
 /**
  * Rows of one dimension summed by their plain-words label (several GA4 values can

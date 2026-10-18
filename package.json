@@ -17,7 +17,8 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file-if-exists=.env scripts/migrate.mjs",
-    "content:images": "node scripts/content-images.mjs"
+    "content:images": "node scripts/content-images.mjs",
+    "content:screenshots": "node scripts/content-screenshots.mjs"
   },
   "dependencies": {
     "@google-analytics/admin": "10.1.1",

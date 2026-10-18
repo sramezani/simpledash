@@ -20,8 +20,10 @@ import type { SearchCard as SearchData } from "@/lib/search-console/data";
 import {
   NEAR_POSITIONS,
   searchesToSignups,
+  slippingQuery,
   type ChangedPage,
   type NearGroup,
+  type PageQuery,
 } from "@/lib/search-console/insights";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +49,7 @@ export function SearchCard({
   signupEvent,
   settingsHref,
   note,
+  action,
 }: {
   data: Ready;
   /** For download file names. */
@@ -56,6 +59,8 @@ export function SearchCard({
   settingsHref: string;
   /** Why these may be older numbers ("Search Console isn't answering…"). */
   note?: string | null;
+  /** This week's one thing, above the tabs. */
+  action?: ReactNode;
 }) {
   const { overview, insights, brand, window } = data;
   const exportInfo: ListExport = { site: siteName, ...window.current };
@@ -119,12 +124,15 @@ export function SearchCard({
     </dl>
   );
 
+  const signups = signupsView(data, signupEvent);
   const views: ListView[] = [
+    // With a signup event, the pages that bring signups come first.
+    ...(signupEvent ? [signups] : []),
     nearView(insights.near),
     changedView(insights.changed, comparable, days(data.insightsWindow.previous)),
     brandView(brand, overview.current.clicks, comparable, versus, settingsHref),
     unclickedView(insights.unclicked),
-    signupsView(data, signupEvent),
+    ...(signupEvent ? [] : [signups]),
   ];
 
   return (
@@ -133,7 +141,12 @@ export function SearchCard({
       title="Google search"
       heading={heading}
       help={SEARCH_HELP}
-      intro={numbers}
+      intro={
+        <>
+          {numbers}
+          {action}
+        </>
+      }
       views={views}
       exportInfo={exportInfo}
     />
@@ -536,18 +549,20 @@ function unclickedView(unclicked: Ready["insights"]["unclicked"]): ListView {
   };
 }
 
-// ── 5. Searches that lead to signups ───────────────────────────────────────
+// ── 5. Brings signups ──────────────────────────────────────────────────────
 
 function signupsView(data: Ready, signupEvent: string | null): ListView {
   const rows = data.landing
     ? searchesToSignups(data.insights.pages, data.landing, data.signups)
     : [];
+  const searches = new Map((data.insights.pageQueries ?? []).map((p) => [p.path, p]));
   const dash = (v: number | null) => (v === null ? "—" : null);
   return {
     value: "signups",
-    label: "Leads to signups",
+    label: "Brings signups",
     itemLabel: "Landing page",
-    columns: signupEvent ? ["Clicks", "Visitors", "Signups"] : ["Clicks", "Visitors"],
+    columns: signupEvent ? ["Signups", "Clicks", "Visitors"] : ["Clicks", "Visitors"],
+    cardColumns: signupEvent ? ["Signups", "Clicks"] : ["Clicks", "Visitors"],
     empty: data.landing ? (
       <EmptyState title="No Google clicks to your pages in this period." />
     ) : (
@@ -558,7 +573,7 @@ function signupsView(data: Ready, signupEvent: string | null): ListView {
     intro: (
       <Intro>
         {signupEvent
-          ? "Clicks from Google (Search Console) next to that page's visitors from Google search and their signups (Google Analytics), for the same days."
+          ? "Signups from Google search visitors who landed on each page (Google Analytics), next to its Google clicks (Search Console), for the same days. Under each page, the searches that showed it most; Google doesn't say which search led to a signup."
           : "Clicks from Google (Search Console) next to that page's visitors from Google search (Google Analytics). Choose your signup event in the overview to see signups here too."}
       </Intro>
     ),
@@ -567,9 +582,91 @@ function signupsView(data: Ready, signupEvent: string | null): ListView {
       key: r.path,
       label: r.path,
       values: signupEvent
-        ? [r.clicks, r.visitors ?? 0, r.signups ?? 0]
+        ? [r.signups ?? 0, r.clicks, r.visitors ?? 0]
         : [r.clicks, r.visitors ?? 0],
-      display: signupEvent ? [null, dash(r.visitors), dash(r.signups)] : [null, dash(r.visitors)],
+      display: signupEvent ? [dash(r.signups), null, dash(r.visitors)] : [null, dash(r.visitors)],
     })),
+    content:
+      signupEvent && rows.length > 0 ? (
+        <SignupPages rows={rows.map((r) => ({ ...r, page: searches.get(r.path) ?? null }))} />
+      ) : undefined,
   };
+}
+
+/** Pages that fit in the card's fixed height: a page with its signups, then its top searches. */
+function SignupPages({
+  rows,
+}: {
+  rows: (ReturnType<typeof searchesToSignups>[number] & {
+    page: NonNullable<Ready["insights"]["pageQueries"]>[number] | null;
+  })[];
+}) {
+  let budget = 9;
+  const shown: { row: (typeof rows)[number]; queries: PageQuery[] }[] = [];
+  for (const row of rows) {
+    if (budget < 1) break;
+    const queries = [...(row.page?.queries ?? [])]
+      .filter((q) => q.clicks > 0)
+      .sort((a, b) => b.clicks - a.clicks)
+      .slice(0, Math.min(2, budget - 1));
+    shown.push({ row, queries });
+    budget -= queries.length + 1;
+  }
+  return (
+    <ol
+      aria-label="Pages that bring signups from Google, with their searches"
+      className="flex h-[calc(9*2.375rem-0.125rem)] flex-col gap-1 overflow-hidden"
+    >
+      {shown.map(({ row, queries }) => {
+        const slipped = row.page ? slippingQuery(row.page) : null;
+        return (
+          <li key={row.path} className="flex flex-col">
+            <div className="flex h-9 items-center gap-2 px-2 text-sm">
+              <span className="min-w-0 flex-1 truncate font-medium" title={row.path}>
+                {row.path}
+              </span>
+              {slipped ? (
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-xs text-negative">
+                  <ArrowDownRightIcon className="size-3" aria-hidden="true" />
+                  Slipping
+                  <span className="sr-only">
+                    : “{slipped.query}” went from position {formatPosition(slipped.positionThen!)}{" "}
+                    to {formatPosition(slipped.position)}
+                  </span>
+                </span>
+              ) : null}
+              <span className="flex shrink-0 gap-2 tabular-nums @sm:gap-4">
+                <span className="w-12 text-right @sm:w-14">
+                  {row.signups === null ? "—" : formatNumber(row.signups)}
+                  <span className="sr-only"> signups,</span>
+                </span>
+                <span className="w-12 text-right text-muted-foreground @sm:w-14">
+                  {formatNumber(row.clicks)}
+                  <span className="sr-only"> clicks</span>
+                </span>
+              </span>
+            </div>
+            {queries.length ? (
+              <ul className="flex flex-col">
+                {queries.map((q) => (
+                  <li
+                    key={q.query}
+                    className="flex min-h-8 items-center gap-2 py-0.5 pr-2 pl-4 text-xs text-muted-foreground @md:pl-5"
+                  >
+                    <span className="min-w-0 flex-1 truncate" title={q.query}>
+                      “{q.query}”
+                    </span>
+                    <span className="shrink-0 tabular-nums">
+                      position {formatPosition(q.position)} · {formatNumber(q.clicks)}{" "}
+                      {q.clicks === 1 ? "click" : "clicks"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </li>
+        );
+      })}
+    </ol>
+  );
 }

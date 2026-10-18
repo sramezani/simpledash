@@ -3,7 +3,7 @@ title: Which traffic sources bring paying customers?
 menuTitle: "Traffic to revenue"
 seoTitle: Which traffic sources bring paying customers?
 description: "Connect visits to sales without guessing: send purchases to GA4, fix payment-page referrals, then read sales by source and landing page. With the limits."
-updated: 2026-10-16
+updated: 2026-10-17
 ---
 
 To know which sources bring paying customers, GA4 has to see the sale: send a `purchase` event (or count a thank-you page), stop payment pages taking the credit, then read purchases by session source and landing page. Stripe tells you how much money came in; GA4 tells you where buyers came from.
@@ -50,13 +50,15 @@ So use GA4 to compare sources with each other, and Stripe for your real revenue.
 It's tempting to divide revenue by visitors per source to get "revenue per visitor from X". Unless GA4 actually recorded the sale for that source, that number is a guess. Keep to sales GA4 recorded, and revenue Stripe recorded.
 
 <InSimpleDash>
-  With Pro, SimpleDash shows **Sales and signups by source** and **by landing page** from GA4 (with
-  GA4's own revenue when it has it), and **Revenue**, **MRR** and **New customers** from your Stripe
-  account, side by side and never mixed into an estimate. It also warns you when a payment page
-  shows up as a source.
+  With Pro, SimpleDash's **What brings customers** shows, from GA4, where the people behind your
+  sales first found you next to the visit they bought on, the paths between the two and the landing
+  pages (with GA4's own revenue when it has it). **Revenue**, **MRR** and **New customers** come
+  from your Stripe account, side by side and never mixed into an estimate. It also warns you when a
+  payment page shows up as a source.
 </InSimpleDash>
 
 ## Related
 
 - [Create a read-only Stripe key](/guides/stripe-restricted-key)
 - [What counts as a sale](/docs/what-counts-as-a-sale)
+- [First user source vs session source](/guides/first-user-source-vs-session-source)

@@ -8,6 +8,8 @@ import {
 import { deriveStats } from "@/lib/ga4/derive";
 import type { RangeWindow } from "@/lib/ga4/ranges";
 import type { Payloads } from "@/lib/ga4/reports";
+import type { MetricChange } from "@/lib/changes/breakdown";
+import { actionFacts, type SearchAction } from "@/lib/search-console/action";
 import { buildSummary } from "@/lib/summary/summary";
 
 /**
@@ -23,6 +25,12 @@ export type SiteBlock = {
   sources: { label: string; value: string }[];
   pages: { label: string; value: string }[];
   aiVisitors: string | null;
+  /** What moved last week: up to 3 sources, with their main landing page (section 31.2). */
+  moved: string[];
+  /** What brings customers' first line, from the last 30 days (section 31.1). */
+  found: string | null;
+  /** This week's one thing on Google search (section 31.3). */
+  action: { title: string; fact: string } | null;
   /** This site's dashboard. */
   dashboard: string;
   /** For the subject: last week's visitors and the change, when it can be compared. */
@@ -48,6 +56,12 @@ export type SiteWeekInput = {
   signupEvent: string | null;
   comparable: boolean;
   dashboard: string;
+  /** Visitors by source and landing page, last week against the week before. */
+  changes?: MetricChange | null;
+  /** The first What brings customers line for the last 30 days, if one stands out. */
+  found?: string | null;
+  /** This week's Google search pick. */
+  action?: SearchAction | null;
 };
 
 export type WeeklyEmailInput = {
@@ -112,10 +126,32 @@ export function buildSiteBlock(input: SiteWeekInput): SiteBlock | null {
       .slice(0, 3)
       .map((r) => ({ label: r.path, value: formatNumber(r.views) })),
     aiVisitors: ai > 0 ? formatNumber(ai) : null,
+    moved: input.comparable ? movedLines(input.changes ?? null) : [],
+    found: input.found ? `In the last 30 days, ${input.found}` : null,
+    action: input.action
+      ? {
+          title: `This week on Google search: work on ${input.action.label}`,
+          fact: actionFacts(input.action).at(-1)!,
+        }
+      : null,
     dashboard: input.dashboard,
     visitors,
     change: input.comparable ? percentChange(visitors, totals.previous.visitors) : null,
   };
+}
+
+/**
+ * "Google +300 visitors (120 → 420), mostly to /blog/ga4." A page is named only when it
+ * moved at least half as much as its source, the same way.
+ */
+export function movedLines(changes: MetricChange | null): string[] {
+  return (changes?.breakdown.movers ?? []).map((m) => {
+    const sign = m.delta > 0 ? "+" : "−";
+    const top = m.pages[0];
+    const mostly =
+      top && Math.abs(top.delta) * 2 >= Math.abs(m.delta) ? `, mostly to ${top.label}` : "";
+    return `${m.label} ${sign}${formatNumber(Math.abs(m.delta))} visitors (${formatNumber(m.then)} → ${formatNumber(m.now)})${mostly}.`;
+  });
 }
 
 /** " (up 23%)", " (no change)", or nothing when it can't be compared. */

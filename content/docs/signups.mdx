@@ -1,7 +1,7 @@
 ---
 title: Choose what counts as a signup
 description: Tell SimpleDash which Google Analytics event means a signup, so the Signups number counts it. Pick a key event, and never see a fake zero.
-updated: 2026-10-16
+updated: 2026-10-18
 ---
 
 Google Analytics doesn't know which of your events means "someone signed up". Pick it once in the Signups number, and SimpleDash counts it for every date range, including the history GA4 already has.
@@ -28,8 +28,11 @@ Done. Signups now counts that event, compared with the period before, and the [M
 
 To change it later, use the pencil next to the Signups number.
 
-<ImageSlot id="signups-picker" alt="The Signups number showing the 'Which action means a signup?' picker with a list of key events">
-On a site with no signup action chosen yet, capture the Signups number showing the picker, with the event list open (for example sign_up, generate_lead, purchase).
+<ImageSlot
+  id="signups-picker"
+  alt="The Signups number with its picker open: Which action means a signup?, with sign_up chosen and a Use this button"
+>
+  From /ui-kit/dashboard?state=no-signup-event (npm run content:screenshots): the Signups number with Choose your signup event open and sign_up picked.
 </ImageSlot>
 
 ## No events in the list?

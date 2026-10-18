@@ -1,0 +1,91 @@
+---
+title: "First user source vs session source in GA4: which channel brings customers?"
+menuTitle: "First vs last visit"
+seoTitle: First user source vs session source in GA4
+description: GA4's first user source is where someone first found you; session source is the visit they bought on. How to compare them, and what each tells you.
+updated: 2026-10-17
+---
+
+In Google Analytics 4, **first user source** is where a person came from the first time GA4 saw them, and it never changes. **Session source** is where each visit came from. A signup or a sale belongs to both: the channel that first found the person, and the visit it happened on. Comparing the two shows which channels find customers that other channels then get the credit for.
+
+## The two in plain words
+
+|                      | First user source                  | Session source                          |
+| -------------------- | ---------------------------------- | --------------------------------------- |
+| What it is           | Where the person came from first   | Where this visit came from              |
+| Changes when?        | Never, for that person and browser | Every visit                             |
+| Where GA4 shows it   | The User acquisition report        | The Traffic acquisition report          |
+| A sale counts under… | The channel that found the person  | The channel of the visit they bought on |
+
+Both skip direct visits when GA4 knows an earlier source: Google calls this "paid and organic channels last click". So someone who first came from X and later typed your address to buy still counts as X for that visit, not Direct.
+
+## An example
+
+Someone sees your post on Reddit and visits. A week later they search your name on Google, come back and buy.
+
+- **First user source:** reddit.com
+- **Session source** of the buying visit: google
+
+In the Traffic acquisition report the sale sits under Google, and Reddit gets nothing. In User acquisition it sits under Reddit. Neither is wrong: Reddit found the customer, and Google brought them back.
+
+## Compare them in GA4
+
+<Steps>
+<Step>
+
+In GA4, open **Explore** and start a **Blank** exploration (Free form).
+
+</Step>
+<Step>
+
+Under **Dimensions**, add **First user source** and **Session source**. Under **Metrics**, add **Event count**.
+
+</Step>
+<Step>
+
+Drag both dimensions to **Rows** and Event count to **Values**.
+
+</Step>
+<Step>
+
+Add a filter: **Event name** exactly matches your signup or purchase event, such as `sign_up` or `purchase`.
+
+</Step>
+</Steps>
+
+Each row is now a path: first source, then the source of the visit with the event, and how many times it happened.
+
+## What to look for
+
+| What you see                                                 | What it tells you                                                      |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| A source with many sales as first, few as session source     | It finds people who buy later, often through another channel           |
+| Google or Direct with many sales from people found elsewhere | They bring people back; something else found them first                |
+| A source with the same counts in both                        | People find you and buy in the same visit from it                      |
+| Many "(not set)" first sources                               | Those people first came before GA4 was on your site, or GA4 lost track |
+
+Keep to the counts. They show which channels found and brought back the people who signed up; they don't say why someone bought.
+
+## Limits
+
+- **Per browser.** GA4 knows a person by their browser (or your user ID, if you send one). Someone who switches device or clears cookies is a new person, with a new first source.
+- **Events, not people.** Event count counts each signup or purchase, so one person who buys twice counts twice.
+- **Not the attribution reports.** GA4's attribution reports, such as Model comparison, share each key event out between channels with a model, so they show parts like 1.3 sales. First user source and session source give whole counts.
+
+<InSimpleDash>
+  With Pro, SimpleDash's **What brings customers** card puts both side by side for your signups and
+  sales: First and Last for each source, the paths between them ("reddit.com → Google"), and how
+  long it took from the first visit. When one source found many more customers than its visits
+  closed, it says so in one line. [What brings customers](/docs/what-brings-customers).
+</InSimpleDash>
+
+## Related
+
+- [From traffic to revenue](/guides/traffic-to-revenue)
+- [Why is direct traffic so high?](/guides/ga4-direct-traffic)
+- [Attribution in plain words](/glossary/attribution)
+
+## Sources
+
+- Google: [Scopes of traffic-source dimensions](https://support.google.com/analytics/answer/11080067) (checked Oct 17, 2026)
+- Google: [API dimensions and metrics](https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema) (checked Oct 17, 2026)

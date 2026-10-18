@@ -24,7 +24,8 @@ import { ShareCard } from "@/components/dashboard/share-card";
 import { SiteSwitcher } from "@/components/dashboard/site-switcher";
 import { SearchCard } from "@/components/search/search-card";
 import { SearchConnect, SearchProblemCard, SearchTeaser } from "@/components/search/search-states";
-import { sampleSearchCard } from "@/lib/search-console/sample";
+import { sampleSearchCard, sampleWeeklyPick } from "@/lib/search-console/sample";
+import { SearchActionPanel } from "@/components/search/search-action";
 import type { PropertyList } from "@/lib/ga4/property-choice";
 import { SiteChip } from "@/components/shared/site-chip";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +34,7 @@ import {
   comparisonGap,
   freeFirstDay,
   parseRange,
+  previousPeriodWords,
   rangeForPlan,
   rangeWindow,
 } from "@/lib/ga4/ranges";
@@ -45,6 +47,9 @@ import {
   SAMPLE_SIGNUP_EVENT,
 } from "@/lib/ga4/sample/sample";
 import { SalesCard } from "@/components/cards/sales-card";
+import { WhatChangedCard } from "@/components/cards/what-changed-card";
+import { metricChanges } from "@/lib/changes/breakdown";
+import { formatDayRange } from "@/lib/format";
 import { revenueMetrics } from "@/components/dashboard/revenue-metrics";
 import { sampleRevenue } from "@/lib/revenue/sample";
 
@@ -73,6 +78,7 @@ const STATES = [
   "free-history",
   "search-connect",
   "search-error",
+  "search-done",
 ] as const;
 
 /** Dev only: the real dashboard on sample data, in every state, without signing in. */
@@ -98,6 +104,11 @@ async function noopNote() {
 async function noopPick() {
   "use server";
   return { saved: true };
+}
+
+async function noopDone() {
+  "use server";
+  return { done: true };
 }
 
 async function sampleShare() {
@@ -170,7 +181,7 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
   await connection(); // dates depend on the current time
   const params = await searchParams;
   const state = STATES.find((s) => s === params.state) ?? "normal";
-  const pro = state === "pro";
+  const pro = state === "pro" || state === "search-done";
   // Free (every state but "pro") sees the last 30 days, like the real dashboard.
   const { range, limited } = rangeForPlan(
     state === "free-history" ? "12m" : parseRange(params.range),
@@ -184,6 +195,10 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
     "goals_landing",
     "purchase_sources",
     "purchase_landing",
+    "first_goals",
+    "first_purchase",
+    "goal_paths",
+    "goal_days",
   ]);
   // A payment page among the sources, to show the owner's warning.
   if (pro) {
@@ -237,6 +252,54 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
           },
         ]
       : [];
+  const searchData = sampleSearchCard(window.current, { signupEvent });
+  const changeReports = sampleReports(window, ["change_paths", "change_goals"]);
+  const changes =
+    empty || state === "no-data" || state === "revoked" ? null : (
+      <WhatChangedCard
+        metrics={metricChanges(
+          {
+            totals: reports.totals.data,
+            sources: reports.sources.data,
+            actions: reports.actions.data,
+            paths: changeReports.change_paths.data,
+            goals: changeReports.change_goals.data,
+            salePageCells: null,
+          },
+          {
+            signupEvent,
+            saleEvent: SAMPLE_SALE_EVENT,
+            salePage: null,
+            pro,
+            search: pro ? searchData.insights.changed : null,
+          },
+        )}
+        versus={`vs ${previousPeriodWords(range)}`}
+        missing={state === "no-history" ? "Not enough history to compare" : null}
+        exportInfo={{ site: "yoursite.com", ...window.current }}
+        searchDays={
+          pro
+            ? formatDayRange(
+                searchData.insightsWindow.current.start,
+                searchData.insightsWindow.current.end,
+              )
+            : null
+        }
+        footer={
+          pro || !signupEvent ? null : (
+            <p className="pb-2 text-xs text-muted-foreground">
+              Pro also shows what moved your signups and sales.{" "}
+              <Link
+                href="/ui-kit/settings?page=billing"
+                className="font-medium text-primary underline-offset-2 hover:underline"
+              >
+                See Pro
+              </Link>
+            </p>
+          )
+        }
+      />
+    );
   const zero = {
     current: { visitors: 0, pageViews: 0, engagementSeconds: 0 },
     previous: { visitors: 0, pageViews: 0, engagementSeconds: 0 },
@@ -280,6 +343,7 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
             remove={noopNote}
           />
         }
+        changes={changes}
         live={
           <LiveCard
             data={
@@ -325,6 +389,13 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
                 pageLanding: null,
                 purchaseSources: extra.purchase_sources.data,
                 purchaseLanding: extra.purchase_landing.data,
+                firstGoals: extra.first_goals.data,
+                firstPages: null,
+                firstPurchase: extra.first_purchase.data,
+                goalPaths: extra.goal_paths.data,
+                pagePaths: null,
+                goalDays: extra.goal_days.data,
+                pageDays: null,
               }}
               signupEvent={SAMPLE_SIGNUP_EVENT}
               saleEvent={SAMPLE_SALE_EVENT}
@@ -338,7 +409,17 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
         search={
           pro ? (
             <SearchCard
-              data={sampleSearchCard(window.current, { signupEvent })}
+              data={searchData}
+              action={
+                <SearchActionPanel
+                  pick={sampleWeeklyPick(window.current, {
+                    signupEvent,
+                    done: state === "search-done",
+                  })}
+                  markDone={noopDone}
+                  signupEvent={signupEvent}
+                />
+              }
               siteName="yoursite.com"
               signupEvent={signupEvent}
               settingsHref="/ui-kit/settings?state=pro&page=site#search"

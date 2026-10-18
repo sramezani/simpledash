@@ -1,6 +1,6 @@
-# Revenue and sales by source
+# Revenue, what brings customers and what changed
 
-Pro's money features: revenue from the user's own Stripe account, and sales and signups by source from GA4. The plan is in `docs/SPEC.md` section 28.3; this file says how the code does it.
+Pro's money features: revenue from the user's own Stripe account, and what brings customers from GA4. Also What changed (every plan, more on Pro). The plan is in `docs/SPEC.md` sections 28.3 and 31; this file says how the code does it.
 
 **The rule:** exact numbers only. Revenue is what Stripe recorded; revenue per source is GA4's own purchase value. Nothing is multiplied, matched by time or estimated.
 
@@ -17,7 +17,10 @@ Pro's money features: revenue from the user's own Stripe account, and sales and 
 | `src/app/actions/revenue.ts` | "Check and save", Remove, "What counts as a sale?" | |
 | `src/components/settings/revenue-settings.tsx`, `sale-settings.tsx` | The two Settings cards | |
 | `src/components/dashboard/revenue-metrics.tsx` | Revenue and New customers in the overview | |
-| `src/components/cards/sales-card.tsx` | Sales and signups by source | |
+| `src/components/cards/sales-card.tsx` | What brings customers | |
+| `src/lib/customers/counts.ts`, `highlights.ts` | First and last visit counts and paths; the highlight lines | yes |
+| `src/lib/changes/breakdown.ts` | What changed: the headline, the moves, their pages, the Google search detail | yes |
+| `src/components/cards/what-changed-card.tsx` | What changed | |
 
 The secret helper `src/lib/auth/secrets.ts` encrypts with Better Auth's key, like the Google tokens.
 
@@ -44,12 +47,24 @@ The secret helper `src/lib/auth/secrets.ts` encrypts with Better Auth's key, lik
 - **Bars** under the visitors line: revenue per day, or per month on 12 months. None on hourly charts (the totals are daily). The tooltip and "View as table" include it.
 - Before Stripe is connected, Revenue shows "Connect Stripe" (to Settings).
 
-## Sales and signups by source (Pro)
+## What brings customers (Pro)
 
 - **What counts as a sale** (Settings): a GA4 key event, or views of a page path (`site.sale_event`, `site.sale_page`), or nothing.
-- **GA4 reports** (`src/lib/ga4/reports.ts`, extra reports only this card loads): `goals_sources` / `goals_landing` (event counts of the signup and sale events by source and landing page), `sale_page_sources` / `sale_page_landing` (views of the thank-you page), `purchase_sources` / `purchase_landing` (GA4's `purchaseRevenue`).
-- **The card:** By source | By landing page, with Visitors (from the Sources and Landing pages reports), Signups, Sales and, only when GA4 has purchase revenue in the period, Revenue (GA4's own sum, in the property's currency). A row outside the top visitor list shows "—" for visitors, never 0.
-- Without purchase values the card says so and links to Google's guide for sending the purchase event.
+- **Last visit** (GA4's session source, which already skips direct visits when an earlier source is known): `goals_sources` / `goals_landing` (event counts by source and landing page), `sale_page_sources` / `sale_page_landing` (thank-you page views), `purchase_sources` / `purchase_landing` (GA4's `purchaseRevenue`).
+- **First visit** (GA4's first user source): `first_goals`, `first_sale_page`, `first_purchase`.
+- **Paths and days:** `goal_paths` / `sale_page_paths` (first source × session source) and `goal_days` / `sale_page_days` (first-visit day × day, grouped into same day, 1–7, 8–30 and over 30 days when the rows arrive).
+- **Loading:** `SalesLoader` makes three `loadReports` calls (last visit, first visit, paths and days), so one refusal from GA4 never hides the rest.
+- **The card:**
+  - A Signups | Sales switch (CSS radios; Sales first) and the legend.
+  - Up to two highlight lines, and the time from first visit.
+  - Tabs: By source (First and Last; Details adds revenue by first and last visit), Paths, and Landing pages (the metric and visitors; Details adds revenue).
+  - Revenue only when GA4 has purchase values; otherwise the card says so and links our guide.
+
+## What changed (every plan; Signups and Sales on Pro)
+
+- **Reports:** `change_paths` (visitors per source and landing page, both periods), `change_goals` (signup and sale events per source and landing page), and `change_sale_page`. Visitors' totals and sources come from `totals` and `sources`; the signups total from `actions`.
+- **Loading:** `ChangesLoader` streams the card under the overview. With Search Console on Pro, it also matches Google's landing pages to Search Console's What changed pages (one load per request, shared with the search card).
+- **The card:** a headline, up to 3 moves (3 visitors or 2 events at least), each opening onto up to 3 pages that moved the same way and, for Google, the searches; "See all changes" for every source. Free sees Visitors only.
 
 ## The payment-page warning (every plan, dashboard only)
 

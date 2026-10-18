@@ -7,6 +7,9 @@ import { getGoogleAccount } from "@/lib/auth/google";
 import { linkGoogleScope } from "@/lib/auth/link-scope";
 import { hasSearchConsoleScope, SEARCH_CONSOLE_SCOPE } from "@/lib/auth/scopes";
 import { requireSite } from "@/lib/auth/session";
+import { todayIn } from "@/lib/ga4/ranges";
+import { addSearchActionNote } from "@/lib/notes/notes";
+import { searchActionNote } from "@/lib/search-console/action";
 import { readBrandTerms } from "@/lib/search-console/brand";
 import {
   autoConnect,
@@ -14,6 +17,7 @@ import {
   disconnectProperty,
   saveBrandTerms,
 } from "@/lib/search-console/connect";
+import { loadWeeklyPick } from "@/lib/search-console/data";
 import { getSiteContext } from "@/lib/sites/sites";
 import { settingsRoutes } from "@/lib/settings-routes";
 
@@ -83,4 +87,31 @@ export async function saveBrandTermsAction(
   await saveBrandTerms(site, readBrandTerms(input));
   refresh();
   return { saved: true };
+}
+
+export type SearchActionState = { error?: string; done?: boolean } | null;
+
+/**
+ * Marks this week's Google search action done: a chart note dated today that remembers
+ * the page and the search, so later weeks can show how they moved. The page is checked
+ * against this week's own pick; the browser can't choose another.
+ */
+export async function markSearchActionDoneAction(
+  siteId: string,
+  _state: SearchActionState,
+  formData: FormData,
+): Promise<SearchActionState> {
+  const { site } = await requireProSite(siteId);
+  const page = formData.get("page");
+  const pick = await loadWeeklyPick(site).catch(() => null);
+  const action = pick?.actions.find((a) => a.page === page);
+  if (!action) return { error: "That page isn't this week's pick any more. Refresh the page." };
+  await addSearchActionNote(site.id, {
+    day: todayIn(site.timeZone),
+    text: searchActionNote(action.path),
+    page: action.page,
+    query: action.query?.query ?? null,
+  });
+  refresh();
+  return { done: true };
 }

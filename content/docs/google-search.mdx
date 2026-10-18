@@ -1,10 +1,10 @@
 ---
 title: Google search insights
-description: With Pro, connect Search Console to see clicks from Google, searches close to page 1, what changed, your name vs new people and pages seen but not clicked.
-updated: 2026-10-16
+description: With Pro, connect Search Console for one page to work on each week, the pages that bring signups with their searches, and searches close to page 1.
+updated: 2026-10-18
 ---
 
-With Pro, SimpleDash adds a Google search card from your own Search Console data: how many people clicked through from Google, the searches you're almost on page 1 for, what changed, and which pages are seen but not clicked. Connecting asks Google for one more read-only permission, only when you choose to.
+With Pro, SimpleDash adds a Google search card from your own Search Console data: one page to work on this week, the pages that bring signups and the searches behind them, the searches you're almost on page 1 for, what changed, and which pages are seen but not clicked. Connecting asks Google for one more read-only permission, only when you choose to.
 
 ## Connect Search Console
 
@@ -33,7 +33,29 @@ SimpleDash picks the matching property: your site's domain property first, then 
 
 ## The card
 
-The top shows **Clicks** (visits from Google search), **Seen** (impressions: how often your pages appeared in results), **Click rate** and average **Position**, compared with the period before. Then five views:
+The top shows **Clicks** (visits from Google search), **Seen** (impressions: how often your pages appeared in results), **Click rate** and average **Position**, compared with the period before. Then **This week**, and five views.
+
+### This week
+
+One page to work on, picked every Monday from the last 28 days of Google's numbers, so it doesn't change when you switch dates. Pages that bring signups come first:
+
+1. **Slipping**: its most-seen search lost 2 or more positions.
+2. **Close to page 1**: a search at positions 8 to 15, seen at least 100 times.
+3. **Seen, not clicked**: Google shows it often, but people rarely click.
+
+You see the numbers behind the pick, short steps and a guide. **Show another** shows the next two. **Mark as done** adds a note to your chart ("Worked on /blog/ga4-setup"), and in later weeks the card shows how that page and search moved since: position and clicks, the same number of days before and after. Pages you worked on are left alone for 28 days.
+
+<ImageSlot
+  id="search-this-week"
+  alt="The This week panel in the Google search card: work on /blog/ga4-without-the-confusion, its signups from Google, a search that lost position, what to do, and Mark as done"
+  caption="One page to work on this week, with the numbers behind it (sample data)."
+>
+  From /ui-kit/dashboard?state=pro&range=30d (npm run content:screenshots): the Google search card from its title to the bottom of the This week panel.
+</ImageSlot>
+
+### Brings signups
+
+The first tab when you've [chosen a signup action](/docs/signups): your pages with the signups from Google search visitors who landed on them (from GA4) and their Google clicks, with the searches that showed each page most. A **Slipping** tag marks a page whose main search lost 2 or more positions. Google doesn't say which search led to a signup, so the card never splits signups between searches.
 
 ### Close to page 1
 
@@ -50,10 +72,6 @@ Clicks from searches that contain your site's name, against all other searches, 
 ### Seen, not clicked
 
 Pages that appear often but get clicked less than your own pages at about the same position. Compared only with your own site, never with an industry number. [Pages seen but not clicked](/guides/low-click-rate-pages).
-
-### Leads to signups
-
-Landing pages that people reach from Google search, with the signups that followed, from GA4. Needs a [signup action](/docs/signups).
 
 ## Good to know
 

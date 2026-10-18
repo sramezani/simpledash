@@ -36,7 +36,7 @@ Sentry's cron monitor `weekly-email` notices when the job stops running or fails
 ## What it says
 
 - **Subject:** one site: "mysite.com: 1,234 visitors last week (up 23%)". Several: "Last week: mysite.com 1,234 visitors (up 23%), and 2 more sites".
-- Per site: the summary line, the 4 numbers for Monday to Sunday against the week before (Signups only when a signup action is chosen), the top 3 sources and pages, a line about AI assistants when there were any, and a link to that site's dashboard (`/dashboard?site=<id>`). With one site the link is the "Open your dashboard" button; with several each block has its heading and dates.
+- Per site: the summary line, the 4 numbers for Monday to Sunday against the week before (Signups only when a signup action is chosen), the top 3 sources and pages, a line about AI assistants when there were any, then up to three lines from `docs/SPEC.md` section 31 (What moved; the first What brings customers line for the last 30 days; This week on Google search, with "See what to do"), and a link to that site's dashboard (`/dashboard?site=<id>`). With one site the link is the "Open your dashboard" button; with several each block has its heading and dates.
 - **Footer:** why they get it, a settings link (`/settings/email`) and the unsubscribe link.
 - Preview it at `/ui-kit/email` (development only; `?text=1` shows the plain-text part, `?sites=3` an account with three sites).
 

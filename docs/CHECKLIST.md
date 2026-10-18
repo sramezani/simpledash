@@ -304,11 +304,29 @@ What's done and what's next, in plain words.
   - Content tests: frontmatter, links and anchors, menus, no typed prices, screenshot list.
   - Production build with an empty environment: every page, Markdown copy and social image prerendered. Checked at 375 px with a keyboard pass (skip link, search with Ctrl+K).
 - [x] Landing page header and footer link the docs and guides; the app's help links for "no GA4 site", "no key events" and "no purchase values" go to our guides (16 Oct)
-- [ ] Siamak: add the 28 screenshots listed in `docs/CONTENT-IMAGES.md`
+- [ ] Siamak: add the screenshots listed in `docs/CONTENT-IMAGES.md`: 11 of 31 are done (SimpleDash's own screens, taken from the previews with `npm run content:screenshots`, 18 Oct); the 20 left are Google, Stripe and site-builder screens
 - [ ] Siamak: walk through the GA4 menus in the setup guides once on your own property (they're written from Google's current help pages; screens change)
 - [ ] Siamak: Cloudflare → Security settings → Configure AI bot policies (Search and Agent allowed; Training your call)
 - [ ] Siamak: Search Console domain property with the sitemap; Bing Webmaster Tools (import from Search Console); Cloudflare Crawler Hints on
 - [ ] Lighthouse on `/docs` and a guide on the live site (not installed here)
+
+## Why people pay: customers, changes and one search fix a week (17 Oct; `docs/SPEC.md` section 31)
+
+- [x] Plan written and approved by Siamak: Free sees What changed for visitors; Mark as done remembers the page; What changed goes under the overview (17 Oct)
+- [x] **What brings customers** (Pro): first visit next to last visit, paths, time from first visit and landing pages, for signups and sales, with up to two highlight lines (17 Oct)
+  - New GA4 reports `first_goals`, `goal_paths`, `goal_days`, `first_purchase` and their thank-you page versions, loaded apart so one refusal hides nothing. Unit tested (`reports`, `counts`, `highlights`).
+  - Checked on `/ui-kit/dashboard?state=pro` at 375 and 1440 px: switch, tabs and Details.
+- [x] **What changed and where**: under the overview; Visitors on every plan, Signups and Sales on Pro, with landing pages and, for Google, Search Console's searches (17 Oct)
+  - New GA4 reports `change_paths`, `change_goals`, `change_sale_page`. Unit tested (`breakdown`). Checked at 375 and 1440 px on Pro, Free and no history; rows open with the keyboard.
+- [x] **Brings signups** tab (first when a signup event is set): pages with Google signups, their searches and a Slipping tag (17 Oct)
+- [x] **This week** in the Google search card: one page to work on, picked weekly from 28 days, with facts, fixed steps and a guide link; Show another; Mark as done adds a chart note; a follow-up shows how the last page did (17 Oct)
+  - Unit tested (`action`, `insights`). Checked on the preview, including the done state, at 375 and 1440 px.
+- [x] **Monday email**: What moved, the 30-day customer line and this week's pick (17 Oct)
+  - Unit tested (email content); read on `/ui-kit/email` as HTML and plain text.
+- [x] Spec section 31, decisions, plans copy, `llms.txt`, README and the docs pages (17 Oct)
+- [ ] Siamak, local only: run `npm run db:migrate` once for `0008_search_action_notes`. Production applies it on its own when the new version starts (`docs/deploy.md`); checked on a throwaway Postgres at 0007: "applied 1 new migration", then "nothing new" (17 Oct)
+- [ ] Siamak: in GA4 → Explore → Free form, put First user source and Session source in rows and Event count (your signup event) in values. If GA4 allows it, the Paths tab will work; if it doesn't, the card hides that tab
+- [ ] **Done when:** on Siamak's own property, What brings customers' First column adds up to the Signups number for the same range, a What changed line matches GA4's Traffic acquisition for the same days, and Mark as done shows on the chart
 
 ## V3: later (postponed 13 Oct; `docs/SPEC.md` section 29)
 

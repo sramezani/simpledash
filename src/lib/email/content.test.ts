@@ -101,3 +101,69 @@ describe("several sites", () => {
     expect(buildWeeklyEmail({ sites: [], links })).toBeNull();
   });
 });
+
+describe("the Pro lines (docs/SPEC.md section 31)", () => {
+  const line = (key: string, then: number, now: number) => ({
+    key,
+    label: key === "google" ? "Google" : key,
+    then,
+    now,
+    delta: now - then,
+  });
+  const changes = {
+    id: "visitors" as const,
+    label: "Visitors",
+    google: null,
+    breakdown: {
+      total: { then: 1003, now: 1234 },
+      change: 23,
+      steady: false,
+      all: [],
+      movers: [
+        { ...line("google", 120, 420), pages: [line("/blog/ga4", 10, 260)] },
+        { ...line("t.co", 210, 130), pages: [line("/", 60, 40)] },
+      ],
+    },
+  };
+
+  it("says what moved, naming a page only when it moved at least half as much", () => {
+    expect(one({ changes })!.blocks[0]!.moved).toEqual([
+      "Google +300 visitors (120 → 420), mostly to /blog/ga4.",
+      "t.co −80 visitors (210 → 130).",
+    ]);
+    expect(one({ changes, comparable: false })!.blocks[0]!.moved).toEqual([]);
+    expect(one()!.blocks[0]!.moved).toEqual([]);
+  });
+
+  it("adds the 30-day customer line and this week's Google search pick", () => {
+    const block = one({
+      found:
+        "7 of your 14 sales came from people who first found you through reddit.com; 2 happened on a visit from reddit.com.",
+      action: {
+        kind: "near",
+        page: "https://mysite.com/pricing",
+        path: "/pricing",
+        label: "/pricing",
+        signups: 6,
+        clicks: 80,
+        query: {
+          query: "ga4 dashboard",
+          clicks: 12,
+          impressions: 940,
+          position: 11.2,
+          clicksThen: 9,
+          positionThen: 12.1,
+        },
+        unclicked: null,
+      },
+    })!.blocks[0]!;
+    expect(block.found).toBe(
+      "In the last 30 days, 7 of your 14 sales came from people who first found you through reddit.com; 2 happened on a visit from reddit.com.",
+    );
+    expect(block.action).toEqual({
+      title: "This week on Google search: work on /pricing",
+      fact: "“ga4 dashboard” sits at position 11.2 (page 2), seen 940 times, 12 clicks.",
+    });
+    expect(one()!.blocks[0]!.action).toBeNull();
+  });
+});

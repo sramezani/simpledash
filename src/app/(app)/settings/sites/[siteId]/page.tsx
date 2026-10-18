@@ -228,7 +228,7 @@ async function RevenueSections({
       <SettingsSection
         id="revenue"
         title="Revenue and sales"
-        description={`Revenue from Stripe next to your visitors, and sales and signups by source, are part of ${plans.pro.name}, with Google search insights.`}
+        description={`Revenue from Stripe next to your visitors, and what brings customers (where the people behind your signups and sales first found you), are part of ${plans.pro.name}, with Google search insights.`}
       >
         <Button asChild variant="outline" className="h-9 self-start pointer-coarse:h-11">
           <Link href={settingsRoutes.billing as Route}>See {plans.pro.name}</Link>

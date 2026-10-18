@@ -2,8 +2,17 @@ import { connection } from "next/server";
 import { buildWeeklyEmail, type SiteWeekInput } from "@/lib/email/content";
 import { uiKitEnabled } from "@/lib/env";
 import { lastWeekRange, rangeWindow } from "@/lib/ga4/ranges";
-import { sampleReports, SAMPLE_DOMAIN, SAMPLE_SIGNUP_EVENT } from "@/lib/ga4/sample/sample";
+import {
+  sampleReports,
+  SAMPLE_DOMAIN,
+  SAMPLE_SALE_EVENT,
+  SAMPLE_SIGNUP_EVENT,
+} from "@/lib/ga4/sample/sample";
+import { metricChanges } from "@/lib/changes/breakdown";
+import { customerCounts } from "@/lib/customers/counts";
+import { customerHighlights } from "@/lib/customers/highlights";
 import { renderEmail } from "@/lib/jobs/weekly-email";
+import { sampleWeeklyPick } from "@/lib/search-console/sample";
 
 const EXTRA_SITES = [
   { label: "blog.yoursite.com", scale: 0.35 },
@@ -19,7 +28,46 @@ export async function GET(request: Request) {
   if (!uiKitEnabled) return new Response("Not found", { status: 404 });
   const search = new URL(request.url).searchParams;
   const window = rangeWindow(lastWeekRange("UTC"), "UTC");
-  const r = sampleReports(window, ["totals", "sources", "pages", "actions", "ai_sources"]);
+  const r = sampleReports(window, [
+    "totals",
+    "sources",
+    "pages",
+    "actions",
+    "ai_sources",
+    "change_paths",
+  ]);
+  const month = sampleReports(rangeWindow("30d", "UTC"), [
+    "goals_sources",
+    "first_goals",
+    "goal_paths",
+  ]);
+  const counts = customerCounts(
+    {
+      goalsSources: month.goals_sources.data,
+      pageSources: null,
+      firstGoals: month.first_goals.data,
+      firstPages: null,
+      goalPaths: month.goal_paths.data,
+      pagePaths: null,
+    },
+    { event: SAMPLE_SALE_EVENT, page: null },
+  );
+  const [found] = customerHighlights({
+    noun: "sales",
+    sources: counts.sources,
+    paths: counts.paths,
+  });
+  const [changes] = metricChanges(
+    {
+      totals: r.totals.data,
+      sources: r.sources.data,
+      actions: r.actions.data,
+      paths: r.change_paths.data,
+      goals: null,
+      salePageCells: null,
+    },
+    { signupEvent: SAMPLE_SIGNUP_EVENT, saleEvent: null, salePage: null, pro: false, search: null },
+  );
   const main: SiteWeekInput = {
     siteLabel: SAMPLE_DOMAIN,
     window,
@@ -31,6 +79,10 @@ export async function GET(request: Request) {
     signupEvent: SAMPLE_SIGNUP_EVENT,
     comparable: true,
     dashboard: "/ui-kit/dashboard",
+    changes: changes ?? null,
+    found: found ?? null,
+    action:
+      sampleWeeklyPick(window.current, { signupEvent: SAMPLE_SIGNUP_EVENT }).actions[0] ?? null,
   };
   const count = Math.min(Math.max(Number(search.get("sites")) || 1, 1), EXTRA_SITES.length + 1);
   const extra = EXTRA_SITES.slice(0, count - 1).map(({ label, scale }, i) => {
@@ -40,6 +92,10 @@ export async function GET(request: Request) {
       ...main,
       siteLabel: label,
       dashboard: `/ui-kit/dashboard?site=${i + 2}`,
+      // The sample's Pro lines belong to the main site only.
+      changes: null,
+      found: null,
+      action: null,
       totals: {
         current: { ...t.current, visitors: times(t.current.visitors) },
         previous: { ...t.previous, visitors: times(t.previous.visitors * (1.1 - i * 0.3)) },

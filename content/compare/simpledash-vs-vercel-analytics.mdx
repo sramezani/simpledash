@@ -3,22 +3,22 @@ title: SimpleDash vs Vercel Web Analytics
 menuTitle: "vs Vercel Web Analytics"
 seoTitle: SimpleDash vs Vercel Web Analytics for Next.js sites
 description: Vercel Web Analytics is built into Vercel with its own script; SimpleDash reads Google Analytics 4 wherever your site is hosted. Which to use, or both.
-updated: 2026-10-16
+updated: 2026-10-17
 ---
 
 **Vercel Web Analytics** is built into Vercel: turn it on in your project and add its package, and it counts visitors with its own privacy-friendly script. **SimpleDash** reads Google Analytics 4, wherever your site is hosted, and shows it on one page. Many Next.js sites on Vercel can use both.
 
 ## Side by side
 
-|                   | Vercel Web Analytics                                    | SimpleDash                                                       |
-| ----------------- | ------------------------------------------------------- | ---------------------------------------------------------------- |
-| Tracking          | Its own script (`@vercel/analytics`)                    | None: reads your GA4                                             |
-| Works for         | Sites hosted on Vercel                                  | Any site with GA4                                                |
-| Cookies           | No cookies                                              | GA4's (with your consent banner)                                 |
-| History           | From when you turn it on, as long as your plan keeps it | Everything GA4 has (Pro)                                         |
-| Signups and sales | Custom events on some plans                             | Signups on every plan; sales by source and Stripe revenue on Pro |
-| Search Console    | No                                                      | Yes (Pro)                                                        |
-| Public stats page | No                                                      | Yes                                                              |
+|                   | Vercel Web Analytics                                    | SimpleDash                                                                       |
+| ----------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Tracking          | Its own script (`@vercel/analytics`)                    | None: reads your GA4                                                             |
+| Works for         | Sites hosted on Vercel                                  | Any site with GA4                                                                |
+| Cookies           | No cookies                                              | GA4's (with your consent banner)                                                 |
+| History           | From when you turn it on, as long as your plan keeps it | Everything GA4 has (Pro)                                                         |
+| Signups and sales | Custom events on some plans                             | Signups on every plan; sales by first and last visit, and Stripe revenue, on Pro |
+| Search Console    | No                                                      | Yes (Pro)                                                                        |
+| Public stats page | No                                                      | Yes                                                                              |
 
 Check [Vercel's docs](https://vercel.com/docs/analytics) for its current plans and limits.
 

@@ -323,3 +323,83 @@ export function searchesToSignups(
     .sort((a, b) => (b.signups ?? -1) - (a.signups ?? -1) || b.clicks - a.clicks)
     .slice(0, limit);
 }
+
+// ── 6. Searches per page, and slipping ─────────────────────────────────────
+
+export type PageQuery = {
+  query: string;
+  clicks: number;
+  impressions: number;
+  position: number;
+  clicksThen: number;
+  /** Null when the search didn't show the page the period before. */
+  positionThen: number | null;
+};
+export type PageQueries = {
+  page: string;
+  /** The path, for joining with Google Analytics. */
+  path: string;
+  label: string;
+  clicks: number;
+  impressions: number;
+  /** The searches that showed the page most, most seen first. */
+  queries: PageQuery[];
+};
+
+/**
+ * The searches behind each page Google sent clicks to: the pages with the most clicks,
+ * each with its most-seen searches, then and now. Built from the same rows as What
+ * changed, so it costs no extra requests.
+ */
+export function pageQueries(
+  pagesNow: PageRow[],
+  queriesNow: QueryPageRow[],
+  queriesThen: QueryPageRow[],
+  domain: string | null,
+  limits = { pages: 100, perPage: 8 },
+): PageQueries[] {
+  const key = (r: QueryPageRow) => `${r.page}\u0000${r.query}`;
+  const then = new Map(queriesThen.map((r) => [key(r), r]));
+  const byPage = new Map<string, QueryPageRow[]>();
+  for (const r of queriesNow) {
+    if (r.impressions <= 0) continue;
+    const list = byPage.get(r.page) ?? [];
+    list.push(r);
+    byPage.set(r.page, list);
+  }
+  return pagesNow
+    .filter((p) => p.clicks > 0 || byPage.has(p.page))
+    .sort((a, b) => b.clicks - a.clicks || b.impressions - a.impressions)
+    .slice(0, limits.pages)
+    .map((p) => ({
+      page: p.page,
+      path: pagePath(p.page),
+      label: pageLabel(p.page, domain),
+      clicks: p.clicks,
+      impressions: p.impressions,
+      queries: (byPage.get(p.page) ?? [])
+        .sort(byImpressions)
+        .slice(0, limits.perPage)
+        .map((r) => {
+          const before = then.get(key(r));
+          return {
+            query: r.query,
+            clicks: r.clicks,
+            impressions: r.impressions,
+            position: r.position,
+            clicksThen: before?.clicks ?? 0,
+            positionThen: before && before.impressions > 0 ? before.position : null,
+          };
+        }),
+    }));
+}
+
+/** A search slips when its average position gets this much worse, seen at least this often. */
+export const SLIP = { positions: 2, minImpressions: 50 } as const;
+
+/** The search that slipped: the page's most-seen search, when its position got worse by 2 or more. */
+export function slippingQuery(page: PageQueries): PageQuery | null {
+  const top = page.queries[0];
+  if (!top || top.positionThen === null || top.impressions < SLIP.minImpressions) return null;
+  return top.position - top.positionThen >= SLIP.positions ? top : null;
+}

@@ -583,6 +583,7 @@ The dashboard is one scrolling page.
 - **Layout:** one column on phones, a grid on wider screens.
 - **List cards** (`ListCard`: Sources, Pages, Countries, Devices, AI traffic, Actions) have no visible title and no CSV button, like DataFast: tabs at the top left name the view ("Country | City"), the view's column names sit at the right, and "More" at the bottom opens the whole list (section 13). The title stays for screen readers; the plain-words help moved into Details. A card with one view shows its name as a single tab.
 - **The overview and "Right now"** keep their ⓘ help; "Right now" shows no visible title either (its ⓘ carries the GeoNames credit).
+- **What changed** (section 31.2) sits right under the overview: the sources and landing pages behind a change, on every plan.
 - **Built from shared parts:** every list card sits in the shared `CardShell` (title, help, CSV, and the loading, empty, error, stale and locked states). The card list, titles and help text come from `src/config/cards.ts` (section 4).
 - **List cards have a fixed height** of 10 rows (`RankedList`), whatever their number of rows, so cards side by side line up and nothing moves. The rest of a list is in Details. Share bars are soft blue (`chart-1`) and grow in when a list appears.
 
@@ -820,7 +821,7 @@ There is no setup screen. Every state below is a card or banner on the dashboard
   - Local time in the site's time zone is Monday, between 13:00 and 17:59.
   - There is no `email_send` row for this week yet.
 - 13:00 leaves time for GA4's usual 12-hour processing of Sunday. The window runs to 17:59 so that a send that failed or was skipped (Resend down, a deploy at the wrong minute) is tried again the next hour, without sending in the evening.
-- The job fetches fresh 7-day reports: `totals`, `sources`, `pages`, `actions` and `ai_sources`. These also update the dashboard cache.
+- The job fetches fresh 7-day reports: `totals`, `sources`, `pages`, `actions`, `ai_sources` and `change_paths`. These also update the dashboard cache.
 - If there were no visitors in either week, no email is sent.
 
 **Content** (React Email, `src/lib/email/weekly-email.tsx`):
@@ -830,6 +831,7 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 - The 4 numbers (Visitors, Page views, Avg. time, and Signups if set) for Monday–Sunday vs the week before.
 - Top 3 sources and top 3 pages.
 - An AI traffic line, only when it's above 0.
+- Three lines from section 31, each left out when it has nothing to say: **What moved** (up to 3 sources), the first **What brings customers** line for the last 30 days, and **This week on Google search** (the weekly pick and its main fact).
 - An "Open your dashboard" button.
 - **Footer:** why they get the email, a settings link and an unsubscribe link.
 - **Look:** the colours, name and logo come from the theme file (section 18), as inline styles, because email clients don't support CSS variables.
@@ -1516,6 +1518,8 @@ Siamak's decisions on Oct 13, 2026 replace the roadmap's V2 list (`docs/ROADMAP.
 4. **Seen but not clicked:** pages with many impressions whose click rate is well below the site's own average click rate at that position. Compared with the site itself, never with an industry number.
 5. **Searches that lead to signups:** Google clicks per landing page next to that page's visitors and signups from GA4 (joined by page, which is exact; never "revenue per search").
 
+**Changed by section 31.3 (Oct 17, 2026):** "Searches that lead to signups" became **Brings signups** (the first tab when a signup event is set), with each page's searches under it, and the card opens with **This week**, one page to work on.
+
 **Honest on screen:** Search Console data is 2–3 days behind (the period says so), and Google leaves out rare searches ("Google hides searches made by very few people"). Search Console keeps 16 months.
 
 **Google's side (Siamak):** add `webmasters.readonly` to the OAuth consent screen and get it verified (a sensitive scope); start this when the sprint starts, because review takes time.
@@ -1551,6 +1555,8 @@ Three layers, each exact, never multiplied together:
 1. **Revenue from Stripe** (Growth). A read-only connection in Settings: the user pastes a **restricted read-only key** (Siamak, Oct 13, 2026). Settings shows short steps (Stripe → Developers → API keys → "Create restricted key", read access to the resources we need, nothing else) and a "Check and save" button that tries one read call. We refuse keys that can write (`sk_` secret keys) and say why. The key is stored encrypted like Google tokens, never shown again (only its last 4 characters), and can be removed in one click. We read balance transactions and subscriptions and keep **daily totals only**: revenue, refunds, new customers and MRR, in the account's currency. Never customer names, emails or card data. The overview gets Revenue and Customers numbers and revenue bars under the visitors line, plus visitors per customer for the period.
 2. **Sales and signups by source** (Growth), from GA4: counts per source and per landing page of the user's chosen events. Settings gets "What counts as a sale?": a GA4 key event (like `purchase`), or a "thank you" page path. Where GA4 already has `purchase` events with a value, revenue per source shows too, from GA4's own numbers. If it doesn't, the card says so and how to send it; we never estimate it.
 3. **Stripe Checkout warning** (every plan): when `checkout.stripe.com` (or another payment page) shows up in Sources, a notice says GA4 is giving sales to the payment page instead of their real source, and links to the GA4 setting that fixes it ("List unwanted referrals").
+
+**Changed by section 31.1 (Oct 17, 2026):** "Sales and signups by source" became **What brings customers**: first visit next to last visit, paths and time from the first visit, as well as landing pages.
 
 **Stored data:** the Stripe credential (encrypted) and daily revenue totals are new kinds of stored data. Both are aggregate or secret-at-rest, never visitor- or customer-level (principle 3); Siamak approved them with this plan.
 
@@ -1622,10 +1628,113 @@ What and why: `docs/CONTENT-PLAN.md`, including the rules for keeping pages righ
 
 - `Price`, `FreeDays`, `MonthsFree` and `PlanFeatures` read `src/config/plans.ts`, so content never types a price. `Freshness` reads `src/lib/ga4/freshness.ts` (the cache times), `Scope` the Google scopes, `PlainWordsTable` `src/config/plain-words.ts`, and `SupportEmail` and `SourceRepo` the theme file.
 - `InSimpleDash`: the one product block per guide, with "Start free" (or "Open dashboard" when signed in) and the live demo.
-- `ImageSlot`: a screenshot by name from `public/content/<name>.webp`. Until the file exists, it renders nothing in production and a dashed box with the instructions in development. Every slot is listed with exact instructions in `docs/CONTENT-IMAGES.md`, which a test keeps in step.
+- `ImageSlot`: a screenshot by name from `public/content/<name>.webp` (or `.png`). Until the file exists, it renders nothing in production and a dashed box with the instructions in development. Every slot is listed with exact instructions in `docs/CONTENT-IMAGES.md`, which a test keeps in step.
+  - **Size:** `npm run content:images` also writes `src/lib/content/image-sizes.json`, each file's real pixel size, read from its header (`image-size.ts`, tested), so nothing is read from disk while a page renders. A test fails when a file in `public/content` is missing from that list.
+  - **Display:** an image keeps its real width and height (no layout shift) and shows at half its pixel width (shots are taken at twice the screen size), never wider than the text. It has an `alt` text, an optional `caption`, and `eager` for an image at the top of its page (it loads at once; the rest load lazily).
+  - **Screens of SimpleDash itself** are retaken from the `/ui-kit` previews on sample data with `npm run content:screenshots` (`scripts/content-screenshots.mjs`): headless Chrome over its debugging protocol saves WebP straight away, each shot cropped to the part the page talks about, with neighbouring cards hidden and the dev address shown as `simpledash.app`. Screens from Google, Stripe and site builders are taken by hand.
 
 **Theme.** Fumadocs' layout CSS is imported in `globals.css` without its colours, and its `fd-*` colours are mapped onto our theme tokens there, so the docs look like the rest of SimpleDash and still follow the token rules.
 
 **Tests** (`src/lib/content/content.test.ts`): every page's frontmatter follows the rules; no SimpleDash price or section sign typed in content; every internal link goes to a page, route or `#heading` that exists; every page is in its folder's `meta.json`; every `ImageSlot` is listed in `docs/CONTENT-IMAGES.md` (made by `npm run content:images`).
 
 **In the app:** the "No Google Analytics site found" notice links to `/guides/add-google-analytics-to-website`, the Signups card's "no key events" state to `/guides/ga4-key-events`, and the sales card's "no purchase values" note to `/guides/track-purchases-ga4`. The landing page's top bar links Guides and Docs, and its footer all four sections.
+
+## 31. Why people pay: customers, changes and one search fix a week (Siamak, Oct 17, 2026)
+
+Siamak's feedback: the dashboard mostly repeated what GA4, Search Console and Stripe already show. These three features turn the same read-only data into answers that are hard to get elsewhere. Every number is a whole count from Google, never a model or an estimate, and nothing says why something happened.
+
+**A GA4 fact these rely on** (Google's help, "Scopes of traffic-source dimensions"): session-scoped sources (`sessionSource`) and first-user sources (`firstUserSource`) use "paid and organic channels last click". A return visit that arrives direct is credited to the last real source, not to Direct. The first source never changes for a person (per browser). We never use GA4's event-scoped, data-driven credit, because it gives fractions like 1.3 sales.
+
+### 31.1 What brings customers (Pro)
+
+The card that was "Sales and signups by source" (`sales-card.tsx`, id `sales`). For **Signups** and **Sales** (a switch when both are set up; Sales first), it answers: who first found the people behind them, which visit it happened on, and how long it took.
+
+**GA4 reports** (`EXTRA_REPORTS`, current period only, filtered to the signup and sale events, or to views of the thank-you page):
+
+| Report | Dimensions | Metric |
+| --- | --- | --- |
+| `first_goals` / `first_sale_page` | `firstUserSource` (+ `eventName`) | `eventCount` / `screenPageViews` |
+| `goal_paths` / `sale_page_paths` | `firstUserSource`, `sessionSource` (+ `eventName`) | `eventCount` / `screenPageViews` |
+| `goal_days` / `sale_page_days` | `firstSessionDate`, `date` (+ `eventName`) | `eventCount` / `screenPageViews` |
+| `first_purchase` | `firstUserSource` | `purchaseRevenue` |
+
+- **Last visit** reuses `goals_sources`, `sale_page_sources` and `purchase_sources`; landing pages reuse `goals_landing` and `sale_page_landing`.
+- **Days** are worked into groups when the report arrives (same day, 1–7 days, 8–30 days, over 30 days, not recorded), so only the group counts are cached. The list allows 10,000 rows; when GA4 cuts it off, the line isn't shown.
+- **Three separate loads** (last visit, first visit, paths and days), so a report GA4 turns down never hides the others. Without first-visit data the card shows last visits only; without paths, no Paths tab.
+- **Counting** (`src/lib/customers/counts.ts`, tested) is shared by the card and the Monday email.
+
+**On screen:**
+
+- A legend: "First: where people first found you. Last: the visit it happened on."
+- Up to two **highlight lines** (`src/lib/customers/highlights.ts`, tested), none when nothing stands out:
+  - A named source (not Direct or unknown) behind 3 or more events by people it first brought, with first − last of 2 or more (the biggest gap wins): "7 of your 14 sales came from people who first found you through reddit.com; 2 happened on a visit from reddit.com."
+  - A last-visit source with 3 or more events, at least half of them by people who first came from elsewhere: "Google was the last visit for 9 sales; for 6 of them, the person first found you somewhere else." Only when the paths list is complete.
+  - The counts are events, so the lines say signups or sales, never people.
+- "Time from first visit: same day 6 · 1–7 days 5 · 8–30 days 2 · over 30 days 1."
+- **Tabs:**
+  - **By source:** First and Last columns, sorted by First. Details adds revenue by first visit and by last visit, when GA4 has purchase values.
+  - **Paths:** "reddit.com → Google", by count.
+  - **Landing pages:** the metric and visitors; Details adds revenue.
+- **Help:** first visit is the first time GA4 saw the browser; someone who changes device or clears cookies starts over.
+- **Switches:** the metric switch and the tabs are CSS radios, so they work without JavaScript. The metric isn't kept in the address.
+- **Free:** sees the Pro teaser (one card for all Pro insights).
+
+### 31.2 What changed and where (every plan; Signups and Sales on Pro)
+
+A card right under the overview (`what-changed-card.tsx`, id `what-changed`, owner only). It is a list of numbers, not a sentence, so it fits the 12 Oct decision that pages show numbers.
+
+**Data:**
+
+- **Visitors:** the total from `totals`. Sources come from `sources` (both periods), because visitors don't add up across rows.
+- **Landing pages per source:** a new report, `change_paths` (`sessionSource` × `landingPage`, `activeUsers`, both periods, 500 rows).
+- **Signups and sales:** `change_goals` (the same dimensions × `eventName`, `eventCount`) and `change_sale_page` (thank-you page views). Event counts add up, so sources are sums of the cells. The signups total comes from `actions`, so it matches the overview. The sales total is shown only when the list is complete.
+- **Google search detail** (Pro with Search Console): the Search Console "What changed" page whose path matches one of Google's moving landing pages, the same way. Search Console is fetched once per request, shared with the search card (`cache()`).
+
+**Rules** (`src/lib/changes/breakdown.ts`, tested):
+
+- **Headline:** "Visitors up 32%", "about the same" within ±3%, or "none the period before". Then before → now.
+- **Moves:** up to 3 sources by size of change, up or down. A change under 3 visitors or 2 events is left out.
+- **Pages:** each move lists up to 3 landing pages that moved the same way. A page with nothing before is marked New.
+- **Steady but moving:** when the total is steady but sources moved underneath, the moves still show.
+- **Not comparable** (`comparisonGap`): the card says so instead.
+
+**On screen:**
+
+- Each move is a native disclosure row (`<details>`), opening onto its pages and, for Google, "On Google search (16 Sep – 15 Oct): clicks to /blog/ga4 316 → 574" and the top 2 searches with position and clicks then and now.
+- "See all changes" opens Details for every source (change, before, now, CSV).
+- Arrows plus a + or − sign, never colour alone.
+- **Free:** sees Visitors only, with one line about Pro.
+- **Differs from the plan:** the change pills in the overview don't link to the card, because the card sits right under them.
+
+### 31.3 Brings signups and one page a week (Pro with Search Console)
+
+**Searches per page:** `search_insights` gains `pageQueries`, the 100 pages with the most clicks, each with its 8 most-seen searches, then and now. It's built from the query × page rows already fetched for What changed, so there are no new requests. The insights cache key carries `v=2`, so older payloads are fetched again.
+
+**Slipping** (`slippingQuery`): a page's most-seen search, seen 50 times or more, whose average position got worse by 2 or more.
+
+**Brings signups** (the search card's first tab when a signup event is set): pages with signups from Google search visitors (GA4 `search_signups`) and Google clicks. Under each page are its top 2 searches by clicks, plus a Slipping tag. We never say a search brought a signup, because GA4 doesn't know the search.
+
+**This week** (a panel at the top of the search card; `src/lib/search-console/action.ts`, tested):
+
+- **Window:** picked from the last 28 finished Search Console days and GA4's Google signups for the same days.
+- **Caching:** cached under the week's Monday in the site's time zone (`week:YYYY-MM-DD` in `report_cache`). The pick doesn't change with the date menu, and the Monday email shows the same one.
+- **Order:** pages that brought signups first (slipping, then close to page 1 with a search at 8–15 seen 100 times or more, then seen but not clicked). Then the same rules for any page, by its Google numbers.
+- **One per page:** up to 3 candidates; "Show another" cycles through them in the browser.
+- **Skipped:** pages worked on in the last 28 days.
+- **What's shown:** the facts (signups, clicks, and the search's position then and now) and fixed steps per kind, with our guide (`/guides/google-clicks-what-changed`, `/guides/keywords-close-to-page-1`, `/guides/low-click-rate-pages`). The steps are the same for every site and never explain the numbers.
+- **Mark as done** (`markSearchActionDoneAction`, Pro only):
+  - The server picks again and accepts only one of this week's candidates.
+  - It adds a chart note dated today, "Worked on /blog/ga4".
+  - The note stores the page and the search in `chart_note.search_page` and `search_query` (migration `0008`).
+  - The panel then shows "Done on 17 Oct…" until Monday.
+- **Follow-up:** for the last page worked on before this week (with 7 or more days of data since, notes up to 56 days old), "Since you worked on /x on 3 Oct, “q”: position 11.2 → 7.4, clicks 12 → 30 (14 days each side)". This comes from `search_followup`: the page and search, the same number of days before and since, at most 28. It is cached per note and the newest day.
+- **Nothing qualifies:** "Nothing stands out this week…".
+- **No signup event:** a nudge to choose one.
+- **Free:** keeps the teaser.
+
+### 31.4 Plans and copy
+
+- Pro's features list "What brings customers: first and last visit" and "Google search insights, and one page to work on each week".
+- The Pro teaser leads with "See what really brings your customers".
+- `llms.txt` lists all three.
+

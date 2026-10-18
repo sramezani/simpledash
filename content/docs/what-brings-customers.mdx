@@ -1,0 +1,58 @@
+---
+title: What brings customers
+description: With Pro, see where the people behind your signups and sales first found you, next to the visit they signed up or bought on, and how long it took.
+updated: 2026-10-18
+---
+
+With Pro, the **What brings customers** card shows two sources for every signup and sale: where the person **first** found you, and the **last** visit, the one it happened on. They are often different. Someone finds you on Reddit, comes back a week later through a Google search for your name, and buys. Google gets the credit in most reports; this card shows that Reddit found them.
+
+## What the card shows
+
+At the top, a switch for **Signups** and **Sales** (when both are set up), and up to two lines when something stands out. For example:
+
+- "7 of your 14 sales came from people who first found you through reddit.com; 2 happened on a visit from reddit.com."
+- "Google was the last visit for 9 sales; for 6 of them, the person first found you somewhere else."
+
+Under them, **Time from first visit**: how many signups or sales happened on the same day as the first visit, within a week, within a month, or later.
+
+Then three tabs:
+
+- **By source**: each source with **First** (signups or sales by people who first came from it) and **Last** (signups or sales on a visit from it). **More** adds revenue by first and by last visit, when GA4 has purchase values.
+- **Paths**: first visit → last visit, such as "reddit.com → Google", by count.
+- **Landing pages**: the page the visit started on, with its signups or sales and visitors.
+
+<ImageSlot
+  id="what-brings-customers-card"
+  alt="The What brings customers card with Sales selected: two highlight lines, the time from first visit, and sources with First and Last visit counts"
+  caption="Sales by first visit and by last visit, over the last 30 days (sample data)."
+>
+  From /ui-kit/dashboard?state=pro&range=30d (npm run content:screenshots): the whole card, Sales and By source selected.
+</ImageSlot>
+
+## Where the numbers come from
+
+Every number is Google Analytics' own count, as GA4 reports it. SimpleDash doesn't estimate anything or split a sale into fractions.
+
+- **First** is GA4's _first user source_: where the person came from the first time GA4 saw their browser. It never changes for that person.
+- **Last** is GA4's _session source_: where the visit with the signup or sale came from. GA4 skips direct visits here when it knows an earlier source, so someone who came from X and typed your address later still counts as X.
+- **Time from first visit** compares the day of the first visit with the day of the signup or sale.
+
+[First user source vs session source in GA4](/guides/first-user-source-vs-session-source) explains the difference in more depth.
+
+## Limits
+
+- **One browser.** Someone who switches from phone to laptop, or clears cookies, starts over as a new person, so their first visit is the first one on that device.
+- **Not recorded.** GA4 has no first source for people who first came before GA4 was on your site. They show as "Unknown".
+- **GA4's own limits.** GA4 can hold back very small numbers to protect privacy, and, depending on your property's settings, fill in for people who declined cookies with its own modelling. SimpleDash shows what GA4 reports.
+- **Events, not people.** The counts are signups and sales, so one person who buys twice counts twice.
+- **Revenue** is GA4's own purchase value, shown only when GA4 has one. [Track purchases in GA4](/guides/track-purchases-ga4).
+
+## Set it up
+
+The card needs a [signup action](/docs/signups), a [sale](/docs/what-counts-as-a-sale), or both.
+
+## Related
+
+- [What changed](/docs/what-changed)
+- [From traffic to revenue](/guides/traffic-to-revenue)
+- [Revenue from Stripe](/docs/revenue)

@@ -1,10 +1,10 @@
 ---
 title: What counts as a sale
-description: With Pro, tell SimpleDash which GA4 event or thank-you page means a sale, to see which sources and landing pages bring signups and sales.
-updated: 2026-10-16
+description: With Pro, tell SimpleDash which GA4 event or thank-you page means a sale, to see where the people behind your sales first found you.
+updated: 2026-10-18
 ---
 
-With Pro, the **Sales and signups by source** card shows which sources and landing pages bring signups and sales. For sales, tell SimpleDash what counts as one: a GA4 key event like `purchase`, or views of a thank-you page.
+With Pro, the **What brings customers** card shows where the people behind your signups and sales first found you, next to the visit it happened on. For sales, tell SimpleDash what counts as one: a GA4 key event like `purchase`, or views of a thank-you page.
 
 ## Choose it
 
@@ -16,8 +16,11 @@ Open the site's settings (the gear in the site menu) and find **What counts as a
 
 Then choose **Save**.
 
-<ImageSlot id="what-counts-as-a-sale" alt="The 'What counts as a sale?' setting with three choices: nothing yet, a key event, or views of a page">
-Capture the "What counts as a sale?" section in a site's settings, with "A key event" selected and purchase chosen.
+<ImageSlot
+  id="what-counts-as-a-sale"
+  alt="The What counts as a sale? setting with A key event selected and purchase chosen, next to Nothing yet and Views of a page"
+>
+  From /ui-kit/settings?state=pro&page=site (npm run content:screenshots): the What counts as a sale? section.
 </ImageSlot>
 
 ## Which one to pick
@@ -28,9 +31,7 @@ Capture the "What counts as a sale?" section in a site's settings, with "A key e
 
 ## The card
 
-**By source** and **By landing page**, each with Visitors, Signups and Sales for the period. A **Revenue** column appears only when GA4 itself has purchase values for the period (GA4's own sums, in your property's currency). Nothing is estimated.
-
-A dash (—) means that source or page wasn't in GA4's top list of visitors, so its visitors are unknown, not zero.
+A **Signups | Sales** switch, then **By source** (First and Last visit), **Paths** (first visit → last visit) and **Landing pages**. Revenue (in **More**) appears only when GA4 itself has purchase values for the period (GA4's own sums, in your property's currency). Nothing is estimated. [What brings customers](/docs/what-brings-customers) explains each part.
 
 ## Sales going to Stripe or PayPal?
 
@@ -38,5 +39,6 @@ If your sales show up under `checkout.stripe.com` or another payment page, GA4 i
 
 ## Related
 
+- [What brings customers](/docs/what-brings-customers)
 - [Choose what counts as a signup](/docs/signups)
 - [Revenue from Stripe](/docs/revenue)

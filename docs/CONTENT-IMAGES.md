@@ -6,10 +6,12 @@ A page shows its screenshot as soon as the file exists; until then the slot rend
 **How to add one:**
 
 1. Capture what the slot asks for, at desktop width unless it says otherwise. Use a test account or blur emails, names, IDs and anything private.
-2. Save it as **WebP** (or PNG) about 1600 pixels wide, named exactly as the slot: `public/content/<id>.webp`.
+2. Save it as **WebP** (or PNG) about 1600 pixels wide, cropped to the part the page talks about, named exactly as the slot: `public/content/<id>.webp` (or `.png`). A Mac screenshot at its normal size is right: pages show images at half their pixel width, never wider than the text.
 3. Run `npm run content:images` to tick it off here.
 
-**0 of 28 added.**
+Screens of SimpleDash itself (the ones whose instructions start with "From /ui-kit") are retaken in one go from the dev previews: start `npm run dev`, then run `npm run content:screenshots` (or `npm run content:screenshots -- <id>` for one). Do it whenever one of those screens changes.
+
+**11 of 31 added.**
 
 ## Get started with SimpleDash
 
@@ -18,57 +20,81 @@ Page: `/docs/getting-started`
 - [ ] `google-consent-screen` → `public/content/google-consent-screen.webp`
   - **Shows:** Google's consent screen for SimpleDash, asking for read-only access to Google Analytics
   - **Capture:** Sign in to simpledash.app with a test Google account and capture Google's consent screen (the one listing "See and download your Google Analytics data"). Crop to the dialog. Blur the email address.
-- [ ] `dashboard-overview` → `public/content/dashboard-overview.webp`
-  - **Shows:** The SimpleDash dashboard: four numbers, the visitors chart and the lists below
-  - **Capture:** Full-width screenshot of the dashboard (desktop, 1440 px wide) on a real site with some traffic, Last 7 days. Show the four numbers, the chart and the first row of cards. Hide or blur anything private.
+- [x] `dashboard-overview` → `public/content/dashboard-overview.webp`
+  - **Shows:** The SimpleDash dashboard on Last 7 days: Visitors, Page views, Avg. time, Signups, Revenue and New customers, the visitors chart with revenue bars, and What changed
+  - **Capture:** From /ui-kit/dashboard?state=pro&range=7d at 1440 px wide (npm run content:screenshots): from the top bar down to the What changed card.
+
+## Google search insights
+
+Page: `/docs/google-search`
+
+- [x] `search-this-week` → `public/content/search-this-week.webp`
+  - **Shows:** The This week panel in the Google search card: work on /blog/ga4-without-the-confusion, its signups from Google, a search that lost position, what to do, and Mark as done
+  - **Capture:** From /ui-kit/dashboard?state=pro&range=30d (npm run content:screenshots): the Google search card from its title to the bottom of the This week panel.
 
 ## The Monday email
 
 Page: `/docs/monday-email`
 
-- [ ] `monday-email` → `public/content/monday-email.webp`
-  - **Shows:** The Monday email: a site's summary line, four numbers, top sources and pages
-  - **Capture:** Screenshot of a real Monday email in Gmail (desktop), showing one site's block from the summary down to the button. Blur your email address.
+- [x] `monday-email` → `public/content/monday-email.webp`
+  - **Shows:** The Monday email for one site: the summary line, four numbers, What moved, a What brings customers line, top sources and pages, and this week's Google search page
+  - **Capture:** From /ui-kit/email at 760 px wide (npm run content:screenshots): the whole email card.
 
 ## Share your stats with a public page
 
 Page: `/docs/public-page`
 
-- [ ] `public-page-settings` → `public/content/public-page-settings.webp`
-  - **Shows:** The public page settings: on or off, the address, the cards to show and search engine indexing
-  - **Capture:** Open a site's settings and capture the "Public page" section: the on switch, the address field, the card checkboxes and "Let search engines index this page". Desktop width.
+- [x] `public-page-settings` → `public/content/public-page-settings.webp`
+  - **Shows:** The public page settings: the page turned on at simpledash.app/p/yoursite-com, the address, the cards to show, and search engine indexing
+  - **Capture:** From /ui-kit/settings?state=public-on&page=site (npm run content:screenshots): the Public page section.
 
 ## Settings and billing
 
 Page: `/docs/settings-and-billing`
 
-- [ ] `settings-pages` → `public/content/settings-pages.webp`
-  - **Shows:** SimpleDash settings with the menu on the left: Profile, Plan and billing, Monday email, then each site
-  - **Capture:** Capture Settings at 1440 px wide on an account with two or three sites, on the Plan & billing page, so the left menu shows Account and Sites.
+- [x] `settings-pages` → `public/content/settings-pages.webp`
+  - **Shows:** SimpleDash settings on the Plan & billing page, with the menu on the left: Profile, Plan & billing, Monday email, then each of your sites
+  - **Capture:** From /ui-kit/settings?state=pro&page=billing at 1100 px wide (npm run content:screenshots): the top bar, the menu and the plan card.
 
 ## Choose what counts as a signup
 
 Page: `/docs/signups`
 
-- [ ] `signups-picker` → `public/content/signups-picker.webp`
-  - **Shows:** The Signups number showing the 'Which action means a signup?' picker with a list of key events
-  - **Capture:** On a site with no signup action chosen yet, capture the Signups number showing the picker, with the event list open (for example sign_up, generate_lead, purchase).
+- [x] `signups-picker` → `public/content/signups-picker.webp`
+  - **Shows:** The Signups number with its picker open: Which action means a signup?, with sign_up chosen and a Use this button
+  - **Capture:** From /ui-kit/dashboard?state=no-signup-event (npm run content:screenshots): the Signups number with Choose your signup event open and sign_up picked.
 
 ## Switch between your Google Analytics sites
 
 Page: `/docs/sites`
 
-- [ ] `site-menu` → `public/content/site-menu.webp`
-  - **Shows:** The site menu open, listing Google Analytics sites grouped by account, with a gear next to each of your sites
-  - **Capture:** Open the site menu on a Google account with at least two GA4 accounts and a few properties. Capture the open menu with the chip above it. Blur any client names.
+- [x] `site-menu` → `public/content/site-menu.webp`
+  - **Shows:** The site menu open: Google Analytics sites grouped by account, a tick on the open site, and a gear next to each of your own sites
+  - **Capture:** From /ui-kit/dashboard?state=pro (npm run content:screenshots): the site chip with its menu open.
+
+## What brings customers
+
+Page: `/docs/what-brings-customers`
+
+- [x] `what-brings-customers-card` → `public/content/what-brings-customers-card.webp`
+  - **Shows:** The What brings customers card with Sales selected: two highlight lines, the time from first visit, and sources with First and Last visit counts
+  - **Capture:** From /ui-kit/dashboard?state=pro&range=30d (npm run content:screenshots): the whole card, Sales and By source selected.
+
+## What changed
+
+Page: `/docs/what-changed`
+
+- [x] `what-changed-card` → `public/content/what-changed-card.webp`
+  - **Shows:** The What changed card: Visitors up 13%, Google +194 opened to show its landing pages, and the Google searches whose clicks and position changed
+  - **Capture:** From /ui-kit/dashboard?state=pro&range=7d (npm run content:screenshots): the whole card with the Google row opened.
 
 ## What counts as a sale
 
 Page: `/docs/what-counts-as-a-sale`
 
-- [ ] `what-counts-as-a-sale` → `public/content/what-counts-as-a-sale.webp`
-  - **Shows:** The 'What counts as a sale?' setting with three choices: nothing yet, a key event, or views of a page
-  - **Capture:** Capture the "What counts as a sale?" section in a site's settings, with "A key event" selected and purchase chosen.
+- [x] `what-counts-as-a-sale` → `public/content/what-counts-as-a-sale.webp`
+  - **Shows:** The What counts as a sale? setting with A key event selected and purchase chosen, next to Nothing yet and Views of a page
+  - **Capture:** From /ui-kit/settings?state=pro&page=site (npm run content:screenshots): the What counts as a sale? section.
 
 ## How to add Google Analytics 4 to a Carrd site
 
@@ -210,9 +236,9 @@ Page: `/guides/keywords-close-to-page-1`
 
 Page: `/guides/public-analytics-page`
 
-- [ ] `public-stats-page` → `public/content/public-stats-page.webp`
-  - **Shows:** A SimpleDash public stats page showing visitors, the chart, top sources and pages
-  - **Capture:** Open a real public page (yours, at simpledash.app/p/…) on desktop and capture the top of the page: the site name, date menu, numbers, chart and first cards.
+- [x] `public-stats-page` → `public/content/public-stats-page.webp`
+  - **Shows:** A SimpleDash public stats page on Last 30 days: Visitors and Page views, the visitors chart, and the Sources and Top pages lists
+  - **Capture:** From /ui-kit/public?range=30d at 1280 px wide (npm run content:screenshots): from the date menu to the first row of lists.
 
 ## How to create a read-only restricted key in Stripe
 

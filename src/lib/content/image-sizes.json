@@ -1,0 +1,57 @@
+{
+  "dashboard-overview": {
+    "src": "/content/dashboard-overview.webp",
+    "width": 1600,
+    "height": 1070
+  },
+  "monday-email": {
+    "src": "/content/monday-email.webp",
+    "width": 1216,
+    "height": 2252
+  },
+  "public-page-settings": {
+    "src": "/content/public-page-settings.webp",
+    "width": 1408,
+    "height": 1416
+  },
+  "public-stats-page": {
+    "src": "/content/public-stats-page.webp",
+    "width": 1600,
+    "height": 1321
+  },
+  "search-this-week": {
+    "src": "/content/search-this-week.webp",
+    "width": 1600,
+    "height": 605
+  },
+  "settings-pages": {
+    "src": "/content/settings-pages.webp",
+    "width": 1600,
+    "height": 711
+  },
+  "signups-picker": {
+    "src": "/content/signups-picker.webp",
+    "width": 736,
+    "height": 472
+  },
+  "site-menu": {
+    "src": "/content/site-menu.webp",
+    "width": 720,
+    "height": 808
+  },
+  "what-brings-customers-card": {
+    "src": "/content/what-brings-customers-card.webp",
+    "width": 1600,
+    "height": 918
+  },
+  "what-changed-card": {
+    "src": "/content/what-changed-card.webp",
+    "width": 1600,
+    "height": 679
+  },
+  "what-counts-as-a-sale": {
+    "src": "/content/what-counts-as-a-sale.webp",
+    "width": 1408,
+    "height": 668
+  }
+}

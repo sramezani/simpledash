@@ -3,7 +3,8 @@ import { sampleReports } from "@/lib/ga4/sample/sample";
 import { rangeWindow } from "@/lib/ga4/ranges";
 import { brandPattern, brandTerms } from "./brand";
 import { parseSearch, type ScResponse, type SearchContext } from "./reports";
-import type { SearchCard } from "./data";
+import { ACTION_DAYS, weeklyActions } from "./action";
+import type { SearchCard, WeeklyPick } from "./data";
 import { searchWindow } from "./window";
 
 /**
@@ -204,5 +205,41 @@ export function sampleSearchCard(
     signups: options.signupEvent === null ? null : ga4.search_signups.data,
     problem: null,
     refreshing: false,
+  };
+}
+
+/** The sample site's weekly pick, from the same sample rows (docs/SPEC.md section 31.3). */
+export function sampleWeeklyPick(
+  range: { start: string; end: string },
+  options: { signupEvent?: string | null; done?: boolean } = {},
+): WeeklyPick {
+  // The pick always looks at 28 days, whatever the dashboard's range.
+  const card = sampleSearchCard(
+    { start: addDays(range.end, -(ACTION_DAYS - 1)), end: range.end },
+    options,
+  );
+  const actions = weeklyActions({
+    pages: card.insights.pageQueries,
+    unclicked: card.insights.unclicked.pages,
+    signups: card.signups,
+    recent: [],
+  });
+  const first = actions[0];
+  return {
+    week: range.end,
+    window: card.insightsWindow,
+    actions,
+    done:
+      options.done && first
+        ? { day: range.end, label: first.label, query: first.query?.query ?? null }
+        : null,
+    followUp: {
+      day: addDays(range.end, -14),
+      label: "/blog/indie-launch-checklist",
+      query: "indie launch checklist",
+      days: 12,
+      before: { clicks: 30, impressions: 400, position: 3.8 },
+      after: { clicks: 92, impressions: 860, position: 2.4 },
+    },
   };
 }

@@ -81,7 +81,7 @@ A merge or push to `main` runs **Deploy** in GitHub Actions:
 1. `npm ci` and `npm run check` (typecheck, lint, tests). Pull requests run only this part.
 2. Builds the `Dockerfile` for the server's CPU, with a build cache.
 3. Sends the image and the files from `deploy/` and `scripts/backup/` to the server over SSH.
-4. On the server, `simpledash deploy` starts the new version. The container runs the database migrations first, then the server. It waits up to 3 minutes for `/api/health`. If the new version isn't healthy, it goes back to the previous one and the run fails.
+4. On the server, `simpledash deploy` starts the new version. The container runs the database migrations first (`scripts/migrate.mjs`: only the ones the database hasn't had yet, so usually none), then the server. The app's log says which: "applied 1 new migration" or "nothing new". Nobody runs migrations on the server by hand. It waits up to 3 minutes for `/api/health`. If the new version isn't healthy, it goes back to the previous one and the run fails.
 
 To deploy again by hand: GitHub → Actions → **Deploy** → **Run workflow** on `main`.
 

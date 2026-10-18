@@ -19,7 +19,7 @@ export type PlanLimits = {
   weeklyEmail: boolean;
   /** Google search insights from Search Console. */
   searchConsole: boolean;
-  /** Revenue from Stripe, and sales and signups by source. */
+  /** Revenue from Stripe, and what brings customers. */
   revenue: boolean;
   /** Public pages show "Powered by SimpleDash". */
   poweredBy: boolean;
@@ -62,9 +62,9 @@ export const plans = {
     features: [
       "12 months and any dates",
       "The Monday email",
-      "Google search insights",
+      "Google search insights, and one page to work on each week",
       "Revenue from Stripe",
-      "Sales and signups by source",
+      "What brings customers: first and last visit",
       "Your public page without our link",
     ],
     limits: {

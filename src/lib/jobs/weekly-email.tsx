@@ -15,10 +15,21 @@ import { loadReports, warm } from "@/lib/ga4/data";
 import { mapLimit } from "@/lib/ga4/property-choice";
 import { customDays, lacksHistory, lastWeekRange, type RangeType } from "@/lib/ga4/ranges";
 import type { ReportName } from "@/lib/ga4/reports";
+import { metricChanges } from "@/lib/changes/breakdown";
+import { customerCounts } from "@/lib/customers/counts";
+import { customerHighlights } from "@/lib/customers/highlights";
 import { reportError } from "@/lib/report-error";
+import { loadWeeklyPick } from "@/lib/search-console/data";
 import { siteList } from "@/lib/sites/access";
 
-const EMAIL_REPORTS: ReportName[] = ["totals", "sources", "pages", "actions", "ai_sources"];
+const EMAIL_REPORTS: ReportName[] = [
+  "totals",
+  "sources",
+  "pages",
+  "actions",
+  "ai_sources",
+  "change_paths",
+];
 
 type Prepared = { userId: string; weekStart: string; email: OutgoingEmail };
 type Account = { userId: string; email: string; main: Site; sites: Site[] };
@@ -176,21 +187,77 @@ export async function weeklyEmailJob(now: Date = new Date()) {
   return { candidates: candidates.length, due: due.length, sent, skipped, failed };
 }
 
-/** One site's last week, from the reports just warmed. */
+/** One site's last week, from the reports just warmed, plus the Pro lines (section 31). */
 async function siteWeek(s: Site, week: RangeType, now: Date): Promise<SiteWeekInput> {
   const result = await loadReports(s, week, EMAIL_REPORTS, { now });
+  const r = result.reports;
+  const [changes] = metricChanges(
+    {
+      totals: r.totals.data,
+      sources: r.sources.data,
+      actions: r.actions.data,
+      paths: r.change_paths.data,
+      goals: null,
+      salePageCells: null,
+    },
+    { signupEvent: s.signupEvent, saleEvent: null, salePage: null, pro: false, search: null },
+  );
+  const [found, pick] = await Promise.all([
+    foundLine(s, now).catch(() => null),
+    loadWeeklyPick(s, { now }).catch(() => null),
+  ]);
   return {
     siteLabel: s.domain ?? s.displayName,
     window: result.window,
-    totals: result.reports.totals.data,
-    sources: result.reports.sources.data,
-    pages: result.reports.pages.data,
-    actions: result.reports.actions.data,
-    aiSources: result.reports.ai_sources.data,
+    totals: r.totals.data,
+    sources: r.sources.data,
+    pages: r.pages.data,
+    actions: r.actions.data,
+    aiSources: r.ai_sources.data,
     signupEvent: s.signupEvent,
     comparable: !lacksHistory(result.window, s.propertyCreatedAt),
     dashboard: `${env.APP_URL}/dashboard?site=${s.id}`,
+    changes: changes ?? null,
+    found,
+    action: pick && !pick.done ? (pick.actions[0] ?? null) : null,
   };
+}
+
+/**
+ * What brings customers' first line for the last 30 days (a week is too few sales to
+ * say much): sales when a sale is set up, otherwise signups.
+ */
+async function foundLine(s: Site, now: Date): Promise<string | null> {
+  const metric =
+    s.saleEvent || s.salePage
+      ? { event: s.saleEvent, page: s.salePage, noun: "sales" }
+      : s.signupEvent
+        ? { event: s.signupEvent, page: null, noun: "signups" }
+        : null;
+  if (!metric) return null;
+  const names: ReportName[] = [
+    ...(metric.event ? (["goals_sources", "first_goals", "goal_paths"] as const) : []),
+    ...(metric.page ? (["sale_page_sources", "first_sale_page", "sale_page_paths"] as const) : []),
+  ];
+  const { reports } = await loadReports(s, "30d", names, { now });
+  const counts = customerCounts(
+    {
+      goalsSources: reports.goals_sources?.data ?? null,
+      pageSources: reports.sale_page_sources?.data ?? null,
+      firstGoals: reports.first_goals?.data ?? null,
+      firstPages: reports.first_sale_page?.data ?? null,
+      goalPaths: reports.goal_paths?.data ?? null,
+      pagePaths: reports.sale_page_paths?.data ?? null,
+    },
+    metric,
+  );
+  if (!counts.hasFirst) return null;
+  const [line] = customerHighlights({
+    noun: metric.noun,
+    sources: counts.sources,
+    paths: counts.pathsComplete ? counts.paths : null,
+  });
+  return line ?? null;
 }
 
 export async function renderEmail(data: WeeklyEmailData) {

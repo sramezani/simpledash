@@ -1,14 +1,26 @@
 import "server-only";
 import type { Site } from "@/lib/db/schema";
 import { cacheDeps, loadReports } from "@/lib/ga4/data";
-import { rangeWindow, type CustomRange, type RangeType } from "@/lib/ga4/ranges";
+import {
+  addDays,
+  daysIn,
+  rangeWindow,
+  todayIn,
+  type CustomRange,
+  type RangeType,
+} from "@/lib/ga4/ranges";
+import { listSearchActionNotes, type SearchActionNote } from "@/lib/notes/notes";
 import type { Payloads, ReportName } from "@/lib/ga4/reports";
 import { reportError } from "@/lib/report-error";
+import { ACTION_DAYS, weekStart, weeklyActions, type SearchAction } from "./action";
 import { brandPattern, brandTerms } from "./brand";
+import { pageLabel, pagePath } from "./insights";
 import { classifySearchError, querySearchAnalytics, type SearchProblem } from "./client";
 import { hostFilter } from "./match";
 import {
+  followupRequests,
   latestRequest,
+  parseFollowup,
   parseLatest,
   parseSearch,
   searchParamsKey,
@@ -17,6 +29,7 @@ import {
   type SearchContext,
   type SearchPayloads,
   type SearchReportName,
+  type SearchTotals,
 } from "./reports";
 import { latestProbe, searchWindow, type SearchWindow } from "./window";
 
@@ -262,5 +275,142 @@ export async function loadSearch(
     signups: site.signupEvent ? (ga4?.reports.search_signups?.data ?? null) : null,
     problem,
     refreshing: refreshing || !!ga4?.refreshing,
+  };
+}
+
+// ── This week's one thing (docs/SPEC.md section 31.3) ───────────────────────
+
+export type FollowUp = {
+  /** The day the action was marked done. */
+  day: string;
+  label: string;
+  query: string | null;
+  /** Days on each side of that day. */
+  days: number;
+  before: SearchTotals;
+  after: SearchTotals;
+};
+
+export type WeeklyPick = {
+  /** The Monday the pick belongs to. */
+  week: string;
+  /** The 28 Search Console days it was picked from. */
+  window: SearchWindow;
+  /** Up to three candidates, best first. */
+  actions: SearchAction[];
+  /** This week's action, once marked done. */
+  done: { day: string; label: string; query: string | null } | null;
+  /** How the page worked on before this week has done since. */
+  followUp: FollowUp | null;
+};
+
+/** A follow-up needs this many days of Search Console data after the note. */
+const FOLLOWUP_MIN_DAYS = 7;
+/** Notes older than this get no follow-up. */
+const FOLLOWUP_MAX_DAYS = 56;
+
+/**
+ * The weekly pick for a site: picked from the last 28 finished Search Console days the
+ * first time it's asked for in a week, and kept for the week (cached under the week's
+ * Monday), so it doesn't change with the date menu and the Monday email shows the same.
+ */
+export async function loadWeeklyPick(
+  site: Site,
+  options: { now?: Date } = {},
+): Promise<WeeklyPick | null> {
+  if (!site.searchConsoleUrl) return null;
+  const url = site.searchConsoleUrl;
+  const now = options.now ?? new Date();
+  const today = todayIn(site.timeZone, now);
+  const week = weekStart(site.timeZone, now);
+  const rangeType = `week:${week}` as RangeType;
+  const probe = context(site, searchWindow({ start: today, end: today }, today));
+  const latest = await latestDay(site, probe, now).catch(() => null);
+  if (!latest) return null;
+  const ctx = context(
+    site,
+    searchWindow({ start: addDays(latest.day, -(ACTION_DAYS - 1)), end: latest.day }, latest.day),
+  );
+  const key: Key = {
+    report: "search_insights",
+    paramsHash: searchParamsKey("search_insights", url, ctx),
+  };
+  let [row] = await store.read(site.propertyId, rangeType, [key]);
+  if (!row) {
+    const fetched = await fetchAndStore(site, rangeType, ctx, ["search_insights"], now);
+    if (fetched.error) await handle(site, fetched.error);
+    row = fetched.rows[0];
+    if (!row) return null;
+  }
+  const cached = row.payload as Cached<"search_insights">;
+  const days = cached.window.current;
+  const [signups, notes] = await Promise.all([
+    site.signupEvent
+      ? loadReports(site, `${days.start}..${days.end}` as CustomRange, ["search_signups"], { now })
+          .then((r) => r.reports.search_signups.data)
+          .catch(() => null)
+      : null,
+    listSearchActionNotes(site.id, addDays(today, -FOLLOWUP_MAX_DAYS)),
+  ]);
+  const recentSince = addDays(today, -ACTION_DAYS);
+  const actions = weeklyActions({
+    pages: cached.data.pageQueries ?? [],
+    unclicked: cached.data.unclicked.pages,
+    signups,
+    recent: notes.filter((n) => n.day >= recentSince).map((n) => pagePath(n.page)),
+  });
+  const doneNote = notes.find((n) => n.day >= week) ?? null;
+  const earlier =
+    notes.find((n) => n.day < week && addDays(n.day, FOLLOWUP_MIN_DAYS - 1) <= latest.day) ?? null;
+  const followUp = earlier
+    ? await loadFollowUp(site, earlier, latest.day, now).catch(() => null)
+    : null;
+  return {
+    week,
+    window: cached.window,
+    actions,
+    done: doneNote
+      ? { day: doneNote.day, label: pageLabel(doneNote.page, site.domain), query: doneNote.query }
+      : null,
+    followUp,
+  };
+}
+
+/** A page and search, the same number of days before and since its action was done. */
+async function loadFollowUp(
+  site: Site,
+  note: SearchActionNote,
+  latest: string,
+  now: Date,
+): Promise<FollowUp> {
+  const url = site.searchConsoleUrl!;
+  const days = Math.min(ACTION_DAYS, daysIn({ start: note.day, end: latest }));
+  const before = { start: addDays(note.day, -days), end: addDays(note.day, -1) };
+  const after = { start: note.day, end: addDays(note.day, days - 1) };
+  const rangeType = `note:${note.id}`;
+  // The end day is in the key, so a newer Google day means a fresh look.
+  const key: Key = {
+    report: "search_followup",
+    paramsHash: `${searchParamsKey("search_followup", url, { pageFilter: null, terms: [] })}|e=${after.end}`,
+  };
+  const [row] = await store.read(site.propertyId, rangeType, [key]);
+  let payload = row ? (row.payload as SearchPayloads["search_followup"]) : null;
+  if (!payload) {
+    const responses = await Promise.all(
+      followupRequests({ page: note.page, query: note.query }, before, after).map((r) =>
+        querySearchAnalytics(site.userId, url, r),
+      ),
+    );
+    payload = parseFollowup(responses);
+    await store.upsert(site.propertyId, rangeType, [
+      { ...key, windowStart: before.start, windowEnd: after.end, payload, fetchedAt: now },
+    ]);
+  }
+  return {
+    day: note.day,
+    label: pageLabel(note.page, site.domain),
+    query: note.query,
+    days,
+    ...payload,
   };
 }

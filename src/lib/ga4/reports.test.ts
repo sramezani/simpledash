@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { rangeWindow } from "./ranges";
-import { buildRequest, paramsKey, parseReport, readRows, REPORTS } from "./reports";
+import {
+  buildRequest,
+  daysBetween,
+  paramsKey,
+  parseReport,
+  readRows,
+  REPORTS,
+} from "./reports";
 
 const window = rangeWindow("7d", "UTC", new Date("2026-10-11T12:00:00Z"));
 const params = { signupEvent: "sign_up" };
@@ -324,5 +331,105 @@ describe("parseReport", () => {
   it("treats bad numbers as zero", () => {
     const rows = readRows(response(["pagePath"], ["screenPageViews"], [["/a", "NaN"]]));
     expect(rows[0]?.metrics.screenPageViews).toBe(0);
+  });
+});
+
+describe("what brings customers (first visit, paths, days)", () => {
+  const sales = { signupEvent: "sign_up", saleEvent: "purchase", salePage: "/thanks" };
+
+  it("breaks the signup and sale events down by first visit, paths and first day", () => {
+    expect(buildRequest("first_goals", window, sales).dimensions).toEqual([
+      { name: "firstUserSource" },
+      { name: "eventName" },
+    ]);
+    expect(buildRequest("goal_paths", window, sales).dimensions).toEqual([
+      { name: "firstUserSource" },
+      { name: "sessionSource" },
+      { name: "eventName" },
+    ]);
+    const days = buildRequest("goal_days", window, sales);
+    expect(days.dimensions).toEqual([
+      { name: "firstSessionDate" },
+      { name: "date" },
+      { name: "eventName" },
+    ]);
+    expect(days.limit).toBe(10_000);
+    expect(days.dimensionFilter?.filter?.inListFilter?.values).toEqual(["sign_up", "purchase"]);
+    expect(days.dateRanges).toHaveLength(1);
+  });
+
+  it("counts thank-you page views and purchase revenue by first visit", () => {
+    const page = buildRequest("sale_page_paths", window, sales);
+    expect(page.metrics).toEqual([{ name: "screenPageViews" }]);
+    expect(page.dimensionFilter?.filter?.stringFilter?.value).toBe("/thanks");
+    expect(buildRequest("first_purchase", window, sales).dimensions).toEqual([
+      { name: "firstUserSource" },
+    ]);
+  });
+
+  it("keys the cache on the events or the page", () => {
+    expect(paramsKey("goal_paths", sales)).toBe("goals=sign_up,purchase");
+    expect(paramsKey("sale_page_days", sales)).toBe("page=/thanks");
+    expect(paramsKey("first_purchase", sales)).toBe("-");
+  });
+
+  it("reads paths with plain labels", () => {
+    const res = response(
+      ["firstUserSource", "sessionSource", "eventName"],
+      ["eventCount"],
+      [
+        ["reddit.com", "google", "purchase", 4],
+        ["reddit.com", "google", "sign_up", 9],
+        ["(not set)", "(direct)", "purchase", 1],
+      ],
+    );
+    expect(parseReport("goal_paths", res, window)).toEqual({
+      rows: [
+        {
+          first: "reddit.com",
+          firstLabel: "reddit.com",
+          last: "google",
+          lastLabel: "Google",
+          events: { purchase: 4, sign_up: 9 },
+        },
+        {
+          first: "(not set)",
+          firstLabel: "Unknown",
+          last: "(direct)",
+          lastLabel: "Direct",
+          events: { purchase: 1 },
+        },
+      ],
+      complete: true,
+    });
+  });
+
+  it("groups days from the first visit, across a month end", () => {
+    const res = response(
+      ["firstSessionDate", "date", "eventName"],
+      ["eventCount"],
+      [
+        ["20261009", "20261009", "sign_up", 5],
+        ["20260930", "20261002", "sign_up", 2],
+        ["20260925", "20261002", "sign_up", 1],
+        ["20260920", "20261009", "sign_up", 3],
+        ["20260801", "20261009", "sign_up", 4],
+        ["(not set)", "20261009", "sign_up", 6],
+        ["20261009", "20261009", "purchase", 1],
+      ],
+    );
+    expect(parseReport("goal_days", res, window)).toEqual({
+      events: {
+        sign_up: { sameDay: 5, week: 3, month: 3, later: 4, unknown: 6 },
+        purchase: { sameDay: 1, week: 0, month: 0, later: 0, unknown: 0 },
+      },
+      complete: true,
+    });
+  });
+
+  it("reads days only from real dates", () => {
+    expect(daysBetween("20261231", "20270101")).toBe(1);
+    expect(daysBetween("(not set)", "20270101")).toBeNull();
+    expect(daysBetween("20270102", "20270101")).toBeNull();
   });
 });

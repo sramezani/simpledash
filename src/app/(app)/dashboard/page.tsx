@@ -2,11 +2,15 @@ import type { Metadata, Route } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { after, connection } from "next/server";
-import { Suspense } from "react";
+import { cache, Suspense } from "react";
 import { allowAnalyticsAccess, signInWithGoogle } from "@/app/actions/auth";
 import { dismissEmailNoticeAction, setWeeklyEmailAction } from "@/app/actions/email";
 import { turnOnPublicPageAction } from "@/app/actions/public-page";
-import { connectSearchConsoleAction } from "@/app/actions/search-console";
+import {
+  connectSearchConsoleAction,
+  markSearchActionDoneAction,
+} from "@/app/actions/search-console";
+import { SearchActionPanel } from "@/components/search/search-action";
 import { RefreshSoon } from "@/components/dashboard/refresh-soon";
 import { SearchCard } from "@/components/search/search-card";
 import {
@@ -16,7 +20,7 @@ import {
   SearchSkeleton,
   SearchTeaser,
 } from "@/components/search/search-states";
-import { loadSearch } from "@/lib/search-console/data";
+import { loadSearch, loadWeeklyPick } from "@/lib/search-console/data";
 import { EmailNotice } from "@/components/dashboard/email-notice";
 import { ShareCard } from "@/components/dashboard/share-card";
 import { getSettings } from "@/lib/email/settings";
@@ -30,7 +34,7 @@ import { LiveCard } from "@/components/globe/live-card";
 import { SignupChange } from "@/components/cards/signup-change";
 import { SignupPicker } from "@/components/cards/signup-picker";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DashboardView } from "@/components/dashboard/dashboard-view";
+import { DashboardView, type DashboardReports } from "@/components/dashboard/dashboard-view";
 import { SiteSwitcher, type SwitcherSite } from "@/components/dashboard/site-switcher";
 import {
   AccessNotGranted,
@@ -57,13 +61,17 @@ import {
   comparisonGap,
   freeFirstDay,
   parseRange,
+  previousPeriodWords,
   rangeForPlan,
   rangeWindow,
   type RangeType,
 } from "@/lib/ga4/ranges";
+import { formatDayRange } from "@/lib/format";
 import { goalEvents, REPORTS, type ReportName } from "@/lib/ga4/reports";
 import { paramsFor } from "@/lib/ga4/cache";
 import { SalesCard } from "@/components/cards/sales-card";
+import { WhatChangedCard } from "@/components/cards/what-changed-card";
+import { metricChanges } from "@/lib/changes/breakdown";
 import { revenueMetrics } from "@/components/dashboard/revenue-metrics";
 import { getRevenueSource, loadRevenue, needsSync, syncRevenue } from "@/lib/revenue/revenue";
 import { sampleReports, SAMPLE_DOMAIN, SAMPLE_SIGNUP_EVENT } from "@/lib/ga4/sample/sample";
@@ -284,6 +292,21 @@ async function SiteDashboard({
           remove={deleteNoteAction.bind(null, site.id)}
         />
       }
+      changes={
+        site.status === "needs_reconnect" ||
+        !totals ||
+        (totals.current.visitors === 0 && totals.previous.visitors === 0) ? null : (
+          <Suspense fallback={<Skeleton className="h-60 rounded-2xl" />}>
+            <ChangesLoader
+              site={site}
+              ctx={ctx}
+              range={range}
+              reports={result.reports}
+              missing={comparisonGap(result.window, site.propertyCreatedAt)}
+            />
+          </Suspense>
+        )
+      }
       live={
         site.status === "ok" && result.problem !== "revoked" && result.problem !== "no_access" ? (
           <Suspense fallback={<LiveCard data={null} endpoint={null} loading />}>
@@ -386,10 +409,16 @@ async function SearchLoader({
   connect: (formData: FormData) => Promise<void>;
   settingsHref: string;
 }) {
-  const data = await loadSearch(site, range).catch((error) => {
-    reportError("Google search card failed", error, { propertyId: site.propertyId });
-    return { kind: "error", problem: "unavailable" } as const;
-  });
+  const [data, pick] = await Promise.all([
+    loadSearchOnce(site, range).catch((error) => {
+      reportError("Google search card failed", error, { propertyId: site.propertyId });
+      return { kind: "error", problem: "unavailable" } as const;
+    }),
+    loadWeeklyPick(site).catch((error) => {
+      reportError("Weekly search pick failed", error, { propertyId: site.propertyId });
+      return null;
+    }),
+  ]);
   if (data.kind === "not_connected") return <SearchConnect connect={connect} />;
   if (data.kind === "error") {
     return (
@@ -404,26 +433,137 @@ async function SearchLoader({
         signupEvent={site.signupEvent}
         settingsHref={settingsHref}
         note={searchProblemNote(data.problem)}
+        action={
+          pick ? (
+            <SearchActionPanel
+              pick={pick}
+              markDone={markSearchActionDoneAction.bind(null, site.id)}
+              signupEvent={site.signupEvent}
+            />
+          ) : null
+        }
       />
       {data.refreshing ? <RefreshSoon token={`search-${data.window.current.end}`} /> : null}
     </>
   );
 }
 
-/** Sales and signups by source (docs/SPEC.md section 28.3), streamed on its own. */
+/** One Search Console load per request: the search card and What changed share it. */
+const loadSearchOnce = cache(loadSearch);
+
+/**
+ * What changed and where (docs/SPEC.md section 31.2), streamed on its own. Visitors on
+ * every plan; signups, sales and the Google search lines on Pro.
+ */
+async function ChangesLoader({
+  site,
+  ctx,
+  range,
+  reports,
+  missing,
+}: {
+  site: Site;
+  ctx: SiteContext;
+  range: RangeType;
+  reports: DashboardReports;
+  missing: string | null;
+}) {
+  const pro = ctx.ent.revenue;
+  const names: ReportName[] = [
+    "change_paths",
+    ...(pro && goalEvents(paramsFor(site)).length > 0 ? (["change_goals"] as const) : []),
+    ...(pro && site.salePage ? (["change_sale_page"] as const) : []),
+  ];
+  const [result, search] = await Promise.all([
+    loadReports(site, range, names).catch(() => null),
+    ctx.ent.searchConsole && site.searchConsoleUrl
+      ? loadSearchOnce(site, range).catch(() => null)
+      : null,
+  ]);
+  const r = result?.reports;
+  const ready = search?.kind === "ready" ? search : null;
+  const metrics = metricChanges(
+    {
+      totals: reports.totals?.data ?? null,
+      sources: reports.sources?.data ?? null,
+      actions: reports.actions?.data ?? null,
+      paths: r?.change_paths?.data ?? null,
+      goals: r?.change_goals?.data ?? null,
+      salePageCells: r?.change_sale_page?.data ?? null,
+    },
+    {
+      signupEvent: site.signupEvent,
+      saleEvent: site.saleEvent,
+      salePage: site.salePage,
+      pro,
+      search: ready?.insights.changed ?? null,
+    },
+  );
+  if (metrics.length === 0) return null;
+  return (
+    <WhatChangedCard
+      metrics={metrics}
+      versus={`vs ${previousPeriodWords(range)}`}
+      missing={missing}
+      exportInfo={{
+        site: site.domain ?? site.displayName,
+        ...(result?.window ?? rangeWindow(range, site.timeZone)).current,
+      }}
+      searchDays={
+        ready
+          ? formatDayRange(ready.insightsWindow.current.start, ready.insightsWindow.current.end)
+          : null
+      }
+      footer={
+        pro || !site.signupEvent ? null : (
+          <p className="pb-2 text-xs text-muted-foreground">
+            {plans.pro.name} also shows what moved your signups and sales.{" "}
+            <Link
+              href={settingsRoutes.billing as Route}
+              className="font-medium text-primary underline-offset-2 hover:underline"
+            >
+              See {plans.pro.name}
+            </Link>
+          </p>
+        )
+      }
+    />
+  );
+}
+
+/**
+ * What brings customers (docs/SPEC.md sections 28.3 and 31.1), streamed on its own.
+ * Three calls, so a report GA4 turns down (first visit, paths) never hides the others.
+ */
 async function SalesLoader({ site, range }: { site: Site; range: RangeType }) {
   const goals = goalEvents(paramsFor(site)).length > 0;
-  const names: ReportName[] = [
+  const page = !!site.salePage;
+  const last: ReportName[] = [
     "sources",
     "landing",
     ...(goals ? (["goals_sources", "goals_landing"] as const) : []),
-    ...(site.salePage ? (["sale_page_sources", "sale_page_landing"] as const) : []),
+    ...(page ? (["sale_page_sources", "sale_page_landing"] as const) : []),
     "purchase_sources",
     "purchase_landing",
   ];
-  const result = await loadReports(site, range, names).catch(() => null);
+  const first: ReportName[] = [
+    ...(goals ? (["first_goals"] as const) : []),
+    ...(page ? (["first_sale_page"] as const) : []),
+    "first_purchase",
+  ];
+  const journeys: ReportName[] = [
+    ...(goals ? (["goal_paths", "goal_days"] as const) : []),
+    ...(page ? (["sale_page_paths", "sale_page_days"] as const) : []),
+  ];
+  const load = (names: ReportName[]) =>
+    names.length ? loadReports(site, range, names).catch(() => null) : Promise.resolve(null);
+  const [result, firstResult, journeyResult] = await Promise.all([
+    load(last),
+    load(first),
+    load(journeys),
+  ]);
   if (!result) return null;
-  const r = result.reports;
+  const r = { ...result.reports, ...firstResult?.reports, ...journeyResult?.reports };
   return (
     <SalesCard
       data={{
@@ -435,6 +575,13 @@ async function SalesLoader({ site, range }: { site: Site; range: RangeType }) {
         pageLanding: r.sale_page_landing?.data ?? null,
         purchaseSources: r.purchase_sources?.data ?? null,
         purchaseLanding: r.purchase_landing?.data ?? null,
+        firstGoals: r.first_goals?.data ?? null,
+        firstPages: r.first_sale_page?.data ?? null,
+        firstPurchase: r.first_purchase?.data ?? null,
+        goalPaths: r.goal_paths?.data ?? null,
+        pagePaths: r.sale_page_paths?.data ?? null,
+        goalDays: r.goal_days?.data ?? null,
+        pageDays: r.sale_page_days?.data ?? null,
       }}
       signupEvent={site.signupEvent}
       saleEvent={site.saleEvent}

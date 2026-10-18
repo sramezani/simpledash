@@ -1,10 +1,12 @@
 import {
   nearPageOne,
+  pageQueries,
   seenNotClicked,
   whatChanged,
   type ChangedPage,
   type NearGroup,
   type NearRow,
+  type PageQueries,
   type PageRow,
   type PositionGroup,
   type QueryPageRow,
@@ -19,16 +21,18 @@ import { latestProbe, newestDay, type SearchWindow } from "./window";
  */
 
 export const SEARCH_REPORTS = ["search_overview", "search_insights", "search_brand"] as const;
-export type SearchReportName = (typeof SEARCH_REPORTS)[number] | "search_latest";
+export type SearchReportName =
+  | (typeof SEARCH_REPORTS)[number]
+  | "search_latest"
+  // A page and search before and since its weekly action was marked done (section 31.3).
+  | "search_followup";
 
+type ScFilter = { dimension: "query" | "page"; operator: string; expression: string };
 export type ScRequest = {
   startDate: string;
   endDate: string;
   dimensions?: ("date" | "query" | "page")[];
-  dimensionFilterGroups?: {
-    groupType: "and";
-    filters: { dimension: "query" | "page"; operator: string; expression: string }[];
-  }[];
+  dimensionFilterGroups?: { groupType: "and"; filters: ScFilter[] }[];
   rowLimit?: number;
   type: "web";
   dataState: "final";
@@ -50,7 +54,10 @@ export type SearchPayloads = {
     unclicked: { pages: Unclicked[]; groups: Partial<Record<PositionGroup, number>> };
     /** Google clicks per page, for the signups view. */
     pages: { page: string; clicks: number }[];
+    /** The searches behind each page, then and now (Brings signups, the weekly pick). */
+    pageQueries: PageQueries[];
   };
+  search_followup: { before: SearchTotals; after: SearchTotals };
   search_brand: {
     /** The spellings counted as the site's name; empty when there's none to count. */
     terms: string[];
@@ -72,6 +79,8 @@ export type SearchContext = {
 
 /** The API returns at most this many rows a request. */
 export const MAX_ROWS = 25_000;
+/** Bumped when the insights payload changes shape, so old cached ones are fetched again. */
+const INSIGHTS_VERSION = 2;
 
 function request(
   range: { start: string; end: string },
@@ -94,6 +103,36 @@ function request(
     ...(filters.length ? { dimensionFilterGroups: [{ groupType: "and", filters }] } : {}),
     ...rest,
   };
+}
+
+/**
+ * One page (and its search, when there is one) before and since a day: clicks and
+ * position over the same number of days on each side.
+ */
+export function followupRequests(
+  target: { page: string; query: string | null },
+  before: { start: string; end: string },
+  after: { start: string; end: string },
+): ScRequest[] {
+  const filters: ScFilter[] = [
+    { dimension: "page", operator: "equals", expression: target.page },
+    ...(target.query
+      ? [{ dimension: "query" as const, operator: "equals", expression: target.query }]
+      : []),
+  ];
+  const one = (range: { start: string; end: string }): ScRequest => ({
+    startDate: range.start,
+    endDate: range.end,
+    type: "web",
+    dataState: "final",
+    aggregationType: "auto",
+    dimensionFilterGroups: [{ groupType: "and", filters }],
+  });
+  return [one(before), one(after)];
+}
+
+export function parseFollowup(responses: ScResponse[]): SearchPayloads["search_followup"] {
+  return { before: totals(responses[0]), after: totals(responses[1]) };
 }
 
 /** Finding Google's newest finished day: clicks by date over the last 10 days. */
@@ -220,6 +259,7 @@ const parsers: Parsers = {
         .filter((p) => p.clicks > 0)
         .slice(0, 300)
         .map((p) => ({ page: p.page, clicks: p.clicks })),
+      pageQueries: pageQueries(pNow, qNow, qThen, ctx.domain),
     };
   },
 
@@ -267,5 +307,8 @@ export function searchParamsKey(
   ctx: Pick<SearchContext, "pageFilter" | "terms">,
 ): string {
   const base = `sc=${siteUrl}|f=${ctx.pageFilter ?? ""}`;
-  return report === "search_brand" ? `${base}|b=${ctx.terms.join(",")}` : base;
+  if (report === "search_brand") return `${base}|b=${ctx.terms.join(",")}`;
+  // v2 added the searches per page; older cached payloads don't have them.
+  if (report === "search_insights") return `${base}|v=${INSIGHTS_VERSION}`;
+  return base;
 }

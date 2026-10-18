@@ -92,54 +92,76 @@ export function ListCard({
         {children ?? (
           <>
             {intro}
-            <ViewToggle
-              name={`${id}-view`}
-              label={`Show ${views.map((v) => v.label.toLowerCase()).join(" or ")}`}
-              views={views.map((view) => ({
-                value: view.value,
-                label: view.label,
-                aside:
-                  view.rows.length && !view.hideColumns ? (
-                    <ColumnNames columns={view.cardColumns ?? view.columns} />
-                  ) : null,
-                content: (
-                  <div className="flex flex-1 flex-col gap-2">
-                    {view.intro && view.rows.length ? view.intro : null}
-                    {view.content ?? (
-                      <RankedList
-                        itemLabel={view.itemLabel}
-                        columns={view.cardColumns ?? view.columns}
-                        rows={view.rows}
-                        empty={view.empty}
-                        initial={view.initial ?? initial}
-                        size={view.sublabelHeader ? "tall" : "default"}
-                      />
-                    )}
-                    <div className="flex h-8 items-center justify-center pointer-coarse:h-11">
-                      {view.rows.length ? (
-                        <ListDetails
-                          title={view.label}
-                          description={help}
-                          itemLabel={view.itemLabel}
-                          columns={view.columns}
-                          rows={view.rows}
-                          sublabelHeader={view.sublabelHeader}
-                          fileName={csvFilename(
-                            exportInfo.site,
-                            `${id}-${view.value}`,
-                            exportInfo.start,
-                            exportInfo.end,
-                          )}
-                        />
-                      ) : null}
-                    </div>
-                  </div>
-                ),
-              }))}
+            <ListViews
+              id={id}
+              help={help}
+              views={views}
+              exportInfo={exportInfo}
+              initial={initial}
             />
           </>
         )}
       </div>
     </section>
+  );
+}
+
+/**
+ * A list card's tabs, lists and Details, for cards that need their own frame around
+ * them (What brings customers shows one set per metric).
+ */
+export function ListViews({
+  id,
+  help,
+  views,
+  exportInfo,
+  initial = 10,
+}: Pick<ListCardProps, "id" | "help" | "views" | "exportInfo" | "initial">) {
+  return (
+    <ViewToggle
+      name={`${id}-view`}
+      label={`Show ${views.map((v) => v.label.toLowerCase()).join(" or ")}`}
+      views={views.map((view) => ({
+        value: view.value,
+        label: view.label,
+        aside:
+          view.rows.length && !view.hideColumns ? (
+            <ColumnNames columns={view.cardColumns ?? view.columns} />
+          ) : null,
+        content: (
+          <div className="flex flex-1 flex-col gap-2">
+            {view.intro && view.rows.length ? view.intro : null}
+            {view.content ?? (
+              <RankedList
+                itemLabel={view.itemLabel}
+                columns={view.cardColumns ?? view.columns}
+                rows={view.rows}
+                empty={view.empty}
+                initial={view.initial ?? initial}
+                size={view.sublabelHeader ? "tall" : "default"}
+              />
+            )}
+            <div className="flex h-8 items-center justify-center pointer-coarse:h-11">
+              {view.rows.length ? (
+                <ListDetails
+                  title={view.label}
+                  description={help}
+                  itemLabel={view.itemLabel}
+                  columns={view.columns}
+                  rows={view.rows}
+                  sublabelHeader={view.sublabelHeader}
+                  fileName={csvFilename(
+                    exportInfo.site,
+                    `${id}-${view.value}`,
+                    exportInfo.start,
+                    exportInfo.end,
+                  )}
+                />
+              ) : null}
+            </div>
+          </div>
+        ),
+      }))}
+    />
   );
 }

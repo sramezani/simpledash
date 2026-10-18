@@ -204,7 +204,10 @@ export type ReportCacheRow = typeof reportCache.$inferSelect;
 
 // ── Chart notes (Sprint 3) ──────────────────────────────────────────────
 
-/** A note on the visitors chart, e.g. "Launched on Product Hunt". Never sent to GA4, never public. */
+/**
+ * A note on the visitors chart, e.g. "Launched on Product Hunt". Never sent to GA4, never
+ * public. Marking the weekly Google search action done adds one (docs/SPEC.md section 31.3).
+ */
 export const chartNote = pgTable(
   "chart_note",
   {
@@ -214,6 +217,9 @@ export const chartNote = pgTable(
       .references(() => site.id, { onDelete: "cascade" }),
     day: date("day").notNull(),
     text: varchar("text", { length: 80 }).notNull(),
+    /** Set when the note marks a weekly Google search action done: the page and the search. */
+    searchPage: text("search_page"),
+    searchQuery: text("search_query"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
