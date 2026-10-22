@@ -154,7 +154,7 @@ Versions were checked on npm on Oct 11, 2026. Pin exact versions in `package.jso
 │   └── backup/                      Dockerfile + backup.sh and restore.sh (pg_dump ↔ R2)
 ├── docs/                            ROADMAP, SPEC, CHECKLIST, STORY, DECISIONS, <area>.md
 └── src/
-    ├── proxy.ts                     sends signed-out visitors from /dashboard and /settings to /signin
+    ├── proxy.ts                     sends signed-out visitors from /dashboard and /settings to /signin, and signed-in ones from /signin to /dashboard
     ├── config/                      product data: plain values, no imports from app code (rules below)
     │   ├── theme.ts                 THE theme and brand file: colours, radius, shadows, name, tagline (section 18)
     │   ├── plans.ts                 plans, prices and features (section 16)
@@ -239,7 +239,7 @@ More features come in V2 (several sites, alerts, revenue), so the code is built 
 | --- | --- | --- | --- |
 | `/` | **Landing**: headline, the live demo in a browser frame, how it works in 3 steps, pricing section (`#pricing`, section 17), FAQ, sign-in or Dashboard button | public | static |
 | `/demo` | **Live demo** (section 17): a real public stats page, framed on the landing page with `?embed=1` | public | partly prerendered, cached about 10 minutes, plus Cloudflare |
-| `/signin` | **Sign in**: one screen saying what we read (read-only), then "Continue with Google" | public | static |
+| `/signin` | **Sign in**: one screen saying what we read (read-only), then "Continue with Google". A signed-in browser is sent to `/dashboard` (by the proxy, unless the address has a query such as `?expired=1`, so a stale cookie can't loop) | public | static |
 | `/dashboard` | **Dashboard**: the cards (section 11); `?site=<id>` names the site (section 28.1) | signed in | dynamic, streamed per card, cache-first |
 | `/settings` | **Settings → Profile**: the account, sign out, disconnect Google, delete account. Settings pages share one frame: a menu on the left ("Account", then "Sites"; a sideways row on phones) and the page beside it | signed in | dynamic |
 | `/settings/billing` | **Settings → Plan & billing**: the plan, Upgrade or Manage billing (section 16) | signed in | dynamic |
@@ -970,7 +970,7 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 - The roadmap's subheadline.
 - Button "See my dashboard, free" → `/signin`.
 
-**Signed in:** the top bar shows "Dashboard →" instead of "Sign in", and the hero button reads "Open my dashboard →". The page stays static and cacheable: the proxy keeps a small `sd_signed_in=1` hint cookie (not HttpOnly, no secret) while the app is used, an inline script in `<head>` reads it before the first paint and marks `<html data-signed-in>`, and CSS (the `signed-in:` variant) shows the right buttons. Nothing moves. Signing out clears the cookie. It is only a hint: `/dashboard` still checks the session (`src/lib/auth/signed-in-hint.ts`).
+**Signed in:** the top bar shows "Dashboard →" instead of "Sign in", and the hero button and both pricing buttons read "Open my dashboard →". The page stays static and cacheable: the proxy keeps a small `sd_signed_in=1` hint cookie (not HttpOnly, no secret) while the app is used, an inline script in `<head>` reads it before the first paint and marks `<html data-signed-in>`, and CSS (the `signed-in:` variant) shows the right buttons. Nothing moves. Signing out clears the cookie. It is only a hint: `/dashboard` still checks the session (`src/lib/auth/signed-in-hint.ts`).
 
 **Live demo** (`DemoFrame`):
 

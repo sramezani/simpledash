@@ -66,12 +66,19 @@ export default function SignInPage({ searchParams }: PageProps<"/signin">) {
 }
 
 async function SignInError({ searchParams }: Pick<PageProps<"/signin">, "searchParams">) {
-  const { error, disconnected } = await searchParams;
+  const { error, disconnected, expired } = await searchParams;
   if (disconnected === "1") {
     return (
       <Notice title="Google is disconnected">
         SimpleDash can&apos;t read your Google Analytics any more, and you&apos;re signed out. Your
         settings are kept: continue with Google to pick up where you left off.
+      </Notice>
+    );
+  }
+  if (expired === "1" && !error) {
+    return (
+      <Notice title="You're signed out">
+        Your sign-in has ended. Continue with Google to see your dashboard again.
       </Notice>
     );
   }

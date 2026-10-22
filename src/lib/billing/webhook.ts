@@ -59,7 +59,8 @@ export function subscriptionFacts(
     interval,
     priceId,
     currentPeriodEnd: item?.current_period_end ? new Date(item.current_period_end * 1000) : null,
-    cancelAtPeriodEnd: sub.cancel_at_period_end ?? false,
+    // The Customer Portal now cancels by setting a date (cancel_at), not cancel_at_period_end.
+    cancelAtPeriodEnd: Boolean(sub.cancel_at_period_end || sub.cancel_at),
     unknownPrice: known === null,
   };
 }

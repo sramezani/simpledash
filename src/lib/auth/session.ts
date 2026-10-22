@@ -20,10 +20,13 @@ export const getSession = cache(async () => {
 
 export type SessionUser = NonNullable<Awaited<ReturnType<typeof getSession>>>["user"];
 
-/** Runs at the top of every signed-in page and server action. Sends signed-out visitors to /signin. */
+/**
+ * Runs at the top of every signed-in page and server action. Sends signed-out visitors to
+ * /signin. `?expired=1` stops src/proxy.ts sending a browser with a stale cookie back here.
+ */
 export async function requireUser(): Promise<SessionUser> {
   const session = await getSession();
-  if (!session) redirect("/signin");
+  if (!session) redirect("/signin?expired=1");
   return session.user;
 }
 

@@ -137,6 +137,16 @@ describe("subscriptionFacts", () => {
     expect(f.userId).toBe("user_1");
     expect(f.customerId).toBe("cus_1");
   });
+
+  it("counts a cancel date from the Customer Portal as cancelling", () => {
+    expect(subscriptionFacts(subscription(), prices).cancelAtPeriodEnd).toBe(false);
+    expect(
+      subscriptionFacts(subscription({ cancel_at_period_end: true }), prices).cancelAtPeriodEnd,
+    ).toBe(true);
+    expect(
+      subscriptionFacts(subscription({ cancel_at: 1_800_000_000 }), prices).cancelAtPeriodEnd,
+    ).toBe(true);
+  });
 });
 
 describe("handleStripeEvent", () => {

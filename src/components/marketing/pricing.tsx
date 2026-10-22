@@ -1,11 +1,9 @@
-import { ArrowRightIcon } from "lucide-react";
-import Link from "next/link";
 import { BillingSwitch } from "@/components/shared/billing-switch";
 import { Container } from "@/components/shared/container";
 import { PlanCard } from "@/components/shared/plan-card";
-import { Button } from "@/components/ui/button";
 import { plans } from "@/config/plans";
 import { monthsFreeLabel, yearlySaving } from "@/lib/billing/prices";
+import { StartButton } from "./account-link";
 import { HandNote } from "./hand-note";
 
 /**
@@ -50,12 +48,7 @@ export function Pricing() {
             features={free.features}
             footer={
               <div className="flex flex-col gap-2.5">
-                <Button asChild size="lg" variant="outline" className="h-12 gap-2 text-base">
-                  <Link href="/signin">
-                    Start free
-                    <ArrowRightIcon className="size-4" aria-hidden="true" />
-                  </Link>
-                </Button>
+                <StartButton label="Start free" variant="outline" />
                 <p className="text-center text-sm text-muted-foreground md:min-h-10">
                   No card needed, no time limit
                 </p>
@@ -71,12 +64,7 @@ export function Pricing() {
             features={pro.features}
             footer={
               <div className="flex flex-col gap-2.5">
-                <Button asChild size="lg" className="h-12 gap-2 text-base">
-                  <Link href="/signin">
-                    Start free, upgrade any time
-                    <ArrowRightIcon className="size-4" aria-hidden="true" />
-                  </Link>
-                </Button>
+                <StartButton label="Start free, upgrade any time" />
                 <p className="text-center text-sm text-pretty text-muted-foreground md:min-h-10">
                   Launch price: it stays the same for as long as you&apos;re subscribed. Cancel any
                   time.

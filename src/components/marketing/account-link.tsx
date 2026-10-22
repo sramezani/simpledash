@@ -1,5 +1,6 @@
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
+import type { ComponentProps } from "react";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -31,6 +32,40 @@ export function HeroCta({ startLabel }: { startLabel: string }) {
         <Link href="/signin">{startLabel}</Link>
       </Button>
       <Button asChild size="lg" className="hidden h-12 gap-2 px-6 text-base signed-in:inline-flex">
+        <Link href="/dashboard">
+          Open my dashboard
+          <ArrowRightIcon className="size-4" aria-hidden="true" />
+        </Link>
+      </Button>
+    </>
+  );
+}
+
+/**
+ * A "start" button that becomes "Open my dashboard" when this browser is signed in, so
+ * signed-in visitors skip /signin (the pricing cards).
+ */
+export function StartButton({
+  label,
+  variant,
+}: {
+  label: string;
+  variant?: ComponentProps<typeof Button>["variant"];
+}) {
+  return (
+    <>
+      <Button asChild size="lg" variant={variant} className="h-12 gap-2 text-base signed-in:hidden">
+        <Link href="/signin">
+          {label}
+          <ArrowRightIcon className="size-4" aria-hidden="true" />
+        </Link>
+      </Button>
+      <Button
+        asChild
+        size="lg"
+        variant={variant}
+        className="hidden h-12 gap-2 text-base signed-in:inline-flex"
+      >
         <Link href="/dashboard">
           Open my dashboard
           <ArrowRightIcon className="size-4" aria-hidden="true" />
