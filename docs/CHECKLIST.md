@@ -331,6 +331,17 @@ What's done and what's next, in plain words.
 - [ ] Siamak: in GA4 → Explore → Free form, put First user source and Session source in rows and Event count (your signup event) in values. If GA4 allows it, the Paths tab will work; if it doesn't, the card hides that tab
 - [ ] **Done when:** on Siamak's own property, What brings customers' First column adds up to the Signups number for the same range, a What changed line matches GA4's Traffic acquisition for the same days, and Mark as done shows on the chart
 
+## Live count and live globe (Siamak's list, 22 Oct; `docs/SPEC.md` section 11.10)
+
+- [x] "● 3 live" beside the date menu on the dashboard, public pages and the demo: one Realtime request every 20 seconds (22 Oct)
+- [x] The "Right now" card is gone from the page; the count opens the live view instead (22 Oct)
+- [x] Live view: a dialog about 90% of the screen (the whole screen on a phone) with the globe, faces per city, a card per marker, and a panel with the count, page views, signups, visitors per minute and Places, Pages, Devices and Actions tabs; picking a place flies the globe there (22 Oct)
+- [x] New globe: MapLibre with SimpleDash's own map data (Natural Earth, `npm run globe:data`), replacing cobe; nothing loads from a map service (22 Oct)
+- [x] Live numbers polled and cached for 20 seconds (22 Oct)
+- [x] Checked at 1440 and 375 px, keyboard only (Enter opens, focus starts on Close, Esc returns to the count), with no console errors; MapLibre loads only when the view opens. Unit tested: parsing, the 180° fix, marker grouping (22 Oct)
+- [x] Spec, decisions, README, `CLAUDE.md`, the docs pages, the privacy credits and a new docs screenshot (22 Oct)
+- [ ] Siamak: open the live view on simpledash.app with real visitors and check the places and faces look right
+
 ## V3: later (postponed 13 Oct; `docs/SPEC.md` section 29)
 
 - X mentions on the chart · Ask your data in plain English · Milestone images · Hacker News and Product Hunt markers · "Tracking looks broken" alert

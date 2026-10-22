@@ -1,4 +1,5 @@
-const MINUTE = 60 * 1000;
+const SECOND = 1000;
+const MINUTE = 60 * SECOND;
 const HOUR = 60 * MINUTE;
 
 /**
@@ -17,8 +18,18 @@ export const FRESHNESS = {
 
 export type FreshnessKind = keyof typeof FRESHNESS;
 
-/** "30 minutes", "1 hour", "12 hours". */
+/**
+ * How long a live answer counts as fresh, and how often the live count and the live view
+ * ask again (docs/SPEC.md section 11.10). Shared by the server cache, the browser and the docs.
+ */
+export const LIVE_REFRESH = 20 * SECOND;
+
+/** "20 seconds", "30 minutes", "1 hour", "12 hours". */
 export function durationWords(ms: number): string {
+  if (ms < MINUTE) {
+    const seconds = Math.round(ms / SECOND);
+    return `${seconds} second${seconds === 1 ? "" : "s"}`;
+  }
   if (ms < HOUR) {
     const minutes = Math.round(ms / MINUTE);
     return `${minutes} minute${minutes === 1 ? "" : "s"}`;

@@ -86,8 +86,8 @@ Pages:
 | `/api/health` | `{"status":"ok"}` when the database answers |
 | `/robots.txt`, `/sitemap.xml`, `/llms.txt` | SEO files |
 | `/api/csv/<card>?site=&range=` | "Download CSV" for a card (signed in, own sites only) |
-| `/api/live?site=` | Live data for the globe (signed in, own sites only) |
-| `/api/p/<slug>/live` | Live data for a public page with "Right now" turned on |
+| `/api/live?site=` | The live count; with `&view=full` everything the live view shows (signed in, own sites only) |
+| `/api/p/<slug>/live` | The same for a public page with "Right now" turned on |
 | `/api/stripe/webhook` | Stripe events (signature checked) |
 | `/api/search-console/connected?site=` | Where Google returns after granting Search Console access; picks the property (signed in) |
 | `/api/email/unsubscribe` | One-click unsubscribe for mail apps (`List-Unsubscribe-Post`) |
@@ -133,6 +133,7 @@ node scripts/run-job.mjs revenue-sync   # hourly at :20 (Pro sites with Stripe c
 | `node scripts/copy-flags.mjs` | Rebuilds `public/flags` (SVG) from country-flag-icons, after upgrading it |
 | `node scripts/copy-tech-icons.mjs` | Rebuilds `public/icons/tech` (browser, OS and device icons) from the two Iconify sets, after changing the list or upgrading them |
 | `node scripts/build-places.mjs` | Rebuilds the globe's place table from GeoNames (all-the-cities) |
+| `npm run globe:data` | Rebuilds the live globe's map in `public/globe/` (Natural Earth country shapes and label points from world-atlas, and the Geist font for labels) |
 | `scripts/backup/backup.sh --local <dir>` | Writes a database backup to a folder (needs `BACKUP_DATABASE_URL`, `pg_dump` 17) |
 | `docker compose up -d db` | Local Postgres 17 |
 | `docker compose --profile app up --build` | The production image on http://localhost:3000 |

@@ -30,7 +30,7 @@ import { addNoteAction, deleteNoteAction, updateNoteAction } from "@/app/actions
 import { chooseSignupEvent, listMyProperties, openSite } from "@/app/actions/site";
 import { plans } from "@/config/plans";
 import { ChartNotes } from "@/components/charts/chart-notes";
-import { LiveCard } from "@/components/globe/live-card";
+import { LiveButton } from "@/components/globe/live-button";
 import { SignupChange } from "@/components/cards/signup-change";
 import { SignupPicker } from "@/components/cards/signup-picker";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -53,7 +53,7 @@ import { hasAnalyticsScope } from "@/lib/auth/scopes";
 import { requireUser } from "@/lib/auth/session";
 import type { Site } from "@/lib/db/schema";
 import { loadReports } from "@/lib/ga4/data";
-import { getLive } from "@/lib/ga4/realtime";
+import { getLiveCount } from "@/lib/ga4/realtime";
 import { listNotes } from "@/lib/notes/notes";
 import { classifyError } from "@/lib/ga4/errors";
 import { chooseFirstSite, listKeyEventNames, stillHasAccess } from "@/lib/ga4/properties";
@@ -326,8 +326,12 @@ async function SiteDashboard({
       }
       live={
         site.status === "ok" && result.problem !== "revoked" && result.problem !== "no_access" ? (
-          <Suspense fallback={<LiveCard data={null} endpoint={null} loading />}>
-            <LiveLoader site={site} />
+          <Suspense
+            fallback={
+              <LiveButton endpoint={null} siteName={label} signupEvent={site.signupEvent} />
+            }
+          >
+            <LiveLoader site={site} siteName={label} />
           </Suspense>
         ) : null
       }
@@ -610,9 +614,16 @@ async function SalesLoader({ site, range }: { site: Site; range: RangeType }) {
   );
 }
 
-async function LiveLoader({ site }: { site: Site }) {
-  const data = await getLive(site).catch(() => null);
-  return <LiveCard data={data} endpoint={`/api/live?site=${site.id}`} />;
+async function LiveLoader({ site, siteName }: { site: Site; siteName: string }) {
+  const count = await getLiveCount(site).catch(() => null);
+  return (
+    <LiveButton
+      initial={count}
+      endpoint={`/api/live?site=${site.id}`}
+      siteName={siteName}
+      signupEvent={site.signupEvent}
+    />
+  );
 }
 
 async function SignupPickerLoader({

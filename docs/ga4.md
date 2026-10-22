@@ -21,7 +21,7 @@ How SimpleDash reads Google Analytics. The plan is in `docs/SPEC.md` sections 7,
 | `property-choice.ts` | Pure helpers for the choice: busiest property, host name, timestamps | yes |
 | `derive.ts` | The four numbers from cached totals: % change, Avg. time, Signups | yes |
 | `sample/sample.ts` | Sample data shaped like a small SaaS site, for the landing demo and the "no GA4" state | yes |
-| `live.ts`, `realtime.ts`, `geo/` | Live data for the globe: parsing (tested), fetching with a 60-second cache, places to coordinates (tested) | partly |
+| `live.ts`, `realtime.ts`, `geo/` | Live data for the live count and view: parsing (tested), fetching with a 20-second cache, places to coordinates (tested) | partly |
 
 ## Reading reports
 
@@ -99,11 +99,13 @@ They run through `POST /api/internal/jobs/<job>` with `Authorization: Bearer <CR
 
 ## Live data (the globe)
 
-`src/lib/ga4/realtime.ts` runs three Realtime API calls (the total, places by country and city, and live pages by title) and keeps the result in memory for 60 seconds per property. The dashboard renders it on the server first, then `/api/live` (signed in, own site only) serves it to the card's poll, about every 45 seconds while the tab is visible.
+`src/lib/ga4/realtime.ts` keeps live answers in memory for 20 seconds per property (`LIVE_TTL`), shared by everyone watching the dashboard or the public page (docs/SPEC.md section 11.10):
 
-- `parseLive()` (`live.ts`, tested) turns rows into `{ total, places, pages, minutes }`. Realtime covers 30 minutes, or 60 on GA4 360.
+- `getLiveCount()`: one Realtime call (the total), for the live count beside the date menu. The dashboard renders it on the server first; `/api/live?site=` serves the button's poll, every 20 seconds while the tab is visible. A fresh full answer answers it too.
+- `getLive()`: six Realtime calls (total, places by country and city, pages by title, devices, visitors per minute, event counts), only while the live view is open (`/api/live?site=&view=full`).
+- `parseLiveCount()` and `parseLive()` (`live.ts`, tested) turn rows into `{ total, minutes }` and `{ total, minutes, places, pages, devices, perMinute, events }`. Realtime covers 30 minutes, or 60 on GA4 360.
 - Places become coordinates with `locate()` (`geo/locate.ts`, tested): the city first (accents ignored, a few English names such as Cologne), otherwise the country's population-weighted centre. The table `geo/places.json` is built from GeoNames (CC BY 4.0) by `node scripts/build-places.mjs`.
-- Live pages show page titles: the Realtime API has no page path.
+- Live pages show page titles, and there's no traffic source: the Realtime API has neither.
 
 ## Chart notes
 

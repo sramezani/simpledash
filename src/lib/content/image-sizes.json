@@ -4,6 +4,11 @@
     "width": 1600,
     "height": 1070
   },
+  "live-view": {
+    "src": "/content/live-view.webp",
+    "width": 1599,
+    "height": 957
+  },
   "monday-email": {
     "src": "/content/monday-email.webp",
     "width": 1216,

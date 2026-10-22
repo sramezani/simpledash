@@ -1,13 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { rangeWindow } from "./ranges";
-import {
-  buildRequest,
-  daysBetween,
-  paramsKey,
-  parseReport,
-  readRows,
-  REPORTS,
-} from "./reports";
+import { buildRequest, daysBetween, paramsKey, parseReport, readRows, REPORTS } from "./reports";
 
 const window = rangeWindow("7d", "UTC", new Date("2026-10-11T12:00:00Z"));
 const params = { signupEvent: "sign_up" };

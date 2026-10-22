@@ -26,6 +26,9 @@ const chrome = spawn(
     `--remote-debugging-port=${PORT}`,
     `--user-data-dir=${profile}`,
     "--force-prefers-reduced-motion",
+    // Software WebGL, for the live view's globe.
+    "--use-angle=swiftshader",
+    "--enable-unsafe-swiftshader",
     "--hide-scrollbars",
     "--no-first-run",
     "--no-default-browser-check",
@@ -226,6 +229,20 @@ const SHOTS = {
       "monday-email",
       `${H} let n = [...document.querySelectorAll('a')].find(a => a.textContent.includes('Unsubscribe')); while (n && getComputedStyle(n).borderTopWidth === '0px') n = n.parentElement; return box(n, 24);`,
     );
+  },
+  async "live-view"() {
+    await go("/ui-kit/dashboard?state=pro&range=7d", 1440, 900);
+    await evaluate(
+      `[...document.querySelectorAll('main button')].find(b => /live view/i.test(b.getAttribute('aria-label') ?? '')).click()`,
+    );
+    // The panel comes first; the globe (MapLibre and the map data) a moment later.
+    await evaluate(`(async () => {
+      for (let i = 0; i < 60 && !document.querySelector('[role=dialog] [data-ready]'); i++) {
+        await new Promise((r) => setTimeout(r, 250));
+      }
+    })()`);
+    await sleep(2500);
+    await shot("live-view", `${H} return box(document.querySelector("[role=dialog]"), 0);`);
   },
   async "public-stats-page"() {
     await go("/ui-kit/public?range=30d", 1280, 1600);

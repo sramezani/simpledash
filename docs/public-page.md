@@ -13,7 +13,7 @@ The optional public stats page at `/p/<slug>`, one per site. The plan is in `doc
 | `src/components/dashboard/share-card.tsx` | "Share your stats publicly?" on the dashboard | |
 | `src/components/settings/public-page-form.tsx` | Settings → Public page | |
 | `src/app/p/[slug]/page.tsx`, `opengraph-image.tsx` | The page, its metadata and its social image | |
-| `src/app/api/p/[slug]/live/route.ts` | Live numbers for the "Right now" card | |
+| `src/app/api/p/[slug]/live/route.ts` | Live numbers when "Right now" is on: the count, or everything the live view shows with `?view=full` | |
 
 ## One page per site
 
@@ -28,7 +28,7 @@ The optional public stats page at `/p/<slug>`, one per site. The plan is in `doc
 
 - The chosen cards from `src/config/cards.ts`. Default: summary line, Visitors, Page views, the chart, Sources, Pages, Countries. Signups, Avg. time, Devices, AI traffic and Right now can be added. Actions can't.
 - The same three ranges as the dashboard (`?range=30d`, `?range=12m`).
-- The chart is server-rendered SVG; the only client code is the Right now card when it's on (it fetches its numbers after load and polls about every 45 seconds while visible).
+- The chart is server-rendered SVG; the only client code is the live count when Right now is on ("● 3 live" beside the date menu: it fetches its number after load and polls every 20 seconds while visible). Clicking it opens the live view, whose code and globe load only then.
 - **Never:** chart notes, the email address, the user's name, settings or the property ID. The signups sentence of the summary appears only when the Signups card is on.
 
 ## When it isn't live
@@ -43,7 +43,7 @@ The optional public stats page at `/p/<slug>`, one per site. The plan is in `doc
 
 - The data (`getPublicView`) is cached about 10 minutes and tagged `public:<slug>`. GA4 reports come from `report_cache`, fresh for 12 hours, refreshed with the owner's Google access.
 - `next.config.ts` sends `Cache-Control: public, s-maxage=600, stale-while-revalidate=86400` for `/p/<slug>`, and the Cloudflare cache rule for `/p/*` lets most views skip our server.
-- `/api/p/<slug>/live` shares the 60-second realtime cache and sends `max-age=30`.
+- `/api/p/<slug>/live` shares the 20-second realtime cache and sends `max-age=20`.
 
 ## Preview
 

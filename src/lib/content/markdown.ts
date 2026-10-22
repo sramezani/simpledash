@@ -4,7 +4,7 @@ import { brand } from "@/config/theme";
 import { ANALYTICS_SCOPE, SEARCH_CONSOLE_SCOPE } from "@/lib/auth/scopes";
 import { monthsFreeOnYearly } from "@/lib/billing/prices";
 import { formatPrice } from "@/lib/format";
-import { durationWords, FRESHNESS, type FreshnessKind } from "@/lib/ga4/freshness";
+import { durationWords, FRESHNESS, LIVE_REFRESH, type FreshnessKind } from "@/lib/ga4/freshness";
 
 const isPlan = (value: string): value is PlanId => value in plans;
 
@@ -27,6 +27,8 @@ function planFact(name: string, attrs: Record<string, string>): string | null {
       const audience = attrs.audience === "public" ? "public" : "owner";
       return kind in FRESHNESS ? durationWords(FRESHNESS[kind][audience]) : null;
     }
+    case "LiveRefresh":
+      return durationWords(LIVE_REFRESH);
     case "Scope":
       return `\`${attrs.name === "search-console" ? SEARCH_CONSOLE_SCOPE : ANALYTICS_SCOPE}\``;
     case "SupportEmail":

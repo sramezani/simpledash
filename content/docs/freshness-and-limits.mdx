@@ -3,7 +3,7 @@ title: How fresh the numbers are, and Google's limits
 menuTitle: "Freshness and limits"
 seoTitle: How fresh SimpleDash numbers are, and limits
 description: How often SimpleDash refreshes your numbers, how late Google Analytics adds visits, Google's hourly limits, and what Free and Pro include.
-updated: 2026-10-16
+updated: 2026-10-22
 ---
 
 SimpleDash keeps a copy of each report so pages open instantly, and refreshes it in the background. For any range that includes today, the copy is at most <Freshness kind="endsToday" audience="owner" /> old; Google itself adds visits a few hours late, so today is always still filling up.
@@ -16,7 +16,7 @@ SimpleDash keeps a copy of each report so pages open instantly, and refreshes it
 | Includes yesterday | Every <Freshness kind="recent" audience="owner" /> | Every <Freshness kind="recent" audience="public" /> |
 | Ended before yesterday | Every <Freshness kind="settled" audience="owner" /> | Every <Freshness kind="settled" audience="public" /> |
 
-When you open a page, you see the latest copy at once. If it's older than the time above, SimpleDash fetches a new one in the background and the next visit has it. The **Right now** card is separate: it updates about every 45 seconds while the page is open.
+When you open a page, you see the latest copy at once. If it's older than the time above, SimpleDash fetches a new one in the background and the next visit has it. **Right now** is separate: the live count and the live view update every <LiveRefresh /> while the page is open.
 
 ## How late Google adds visits
 

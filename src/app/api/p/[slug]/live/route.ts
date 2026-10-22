@@ -2,11 +2,11 @@ import { eq } from "drizzle-orm";
 import { connection } from "next/server";
 import { db } from "@/lib/db/client";
 import { publicPage, type Site } from "@/lib/db/schema";
-import { getLive } from "@/lib/ga4/realtime";
+import { getLive, getLiveCount, LIVE_TTL } from "@/lib/ga4/realtime";
 import { publicSiteOf } from "@/lib/public-page/view";
 
-// Which site a slug's live card shows, kept 60 seconds like the live numbers, so a
-// busy public page doesn't send every visitor's poll to the database.
+// Which site a slug's live count shows, kept 60 seconds, so a busy public page doesn't send
+// every visitor's poll to the database.
 const lookups = new Map<string, { site: Site | null; until: number }>();
 const LOOKUP_MS = 60_000;
 
@@ -24,16 +24,23 @@ async function liveSiteFor(slug: string): Promise<Site | null> {
   return found;
 }
 
-/** Live data for a public page with the "Right now" card turned on. Shares the 60-second cache. */
-export async function GET(_request: Request, ctx: RouteContext<"/api/p/[slug]/live">) {
+/**
+ * Live data for a public page with "Right now" turned on: the count, or with ?view=full
+ * everything the live view shows. Shares the dashboard's 20-second cache.
+ */
+export async function GET(request: Request, ctx: RouteContext<"/api/p/[slug]/live">) {
   await connection();
   const { slug } = await ctx.params;
   if (slug.length > 40) return new Response("Not found", { status: 404 });
   const owned = await liveSiteFor(slug);
   if (!owned) return new Response("Not found", { status: 404 });
   try {
-    const live = await getLive(owned);
-    return Response.json(live, { headers: { "Cache-Control": "public, max-age=30, s-maxage=30" } });
+    const full = new URL(request.url).searchParams.get("view") === "full";
+    const live = full ? await getLive(owned) : await getLiveCount(owned);
+    const seconds = LIVE_TTL / 1000;
+    return Response.json(live, {
+      headers: { "Cache-Control": `public, max-age=${seconds}, s-maxage=${seconds}` },
+    });
   } catch {
     return Response.json({ error: "Live numbers aren't available right now." }, { status: 503 });
   }

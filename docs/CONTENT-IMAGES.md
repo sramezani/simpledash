@@ -11,7 +11,15 @@ A page shows its screenshot as soon as the file exists; until then the slot rend
 
 Screens of SimpleDash itself (the ones whose instructions start with "From /ui-kit") are retaken in one go from the dev previews: start `npm run dev`, then run `npm run content:screenshots` (or `npm run content:screenshots -- <id>` for one). Do it whenever one of those screens changes.
 
-**11 of 31 added.**
+**12 of 32 added.**
+
+## The SimpleDash dashboard, card by card
+
+Page: `/docs/dashboard`
+
+- [x] `live-view` → `public/content/live-view.webp`
+  - **Shows:** The live view: a globe on a night sky with drawn faces over New York, Europe and San Francisco, and a panel with 9 visitors in the last 30 minutes, visitors per minute and the places they're in
+  - **Capture:** From /ui-kit/dashboard?state=pro&range=7d (npm run content:screenshots): the live count clicked, the whole dialog once the globe has drawn.
 
 ## Get started with SimpleDash
 

@@ -1,12 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ChangedPage } from "@/lib/search-console/insights";
-import {
-  changeBreakdown,
-  googleDetail,
-  metricChanges,
-  MIN_CHANGE,
-  sumBySource,
-} from "./breakdown";
+import { changeBreakdown, googleDetail, metricChanges, MIN_CHANGE, sumBySource } from "./breakdown";
 
 const cell = (source: string, path: string, then: number, now: number) => ({
   source,

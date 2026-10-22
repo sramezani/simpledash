@@ -66,7 +66,7 @@ type DashboardViewProps = {
   /** Chart notes in this range, and the panel to add and edit them. */
   notes?: { id: string; day: string; text: string }[];
   notesPanel?: ReactNode;
-  /** The "Right now" card (it loads on its own). */
+  /** The live count beside the date menu, which opens the live view (it loads on its own). */
   live?: ReactNode;
   /** What changed and where, right under the four numbers (it loads on its own). */
   changes?: ReactNode;
@@ -181,7 +181,6 @@ export function DashboardView(props: DashboardViewProps) {
         }
       />
       {props.changes}
-      {props.live}
       <div className="grid gap-3 md:grid-cols-2">
         <SourcesCard
           sources={reports.sources?.data ?? null}
@@ -249,6 +248,7 @@ export function DashboardView(props: DashboardViewProps) {
             )}
             period={isPreset(range) ? period : null}
             note={freshnessNote(window)}
+            live={props.live}
           />
           {props.notices}
           {cards}

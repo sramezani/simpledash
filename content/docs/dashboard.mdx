@@ -3,7 +3,7 @@ title: The SimpleDash dashboard, card by card
 menuTitle: "The dashboard"
 seoTitle: The SimpleDash dashboard, card by card
 description: What every number, chart and list on the SimpleDash dashboard means, which Google Analytics 4 metric is behind it, and where to find it in GA4.
-updated: 2026-10-17
+updated: 2026-10-22
 ---
 
 The dashboard is one page: four numbers and a chart at the top, then what changed and where, then lists of where visitors came from, what they read and where they are. Every number comes from your Google Analytics 4 property, in plain words, with the same number one click away in GA4 if you want to check.
@@ -75,7 +75,24 @@ Downloads, outbound clicks, form submits and your signups, as GA4 recorded them.
 
 ## Right now
 
-Visitors in the last 30 minutes, on a small globe, with the pages they're on. Google's realtime data has page titles rather than page addresses, so the list shows titles. It updates about every 45 seconds while the tab is open.
+**● 3 live**, at the right of the site and date menus, is how many people were on your site in the last 30 minutes. The dot turns green and pulses while anyone is there. It updates every <LiveRefresh /> while the tab is open.
+
+Click it for the live view: a globe with a drawn face for each visitor at their city, and a panel with the count, page views, signups, visitors per minute, and four tabs:
+
+- **Places**: cities, busiest first. Pick one and the globe flies there.
+- **Pages**: the pages people are on. Google's realtime data has page titles rather than page addresses, so the list shows titles.
+- **Devices**: desktop, mobile and tablet.
+- **Actions**: downloads, outbound clicks, form submits and signups, as on the Actions card.
+
+The faces are only decoration: Google tells SimpleDash how many people are in a city, never who they are. Google's realtime data doesn't say where visitors came from, so there's no sources list here. The map is part of SimpleDash: nothing is loaded from a map service.
+
+<ImageSlot
+  id="live-view"
+  alt="The live view: a globe on a night sky with drawn faces over New York, Europe and San Francisco, and a panel with 9 visitors in the last 30 minutes, visitors per minute and the places they're in"
+  caption="The live view, opened from the live count (sample data)."
+>
+  From /ui-kit/dashboard?state=pro&range=7d (npm run content:screenshots): the live count clicked, the whole dialog once the globe has drawn.
+</ImageSlot>
 
 ## More, and CSV
 

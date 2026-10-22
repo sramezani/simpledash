@@ -7,7 +7,7 @@ import { OverviewCard, type OverviewMetric } from "@/components/cards/overview-c
 import { PagesCard } from "@/components/cards/pages-card";
 import { SourcesCard } from "@/components/cards/sources-card";
 import { StaticLineChart } from "@/components/charts/static-line-chart";
-import { LiveCard } from "@/components/globe/live-card";
+import { LiveButton } from "@/components/globe/live-button";
 import { Container } from "@/components/shared/container";
 import { LogoMark } from "@/components/shared/logo";
 import { Notice } from "@/components/shared/notice";
@@ -45,7 +45,7 @@ export function PublicView({
   query?: Record<string, string>;
   /** The range shown without `?range=` (the demo's differs). */
   defaultRange?: RangeType;
-  /** Replaces the "Right now" card, e.g. with sample data in the dev preview. */
+  /** Replaces the live count, e.g. with sample data in the dev preview. */
   live?: React.ReactNode;
   /** Shown inside the landing page's browser frame: links leave the frame. */
   embedded?: boolean;
@@ -105,6 +105,18 @@ export function PublicView({
             )}
             period={isPreset(range) ? period : null}
             note={freshnessNote(window)}
+            live={
+              has("live")
+                ? (live ?? (
+                    // The page is cached, so the count is asked for in the browser.
+                    <LiveButton
+                      endpoint={`/api/p/${view.slug}/live`}
+                      siteName={view.label}
+                      signupEvent={signupEvent}
+                    />
+                  ))
+                : null
+            }
           />
           {view.customLimited ? (
             <Notice tone="warning" title="This page can't load more custom ranges right now.">
@@ -122,9 +134,6 @@ export function PublicView({
               chart={points ? <StaticLineChart points={points} /> : null}
             />
           ) : null}
-          {has("live")
-            ? (live ?? <LiveCard data={null} deferred endpoint={`/api/p/${view.slug}/live`} />)
-            : null}
           {lists.length > 0 ? (
             <div className="grid gap-3 md:grid-cols-2">
               {has("sources") ? (

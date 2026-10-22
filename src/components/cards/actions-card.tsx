@@ -20,11 +20,12 @@ type ActionsCardProps = {
   dimmed?: boolean;
 };
 
-/** Downloads, outbound clicks, form submits and signups. Zero rows are hidden (docs/SPEC.md section 11.9). */
-export function ActionsCard({ counts, signupEvent, exportInfo, dimmed }: ActionsCardProps) {
-  const card = cardById.actions;
-  const count = (event: string) => counts?.current[event] ?? 0;
-  const rows = [
+/**
+ * Downloads, outbound clicks, form submits and signups, busiest first, from event counts by
+ * GA4 event name. Zero rows are hidden. Shared with the live view.
+ */
+export function actionRows(counts: Record<string, number> | null, signupEvent: string | null) {
+  return [
     { key: "file_download", label: "Downloads", icon: DownloadIcon },
     { key: "click", label: "Outbound clicks", icon: ExternalLinkIcon },
     { key: "form_submit", label: "Form submits", icon: SendIcon },
@@ -32,9 +33,15 @@ export function ActionsCard({ counts, signupEvent, exportInfo, dimmed }: Actions
       ? [{ key: signupEvent, label: "Signups", icon: UserPlusIcon }]
       : []),
   ]
-    .map((row) => ({ ...row, value: count(row.key) }))
+    .map((row) => ({ ...row, value: counts?.[row.key] ?? 0 }))
     .filter((row) => row.value > 0)
     .sort((a, b) => b.value - a.value);
+}
+
+/** Downloads, outbound clicks, form submits and signups. Zero rows are hidden (docs/SPEC.md section 11.9). */
+export function ActionsCard({ counts, signupEvent, exportInfo, dimmed }: ActionsCardProps) {
+  const card = cardById.actions;
+  const rows = actionRows(counts?.current ?? null, signupEvent);
 
   return (
     <ListCard

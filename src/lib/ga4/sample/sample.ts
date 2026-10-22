@@ -8,6 +8,7 @@ import {
   seriesKeys,
   type RangeWindow,
 } from "@/lib/ga4/ranges";
+import type { LiveData } from "@/lib/ga4/live";
 import type { Payloads, ReportName } from "@/lib/ga4/reports";
 
 /**
@@ -559,17 +560,23 @@ export function sampleReports<R extends ReportName>(
 }
 
 /** A calm moment on the sample site, for the landing demo and the dev preview. */
-export const sampleLive = {
+export const sampleLive: LiveData = {
   total: 9,
   minutes: 30,
   places: [
-    { lat: 40.71, lng: -74.01, visitors: 2, label: "New York, United States" },
-    { lat: 52.52, lng: 13.41, visitors: 2, label: "Berlin, Germany" },
-    { lat: 51.51, lng: -0.13, visitors: 1, label: "London, United Kingdom" },
-    { lat: 12.97, lng: 77.59, visitors: 1, label: "Bengaluru, India" },
-    { lat: 52.37, lng: 4.89, visitors: 1, label: "Amsterdam, Netherlands" },
-    { lat: 37.77, lng: -122.42, visitors: 1, label: "San Francisco, United States" },
-    { lat: -33.87, lng: 151.21, visitors: 1, label: "Sydney, Australia" },
+    { lat: 40.71, lng: -74.01, visitors: 2, label: "New York, United States", countryCode: "US" },
+    { lat: 52.52, lng: 13.41, visitors: 2, label: "Berlin, Germany", countryCode: "DE" },
+    { lat: 51.51, lng: -0.13, visitors: 1, label: "London, United Kingdom", countryCode: "GB" },
+    { lat: 12.97, lng: 77.59, visitors: 1, label: "Bengaluru, India", countryCode: "IN" },
+    { lat: 52.37, lng: 4.89, visitors: 1, label: "Amsterdam, Netherlands", countryCode: "NL" },
+    {
+      lat: 37.77,
+      lng: -122.42,
+      visitors: 1,
+      label: "San Francisco, United States",
+      countryCode: "US",
+    },
+    { lat: -33.87, lng: 151.21, visitors: 1, label: "Sydney, Australia", countryCode: "AU" },
   ],
   pages: [
     { title: "GA4 without the confusion · Blog", visitors: 3 },
@@ -578,4 +585,12 @@ export const sampleLive = {
     { title: "Getting started · Docs", visitors: 1 },
     { title: "Changelog · Your site", visitors: 1 },
   ],
+  devices: [
+    { device: "desktop", label: "Desktop", visitors: 6 },
+    { device: "mobile", label: "Mobile", visitors: 3 },
+  ],
+  perMinute: [
+    1, 0, 2, 1, 1, 0, 0, 1, 2, 3, 1, 0, 1, 2, 1, 1, 0, 2, 3, 2, 1, 1, 0, 1, 2, 4, 3, 2, 3, 2,
+  ],
+  events: { page_view: 41, click: 3, file_download: 1, [SAMPLE_SIGNUP_EVENT]: 2 },
 };

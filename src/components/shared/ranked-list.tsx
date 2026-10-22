@@ -26,6 +26,8 @@ type RankedListProps = {
   initial?: number;
   /** `tall`: two-line rows, for rows with a second line (`sublabel`). */
   size?: "default" | "tall";
+  /** Makes each row a button (the live view's places fly the globe there). Client components only. */
+  onSelect?: (key: string) => void;
 };
 
 /** A row's value as shown: its display text, or the number. */
@@ -64,6 +66,7 @@ export function RankedList({
   empty,
   initial = 10,
   size = "default",
+  onSelect,
 }: RankedListProps) {
   const max = Math.max(1, ...rows.map((r) => r.values[0] ?? 0));
   const viewport = { "--rows": initial } as CSSProperties;
@@ -96,12 +99,24 @@ export function RankedList({
                   style={{ "--share": `${Math.max(share * 100, 1)}%` } as CSSProperties}
                   className="absolute inset-y-0 left-0 w-(--share) rounded-md bg-chart-1/12 transition-[width] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] starting:w-0"
                 />
+                {onSelect ? (
+                  // Over the whole row, so any part of it can be clicked; the row's text is read with it.
+                  <button
+                    type="button"
+                    onClick={() => onSelect(row.key)}
+                    aria-label={`${row.label}${row.sublabel ? `, ${row.sublabel}` : ""}, ${spoken}`}
+                    className="absolute inset-0 z-10 cursor-pointer rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                ) : null}
                 {row.icon ? (
                   <span className="relative flex size-4 shrink-0 items-center justify-center">
                     {row.icon}
                   </span>
                 ) : null}
-                <span className="relative flex min-w-0 flex-1 flex-col">
+                <span
+                  className="relative flex min-w-0 flex-1 flex-col"
+                  aria-hidden={onSelect ? true : undefined}
+                >
                   <span className="truncate" title={row.label}>
                     {row.label}
                     <span className="sr-only">

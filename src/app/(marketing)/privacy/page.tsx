@@ -252,8 +252,10 @@ export default function PrivacyPage() {
         <p>
           The live globe places visitors using city data from{" "}
           <a href="https://www.geonames.org/">GeoNames</a>, licensed under{" "}
-          <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Country flags come
-          from country-flag-icons (MIT).
+          <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Its map comes from{" "}
+          <a href="https://www.naturalearthdata.com/">Natural Earth</a> (public domain) and is
+          served by {brand.name} itself, and its faces are DiceBear&apos;s Notionists by Zoish
+          (CC0). Country flags come from country-flag-icons (MIT).
         </p>
       </LegalSection>
 

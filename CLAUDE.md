@@ -42,7 +42,7 @@ These are not up for debate. Anything that would break one goes to Siamak first.
 | UI | Tailwind CSS 4, shadcn/ui and lucide icons |
 | Theme and brand | One file, `src/config/theme.ts`, written into each page as CSS variables. Light theme only in V1 |
 | Charts | shadcn/ui charts (Recharts) in the dashboard only. Server-rendered SVG on landing and public pages |
-| Live globe | cobe, loaded lazily |
+| Live globe | MapLibre GL JS (globe projection) with self-hosted Natural Earth map data, loaded only when the live view opens |
 | Database | Postgres 17 in a container on the server, through Drizzle ORM and postgres.js. Local Postgres in Docker (or Supabase, for now) for development |
 | Auth | Better Auth with Google sign-in and read-only Analytics consent. Tokens are encrypted |
 | Google APIs | `@google-analytics/data` and `@google-analytics/admin` (v1beta) |

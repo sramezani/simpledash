@@ -4,6 +4,38 @@ A dated log with one entry per session. **Newest entry first.**
 
 It is written for future Claude sessions: read the latest entry before starting work. Ideas that fall outside the roadmap go here too (Working rule 5).
 
+## 2026-10-22 · Session 16 · Stripe live, sign-in redirects, the live globe
+
+### Done
+
+- **Stripe live:** product, two prices, the webhook and the Customer Portal set up in the new live account; price IDs in `deploy/secrets/app.env` (Siamak pasted the keys himself). Test payment, webhook (3 delivered, 0 failed) and portal all worked.
+- **Cancel fix:** Stripe's newer portal cancels with `cancel_at`, not `cancel_at_period_end`; `subscriptionFacts` now reads both, so Settings says "ends on" after a cancel.
+- **Signed-in redirects:** `/signin` sends a signed-in browser to the dashboard (`src/proxy.ts`), the pricing buttons read "Open my dashboard" when signed in, and `requireUser()` sends a stale cookie to `/signin?expired=1` so the two can never loop.
+- **Legal:** the pages name Koochak Art, Lauriergracht 116 D2, Amsterdam.
+- **Live count and live globe** (Siamak's list, section 11.10):
+  - "● 3 live" beside the date menu (dashboard, public pages, demo), one Realtime request every 20 seconds. The Right now card is gone.
+  - The count opens the live view: a dialog with a MapLibre globe on a night sky, drawn faces per city (DiceBear Notionists, CC0), a card per marker, and a panel with the count, page views, signups, visitors per minute and tabs. Six Realtime requests every 20 seconds, only while it's open.
+  - Map data is our own (`npm run globe:data`): Natural Earth 1:50m from `world-atlas`, label points from `polylabel`, Geist for the labels through MapLibre 6's `font-faces`. About 205 KB compressed, loaded only when the view opens.
+
+### Learned
+
+- **MapLibre 6's worker:** Turbopack doesn't follow MapLibre's own worker lookup; `setWorkerUrl(new URL("maplibre-gl/dist/maplibre-gl-worker.mjs", import.meta.url).href)` makes Turbopack emit it as a static file (dev and build).
+- **MapLibre's CSS makes its container `position: relative`:** give it an inner `size-full` element inside a positioned wrapper, or the map is 0 px tall.
+- **Natural Earth outlines cross 180°** (Russia, Fiji): flat tiles draw a stripe across the world. Unwrap the longitudes first (`src/lib/globe/antimeridian.ts`), but leave Antarctica, which circles the pole.
+- **The Realtime API has no traffic source**, so the live view can't show referrers like DataFast's.
+- **Headless WebGL** for screenshots: `--use-angle=swiftshader --enable-unsafe-swiftshader` (now in `npm run content:screenshots`).
+- `@dicebear/core` 9.4.2 has an SVG injection advisory; 9.4.3 fixes it.
+
+### Problems
+
+- `npm run build` compiled and generated every page, then stopped with a Next.js message about a security vulnerability in Next 16.4.0 that asks to run `next upgrade --agent=security`. Not run: it's Siamak's call.
+- I ran `git rm` on the three old globe files by mistake and unstaged them straight away (`git restore --staged`); nothing is staged.
+
+### Next
+
+- Siamak: check the live view with real visitors, and decide on the Next.js upgrade.
+- Idea (outside the roadmap): show the live count in the browser tab title while the view is open.
+
 ## 2026-10-18 · Session 15, continued · Migrations on deploy, screenshots
 
 ### Done

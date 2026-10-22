@@ -17,7 +17,7 @@ import {
 } from "@/components/dashboard/states";
 import { SignupChange } from "@/components/cards/signup-change";
 import { ChartNotes } from "@/components/charts/chart-notes";
-import { LiveCard } from "@/components/globe/live-card";
+import { LiveButton } from "@/components/globe/live-button";
 import { SignupPicker } from "@/components/cards/signup-picker";
 import { EmailNotice } from "@/components/dashboard/email-notice";
 import { ShareCard } from "@/components/dashboard/share-card";
@@ -138,6 +138,17 @@ async function previewOpen() {
   "use server";
   return { error: "This is a preview: nothing was opened." };
 }
+
+/** The sample site with nobody on it: what the live view says in a quiet moment. */
+const quietLive = {
+  ...sampleLive,
+  total: 0,
+  places: [],
+  pages: [],
+  devices: [],
+  perMinute: sampleLive.perMinute.map(() => 0),
+  events: {},
+};
 
 const PREVIEW_SITES = [
   {
@@ -351,11 +362,11 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/dashboard">, "s
         }
         changes={changes}
         live={
-          <LiveCard
-            data={
-              state === "no-data" ? { ...sampleLive, total: 0, places: [], pages: [] } : sampleLive
-            }
+          <LiveButton
             endpoint={null}
+            sample={state === "no-data" ? quietLive : sampleLive}
+            siteName="yoursite.com"
+            signupEvent={SAMPLE_SIGNUP_EVENT}
           />
         }
         site={pro || state === "free-menu" ? <PreviewSwitcher pro={pro} range={range} /> : site}

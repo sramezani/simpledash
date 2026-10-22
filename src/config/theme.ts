@@ -80,6 +80,13 @@ export const colors = {
     "chart-5": "#DB2777",
     // Layers: the dim layer behind dialogs (used with an opacity, e.g. bg-overlay/50)
     overlay: neutral[950],
+    // The live globe (docs/SPEC.md section 11.10): deep space around a light map
+    "globe-space": "#070B1D",
+    "globe-ocean": "#3F7FDC",
+    "globe-land": "#F1EEE4",
+    "globe-border": "#C9C1AC",
+    "globe-label": "#57524A",
+    "globe-glow": "#8CC0FF",
     // Decoration: the three dots of the browser window around the landing demo
     "window-close": "#FF5F57",
     "window-minimize": "#FEBC2E",
@@ -88,6 +95,9 @@ export const colors = {
 } as const;
 
 export type ColorToken = keyof (typeof colors)["light"];
+
+/** Soft backgrounds for the faces on the live globe, picked per face so each keeps its colour. */
+export const avatarBackgrounds = ["#FDE7B0", "#CFE3FF", "#DCD9FF", "#FAD4E4", "#CDEFD9", "#FFD9C2"];
 
 /** The base corner radius. Smaller and larger radii are worked out from it. */
 export const radius = "0.625rem";
@@ -124,6 +134,8 @@ export const textPairs: ReadonlyArray<readonly [text: ColorToken, background: Co
   ["positive", "background"],
   ["negative", "background"],
   ["warning", "background"],
+  // Country names on the live globe.
+  ["globe-label", "globe-land"],
 ];
 
 /** Non-text pairs that must reach 3:1 (WCAG 1.4.11): focus ring and the visitors line. */

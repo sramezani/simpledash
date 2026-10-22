@@ -72,6 +72,12 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
   --color-overlay: var(--overlay);
+  --color-globe-space: var(--globe-space);
+  --color-globe-ocean: var(--globe-ocean);
+  --color-globe-land: var(--globe-land);
+  --color-globe-border: var(--globe-border);
+  --color-globe-label: var(--globe-label);
+  --color-globe-glow: var(--globe-glow);
   --color-window-close: var(--window-close);
   --color-window-minimize: var(--window-minimize);
   --color-window-zoom: var(--window-zoom);

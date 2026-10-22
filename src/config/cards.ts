@@ -142,7 +142,7 @@ export const cards = [
   {
     id: "live",
     title: "Right now",
-    help: "Visitors in the last 30 minutes, by place, and the pages they're on (shown by page title). Places on the globe: GeoNames, CC BY 4.0.",
+    help: "The live count beside the date menu: visitors in the last 30 minutes. It opens the live view: a globe of places, the pages they're on (by page title), devices and actions. Places on the globe: GeoNames, CC BY 4.0.",
     csv: false,
     publicAllowed: true,
     publicDefault: false,

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { DashboardSkeleton } from "@/components/dashboard/states";
-import { LiveCard } from "@/components/globe/live-card";
+import { LiveButton } from "@/components/globe/live-button";
 import { PausedView, PublicView } from "@/components/public-page/public-view";
 import { defaultPublicCardIds, publicCardIds } from "@/config/cards";
 import { uiKitEnabled } from "@/lib/env";
@@ -60,7 +60,14 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/public">, "sear
         <PublicView
           basePath="/ui-kit/public"
           query={{ state }}
-          live={<LiveCard data={sampleLive} endpoint={null} />}
+          live={
+            <LiveButton
+              endpoint={null}
+              sample={sampleLive}
+              siteName="yoursite.com"
+              signupEvent={SAMPLE_SIGNUP_EVENT}
+            />
+          }
           view={{
             kind: "live",
             label: "yoursite.com",

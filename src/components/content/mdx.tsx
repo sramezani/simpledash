@@ -5,7 +5,14 @@ import { Step, Steps } from "fumadocs-ui/components/steps";
 import { Tab, Tabs } from "fumadocs-ui/components/tabs";
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import type { MDXComponents } from "mdx/types";
-import { Freshness, PlainWordsTable, Scope, SourceRepo, SupportEmail } from "./code-facts";
+import {
+  Freshness,
+  LiveRefresh,
+  PlainWordsTable,
+  Scope,
+  SourceRepo,
+  SupportEmail,
+} from "./code-facts";
 import { ImageSlot } from "./image-slot";
 import { InSimpleDash } from "./in-simpledash";
 import { FreeDays, MonthsFree, PlanFeatures, Price } from "./plan-facts";
@@ -27,6 +34,7 @@ export function getMDXComponents(components?: MDXComponents) {
     InSimpleDash,
     FreeDays,
     Freshness,
+    LiveRefresh,
     MonthsFree,
     PlainWordsTable,
     Scope,

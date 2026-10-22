@@ -110,7 +110,7 @@ Versions were checked on npm on Oct 11, 2026. Pin exact versions in `package.jso
 | Icons | lucide-react (shadcn's default set) | 1.55 | One icon set, tree-shaken |
 | Theme and brand | `src/config/theme.ts`, written into each page as CSS variables by `ThemeStyle` | — | One file for colours, radius, shadows and brand facts (section 18) |
 | Charts | shadcn/ui charts (Recharts), **dashboard only** | recharts 3.10 | Landing and public pages use server-rendered SVG (sections 15 and 17) |
-| Globe | cobe | 2.0 | About 5 KB, loaded lazily |
+| Globe | MapLibre GL JS (globe projection), DiceBear Notionists faces | 6.13, 9.4 | Loaded only when the live view opens; map data self-hosted in `public/globe` |
 | Language | TypeScript, strict | 6.0.3, pinned | typescript-eslint needs < 6.1. TypeScript 7 comes later |
 | Database | Postgres in a container on the server (`postgres:17-alpine`), plain Postgres | 17 | The same image runs locally (section 21) |
 | Hosting | One Ubuntu or Debian server with Docker Compose, Caddy and cron, behind Cloudflare. GitHub Actions deploys | Caddy 2 | `deploy/`, section 21 |
@@ -185,7 +185,7 @@ Versions were checked on npm on Oct 11, 2026. Pin exact versions in `package.jso
     │   │                            RankedList, EmptyState, Notice, SegmentedControl, BillingSwitch…
     │   ├── cards/                   one file per card, built from shared blocks
     │   ├── charts/                  VisitorsChart (Recharts) · StaticLineChart (SVG, no JS)
-    │   ├── globe/                   LiveGlobe (lazy)
+    │   ├── globe/                   LiveButton, the live view and LiveGlobe (both lazy)
     │   ├── marketing/               Hero · HowItWorks · Pricing · Faq · Footer
     │   └── settings/                the settings frame, its menu and the sections
     └── lib/
@@ -582,7 +582,7 @@ The dashboard is one scrolling page.
 - **The overview** (`OverviewCard`): one card with the four numbers in a row, short dividers between them (two by two on phones), and the visitors chart underneath. Downloads for the chart and the four numbers sit in one small CSV menu.
 - **Layout:** one column on phones, a grid on wider screens.
 - **List cards** (`ListCard`: Sources, Pages, Countries, Devices, AI traffic, Actions) have no visible title and no CSV button, like DataFast: tabs at the top left name the view ("Country | City"), the view's column names sit at the right, and "More" at the bottom opens the whole list (section 13). The title stays for screen readers; the plain-words help moved into Details. A card with one view shows its name as a single tab.
-- **The overview and "Right now"** keep their ⓘ help; "Right now" shows no visible title either (its ⓘ carries the GeoNames credit).
+- **The overview** keeps its ⓘ help. "Right now" is no longer a card: it is the live count beside the date menu, and the live view's footer carries the GeoNames credit (section 11.10).
 - **What changed** (section 31.2) sits right under the overview: the sources and landing pages behind a change, on every plan.
 - **Built from shared parts:** every list card sits in the shared `CardShell` (title, help, CSV, and the loading, empty, error, stale and locked states). The card list, titles and help text come from `src/config/cards.ts` (section 4).
 - **List cards have a fixed height** of 10 rows (`RankedList`), whatever their number of rows, so cards side by side line up and nothing moves. The rest of a list is in Details. Share bars are soft blue (`chart-1`) and grow in when a list appears.
@@ -738,31 +738,45 @@ Rows with zero are hidden. If every row is zero, the card says: "No actions reco
 
 ### 11.10 Live globe
 
-The card shows "12 visitors right now", a globe of places and the top 5 live pages.
+Two parts (since 22 Oct 2026, Siamak): a small live count in the row above the overview, and the live view it opens.
 
-**Realtime API queries.** Realtime covers the last 30 minutes on standard properties and 60 on GA4 360.
+**The live count.** "● 3 live" at the right of the site and date row, on the dashboard, public pages (when "Right now" is on) and the demo. The dot is green and pulses while anyone is there, grey at zero. It is one Realtime request (`activeUsers`, no dimensions), asked for every 20 seconds while the tab is visible. Screen readers hear "3 visitors in the last 30 minutes. Open the live view."
 
+**The live view** (a dialog, about 90% of the screen on a computer, the whole screen on a phone):
+
+- A globe on a starry night sky, with a drawn face for each visitor at their city (up to 3 faces per marker, "+N" for the rest). Hovering a marker shows a card with each place, its flag and count. Places that would overlap on screen share a marker, worked out again after each zoom (`src/lib/globe/groups.ts`).
+- A panel (top left on a computer, under the globe on a phone): the count, Page views, Signups (when a signup event is chosen), visitors per minute over the window as bars, and tabs: Places, Pages, Devices, Actions. Picking a place flies the globe there and shows its card.
+- The globe turns slowly until touched, and not at all with `prefers-reduced-motion`. Drag to turn, scroll to zoom.
+- The faces are decoration: GA4 says how many people are in a city, never who. The panel says so ("Faces are for fun: visitors stay anonymous.").
+- Everything is asked for every 20 seconds while the view is open, and the count beside the date menu follows it.
+
+**Realtime API queries.** Realtime covers the last 30 minutes on standard properties and 60 on GA4 360. The Realtime API has no traffic source dimension, so there's no "where they came from" list.
+
+- **Count:** metric `activeUsers`, no dimensions.
 - **Places:** dimensions `countryId`, `country` and `city`, metric `activeUsers`, limit 100.
-- **Live pages:** dimension `unifiedScreenName`, metric `activeUsers`, limit 5. The Realtime API has no page path, so **live pages show page titles**.
+- **Pages:** dimension `unifiedScreenName`, metric `activeUsers`, limit 10. The Realtime API has no page path, so **live pages show page titles**.
+- **Devices:** dimension `deviceCategory`, metric `activeUsers`.
+- **Visitors per minute:** dimension `minutesAgo`, metric `activeUsers`. Minutes without a row are zero.
+- **Actions:** dimension `eventName`, metric `eventCount`, limit 50. Shown like the Actions card (downloads, outbound clicks, form submits, signups); `page_view` gives Page views.
 
 **From place names to coordinates** (on the server):
 
 - A static lookup table built from GeoNames (CC BY 4.0, through the `all-the-cities` package) by `scripts/build-places.mjs`: about 14,000 places with 30,000+ people, matched on country code and city name (accents ignored, plus a few English names such as Cologne).
 - If no city matches, use the country's population-weighted centre.
-- Changed from Natural Earth in Sprint 3: Natural Earth's populated places aren't packaged on npm. GeoNames needs a credit line, which is in the privacy policy and the Right now card's help.
-- Only coordinates and counts are sent to the browser.
+- GeoNames needs a credit line, which is in the privacy policy and the Right now help.
+- Only coordinates, labels, country codes and counts are sent to the browser.
 
-**`/api/live`** returns `{ total, places: [{ lat, lng, visitors, label }], pages: [{ title, visitors }] }`. It is cached for 60 seconds per property, in memory.
+**`/api/live?site=<id>`** returns the count `{ total, minutes }`; with `&view=full` it returns everything the view shows: `{ total, minutes, places: [{ lat, lng, visitors, label, countryCode }], pages: [{ title, visitors }], devices: [{ device, label, visitors }], perMinute: number[], events: { [eventName]: count } }`. `/api/p/<slug>/live` does the same for a public page. Both are cached for 20 seconds per property, in memory, shared by everyone watching; a fresh full answer also answers the count.
 
-**In the browser:**
+**The map** (no map service, nothing sent anywhere else):
 
-- The server renders the card first as a text list of places and pages.
-- cobe (about 5 KB) is imported only when:
-  - the card scrolls into view, and
-  - WebGL works.
-- It polls every 45 seconds, give or take a little, while the tab is visible, and stops when the tab is hidden.
-- With `prefers-reduced-motion`, the globe doesn't spin.
-- The count updates in a polite `aria-live` region.
+- MapLibre GL JS with the globe projection, loaded only when the view opens (the panel shows first).
+- Country shapes from Natural Earth (public domain, through the `world-atlas` package, 1:50m), a label point per country and Geist for the labels, written to `public/globe/` by `npm run globe:data`. About 205 KB compressed.
+- Russia's and Fiji's outlines cross 180°, which flat map tiles read as a line across the world: `src/lib/globe/antimeridian.ts` makes their longitudes continuous first.
+- MapLibre's worker file is served from the installed package (`new URL(..., import.meta.url)`), so it always matches the library.
+- Colours are theme tokens (`globe-space`, `globe-ocean`, `globe-land`, `globe-border`, `globe-label`, `globe-glow`).
+- Faces: DiceBear's Notionists (CC0), made in the browser from a seed per place, so a place keeps its faces between updates.
+- Without WebGL the globe stays empty; the panel has every number.
 
 ## 12. Onboarding and states
 
@@ -1184,7 +1198,7 @@ The bar is the polish of the best tools in this space: everything clear, quick a
 
 - Server components, streamed card by card with Suspense.
 - Cache first (section 10.3).
-- Recharts and cobe are split into their own chunks, and the globe loads only when visible.
+- Recharts and MapLibre are split into their own chunks; the live view and its globe load only when the live count is clicked (fetched early on hover or focus).
 
 **Lint:** `eslint-config-next`'s core-web-vitals rules are on.
 
@@ -1200,7 +1214,7 @@ The bar is the polish of the best tools in this space: everything clear, quick a
 - shadcn and Radix components, which have keyboard support built in.
 - Visible focus rings and WCAG AA contrast.
 - Real headings and landmarks, and a label on every control.
-- **Charts:** a caption plus "View as table". The globe has its text list.
+- **Charts:** a caption plus "View as table". The globe's places are listed in the live view's panel, and picking one there flies the globe to it; the globe itself is hidden from screen readers.
 - **Changes:** shown with arrows and words, never colour alone.
 - `prefers-reduced-motion` is respected.
 - **Theme:** light only in V1, confirmed by Siamak on Oct 11, 2026. The theme file can take a dark palette later (Design system, above).
