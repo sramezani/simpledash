@@ -111,7 +111,7 @@ What's done and what's next, in plain words.
 - [x] `llms.txt`: a short plain-text summary of SimpleDash for AI assistants (what it is, features, price, key links) (2026-10-11)
 - [x] Lighthouse on landing and legal pages: 95 or more in all four categories, aiming for 100 (2026-10-11)
   - Local production build. Landing: mobile 99 / 100 / 100 / 100, desktop 100 / 100 / 100 / 100. Privacy and terms: mobile 98 / 100 / 100 / 100, desktop 100 across the board.
-- [ ] Submit the Google app for verification (Siamak records the demo video)
+- [x] Submit the Google app for verification (Siamak records the demo video) (19 Oct): branding verified; data access under review
   - The scope justification and a demo video script are ready in `docs/google-verification.md`. It needs the live site first.
 - [ ] **Done when:** a stranger can understand the landing page in 10 seconds, and the verification request is submitted.
 
@@ -125,8 +125,9 @@ What's done and what's next, in plain words.
 - [x] Decide the refund rule for yearly plans (for the terms) (2026-10-11)
   - A full refund within 14 days of a yearly payment.
 - [ ] Cloudflare Email Routing: `hello@simpledash.app` forwards to your inbox
-- [ ] Verify ownership of `simpledash.app` in Google Search Console (needed for Google's app verification)
-- [ ] Record the demo video and submit the app for verification
+- [x] Verify ownership of `simpledash.app` in Google Search Console (needed for Google's app verification) (19 Oct)
+- [x] Record the demo video and submit the app for verification (19 Oct)
+- [ ] Google approves data access (`analytics.readonly`): then the "unverified app" warning disappears. Keep the app on Production meanwhile
 
 ## Sprint 4: email, sharing, payment, launch
 

@@ -8,14 +8,14 @@ import { brand } from "./theme";
  */
 export const legal = {
   /** Who runs SimpleDash: a registered business name, or the owner's full name. */
-  businessName: "SimpleDash" as string | null,
+  businessName: "Koochak Art" as string | null,
   /** A postal address, e.g. "Street 1, 1234 AB City". */
-  address: "Amsterdam" as string | null,
+  address: "Lauriergracht 116 D2, 1016 RP Amsterdam" as string | null,
   /** The country whose law governs the terms, e.g. "the Netherlands". */
   country: "the Netherlands" as string | null,
   contactEmail: brand.supportEmail,
   /** YYYY-MM-DD. Shown at the top of both pages and used in the sitemap. Update it whenever either page changes. */
-  lastUpdated: "2026-10-18",
+  lastUpdated: "2026-10-22",
   /** Yearly plans: a full refund if asked within this many days of a yearly payment. */
   yearlyRefundDays: 14,
   /** The most we owe someone who never paid (terms, "Liability"), in the plan currency. */

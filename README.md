@@ -128,6 +128,7 @@ node scripts/run-job.mjs revenue-sync   # hourly at :20 (Pro sites with Stripe c
 | `npm run db:generate` | Writes a SQL migration into `drizzle/` from changes in `src/lib/db/schema.ts` |
 | `npm run db:migrate` | Applies new migrations to `DATABASE_URL` (local; production runs them itself when the app starts) |
 | `npm run content:images` | Rewrites `docs/CONTENT-IMAGES.md` (every screenshot slot in `content/`, and which are still missing) and `src/lib/content/image-sizes.json` (each screenshot's size) |
+| `npm run brand:assets` | Writes the logo as files in `public/brand/` (SVG mark, icon and full logo; PNG icons at 512 and 120 px, and the full logo), from the theme colours |
 | `npm run content:screenshots` | Retakes the screenshots of SimpleDash itself from the `/ui-kit` previews with the Mac's Chrome, as WebP (needs `npm run dev`; `-- <id>` for one) |
 | `node scripts/copy-flags.mjs` | Rebuilds `public/flags` (SVG) from country-flag-icons, after upgrading it |
 | `node scripts/copy-tech-icons.mjs` | Rebuilds `public/icons/tech` (browser, OS and device icons) from the two Iconify sets, after changing the list or upgrading them |

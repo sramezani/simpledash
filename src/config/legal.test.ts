@@ -9,6 +9,6 @@ describe("legal facts", () => {
   });
 
   it("name who runs SimpleDash in one line", () => {
-    expect(operator()).toBe("SimpleDash, Amsterdam, the Netherlands");
+    expect(operator()).toBe("Koochak Art, Lauriergracht 116 D2, 1016 RP Amsterdam, the Netherlands");
   });
 });

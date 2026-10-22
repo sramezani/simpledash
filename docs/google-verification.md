@@ -14,6 +14,10 @@ What Siamak needs to submit SimpleDash for Google's OAuth verification (Sprint 3
    - Scopes: `openid`, `email`, `profile`, `.../auth/analytics.readonly`, and since V2 (Sprint 6) `.../auth/webmasters.readonly`
    - Publishing status: **In production**
 
+## Where to submit
+
+Google Cloud Console → **Google Auth Platform** → **Verification Center**: <https://console.cloud.google.com/auth/verification> (pick the SimpleDash project at the top). Fill in the steps above under **Branding**, **Audience** and **Data Access** first (<https://console.cloud.google.com/auth/overview>), then choose **Prepare for verification** / **Submit**.
+
 ## Scope justification (paste into the form)
 
 > SimpleDash shows a website owner their own Google Analytics 4 data on one simple dashboard page, in a weekly email and, if they choose, on a public stats page. We request `analytics.readonly` to list the user's GA4 properties (Admin API: account summaries, property details, data streams and key events) and to run reports on them (Data API: visitors, page views, sources, pages, countries, devices and realtime visitors). We never write to the user's Google account. We store only the encrypted tokens, the user's settings and short-lived aggregated report summaries, never data about individual visitors. The weekly email needs offline access to fetch last week's numbers when the user isn't signed in.
