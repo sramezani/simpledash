@@ -4,6 +4,17 @@ A dated log with one entry per session. **Newest entry first.**
 
 It is written for future Claude sessions: read the latest entry before starting work. Ideas that fall outside the roadmap go here too (Working rule 5).
 
+## 2026-10-23 · Session 16, continued · Next.js security upgrade
+
+### Done
+
+- **Next.js and `eslint-config-next` 16.4.0 → 16.4.2** (Siamak's go-ahead). 16.0.0 to 16.4.0 have two critical remote code execution holes (image optimiser with SVGs; `use cache` functions returning typed arrays) and a Server Actions denial of service. Done with `npm install --save-exact`, not the `next upgrade --agent=security` command the build printed, so every change is visible in `package.json` and the lockfile. Decision logged (only 8 days after release, because it's a critical fix).
+- `npm audit` no longer lists `next`. What's left (drizzle-kit, the shadcn command line, the lint config and their esbuild, micromatch and ip-address) are developer tools that never run in the app.
+
+### Learned
+
+- `next build` on 16.4.0 compiles and generates every page, then stops with a "SecurityFatalError" that asks to run its upgrade agent. The advisories are real (checked with `npm audit`); the fix is a normal patch install.
+
 ## 2026-10-22 · Session 16 · Stripe live, sign-in redirects, the live globe
 
 ### Done
