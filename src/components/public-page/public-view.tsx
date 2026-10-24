@@ -45,7 +45,7 @@ export function PublicView({
   query?: Record<string, string>;
   /** The range shown without `?range=` (the demo's differs). */
   defaultRange?: RangeType;
-  /** Replaces the live count, e.g. with sample data in the dev preview. */
+  /** Replaces the live count, e.g. with sample data in the demo and the dev preview. */
   live?: React.ReactNode;
   /** Shown inside the landing page's browser frame: links leave the frame. */
   embedded?: boolean;
@@ -87,6 +87,16 @@ export function PublicView({
     ] satisfies OverviewMetric[]
   ).filter(({ id }) => has(id) && (id !== "signups" || signupEvent));
   const showChart = has("chart");
+  const liveCount = has("live")
+    ? (live ?? (
+        // The page is cached, so the count is asked for in the browser.
+        <LiveButton
+          endpoint={`/api/p/${view.slug}/live`}
+          siteName={view.label}
+          signupEvent={signupEvent}
+        />
+      ))
+    : null;
   const lists = ["sources", "pages", "countries", "devices", "ai"].filter(has);
 
   return (
@@ -105,27 +115,16 @@ export function PublicView({
             )}
             period={isPreset(range) ? period : null}
             note={freshnessNote(window)}
-            live={
-              has("live")
-                ? (live ?? (
-                    // The page is cached, so the count is asked for in the browser.
-                    <LiveButton
-                      endpoint={`/api/p/${view.slug}/live`}
-                      siteName={view.label}
-                      signupEvent={signupEvent}
-                    />
-                  ))
-                : null
-            }
           />
           {view.customLimited ? (
             <Notice tone="warning" title="This page can't load more custom ranges right now.">
               Try again in an hour, or pick a range from the menu.
             </Notice>
           ) : null}
-          {metrics.length > 0 || showChart ? (
+          {metrics.length > 0 || showChart || liveCount ? (
             <OverviewCard
               metrics={metrics}
+              live={liveCount}
               versus={versus}
               missing={comparisonGap ?? undefined}
               points={points}

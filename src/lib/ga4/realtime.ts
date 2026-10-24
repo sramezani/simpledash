@@ -11,7 +11,7 @@ import { parseLive, parseLiveCount, type LiveCount, type LiveData } from "./live
  * Google is asked at most that often whoever is watching. One server process, so memory
  * is enough.
  *
- * - getLiveCount: the number beside the date menu, one request.
+ * - getLiveCount: the live count in the overview, one request.
  * - getLive: everything the live view shows (six requests), only while it is open.
  */
 
@@ -21,29 +21,40 @@ type Entry<T> = { at: number; data: Promise<T> };
 const counts = new Map<string, Entry<LiveCount>>();
 const full = new Map<string, Entry<LiveData>>();
 
-function cached<T>(cache: Map<string, Entry<T>>, key: string, now: number, load: () => Promise<T>) {
+function cached<T>(
+  cache: Map<string, Entry<T>>,
+  key: string,
+  now: number,
+  maxAge: number,
+  load: () => Promise<T>,
+) {
   const hit = cache.get(key);
-  if (hit && now - hit.at < LIVE_TTL) return hit.data;
+  if (hit && now - hit.at < maxAge) return hit.data;
   const data = load();
   cache.set(key, { at: now, data });
   data.catch(() => cache.delete(key));
   return data;
 }
 
-export function getLiveCount(site: Site, now: number = Date.now()): Promise<LiveCount> {
+/** `maxAge` is shorter only for the dashboard's early ask (LIVE_EARLY). */
+export function getLiveCount(
+  site: Site,
+  now: number = Date.now(),
+  maxAge: number = LIVE_TTL,
+): Promise<LiveCount> {
   // A fresh full result already has the count: no need to ask Google again.
   const fresh = full.get(site.propertyId);
-  if (fresh && now - fresh.at < LIVE_TTL) {
+  if (fresh && now - fresh.at < maxAge) {
     return fresh.data.then(({ total, minutes }) => ({ total, minutes }));
   }
-  return cached(counts, site.propertyId, now, async () => {
+  return cached(counts, site.propertyId, now, maxAge, async () => {
     const { run, property, minutes, metric } = await realtime(site);
     return parseLiveCount(await run({ property, metrics: metric }), minutes);
   });
 }
 
 export function getLive(site: Site, now: number = Date.now()): Promise<LiveData> {
-  return cached(full, site.propertyId, now, () => fetchLive(site));
+  return cached(full, site.propertyId, now, LIVE_TTL, () => fetchLive(site));
 }
 
 async function realtime(site: Site) {

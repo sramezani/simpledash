@@ -80,8 +80,8 @@ export const colors = {
     "chart-5": "#DB2777",
     // Layers: the dim layer behind dialogs (used with an opacity, e.g. bg-overlay/50)
     overlay: neutral[950],
-    // The live globe (docs/SPEC.md section 11.10): deep space around a light map
-    "globe-space": "#070B1D",
+    // The live globe (docs/SPEC.md section 11.10): a deep blue night around a light map
+    "globe-space": "#121936",
     "globe-ocean": "#3F7FDC",
     "globe-land": "#F1EEE4",
     "globe-border": "#C9C1AC",

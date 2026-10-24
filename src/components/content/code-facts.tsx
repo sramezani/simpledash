@@ -2,7 +2,13 @@ import type { ReactNode } from "react";
 import { plainWords } from "@/config/plain-words";
 import { brand } from "@/config/theme";
 import { ANALYTICS_SCOPE, SEARCH_CONSOLE_SCOPE } from "@/lib/auth/scopes";
-import { durationWords, FRESHNESS, LIVE_REFRESH, type FreshnessKind } from "@/lib/ga4/freshness";
+import {
+  durationWords,
+  FRESHNESS,
+  LIVE_EARLY,
+  LIVE_REFRESH,
+  type FreshnessKind,
+} from "@/lib/ga4/freshness";
 
 /**
  * Facts the code owns, shown inside content (docs/SPEC.md section 30): how fresh numbers
@@ -23,6 +29,11 @@ export function Freshness({
 /** "20 seconds": how often the live count and the live view update. */
 export function LiveRefresh() {
   return <>{durationWords(LIVE_REFRESH)}</>;
+}
+
+/** "5 seconds": when the dashboard asks for the live count once more after it opens. */
+export function LiveEarly() {
+  return <>{durationWords(LIVE_EARLY)}</>;
 }
 
 /** The exact Google scope, as Google's consent screen and docs name it. */

@@ -65,7 +65,7 @@ Pages:
 | Page | What it is |
 | --- | --- |
 | `/` | Landing page: the live demo in a browser frame, how it works, pricing (`/#pricing`), FAQ. Shows "Dashboard" instead of "Sign in" when you're signed in |
-| `/demo` | The live demo: a real public stats page, set in `src/config/demo.ts` (sample data if that page is off) |
+| `/demo` | The live demo: a real public stats page, set in `src/config/demo.ts` (sample data, live globe included, if that page is off) |
 | `/signin` | "Continue with Google" (needs `GOOGLE_CLIENT_ID` and the redirect URI on the Google client) |
 | `/dashboard` | The dashboard (signed in). `?site=<id>` names the site (default: the one opened last). `?range=today`, `yesterday`, `7d` (default), `30d`, `12m`, or a custom range like `?range=2026-09-01..2026-09-30`. On Free, anything older than 30 days shows Last 30 days |
 | `/settings` | Settings → Profile: your account, disconnect Google, delete account (signed in). A menu on the left links every settings page |
@@ -86,7 +86,7 @@ Pages:
 | `/api/health` | `{"status":"ok"}` when the database answers |
 | `/robots.txt`, `/sitemap.xml`, `/llms.txt` | SEO files |
 | `/api/csv/<card>?site=&range=` | "Download CSV" for a card (signed in, own sites only) |
-| `/api/live?site=` | The live count; with `&view=full` everything the live view shows (signed in, own sites only) |
+| `/api/live?site=` | The live count; with `&view=full` everything the live view shows; with `&fresh=1` (the dashboard's one early ask) an answer at most 5 seconds old (signed in, own sites only) |
 | `/api/p/<slug>/live` | The same for a public page with "Right now" turned on |
 | `/api/stripe/webhook` | Stripe events (signature checked) |
 | `/api/search-console/connected?site=` | Where Google returns after granting Search Console access; picks the property (signed in) |
@@ -131,7 +131,7 @@ node scripts/run-job.mjs revenue-sync   # hourly at :20 (Pro sites with Stripe c
 | `npm run brand:assets` | Writes the logo as files in `public/brand/` (SVG mark, icon and full logo; PNG icons at 512 and 120 px, and the full logo), from the theme colours |
 | `npm run content:screenshots` | Retakes the screenshots of SimpleDash itself from the `/ui-kit` previews with the Mac's Chrome, as WebP (needs `npm run dev`; `-- <id>` for one) |
 | `node scripts/copy-flags.mjs` | Rebuilds `public/flags` (SVG) from country-flag-icons, after upgrading it |
-| `node scripts/copy-tech-icons.mjs` | Rebuilds `public/icons/tech` (browser, OS and device icons) from the two Iconify sets, after changing the list or upgrading them |
+| `node scripts/copy-tech-icons.mjs` | Rebuilds `public/icons/tech` (browser, OS and device icons) from the two Iconify sets and our own desktop icon in `scripts/tech-icons/`, after changing the list or upgrading them |
 | `node scripts/build-places.mjs` | Rebuilds the globe's place table from GeoNames (all-the-cities) |
 | `npm run globe:data` | Rebuilds the live globe's map in `public/globe/` (Natural Earth country shapes and label points from world-atlas, and the Geist font for labels) |
 | `scripts/backup/backup.sh --local <dir>` | Writes a database backup to a folder (needs `BACKUP_DATABASE_URL`, `pg_dump` 17) |

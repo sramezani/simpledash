@@ -46,6 +46,8 @@ type OverviewCardProps = {
   hint?: string;
   /** When the points carry revenue (Pro): its currency, for the table. */
   revenueCurrency?: string;
+  /** The live count, the last number of the row, which opens the live view. */
+  live?: ReactNode;
 };
 
 /**
@@ -66,6 +68,7 @@ export function OverviewCard({
   footer,
   hint,
   revenueCurrency,
+  live,
 }: OverviewCardProps) {
   const showRevenue = !!revenueCurrency && !!points?.some((p) => p.revenue !== undefined);
   const chartCard = cardById.chart;
@@ -73,14 +76,21 @@ export function OverviewCard({
   return (
     <section
       aria-label="Overview"
-      className="group/chart @container overflow-hidden rounded-2xl border bg-card text-card-foreground shadow-xs"
+      // Named, so the live count (its own container) can still size its number by the card.
+      className="group/chart @container/overview overflow-hidden rounded-2xl border bg-card text-card-foreground shadow-xs"
     >
       <div className={cn(dimmed && "opacity-55 grayscale")}>
-        {metrics.length > 0 ? (
-          <div className="grid grid-cols-2 @3xl:flex">
+        {metrics.length > 0 || live ? (
+          // Pulled 1px up and left, so the card's edge hides the dividers of the first row and column.
+          <div className="-mt-px -ml-px flex flex-wrap">
             {metrics.map((m) => (
               <Metric key={m.id} metric={m} versus={versus} missing={missing} />
             ))}
+            {live ? (
+              <div id="live" className={cn(cellClass, "p-1.5")}>
+                {live}
+              </div>
+            ) : null}
           </div>
         ) : null}
         {showChart ? (
@@ -204,9 +214,18 @@ export function OverviewCard({
 }
 
 /**
- * One number of the overview. On a wide card the numbers sit in one row with short
- * dividers between them; on a narrow one, two by two.
+ * One cell of the numbers row. On a wide card the numbers sit in one row of equal cells;
+ * on a narrow one, two by two. A cell never gets narrower than its label and number:
+ * when they don't fit, the last ones move to a new row, and a cell alone on its row takes
+ * all of it. Short dividers on the left and top of every cell, the outer ones hidden.
  */
+const cellClass = cn(
+  "relative grow basis-1/2 @3xl:basis-0",
+  "before:absolute before:inset-y-4 before:left-0 before:w-px before:bg-border",
+  "after:absolute after:inset-x-4 after:top-0 after:h-px after:bg-border",
+);
+
+/** One number of the overview. */
 function Metric({
   metric,
   versus,
@@ -218,18 +237,12 @@ function Metric({
 }) {
   const card = cardById[metric.id];
   return (
-    <div
-      id={metric.id}
-      className={cn(
-        "relative flex min-w-0 flex-col gap-1.5 px-4 py-4 @2xl:px-5 @3xl:flex-1",
-        // Short vertical dividers: between the two columns, or between every number in a row.
-        "before:absolute before:inset-y-4 before:left-0 before:hidden before:w-px before:bg-border even:before:block @3xl:before:block @3xl:first:before:hidden",
-        // A line above the second row on narrow cards.
-        "after:absolute after:inset-x-4 after:top-0 after:hidden after:h-px after:bg-border [&:nth-child(n+3)]:after:block @3xl:[&:nth-child(n+3)]:after:hidden",
-      )}
-    >
+    <div id={metric.id} className={cn(cellClass, "flex flex-col gap-1.5 px-4 py-4 @2xl:px-5")}>
       <div className="flex h-6 items-center gap-1">
-        <h2 id={`${metric.id}-title`} className="text-sm font-medium text-muted-foreground">
+        <h2
+          id={`${metric.id}-title`}
+          className="text-sm font-medium whitespace-nowrap text-muted-foreground"
+        >
           {card.title}
         </h2>
         <HelpTip id={metric.id} label={card.title}>
@@ -241,7 +254,7 @@ function Metric({
       </div>
       {metric.children ?? (
         <>
-          <p className="text-2xl leading-tight font-semibold tracking-tight tabular-nums @md:text-3xl">
+          <p className="text-2xl leading-tight font-semibold tracking-tight whitespace-nowrap tabular-nums @md:text-3xl">
             {metric.value ?? "—"}
           </p>
           {metric.value === null ? (

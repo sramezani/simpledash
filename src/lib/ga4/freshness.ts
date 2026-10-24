@@ -24,6 +24,13 @@ export type FreshnessKind = keyof typeof FRESHNESS;
  */
 export const LIVE_REFRESH = 20 * SECOND;
 
+/**
+ * The dashboard asks for the live count once more this soon after it opens, and that ask
+ * takes an answer at most this old, so an owner who just opened their own site sees
+ * themselves without waiting for the next 20-second round.
+ */
+export const LIVE_EARLY = 5 * SECOND;
+
 /** "20 seconds", "30 minutes", "1 hour", "12 hours". */
 export function durationWords(ms: number): string {
   if (ms < MINUTE) {

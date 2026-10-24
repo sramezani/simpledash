@@ -189,10 +189,7 @@ function Loaded({
       </Tabs.Root>
 
       <footer className="mt-auto flex flex-col gap-1 border-t px-5 py-3 text-xs text-pretty text-muted-foreground">
-        <p>
-          Updates every 20 seconds, from Google Analytics. Faces are for fun: visitors stay
-          anonymous.
-        </p>
+        <p>Faces are for fun: visitors stay anonymous.</p>
         <p>
           Places:{" "}
           <a

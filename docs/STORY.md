@@ -4,6 +4,41 @@ A dated log with one entry per session. **Newest entry first.**
 
 It is written for future Claude sessions: read the latest entry before starting work. Ideas that fall outside the roadmap go here too (Working rule 5).
 
+## 2026-10-24 · Session 17 · Live count in the overview, globe in the demo
+
+### Done
+
+Siamak's list, from three screenshots:
+
+- **The live count moved into the overview**, as its last number: "● Right now 3" with "Open the globe →" under it in the link colour. The whole tile is the click area (the button's `::after` covers it), with a soft hover background and a focus ring; its ⓘ help sits above the click area and still opens on its own. `OverviewToolbar` no longer has a live slot; `OverviewCard` has `live`.
+- **The numbers row wraps.** With the live count, Pro with Stripe has 7 cells and equal cells squeezed "New customers" onto two lines at 1440 px. Cells are now flex items that never get narrower than their label and number (`whitespace-nowrap`, no `min-w-0`): if they don't fit, the last ones move to a new row and fill it. Dividers sit on every cell's left and top; the row is pulled 1px up and left, so the card's edge hides the outer ones. The live tile lies flat (label, number, "Open the globe" at the right) when it's alone on a wide row (`@container/live`); its number follows the card (`@container/overview`, now named).
+- **The early ask:** the dashboard asks for the count once more 5 seconds after it opens with `&fresh=1`, which takes a cached answer only if it's at most 5 seconds old (`LIVE_EARLY`, `getLiveCount(site, now, maxAge)`). Without the shorter age the server's 20-second cache would answer with the same number. Once per page load, not again after the live view closes. Not on public pages (their visitors aren't on the counted site).
+- **Globe in `/demo` and the landing page:** production's demo shows sample data (yoursite.com; `meetline-me`'s public page is missing or paused there), and the sample left out Right now. `getDemoView` now returns `{ view, sample }`, the sample includes every public card, and `/demo` gives it `sampleLive`. The live view opens inside the landing page's demo frame. The frame's placeholder and the dashboard skeleton have 5 cells now.
+- **Lighter sky:** `globe-space` #070B1D → #121936.
+- **Panel footer:** "Updates every 20 seconds, from Google Analytics." removed; "Faces are for fun: visitors stay anonymous." and the credits stay.
+- **Desktop icon:** Icons8's "display" is a digital number display (it read "00"). Our own monitor in their style is in `scripts/tech-icons/desktop.svg`, and `copy-tech-icons.mjs` copies it (the lint rule bans hex in scripts, so it's a file, not a string).
+- **Docs:** `LiveEarly` code fact for content; dashboard, public page, realtime glossary and the GA4 check guide updated (dates moved to 24 Oct); 4 screenshots retaken (`dashboard-overview`, `signups-picker`, `live-view`, `public-stats-page`); spec sections 11, 11.8, 11.10 and 17, 5 decisions, README, checklist.
+- **Checked:** `npm run check` (58 files, 456 tests). Screenshots at 375, 768, 1000 and 1440 px of the normal, Pro, quiet, loading and public states. Keyboard: Tab reaches the help, then the tile; Enter opens the view; Esc returns focus to the tile. The early ask's timing on a temporary page (4.9 s with `fresh=1`, then about 20 s; no second early ask after closing the view), and the cache's ages in a one-off `vi.mock` check (both deleted).
+
+### Learned
+
+- **A named container keeps unnamed queries working.** `@container/overview` still answers `@md:` inside it, until a nearer container appears. Inside the live tile (`@container/live`), the number uses `@md/overview:` to follow the card.
+- **`container-type: inline-size` gives an element no min-content width**, so a flex cell with it needs an explicit `min-w-*` (`min-w-38` for the live tile).
+- **Flex-wrap with `basis-0` still wraps** on min-content: a line breaks when the cells' minimum widths don't fit. That gives "move to a new row when there's no room" without counting cells.
+- **Hiding the outer dividers:** pull the row `-mt-px -ml-px` inside a card with `overflow-hidden`; the first row's top lines and first column's left lines land under the edge.
+
+### Problems
+
+- The browser pane shows 1440 px scaled to 800 wide, too blurry for spacing; screenshots came from headless Chrome over DevTools (a scratch copy of the screenshot script's approach).
+- Not signed in locally, and Google sign-in is Siamak's, so the early ask was checked on a temporary page against a fake endpoint, not the real dashboard.
+- Lighthouse wasn't run (not installed here). The landing page itself only changed its demo placeholder; public pages only moved the live count into the overview.
+
+### Next
+
+- Siamak: on simpledash.app, open the dashboard and check you show up in Right now within about 5 seconds.
+- Lighthouse on the landing page, `/demo` and a public page after deploy.
+- Idea (not built): asking with `fresh=1` once when the tab comes back too, for an owner who opens their site in another tab after the dashboard. Would add one Google call per return.
+
 ## 2026-10-23 · Session 16, continued · Next.js security upgrade
 
 ### Done

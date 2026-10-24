@@ -180,9 +180,13 @@ export function DashboardSkeleton({
           </div>
           <Skeleton className="h-6 w-3/4 max-w-xl" />
           <div className="@container overflow-hidden rounded-2xl border bg-card shadow-xs">
-            <div className="grid grid-cols-2 @3xl:grid-cols-4">
-              {Array.from({ length: 4 }, (_, i) => (
-                <div key={i} className="flex flex-col gap-2.5 px-4 py-4 @2xl:px-5">
+            {/* The four numbers and the live count, which takes a whole row on phones. */}
+            <div className="grid grid-cols-2 @3xl:grid-cols-5">
+              {Array.from({ length: 5 }, (_, i) => (
+                <div
+                  key={i}
+                  className="flex flex-col gap-2.5 px-4 py-4 last:col-span-2 @2xl:px-5 @3xl:last:col-span-1"
+                >
                   <Skeleton className="h-4 w-20" />
                   <Skeleton className="h-8 w-24" />
                   <Skeleton className="h-3 w-12" />

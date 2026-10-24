@@ -17,7 +17,7 @@ export type LivePlace = {
   countryCode: string;
 };
 
-/** The live count beside the date menu: one small request, polled while the page is open. */
+/** The live count, the last number of the overview: one small request, polled while the page is open. */
 export type LiveCount = {
   total: number;
   /** The window GA4's realtime covers: 30 minutes (60 on GA4 360). */

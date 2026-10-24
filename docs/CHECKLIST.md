@@ -342,6 +342,18 @@ What's done and what's next, in plain words.
 - [x] Spec, decisions, README, `CLAUDE.md`, the docs pages, the privacy credits and a new docs screenshot (22 Oct)
 - [ ] Siamak: open the live view on simpledash.app with real visitors and check the places and faces look right
 
+### Live count in the overview (Siamak's list, 24 Oct)
+
+- [x] The live count is the last number of the overview ("● Right now 3", "Open the globe →"), not beside the date menu; the whole tile opens the live view, with a hover background and a focus ring (24 Oct)
+- [x] The numbers row wraps when it has no room (Pro with Stripe has 7 cells), and the live count lies flat when alone on a row (24 Oct)
+- [x] The dashboard asks for the live count once more 5 seconds after it opens, for an answer at most 5 seconds old, so an owner sees themselves quickly (24 Oct)
+- [x] The globe on `/demo` and the landing page: the sample demo now has the live count and globe (24 Oct)
+- [x] A lighter night sky behind the globe; "Updates every 20 seconds, from Google Analytics" removed from the panel (24 Oct)
+- [x] A proper desktop icon in Devices and the live view (the old one read "00") (24 Oct)
+- [x] Checked at 375, 768, 1000 and 1440 px, keyboard only (Tab reaches the help, then the tile; Enter opens; Esc returns focus), the live view inside the landing page's demo frame, and the early ask's timing (5 s with `fresh=1`, then every 20 s, not again after closing the view). `npm run check` passes. Docs pages, 4 screenshots, spec, decisions and README updated (24 Oct)
+- [ ] Lighthouse on the landing page, `/demo` and a public page after deploy (not installed here)
+- [ ] Siamak: on simpledash.app, open the dashboard and check you show up in Right now within about 5 seconds
+
 ## V3: later (postponed 13 Oct; `docs/SPEC.md` section 29)
 
 - X mentions on the chart · Ask your data in plain English · Milestone images · Hacker News and Product Hunt markers · "Tracking looks broken" alert

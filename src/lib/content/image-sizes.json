@@ -2,7 +2,7 @@
   "dashboard-overview": {
     "src": "/content/dashboard-overview.webp",
     "width": 1600,
-    "height": 1070
+    "height": 1069
   },
   "live-view": {
     "src": "/content/live-view.webp",
@@ -22,7 +22,7 @@
   "public-stats-page": {
     "src": "/content/public-stats-page.webp",
     "width": 1600,
-    "height": 1321
+    "height": 1320
   },
   "search-this-week": {
     "src": "/content/search-this-week.webp",

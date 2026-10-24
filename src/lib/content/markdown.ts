@@ -4,7 +4,13 @@ import { brand } from "@/config/theme";
 import { ANALYTICS_SCOPE, SEARCH_CONSOLE_SCOPE } from "@/lib/auth/scopes";
 import { monthsFreeOnYearly } from "@/lib/billing/prices";
 import { formatPrice } from "@/lib/format";
-import { durationWords, FRESHNESS, LIVE_REFRESH, type FreshnessKind } from "@/lib/ga4/freshness";
+import {
+  durationWords,
+  FRESHNESS,
+  LIVE_EARLY,
+  LIVE_REFRESH,
+  type FreshnessKind,
+} from "@/lib/ga4/freshness";
 
 const isPlan = (value: string): value is PlanId => value in plans;
 
@@ -29,6 +35,8 @@ function planFact(name: string, attrs: Record<string, string>): string | null {
     }
     case "LiveRefresh":
       return durationWords(LIVE_REFRESH);
+    case "LiveEarly":
+      return durationWords(LIVE_EARLY);
     case "Scope":
       return `\`${attrs.name === "search-console" ? SEARCH_CONSOLE_SCOPE : ANALYTICS_SCOPE}\``;
     case "SupportEmail":

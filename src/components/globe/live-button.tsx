@@ -1,7 +1,11 @@
 "use client";
 
+import { ArrowRightIcon } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRef, useState } from "react";
+import { HelpTip } from "@/components/shared/help-tip";
+import { cardById } from "@/config/cards";
+import { formatNumber } from "@/lib/format";
 import type { LiveCount, LiveData } from "@/lib/ga4/live";
 import { cn } from "@/lib/utils";
 import { useLivePoll } from "./use-live-poll";
@@ -14,21 +18,24 @@ type LiveButtonProps = {
   endpoint: string | null;
   /** The count rendered on the server, or null to ask straight away (the cached public page). */
   initial?: LiveCount | null;
-  /** A fixed live view (the dev preview and samples): no polling at all. */
+  /** A fixed live view (the demo, the dev preview): no polling at all. */
   sample?: LiveData;
+  /** Ask once more 5 seconds in, so an owner who just opened their site sees themselves (dashboard). */
+  early?: boolean;
   siteName: string;
   signupEvent: string | null;
 };
 
 /**
- * "● 3 live" beside the date menu (docs/SPEC.md section 11.10): one small request every
- * 20 seconds. A click opens the live view, whose code (and the globe's) loads only then,
- * fetched early when the pointer or focus reaches the button.
+ * "● Right now 3", the last number of the overview (docs/SPEC.md section 11.10): one small
+ * request every 20 seconds. The whole tile opens the live view, whose code (and the globe's)
+ * loads only then, fetched early when the pointer or focus reaches it.
  */
 export function LiveButton({
   endpoint,
   initial = null,
   sample,
+  early = false,
   siteName,
   signupEvent,
 }: LiveButtonProps) {
@@ -38,12 +45,19 @@ export function LiveButton({
   // The newest count, from this button's polls or from the open view's.
   const [latest, setLatest] = useState<LiveCount | null>(initial);
   // While the view is open it polls everything, count included, so this one rests.
-  const polled = useLivePoll<LiveCount>(sample || open ? null : endpoint, initial, setLatest);
+  const polled = useLivePoll<LiveCount>(
+    sample || open ? null : endpoint,
+    initial,
+    setLatest,
+    early,
+  );
   const count = sample ?? latest;
+  const clickable = !!endpoint || !!sample;
   const failed = !sample && !count && polled.failed;
-  const loading = !sample && !count && !failed;
+  const loading = !count && !failed;
   const total = count?.total ?? 0;
   const minutes = count?.minutes ?? 30;
+  const card = cardById.live;
 
   const label = count
     ? `${total} ${total === 1 ? "visitor" : "visitors"} in the last ${minutes} minutes. Open the live view.`
@@ -51,31 +65,66 @@ export function LiveButton({
 
   return (
     <>
-      <button
-        ref={button}
-        type="button"
-        aria-label={label}
-        aria-haspopup="dialog"
-        title={failed ? "Live numbers aren't available right now." : undefined}
-        disabled={!endpoint && !sample}
-        onPointerEnter={() => void loadDialog()}
-        onFocus={() => void loadDialog()}
-        onClick={() => {
-          setOpened(true);
-          setOpen(true);
-        }}
-        className="inline-flex h-9 shrink-0 items-center gap-2 rounded-lg border bg-card px-3 text-sm font-medium shadow-xs transition-colors duration-150 ease-out outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:hover:bg-card pointer-coarse:h-11"
-      >
-        <LiveDot active={total > 0} />
-        {loading ? (
-          <span className="h-3.5 w-4 animate-pulse rounded-sm bg-muted" aria-hidden="true" />
-        ) : count ? (
-          <span className="tabular-nums" aria-live="polite">
-            {total}
-          </span>
-        ) : null}
-        <span className="text-muted-foreground">live</span>
-      </button>
+      {/* Its own container: alone on a wide row, the tile lies flat. The number follows the card. */}
+      <div className="@container/live h-full min-w-38">
+        <div
+          className={cn(
+            "relative flex h-full flex-col gap-1.5 rounded-xl px-2.5 py-2.5 transition-colors duration-150 ease-out @xs/live:flex-row @xs/live:items-center @xs/live:gap-4 @2xl/overview:px-3.5",
+            clickable &&
+              "has-[button:focus-visible]:ring-2 has-[button:focus-visible]:ring-ring has-[button:hover]:bg-muted/70",
+          )}
+        >
+          <div className="flex h-6 items-center gap-1">
+            <h2
+              id="live-title"
+              className="flex items-center gap-2 text-sm font-medium whitespace-nowrap text-muted-foreground"
+            >
+              <LiveDot active={total > 0} />
+              {card.title}
+            </h2>
+            {/* Above the button's click area, so the help still opens on its own. */}
+            <span className="relative z-10 flex">
+              <HelpTip id="live" label={card.title}>
+                {card.help}
+              </HelpTip>
+            </span>
+          </div>
+          <button
+            ref={button}
+            type="button"
+            aria-label={label}
+            aria-haspopup="dialog"
+            title={failed ? "Live numbers aren't available right now." : undefined}
+            disabled={!clickable}
+            onPointerEnter={() => void loadDialog()}
+            onFocus={() => void loadDialog()}
+            onClick={() => {
+              setOpened(true);
+              setOpen(true);
+            }}
+            // The click area covers the whole tile.
+            className="group/live flex flex-col items-start gap-1.5 text-left outline-none after:absolute after:inset-0 after:rounded-xl enabled:cursor-pointer @xs/live:flex-1 @xs/live:flex-row @xs/live:items-center @xs/live:justify-between @xs/live:gap-4"
+          >
+            <span className="text-2xl leading-tight font-semibold tracking-tight tabular-nums @md/overview:text-3xl">
+              {loading ? (
+                <span
+                  className="inline-block h-[0.8em] w-[1.2em] animate-pulse rounded-md bg-muted align-middle"
+                  aria-hidden="true"
+                />
+              ) : (
+                <span aria-live="polite">{count ? formatNumber(total) : "—"}</span>
+              )}
+            </span>
+            <span className="inline-flex min-h-4 items-center gap-1 text-xs font-medium whitespace-nowrap text-primary">
+              Open the globe
+              <ArrowRightIcon
+                className="size-3.5 shrink-0 transition-transform duration-150 ease-out group-hover/live:translate-x-0.5"
+                aria-hidden="true"
+              />
+            </span>
+          </button>
+        </div>
+      </div>
       {opened ? (
         <LiveDialog
           open={open}

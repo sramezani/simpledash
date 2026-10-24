@@ -4,12 +4,14 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { DashboardSkeleton } from "@/components/dashboard/states";
+import { LiveButton } from "@/components/globe/live-button";
 import { PublicView } from "@/components/public-page/public-view";
 import { Container } from "@/components/shared/container";
 import { demo } from "@/config/demo";
 import { plans } from "@/config/plans";
 import { brand } from "@/config/theme";
 import { parseRange } from "@/lib/ga4/ranges";
+import { sampleLive } from "@/lib/ga4/sample/sample";
 import { getDemoView } from "@/lib/public-page/demo";
 
 export const metadata: Metadata = {
@@ -37,12 +39,22 @@ async function Content({ searchParams }: PageProps<"/demo">) {
   const params = await searchParams;
   const range = parseRange(params.range, demo.defaultRange);
   const embedded = params.embed === "1";
-  const view = await getDemoView(range);
+  const { view, sample } = await getDemoView(range);
   return (
     <>
       {embedded ? null : <DemoBanner />}
       <PublicView
         view={view}
+        live={
+          sample ? (
+            <LiveButton
+              endpoint={null}
+              sample={sampleLive}
+              siteName={view.label}
+              signupEvent={view.signupEvent}
+            />
+          ) : undefined
+        }
         basePath="/demo"
         query={embedded ? { embed: "1" } : undefined}
         defaultRange={demo.defaultRange}

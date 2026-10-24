@@ -579,10 +579,10 @@ The dashboard is one scrolling page.
 - **Top bar:** the logo and a link to Settings.
 - **Toolbar** (`OverviewToolbar`, shared with public pages and the demo): the site chip with its icon (on the dashboard it opens the site switcher), the date menu (`RangePicker`: Today, Yesterday, Last 7 days, Last 30 days, Last 12 months; it opens with a short fade and zoom, the label changes at once and a spinner shows while the new numbers load), and the period in words with its hint (section 8).
 - **Below it:** notices (weekly email notice, state banners from section 12), then the cards. The period next to the date menu is small and light.
-- **The overview** (`OverviewCard`): one card with the four numbers in a row, short dividers between them (two by two on phones), and the visitors chart underneath. Downloads for the chart and the four numbers sit in one small CSV menu.
+- **The overview** (`OverviewCard`): one card with the numbers in a row, short dividers between them (two by two on phones), the live count as the last one (section 11.10), and the visitors chart underneath. A cell never gets narrower than its label and number: when they don't fit (Pro with Stripe on a narrow window), the last ones move to a new row, and a cell alone on its row takes all of it. Downloads for the chart and the four numbers sit in one small CSV menu.
 - **Layout:** one column on phones, a grid on wider screens.
 - **List cards** (`ListCard`: Sources, Pages, Countries, Devices, AI traffic, Actions) have no visible title and no CSV button, like DataFast: tabs at the top left name the view ("Country | City"), the view's column names sit at the right, and "More" at the bottom opens the whole list (section 13). The title stays for screen readers; the plain-words help moved into Details. A card with one view shows its name as a single tab.
-- **The overview** keeps its ⓘ help. "Right now" is no longer a card: it is the live count beside the date menu, and the live view's footer carries the GeoNames credit (section 11.10).
+- **The overview** keeps its ⓘ help. "Right now" is no longer a card: it is the live count, the last number of the overview, and the live view's footer carries the GeoNames credit (section 11.10).
 - **What changed** (section 31.2) sits right under the overview: the sources and landing pages behind a change, on every plan.
 - **Built from shared parts:** every list card sits in the shared `CardShell` (title, help, CSV, and the loading, empty, error, stale and locked states). The card list, titles and help text come from `src/config/cards.ts` (section 4).
 - **List cards have a fixed height** of 10 rows (`RankedList`), whatever their number of rows, so cards side by side line up and nothing moves. The rest of a list is in Details. Share bars are soft blue (`chart-1`) and grow in when a list appears.
@@ -723,7 +723,7 @@ Three tabs: **Browser | OS | Device**, each with visitors, share and an icon.
 
 - **Browser** (report `browsers`: `browser`, top 50) and **OS** (report `systems`: `operatingSystem`, top 25). Names in plain words: "Macintosh" reads "macOS", "Safari (in-app)" reads "Safari (in an app)", "(not set)" reads "Unknown". Values that read the same are merged.
 - **Device** (`deviceCategory`): Desktop, Mobile and Tablet. Any other category is shown as "Other".
-- **Icons** are self-hosted SVGs in `public/icons/tech`, copied by `scripts/copy-tech-icons.mjs`: brand logos from SVG Logos (CC0) and device pictures from Icons8's Flat Color Icons (MIT). `src/config/tech-icons.ts` says which GA4 name gets which file; anything else gets a plain globe (browsers) or question mark.
+- **Icons** are self-hosted SVGs in `public/icons/tech`, copied by `scripts/copy-tech-icons.mjs`: brand logos from SVG Logos (CC0) and device pictures from Icons8's Flat Color Icons (MIT). Icons8's set has no plain computer screen (its "display" is a digital number display that read "00"), so the desktop picture is our own drawing in the same style (`scripts/tech-icons/desktop.svg`). `src/config/tech-icons.ts` says which GA4 name gets which file; anything else gets a plain globe (browsers) or question mark.
 
 ### 11.9 Actions
 
@@ -738,9 +738,15 @@ Rows with zero are hidden. If every row is zero, the card says: "No actions reco
 
 ### 11.10 Live globe
 
-Two parts (since 22 Oct 2026, Siamak): a small live count in the row above the overview, and the live view it opens.
+Two parts (since 22 Oct 2026, Siamak): a live count, the last number of the overview, and the live view it opens. The count sat beside the date menu until 24 Oct, when Siamak moved it into the numbers row so it reads as one of them and is clearly clickable.
 
-**The live count.** "● 3 live" at the right of the site and date row, on the dashboard, public pages (when "Right now" is on) and the demo. The dot is green and pulses while anyone is there, grey at zero. It is one Realtime request (`activeUsers`, no dimensions), asked for every 20 seconds while the tab is visible. Screen readers hear "3 visitors in the last 30 minutes. Open the live view."
+**The live count.** "● Right now 3", the last cell of the overview's numbers row, on the dashboard, public pages (when "Right now" is on) and the demo (with sample live data when the demo shows sample data).
+
+- Under the number, "Open the globe →" in the link colour says it opens something. The whole tile is the click area, with a soft background on hover and a focus ring; its ⓘ help still opens on its own.
+- Alone on a wide row (phones, or when the row has no room), it lies flat: the label, the number, and "Open the globe" at the right. It has its own container for this (`@container/live`); its number follows the card (`@container/overview`), so it matches the others.
+- The dot is green and pulses while anyone is there, grey at zero. Screen readers hear "3 visitors in the last 30 minutes. Open the live view."
+- It is one Realtime request (`activeUsers`, no dimensions), asked for every 20 seconds while the tab is visible.
+- **The early ask (dashboard only):** 5 seconds after the page opens, the count is asked for once more with `&fresh=1`, which takes an answer at most 5 seconds old instead of 20 (`LIVE_EARLY` in `src/lib/ga4/freshness.ts`). An owner who just opened their own site sees themselves without waiting 20 seconds. It happens once per page load, not again after the live view closes. Public pages don't need it: their visitors aren't on the site being counted.
 
 **The live view** (a dialog, about 90% of the screen on a computer, the whole screen on a phone):
 
@@ -748,7 +754,8 @@ Two parts (since 22 Oct 2026, Siamak): a small live count in the row above the o
 - A panel (top left on a computer, under the globe on a phone): the count, Page views, Signups (when a signup event is chosen), visitors per minute over the window as bars, and tabs: Places, Pages, Devices, Actions. Picking a place flies the globe there and shows its card.
 - The globe turns slowly until touched, and not at all with `prefers-reduced-motion`. Drag to turn, scroll to zoom.
 - The faces are decoration: GA4 says how many people are in a city, never who. The panel says so ("Faces are for fun: visitors stay anonymous.").
-- Everything is asked for every 20 seconds while the view is open, and the count beside the date menu follows it.
+- Everything is asked for every 20 seconds while the view is open, and the live count follows it.
+- The sky is a deep blue (`globe-space`, lightened on 24 Oct so it feels less heavy) with still stars and a soft glow behind the globe. The panel's footer says only that the faces are for fun, and the credits.
 
 **Realtime API queries.** Realtime covers the last 30 minutes on standard properties and 60 on GA4 360. The Realtime API has no traffic source dimension, so there's no "where they came from" list.
 
@@ -766,7 +773,7 @@ Two parts (since 22 Oct 2026, Siamak): a small live count in the row above the o
 - GeoNames needs a credit line, which is in the privacy policy and the Right now help.
 - Only coordinates, labels, country codes and counts are sent to the browser.
 
-**`/api/live?site=<id>`** returns the count `{ total, minutes }`; with `&view=full` it returns everything the view shows: `{ total, minutes, places: [{ lat, lng, visitors, label, countryCode }], pages: [{ title, visitors }], devices: [{ device, label, visitors }], perMinute: number[], events: { [eventName]: count } }`. `/api/p/<slug>/live` does the same for a public page. Both are cached for 20 seconds per property, in memory, shared by everyone watching; a fresh full answer also answers the count.
+**`/api/live?site=<id>`** returns the count `{ total, minutes }`; with `&view=full` it returns everything the view shows: `{ total, minutes, places: [{ lat, lng, visitors, label, countryCode }], pages: [{ title, visitors }], devices: [{ device, label, visitors }], perMinute: number[], events: { [eventName]: count } }`. `/api/p/<slug>/live` does the same for a public page. Both are cached for 20 seconds per property, in memory, shared by everyone watching; a fresh full answer also answers the count. `/api/live?site=<id>&fresh=1` (the dashboard's early ask) takes a cached count only when it's at most 5 seconds old, so a user can make Google be asked at most every 5 seconds per property.
 
 **The map** (no map service, nothing sent anywhere else):
 
@@ -992,6 +999,7 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 - Fixed height: the page scrolls inside the window, and its date menu, tabs and tooltips work.
 - The frame starts loading only when it comes near the screen, then fades in over a placeholder of the same shape, so the landing page's first load stays light.
 - **Which page:** `src/config/demo.ts` holds the slug (now `meetline-me`) and the range the demo opens with. If that page is missing or paused, `/demo` shows sample data instead, so the landing page never breaks.
+- **The live globe in the demo:** the real page shows its live count when its owner turned on "Right now". The sample data shows it always, with a still sample (`sampleLive`: 9 visitors in 7 cities), so the globe can be tried on the landing page and on `/demo`. The live view opens inside the demo's frame.
 - **`/demo` on its own** shows the same page with a "Live demo" banner and a "Get yours, free" button. It always allows every range and shows "Powered by SimpleDash", whatever the demo owner's plan. It is `noindex` (the original is `/p/<slug>`), may be framed by our own site only (`frame-ancestors 'self'`), and is cached like a public page.
 - **No Recharts on the landing page:** the demo uses the server-rendered chart, and its JavaScript runs inside the frame.
 

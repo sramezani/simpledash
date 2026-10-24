@@ -60,8 +60,9 @@ function DemoPlaceholder() {
       </div>
       <Skeleton className="h-6 w-2/3 max-w-md" />
       <div className="rounded-2xl border bg-card p-4">
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {Array.from({ length: 4 }, (_, i) => (
+        {/* The four numbers and the live count. */}
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+          {Array.from({ length: 5 }, (_, i) => (
             <div key={i} className="flex flex-col gap-2">
               <Skeleton className="h-4 w-16" />
               <Skeleton className="h-8 w-20" />

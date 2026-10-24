@@ -7,6 +7,7 @@ import defaultMdxComponents from "fumadocs-ui/mdx";
 import type { MDXComponents } from "mdx/types";
 import {
   Freshness,
+  LiveEarly,
   LiveRefresh,
   PlainWordsTable,
   Scope,
@@ -34,6 +35,7 @@ export function getMDXComponents(components?: MDXComponents) {
     InSimpleDash,
     FreeDays,
     Freshness,
+    LiveEarly,
     LiveRefresh,
     MonthsFree,
     PlainWordsTable,

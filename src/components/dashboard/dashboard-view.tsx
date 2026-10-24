@@ -66,7 +66,7 @@ type DashboardViewProps = {
   /** Chart notes in this range, and the panel to add and edit them. */
   notes?: { id: string; day: string; text: string }[];
   notesPanel?: ReactNode;
-  /** The live count beside the date menu, which opens the live view (it loads on its own). */
+  /** The live count, the last number of the overview, which opens the live view (it loads on its own). */
   live?: ReactNode;
   /** What changed and where, right under the four numbers (it loads on its own). */
   changes?: ReactNode;
@@ -172,6 +172,7 @@ export function DashboardView(props: DashboardViewProps) {
         }
         dimmed={dimmed}
         revenueCurrency={revenueCurrency}
+        live={props.live}
         actions={props.csv ? <CsvMenu id="overview" items={csvItems} /> : undefined}
         footer={props.notesPanel}
         hint={
@@ -248,7 +249,6 @@ export function DashboardView(props: DashboardViewProps) {
             )}
             period={isPreset(range) ? period : null}
             note={freshnessNote(window)}
-            live={props.live}
           />
           {props.notices}
           {cards}

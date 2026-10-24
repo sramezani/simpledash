@@ -28,7 +28,7 @@ The optional public stats page at `/p/<slug>`, one per site. The plan is in `doc
 
 - The chosen cards from `src/config/cards.ts`. Default: summary line, Visitors, Page views, the chart, Sources, Pages, Countries. Signups, Avg. time, Devices, AI traffic and Right now can be added. Actions can't.
 - The same three ranges as the dashboard (`?range=30d`, `?range=12m`).
-- The chart is server-rendered SVG; the only client code is the live count when Right now is on ("● 3 live" beside the date menu: it fetches its number after load and polls every 20 seconds while visible). Clicking it opens the live view, whose code and globe load only then.
+- The chart is server-rendered SVG; the only client code is the live count when Right now is on ("● Right now 3", the last number of the overview: it fetches its number after load and polls every 20 seconds while visible). Clicking it opens the live view, whose code and globe load only then.
 - **Never:** chart notes, the email address, the user's name, settings or the property ID. The signups sentence of the summary appears only when the Signups card is on.
 
 ## When it isn't live

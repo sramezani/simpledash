@@ -620,6 +620,7 @@ async function LiveLoader({ site, siteName }: { site: Site; siteName: string }) 
     <LiveButton
       initial={count}
       endpoint={`/api/live?site=${site.id}`}
+      early
       siteName={siteName}
       signupEvent={site.signupEvent}
     />

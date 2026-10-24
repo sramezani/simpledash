@@ -11,17 +11,21 @@ type LiveView = Extract<PublicView, { kind: "live" }>;
 /**
  * What /demo shows: the configured public page (src/config/demo.ts), or sample data
  * when that page is missing or paused, so the landing page's demo never breaks.
+ * `sample` says which, so the demo can give the sample its still live view.
  */
-export async function getDemoView(range: RangeType, now?: Date): Promise<LiveView> {
+export async function getDemoView(
+  range: RangeType,
+  now?: Date,
+): Promise<{ view: LiveView; sample: boolean }> {
   const view = await getPublicView(demo.slug, range, true);
-  if (view.kind === "live") return view;
+  if (view.kind === "live") return { view, sample: false };
   const window = rangeWindow(range, "UTC", now ?? new Date());
-  return {
+  const sampleView: LiveView = {
     kind: "live",
     label: SAMPLE_DOMAIN,
     slug: demo.slug,
-    // Every card but "Right now", which needs a real site.
-    cards: publicCardIds.filter((id) => id !== "live"),
+    // Every card, "Right now" too: the demo shows it with sampleLive.
+    cards: [...publicCardIds],
     indexable: false,
     range,
     window,
@@ -32,4 +36,5 @@ export async function getDemoView(range: RangeType, now?: Date): Promise<LiveVie
     poweredBy: true,
     fullHistory: true,
   };
+  return { view: sampleView, sample: true };
 }

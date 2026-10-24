@@ -101,7 +101,7 @@ They run through `POST /api/internal/jobs/<job>` with `Authorization: Bearer <CR
 
 `src/lib/ga4/realtime.ts` keeps live answers in memory for 20 seconds per property (`LIVE_TTL`), shared by everyone watching the dashboard or the public page (docs/SPEC.md section 11.10):
 
-- `getLiveCount()`: one Realtime call (the total), for the live count beside the date menu. The dashboard renders it on the server first; `/api/live?site=` serves the button's poll, every 20 seconds while the tab is visible. A fresh full answer answers it too.
+- `getLiveCount()`: one Realtime call (the total), for the live count, the last number of the overview. The dashboard renders it on the server first; `/api/live?site=` serves the button's poll, every 20 seconds while the tab is visible. A fresh full answer answers it too. Its third argument is the oldest answer it accepts: 20 seconds, or 5 (`LIVE_EARLY`) for the dashboard's one early ask (`&fresh=1`) 5 seconds after the page opens, so an owner who just opened their site sees themselves.
 - `getLive()`: six Realtime calls (total, places by country and city, pages by title, devices, visitors per minute, event counts), only while the live view is open (`/api/live?site=&view=full`).
 - `parseLiveCount()` and `parseLive()` (`live.ts`, tested) turn rows into `{ total, minutes }` and `{ total, minutes, places, pages, devices, perMinute, events }`. Realtime covers 30 minutes, or 60 on GA4 360.
 - Places become coordinates with `locate()` (`geo/locate.ts`, tested): the city first (accents ignored, a few English names such as Cologne), otherwise the country's population-weighted centre. The table `geo/places.json` is built from GeoNames (CC BY 4.0) by `node scripts/build-places.mjs`.
