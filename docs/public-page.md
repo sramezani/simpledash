@@ -14,6 +14,7 @@ The optional public stats page at `/p/<slug>`, one per site. The plan is in `doc
 | `src/components/settings/public-page-form.tsx` | Settings → Public page | |
 | `src/app/p/[slug]/page.tsx`, `opengraph-image.tsx` | The page, its metadata and its social image | |
 | `src/app/api/p/[slug]/live/route.ts` | Live numbers when "Right now" is on: the count, or everything the live view shows with `?view=full` | |
+| `src/config/footer.ts`, `src/lib/public-page/footer.ts`, `footer-data.ts` | The landing page's footer: SimpleDash's own page, read as 10 days and a live band (below) | `footer-data.ts` yes |
 
 ## One page per site
 
@@ -48,3 +49,12 @@ The optional public stats page at `/p/<slug>`, one per site. The plan is in `doc
 ## Preview
 
 `/ui-kit/public?state=default-cards|all-cards|paused` (development only) shows the page on sample data.
+
+## SimpleDash's own page in the footer
+
+The footer of the landing and legal pages draws the name "SimpleDash" as a chart of SimpleDash's own last 10 days, with a live band above it (`docs/SPEC.md` section 17). Its letters open a card about their day; they don't link to the page. It reads the public page named in `src/config/footer.ts` (`simpledash-app`), so it shows only what that page shows:
+
+- **The word** needs the page on, not paused, and showing the chart card. The 10 days are the last 10 points of its Last 30 days chart (the same report cache). Days before the GA4 property existed have no number.
+- **The live band** needs "Right now"; its countries, pages and devices need those cards. It uses `getLive()`, the live view's data.
+- `getFooterStats()` is cached about 10 minutes with the page's tag, so turning a card off in Settings shows in the footer at once. It streams in after the static page (`connection()` inside `Suspense`). Without numbers the footer shows the plain dim word at the same size.
+- `/ui-kit/footer` shows the footer on sample numbers in each state (full, nobody live, a new site, no numbers).

@@ -7,7 +7,7 @@ import { formatPrice } from "@/lib/format";
 /** The headline and button, exactly as in the roadmap. */
 export function Hero() {
   return (
-    <section aria-labelledby="hero-title" className="pt-14 pb-10 sm:pt-20">
+    <section id="hero" aria-labelledby="hero-title" className="scroll-mt-4 pt-14 pb-10 sm:pt-20">
       <Container className="flex flex-col items-center gap-6 text-center">
         <p className="rounded-full border bg-card px-3 py-1 text-xs text-muted-foreground">
           Works with the Google Analytics 4 you already have

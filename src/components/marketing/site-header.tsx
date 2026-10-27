@@ -25,12 +25,15 @@ export function SiteHeader() {
           >
             Docs
           </Link>
-          <Link
+          {/* A plain link: on the landing page the browser glides to the section, even when the
+              address already ends in #pricing (Next.js's Link ignores a click to the same address). */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a
             href="/#pricing"
             className="inline-flex h-9 items-center rounded-lg px-3 text-sm text-muted-foreground hover:text-foreground pointer-coarse:h-11"
           >
             Pricing
-          </Link>
+          </a>
           <AccountLink />
         </nav>
       </Container>

@@ -81,6 +81,13 @@
   --color-window-close: var(--window-close);
   --color-window-minimize: var(--window-minimize);
   --color-window-zoom: var(--window-zoom);
+  --color-footer: var(--footer);
+  --color-footer-foreground: var(--footer-foreground);
+  --color-footer-muted: var(--footer-muted);
+  --color-footer-border: var(--footer-border);
+  --color-footer-ghost: var(--footer-ghost);
+  --color-footer-accent: var(--footer-accent);
+  --color-footer-live-dot: var(--footer-live-dot);
 
   /* Fumadocs' colours, on the same tokens (docs/SPEC.md section 30). */
   --color-fd-background: var(--background);
@@ -128,6 +135,12 @@
   }
   html {
     -webkit-text-size-adjust: 100%;
+  }
+  /* Same-page links ("Pricing" in the top bar and footer) glide to their section. */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
   body {
     @apply bg-background font-sans text-foreground antialiased;
@@ -216,4 +229,294 @@
 }
 .note-panel::backdrop {
   @apply bg-overlay/20;
+}
+
+/*
+ * The footer (docs/SPEC.md section 17). Colours are token classes in the components; this holds
+ * the sizes that depend on each other, the motion and the glow.
+ *
+ * The word is a chart: `.footer-word` is a container, so the letters, columns and bars scale
+ * with its width. Each column is as wide as its letter (the letter sits in the flow), and sets
+ * --share (its bar, 0 to 1 of the busiest day), --i (its place, for the one-after-another
+ * rise) and --anchor (the name its card is placed by).
+ */
+.footer-glow {
+  background-image:
+    radial-gradient(
+      52rem 30rem at 85% -5%,
+      color-mix(in srgb, var(--footer-accent) 22%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      44rem 26rem at 10% 80%,
+      color-mix(in srgb, var(--footer-accent) 12%, transparent),
+      transparent 70%
+    );
+}
+.footer-word {
+  container-type: inline-size;
+}
+.footer-word-grid {
+  --word-h: max(10rem, 25cqw);
+  --label-h: 3rem;
+  --bar-room: calc(var(--word-h) - var(--label-h));
+  --bar-r: max(0.5rem, 1cqw);
+  display: flex;
+  justify-content: space-between;
+  height: var(--word-h);
+}
+.footer-col {
+  position: static;
+  height: 100%;
+}
+/* The letter: in the flow it sizes its column; lit inside the bar it lines up with it. */
+.footer-letter {
+  display: block;
+  font-size: 16cqw;
+  font-weight: 700;
+  line-height: 0.8;
+  letter-spacing: -0.02em;
+  /* The descender of "p" runs off the bottom of the page. */
+  translate: 0 0.04em;
+  user-select: none;
+}
+.footer-bar {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: calc(var(--share) * var(--bar-room));
+  overflow: hidden;
+  border-radius: var(--bar-r) var(--bar-r) 0 0;
+  backdrop-filter: blur(12px);
+  clip-path: inset(0 0 0 0);
+  transition:
+    background-color 300ms ease-out,
+    border-color 300ms ease-out;
+}
+.footer-lit {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  text-align: center;
+  color: color-mix(in srgb, var(--footer-foreground) 38%, transparent);
+  transition: color 250ms ease-out;
+}
+.footer-lit-today {
+  color: color-mix(in srgb, var(--footer-foreground) 25%, transparent);
+}
+/* Soft until it's the one: hover, keyboard focus or an open card makes the letter bright white. */
+.footer-col:is(:hover, :has(.footer-day:focus-visible), :has(:popover-open)) .footer-lit {
+  color: var(--footer-foreground);
+}
+.footer-col:is(:hover, :has(.footer-day:focus-visible), :has(:popover-open)) .footer-bar {
+  background-color: color-mix(in srgb, var(--footer-accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--footer-accent) 45%, transparent);
+  border-top-color: var(--footer-accent);
+}
+.footer-num {
+  transition: color 250ms ease-out;
+}
+.footer-col:is(:hover, :has(.footer-day:focus-visible), :has(:popover-open)) .footer-num {
+  color: var(--footer-foreground);
+}
+/* A streak of light crosses the glass when its card opens. */
+.footer-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 25%,
+    color-mix(in srgb, var(--footer-accent) 55%, transparent) 50%,
+    transparent 75%
+  );
+  translate: -130% 0;
+}
+.footer-col:has(:popover-open) .footer-bar::after {
+  animation: footer-sheen 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes footer-sheen {
+  from {
+    translate: -130% 0;
+  }
+  to {
+    translate: 130% 0;
+  }
+}
+/* The number and day ride on top of the bar; wider than a narrow letter, so centred over it. */
+.footer-label {
+  position: absolute;
+  inset-inline: -2rem;
+  bottom: calc(var(--share) * var(--bar-room));
+  display: flex;
+  justify-content: center;
+  padding-bottom: 0.375rem;
+}
+.footer-label-inner {
+  transition: scale 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.footer-col:has(:popover-open) .footer-label-inner {
+  scale: 1.12;
+}
+/* Hover or focus: the sentence replaces the caption. */
+.footer-day-note {
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+.footer-col:has(.footer-day:hover, .footer-day:focus-visible) .footer-day-note {
+  opacity: 1;
+}
+/* Keyboard focus wins over a resting mouse, so only one sentence shows. */
+.footer-word-grid:has(.footer-day:focus-visible)
+  .footer-col:not(:has(.footer-day:focus-visible))
+  .footer-day-note {
+  opacity: 0;
+}
+.footer-caption {
+  transition: opacity 150ms ease-out;
+}
+.footer-word:has(.footer-day:hover, .footer-day:focus-visible) .footer-caption {
+  opacity: 0;
+}
+
+/* A letter's card: placed above its number, popping up with a little spring. */
+.footer-label {
+  anchor-name: var(--anchor);
+}
+.footer-day-card {
+  position-anchor: var(--anchor);
+  opacity: 0;
+  translate: 0 0.5rem;
+  scale: 0.92;
+  transform-origin: bottom center;
+  transition:
+    opacity 200ms ease-out,
+    translate 350ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    scale 350ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    overlay 200ms allow-discrete,
+    display 200ms allow-discrete;
+}
+.footer-day-card:popover-open {
+  opacity: 1;
+  translate: 0 0;
+  scale: 1;
+}
+@starting-style {
+  .footer-day-card:popover-open {
+    opacity: 0;
+    translate: 0 0.5rem;
+    scale: 0.92;
+  }
+}
+@supports (anchor-name: --a) {
+  .footer-day-card:popover-open {
+    position-area: top;
+    position-try-fallbacks:
+      top span-right,
+      top span-left,
+      flip-block;
+    margin: 0 0 0.5rem;
+    inset: auto;
+  }
+}
+/* Its digits roll up from 0 each time it opens. */
+.footer-reel {
+  translate: 0 var(--to);
+  transition: translate 1s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@starting-style {
+  .footer-day-card:popover-open .footer-reel {
+    translate: 0 0;
+  }
+}
+
+/* The bars rise as the word scrolls into view: clip-path and translate only, so nothing moves. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .footer-word {
+      view-timeline: --footer-word block;
+    }
+    .footer-bar,
+    .footer-label {
+      animation: footer-bar-rise linear both;
+      animation-timeline: --footer-word;
+      animation-range: entry calc(var(--i) * 4%) entry calc(50% + var(--i) * 4%);
+    }
+    .footer-label {
+      animation-name: footer-label-rise;
+    }
+  }
+}
+@keyframes footer-bar-rise {
+  from {
+    clip-path: inset(100% 0 0 0);
+  }
+}
+@keyframes footer-label-rise {
+  from {
+    translate: 0 calc(var(--share) * var(--bar-room));
+    opacity: 0;
+  }
+}
+
+/* The live band: two copies side by side slide left forever, fading in and out at the edges. */
+@media (prefers-reduced-motion: no-preference) {
+  .footer-band {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black 3rem,
+      black calc(100% - 3rem),
+      transparent
+    );
+  }
+}
+.footer-marquee {
+  animation: footer-marquee var(--marquee-time, 60s) linear infinite;
+}
+.footer-band:hover .footer-marquee,
+.footer-live:has(:checked) .footer-marquee {
+  animation-play-state: paused;
+}
+@keyframes footer-marquee {
+  to {
+    translate: -50% 0;
+  }
+}
+/* Still for reduced motion: the first lines, lined up with the footer's edge. */
+@media (prefers-reduced-motion: reduce) {
+  .footer-marquee {
+    animation: none;
+    padding-inline-start: 1rem;
+  }
+}
+
+/*
+ * How it works (docs/SPEC.md section 17): a soft brand glow behind the section, a dot grid
+ * fading out behind each step's drawing, and the drawing's visitors line drawing itself in
+ * as it scrolls into view.
+ */
+.how-glow {
+  background-image: radial-gradient(
+    70rem 30rem at 50% 62%,
+    color-mix(in srgb, var(--primary) 7%, transparent),
+    transparent 70%
+  );
+}
+.how-dots {
+  background-image: radial-gradient(
+    color-mix(in srgb, var(--primary) 22%, transparent) 1px,
+    transparent 1.5px
+  );
+  background-size: 14px 14px;
+  mask-image: radial-gradient(ellipse at center, black 25%, transparent 75%);
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .how-line {
+      animation: chart-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 30% cover 45%;
+    }
+  }
 }

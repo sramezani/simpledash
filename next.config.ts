@@ -11,7 +11,8 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
 ];
 
-// Public pages are cached at Cloudflare for 10 minutes (docs/SPEC.md section 15).
+// Public pages, the landing page and the legal pages are cached at Cloudflare for 10 minutes
+// (docs/SPEC.md sections 15 and 17).
 const publicCache = {
   key: "Cache-Control",
   value: "public, s-maxage=600, stale-while-revalidate=86400",
@@ -41,6 +42,10 @@ const nextConfig: NextConfig = {
     return [
       { source: "/:path*", headers: securityHeaders },
       { source: "/p/:slug", headers: [publicCache] },
+      // The landing and legal pages stream in the footer's numbers (docs/SPEC.md section 17).
+      { source: "/", headers: [publicCache] },
+      { source: "/privacy", headers: [publicCache] },
+      { source: "/terms", headers: [publicCache] },
       // The live demo is shown in a frame on our own landing page, and only there.
       // A later rule wins for the same header, so this replaces the two above.
       {

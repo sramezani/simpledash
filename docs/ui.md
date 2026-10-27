@@ -38,8 +38,11 @@ Outside the page, the same values are imported directly: the favicons (`src/app/
 | Notes | `warning` | `text-warning`: "Still updating" and quota notes |
 | Charts | `chart-1` … `chart-5` | `stroke-chart-1`; `chart-1` is the visitors line |
 | Layers | `overlay` | `bg-overlay/50` behind dialogs |
+| Footer | `footer`, `footer-foreground`, `footer-muted`, `footer-border`, `footer-ghost`, `footer-accent`, `footer-live-dot` | `bg-footer text-footer-foreground`: the footer band in the brand colour. `footer-accent` (white) is its bars and focus ring; `footer-ghost` its dim letters |
 
 Opacity modifiers work on every token, for example `bg-primary/10` for the share bars in ranked lists.
+
+On the footer band, buttons use the `light` variant (`<Button variant="light">`: a white button with brand-coloured text), and the band sets its focus ring to `footer-accent`. Frosted glass there is a token at low opacity plus `backdrop-blur` (`bg-footer-foreground/10 backdrop-blur-md`). Brand marks lucide doesn't have (GitHub, X) are in `src/components/shared/brand-icons.tsx`.
 
 ## The guards (part of `npm run check`)
 

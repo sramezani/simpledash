@@ -4,6 +4,44 @@ A dated log with one entry per session. **Newest entry first.**
 
 It is written for future Claude sessions: read the latest entry before starting work. Ideas that fall outside the roadmap go here too (Working rule 5).
 
+## 2026-10-27 · Session 18 · A footer whose word is a chart
+
+### Done
+
+- **Ideas first:** Siamak wanted a footer to market on X. Sketched letters-as-bars, a live sentence and the dash bending into a line, then looked through footer.design (giant cropped wordmarks, a last call above them, dark bands, live or moving elements). Siamak picked letters-as-bars with those patterns.
+- **The footer** (`SiteFooter`, landing and legal pages), first a near-black band, then (Siamak: too dark next to the light site) the brand colour, in seven new `footer-*` tokens:
+  - The tagline, "See my dashboard, free" on a new white `light` button variant, and three link columns.
+  - A live band (`FooterBand`): SimpleDash's own live numbers sliding by, flags for countries, "Checked 6 minutes ago" (`TimeAgo`, a small client component with `useSyncExternalStore`). CSS only, with a pause switch made of a checkbox; still for reduced motion. Without live numbers it shows three still facts at the same height.
+  - The word (`FooterWord`): "SimpleDash" edge to edge, cut at the bottom of the page, its 10 letters the last 10 days. A bar from zero behind each letter, the letter cut out of the bar and dim above it, the number and day on top (on a small dark backing, since a quiet day's label sits over its letter), today lighter. Each letter links to that day on the public page. Hover or keyboard focus dims the others and swaps the caption for a sentence ("Sunday 25 October: 254 visitors, the busiest of these 10 days"), all CSS.
+  - The bars rise as the word scrolls in: a named view timeline, `clip-path` and `translate` only. Measured CLS 0 at 375 and 1440 px on the production build.
+- **Data** (`getFooterStats`, `footer-data.ts`): SimpleDash's own public page (`src/config/footer.ts`, `simpledash-app`; the demo shows meetline.me, so it couldn't say "our numbers"). Only what that page shows. Last 10 points of its Last 30 days chart through the report cache; no number before the property existed; live band from `getLive`. Cached 10 minutes, tagged like the page, streamed in after the static shell (`connection()` in `Suspense`). `/`, `/privacy` and `/terms` now send the public `Cache-Control` and build as partly prerendered.
+- **Checked:** `npm run check` (61 files, 499 tests); the production build; the cache headers; `/ui-kit/footer` (new, sample numbers in four states) at 375 and 1440 px with full-size headless Chrome shots, hover, a keyboard pass (that found the pause switch not pausing: fixed) and reduced motion; `getFooterStats` once with mocks in `.vitest/` (deleted).
+- **Colour:** rendered deep indigo, brand blue and light lavender with the real footer; brand blue picked (lighter, still ends the page, the word becomes the brand; lavender blended into the page). Tokens renamed `inverse-*` → `footer-*`, since a white "brand" token read wrong.
+- Spec section 17 (and 5, 18), seven decisions, `docs/ui.md`, `docs/public-page.md`, README and the checklist.
+
+- **Second pass (Siamak):** kept the blue. Solid white bars felt old-fashioned, so the bars are frosted glass (a token gradient, `backdrop-blur`, a bright top edge) with the letter lit white inside and dim above. Letters are as wide as in the name, so the word fills the width (about 1.5 times bigger; `16cqw`, measured 1,270 of 1,392 px at 1440). A letter no longer links to the public page: it opens a native popover card (CSS anchor positioning) with the long day, an odometer number (`@starting-style` under `:popover-open`), the change from the day before (`Delta`; never for today) and its rank (`dayFacts`, tested), while a light streak crosses its glass. "See all our numbers" gone; "Click a letter" hint; "Open source on GitHub" and "Made by Sia" pills (`brand-icons.tsx`, `brand.makerName` / `makerUrl`); a soft radial glow. Checked at 375 and 1440 px, clicking, Enter and Esc, and the young-site and plain states.
+
+- **Third pass (Siamak):** the GitHub and X pills open in a new tab. "Pricing" in the top bar and footer glides to the section: `scroll-behavior: smooth` (not for reduced motion) and `data-scroll-behavior="smooth"` on `<html>`. Measured in headless Chrome: 0 → 1,791 px in about 0.8 s, from the top bar and from the footer, again on repeat clicks; from `/privacy` it opens the landing page at pricing.
+
+- **Fourth pass (Siamak):** Google verified the app's data access (Siamak's screenshot), so a "Works with" band (`works-with.tsx`) now says "Verified by Google" next to Read-only access, No tracking script and Open source, under Google Analytics 4, Search Console and Stripe as plain names (not "trusted by", no Google logos). How it works rebuilt (`how-it-works.tsx`): a pill, "Three steps to your numbers", three cards with HTML drawings (consent screen, the busiest site picked, one page with the visitors line drawing in), "01–03", and the reasons as one card with icon tiles; a soft glow and dot grid (`.how-glow`, `.how-dots`, `.how-line` in `globals.css`). Ids on every landing section. Footer letters soft until hovered, focused or opened. The troubleshooting page's "unverified app" note updated.
+
+### Learned
+
+- Next.js's `Link` does nothing when clicked while the address already matches (`/#pricing` after one click), so a hash link that must work every time is a plain `<a>`. The browser pane in the desktop app doesn't run smooth scrolling; measure it in headless Chrome.
+- `@starting-style` reaches the descendants of a popover as it opens, so its digits can roll from 0 every time it opens, with no JavaScript.
+- Classes in `globals.css` are unlayered, so they beat Tailwind utilities: a utility can't pause an animation that a `globals.css` class sets. Put such state rules next to the class.
+- `cqw` in a property resolves against the nearest ancestor container, not the element itself: `.footer-word` is the container and `.footer-word-grid` reads the sizes.
+- Filling the letters themselves misleads (short letters look fuller); a bar behind each letter in equal columns keeps it an honest bar chart.
+- A `"use cache"` result in the static shell would be fetched during `next build`, where there is no database: hence the stream.
+- The dev database has no `meetline-me` page either (the demo falls back to sample data there), so the real data path can't be seen locally without seeding.
+
+### Next
+
+- Siamak: turn on simpledash.app's public page with the address `simpledash-app` and the cards "Visitors over time" and "Right now" (plus Countries, Pages, Devices for the live band). Until then the footer shows the plain dim word.
+- Lighthouse on the landing page and a legal page after deploy.
+- Firefox: check the cards there after deploy (anchor positioning is newer; without it the card opens in the middle of the screen).
+- Idea, not in the roadmap: a tiny "made with SimpleDash" footer badge users could put on their own sites, showing their live count (needs Siamak's yes).
+
 ## 2026-10-26 · Session 17, continued · A false "Google access ended", and deploys with SSH locked
 
 ### Done

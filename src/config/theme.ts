@@ -38,6 +38,9 @@ export const brand = {
   supportEmail: "hello@simpledash.app",
   /** The open-source code (AGPL-3.0). */
   sourceUrl: "https://github.com/sramezani/simpledash",
+  /** Who makes SimpleDash: "Made by Sia" in the footer, linking to X. */
+  makerName: "Sia",
+  makerUrl: "https://x.com/siaramzee",
 } as const;
 
 /** Light theme only in V1. A `dark` palette with the same keys can be added later. */
@@ -91,6 +94,17 @@ export const colors = {
     "window-close": "#FF5F57",
     "window-minimize": "#FEBC2E",
     "window-zoom": "#28C840",
+    // The footer band (docs/SPEC.md section 17): the brand colour, with white on it.
+    footer: brandColor,
+    "footer-foreground": neutral[0],
+    "footer-muted": "#E2E0FC",
+    "footer-border": "#6660E3",
+    // The footer word's dim letters, a little lighter than the band.
+    "footer-ghost": "#6C65E8",
+    // The footer word's bars and the band's focus ring.
+    "footer-accent": neutral[0],
+    // The live dot in the footer's live band.
+    "footer-live-dot": "#86EFAC",
   },
 } as const;
 
@@ -136,6 +150,11 @@ export const textPairs: ReadonlyArray<readonly [text: ColorToken, background: Co
   ["warning", "background"],
   // Country names on the live globe.
   ["globe-label", "globe-land"],
+  // The footer band: its text, quiet text, the light button, and letters cut out of a bar.
+  ["footer-foreground", "footer"],
+  ["footer-muted", "footer"],
+  ["footer", "footer-foreground"],
+  ["footer", "footer-accent"],
 ];
 
 /** Non-text pairs that must reach 3:1 (WCAG 1.4.11): focus ring and the visitors line. */
@@ -148,6 +167,9 @@ export const uiPairs: ReadonlyArray<readonly [ColorToken, ColorToken]> = [
   ["chart-3", "card"],
   // Revenue bars under the visitors line (Pro).
   ["chart-4", "card"],
+  // The footer's bars, its focus ring and its live dot, on the band.
+  ["footer-accent", "footer"],
+  ["footer-live-dot", "footer"],
 ];
 
 export const theme = { brand, brandColor, colors, radius, shadows } as const;

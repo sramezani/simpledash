@@ -127,7 +127,7 @@ What's done and what's next, in plain words.
 - [ ] Cloudflare Email Routing: `hello@simpledash.app` forwards to your inbox
 - [x] Verify ownership of `simpledash.app` in Google Search Console (needed for Google's app verification) (19 Oct)
 - [x] Record the demo video and submit the app for verification (19 Oct)
-- [ ] Google approves data access (`analytics.readonly`): then the "unverified app" warning disappears. Keep the app on Production meanwhile
+- [x] Google approves data access (`analytics.readonly`): then the "unverified app" warning disappears (27 Oct, Siamak's screenshot: "Your app's data access has been verified")
 
 ## Sprint 4: email, sharing, payment, launch
 
@@ -360,6 +360,23 @@ What's done and what's next, in plain words.
 - [x] A 401 from GA4 (Data and Admin) or Search Console gets a new token and runs once more; only Google's token server refusing the grant shows "Google access ended" (26 Oct)
 - [x] Unit tested (the token cache's lifetime and sharing, the retry, the error mapping, the cache's reconnect marking), and the wiring checked once with Better Auth and Google's token server mocked. `npm run check` passes (26 Oct)
 - [ ] Siamak: after the next deploy, watch for the banner; Sentry now gets "GA4 request failed" if a 401 ever survives a new token
+
+### The footer: the word is a chart (27 Oct; `docs/SPEC.md` section 17)
+
+- [x] A brand-coloured footer on the landing and legal pages (first near-black, lightened at Siamak's ask): the tagline, "See my dashboard, free" and three link columns (Product, Learn, Company) (27 Oct)
+- [x] A live band of SimpleDash's own live numbers (visitors in the last 30 minutes, countries with flags, pages, devices, "checked … ago"), CSS only, with a pause switch; still for reduced motion (27 Oct)
+- [x] The name "SimpleDash" as a chart of the last 10 days: a bar from zero behind each letter, the letter cut out of it, the number and day on top, today lighter; each letter links to its day on the public page; hover or focus explains the day in a sentence (27 Oct)
+- [x] The bars rise as the word scrolls into view (CSS scroll-driven, no layout shift); without numbers, the plain dim word at the same size (27 Oct)
+- [x] Seven `footer-*` colour tokens with contrast tests, and a white `light` button (27 Oct)
+- [x] Unit tested (`footer-data`, the day names); the server part checked once with mocks. `npm run check` passes (27 Oct)
+- [x] Checked on `/ui-kit/footer` at 375 and 1440 px, keyboard only (links, pause switch, the 10 letters), reduced motion, and the production build: `/`, `/privacy` and `/terms` partly prerendered with the public `Cache-Control`, no layout shift while scrolling (27 Oct)
+- [x] Glass bars and bigger letters (each as wide as in the name); a letter opens a frosted card with its day (odometer number, change from the day before, rank, a light streak), no link; "See all our numbers" removed; "Open source on GitHub" and "Made by Sia" pills; a soft glow (27 Oct)
+- [x] The GitHub and X pills open in a new tab; "Pricing" in the top bar and footer glides to the pricing section, every click (27 Oct)
+- [x] Footer letters soft by default, bright white on hover, focus or an open card (27 Oct)
+- [x] How it works redesigned: a drawing per step (HTML, no images), "01–03", the three reasons in one card; a "Works with" band with "Verified by Google"; ids on every landing section (`#hero`, `#demo`, `#works-with`, `#how-it-works`, `#pricing`, `#faq`, `#footer`) (27 Oct)
+- [x] The docs' "unverified app" note says Google has verified SimpleDash (27 Oct)
+- [ ] Siamak: on simpledash.app's settings page, turn on the public page with the address `simpledash-app` and the cards "Visitors over time" and "Right now" (Countries, Pages and Devices fill the live band). Until then the footer shows the plain word
+- [ ] Lighthouse on the landing page and a legal page after deploy (not installed here)
 
 ## V3: later (postponed 13 Oct; `docs/SPEC.md` section 29)
 

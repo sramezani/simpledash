@@ -9,11 +9,13 @@ import {
   formatDay,
   formatDayRange,
   formatDuration,
+  formatLongDay,
   formatMonth,
   formatNumber,
   formatPercent,
   formatPrice,
   formatShare,
+  formatShortDay,
   formatTime,
   percentChange,
 } from "./format";
@@ -81,6 +83,13 @@ describe("dates", () => {
     expect(formatMonth("2026-01")).toBe("Jan 2026");
     expect(formatDayRange("2026-10-04", "2026-10-10")).toBe("4 Oct – 10 Oct");
     expect(formatDayRange("2025-12-29", "2026-01-04")).toBe("29 Dec 2025 – 4 Jan 2026");
+  });
+
+  it("names a day in a sentence and in a tight label", () => {
+    expect(formatLongDay("2026-10-23")).toBe("Friday 23 October");
+    expect(formatLongDay("2026-03-01")).toBe("Sunday 1 March");
+    expect(formatShortDay("2026-10-23")).toBe("Fri 23");
+    expect(formatShortDay("2026-10-27")).toBe("Tue 27");
   });
 
   it("formats a date and a time in a time zone", () => {

@@ -53,7 +53,7 @@ const items: { q: string; a: ReactNode }[] = [
 /** FAQ, as native disclosure widgets: no JavaScript. */
 export function Faq() {
   return (
-    <section aria-labelledby="faq-title" className="py-16 sm:py-20">
+    <section id="faq" aria-labelledby="faq-title" className="scroll-mt-4 py-16 sm:py-20">
       <Container className="flex max-w-3xl flex-col gap-6">
         <h2 id="faq-title" className="text-3xl font-semibold tracking-tight">
           Questions

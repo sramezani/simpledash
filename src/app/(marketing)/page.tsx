@@ -6,6 +6,7 @@ import { HowItWorks } from "@/components/marketing/how-it-works";
 import { Pricing } from "@/components/marketing/pricing";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { SiteHeader } from "@/components/marketing/site-header";
+import { WorksWith } from "@/components/marketing/works-with";
 import { Container } from "@/components/shared/container";
 import { brand } from "@/config/theme";
 import { env } from "@/lib/env";
@@ -17,18 +18,23 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-/** The landing page (docs/SPEC.md section 17). Static; the live demo loads in its frame. */
+/**
+ * The landing page (docs/SPEC.md section 17). Static; the live demo loads in its frame.
+ * Every section has an id to link to: #hero, #demo, #works-with, #how-it-works, #pricing,
+ * #faq and #footer.
+ */
 export default function HomePage() {
   return (
     <>
       <SiteHeader />
       <main id="main">
         <Hero />
-        <section aria-label="Live demo" className="pb-10 sm:pb-14">
+        <section id="demo" aria-label="Live demo" className="scroll-mt-4 pb-10 sm:pb-14">
           <Container>
             <DemoFrame />
           </Container>
         </section>
+        <WorksWith />
         <HowItWorks />
         <Pricing />
         <Faq />

@@ -64,7 +64,7 @@ Pages:
 
 | Page | What it is |
 | --- | --- |
-| `/` | Landing page: the live demo in a browser frame, how it works, pricing (`/#pricing`), FAQ. Shows "Dashboard" instead of "Sign in" when you're signed in |
+| `/` | Landing page: the live demo in a browser frame, how it works, pricing (`/#pricing`), FAQ, and a footer whose word "SimpleDash" is a chart of SimpleDash's own last 10 days (from the public page in `src/config/footer.ts`). Shows "Dashboard" instead of "Sign in" when you're signed in |
 | `/demo` | The live demo: a real public stats page, set in `src/config/demo.ts` (sample data, live globe included, if that page is off) |
 | `/signin` | "Continue with Google" (needs `GOOGLE_CLIENT_ID` and the redirect URI on the Google client) |
 | `/dashboard` | The dashboard (signed in). `?site=<id>` names the site (default: the one opened last). `?range=today`, `yesterday`, `7d` (default), `30d`, `12m`, or a custom range like `?range=2026-09-01..2026-09-30`. On Free, anything older than 30 days shows Last 30 days |

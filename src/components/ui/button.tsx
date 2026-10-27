@@ -18,6 +18,9 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
+        // The light button on the footer's brand-coloured band (docs/SPEC.md section 17).
+        light:
+          "bg-footer-foreground text-footer hover:bg-footer-foreground/85 focus-visible:border-footer-accent focus-visible:ring-footer-accent/50",
       },
       size: {
         default:

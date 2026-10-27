@@ -4,6 +4,8 @@ Oct 11, 2026 · Written by Claude Code from `docs/ROADMAP.md` · Status: approve
 
 **Updated Oct 11, 2026 (session 2):** a yearly price and Growth shown as "coming soon" (sections 16 and 17), one theme and brand file and a UI quality bar (section 18), and code structure and reuse rules (section 4).
 
+**Updated Oct 27, 2026 (session 18):** a new footer for the landing and legal pages: a brand-coloured band with a last call, a live band of SimpleDash's own numbers, and the name as a bar chart of its last 10 days (sections 5, 17 and 18).
+
 **Updated Oct 15, 2026 (session 13, end):** ranges end today (Siamak): Last 7 days, Last 30 days and Last 12 months include today so far, on the dashboard and public pages, and are compared with the period before. Free's 30 days start on the first day of Last 30 days. The Monday email keeps last Monday to Sunday with its own range (`lastWeekRange`). Reports for ranges that end today stay fresh for 30 minutes (an hour on public pages) (sections 8, 10, 14 and 16).
 
 **Updated Oct 15, 2026 (session 13, later):** no site limit on either plan. Free and Pro both open every Google Analytics site in the account, so paused sites, the "n of 10" count and the Free footer in the site menu are gone (sections 7, 15, 16 and 28.1).
@@ -237,7 +239,7 @@ More features come in V2 (several sites, alerts, revenue), so the code is built 
 
 | Route | Purpose | Who | Rendering |
 | --- | --- | --- | --- |
-| `/` | **Landing**: headline, the live demo in a browser frame, how it works in 3 steps, pricing section (`#pricing`, section 17), FAQ, sign-in or Dashboard button | public | static |
+| `/` | **Landing**: headline, the live demo in a browser frame, how it works in 3 steps, pricing section (`#pricing`, section 17), FAQ, sign-in or Dashboard button, and the footer whose word is a chart | public | static, with the footer's numbers streamed in; cached about 10 minutes, plus Cloudflare |
 | `/demo` | **Live demo** (section 17): a real public stats page, framed on the landing page with `?embed=1` | public | partly prerendered, cached about 10 minutes, plus Cloudflare |
 | `/signin` | **Sign in**: one screen saying what we read (read-only), then "Continue with Google". A signed-in browser is sent to `/dashboard` (by the proxy, unless the address has a query such as `?expired=1`, so a stale cookie can't loop) | public | static |
 | `/dashboard` | **Dashboard**: the cards (section 11); `?site=<id>` names the site (section 28.1) | signed in | dynamic, streamed per card, cache-first |
@@ -246,7 +248,7 @@ More features come in V2 (several sites, alerts, revenue), so the code is built 
 | `/settings/email` | **Settings → Monday email**: on or off (Pro, section 14) | signed in | dynamic |
 | `/settings/sites/[siteId]` | **Settings for one site**: public page, Google search insights, revenue, what counts as a sale, remove the site (section 28.1) | signed in, the user's own site | dynamic |
 | `/p/[slug]` | **Public page** (section 15) | public | cached about 10 minutes, plus Cloudflare |
-| `/privacy`, `/terms` | **Legal** | public | static |
+| `/privacy`, `/terms` | **Legal** | public | static, with the footer's numbers streamed in; cached about 10 minutes, plus Cloudflare |
 | `/robots.txt`, `/sitemap.xml`, `/llms.txt` | **SEO files** (section 17) | public | static or cached |
 | `/admin` | Usage counts (section 20) | `ADMIN_EMAILS` | dynamic |
 | `/email/unsubscribe` | One-click unsubscribe (section 14) | signed token | dynamic |
@@ -1005,13 +1007,22 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 - **`/demo` on its own** shows the same page with a "Live demo" banner and a "Get yours, free" button. It always allows every range and shows "Powered by SimpleDash", whatever the demo owner's plan. It is `noindex` (the original is `/p/<slug>`), may be framed by our own site only (`frame-ancestors 'self'`), and is cached like a public page.
 - **No Recharts on the landing page:** the demo uses the server-rendered chart, and its JavaScript runs inside the frame.
 
-**How it works, in 3 steps:**
+**Works with** (`WorksWith`, `#works-with`, between the demo and How it works; Siamak, Oct 27, 2026): "Works with the tools you already use", then Google Analytics 4, Google Search Console and Stripe as names with our own plain icons (integrations, not customers, so never "trusted by"; Google's logos aren't ours to use), then four facts as chips: "Verified by Google" (Google approved the app's data access on Oct 27, 2026), "Read-only access", "No tracking script", "Open source".
+
+**How it works, in 3 steps** (`#how-it-works`; redesigned Oct 27, 2026):
 
 1. Sign in with Google.
 2. We find your GA4 site.
 3. See your visitors, sources and top pages on one page.
 
-**Pricing section** (`#pricing`, linked as "Pricing" from the landing page's top bar and footer). Everything on its cards comes from `src/config/plans.ts` (section 16).
+- A pill "How it works", the heading "Three steps to your numbers" and one line under it.
+- Each step is a card with a small drawing of it made of HTML (no image files): the consent screen reduced to "See your Google Analytics · Read-only access · Allow", the account's sites with the busiest picked, and one page with the visitors line (it draws itself in as it scrolls into view) and top sources. The drawings show shapes and labels, never made-up numbers. Under the drawing: "01", the step and its sentence.
+- A soft brand glow behind the cards and a fading dot grid behind each drawing.
+- Under the steps, one card split in three: Zero setup, Full charts from day one, A flat price, each with an icon tile.
+
+**Section addresses:** every landing section has an id to link to and share: `#hero`, `#demo`, `#works-with`, `#how-it-works`, `#pricing`, `#faq`, `#footer`.
+
+**Pricing section** (`#pricing`, linked as "Pricing" from the landing page's top bar and footer). Both links glide to it (`scroll-behavior: smooth` on the page, off for reduced motion; `data-scroll-behavior="smooth"` on `<html>` so Next.js keeps changing pages instant). They are plain `<a href="/#pricing">` links: Next.js's `Link` ignores a click to the address already showing, so a second click did nothing. From the legal pages they open the landing page at its pricing. Everything on its cards comes from `src/config/plans.ts` (section 16).
 
 - **Monthly / Yearly switch** (the shared `BillingSwitch`):
   - Two radio buttons styled as a segmented control, labelled "Monthly" and "Yearly". A handwritten "2 months free" note with an arrow points at Yearly (screen readers hear "Yearly · 2 months free").
@@ -1026,6 +1037,27 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 **Hero:** under the button, "Free for all your sites · no card · read-only access · Pro $9 a month".
 
 **FAQ:** "Do I need GA4?", "What do you store?", "Can SimpleDash change anything in my Google account?", "Is it really free?", "Is SimpleDash open source?" (the code on GitHub, AGPL-3.0) and "Do I have to add a tracking script?".
+
+**Footer** (`SiteFooter`, on the landing and legal pages; Siamak, Oct 27, 2026). A band in the brand colour at the end of the light page, in the `footer` tokens (section 18; Siamak, Oct 27, 2026: lighter than the first near-black), with a soft glow and frosted glass. Top to bottom:
+
+1. **Last call:** the tagline as a large heading, "Free for all your sites · no card · read-only access" (from `plans.ts`), and the hero's button on the white `light` variant ("See my dashboard, free", or "Open my dashboard →" when signed in). Beside it, three link columns: Product (Pricing, Live demo, Compare), Learn (Docs, Guides, GA4 glossary) and Company (Privacy, Terms, Cookie settings, the support email). Under them, two frosted pills: "Open source on GitHub" (GitHub icon) and "Made by Sia" (X icon, `brand.makerUrl`), both opening in a new tab (with "opens in a new tab" for screen readers).
+2. **Live band:** a frosted strip with a slow scrolling line of SimpleDash's own live numbers, for example "23 visitors in the last 30 minutes · 7 in the United States · 4 reading Pricing · 15 on computers", ending with when it was checked ("checked 6 minutes ago", worked out in the browser). CSS only; it stops on hover and for reduced motion, and the repeated copy is hidden from screen readers. Left out when nobody was there.
+3. **The word is a chart:** the name "SimpleDash", edge to edge and cut off at the bottom of the page. Its 10 letters are the last 10 days of visitors, today last:
+   - Each letter is as wide as it is in the name (Siamak, Oct 27: bigger letters), and the word fills the width. A frosted glass bar rises in each letter's column, from zero, to that day's visitors against the busiest of the 10 days, with a bright top edge. Inside the bar the letter shows softly (white at about 40%); above it the letter stays a dim ghost. Hover, keyboard focus or an open card makes that letter, its glass and its number bright white (Siamak, Oct 27, 2026). The bar's height carries the number, not the letter's shape, so short letters ("m", "a") don't make a day look busier; wide letters have wide bars.
+   - The day's number and its short name sit on top of each bar ("254", "Fri 23"). Today is a dashed, fainter bar with "Today", because it is still updating.
+   - **A letter is a button** (read as "Friday 23 October: 254 visitors. Show this day"). Clicking it opens a frosted card above its number (a native popover, placed with CSS anchor positioning; Esc or a click outside closes it): the long day name, the number rolling up from 0 like an odometer, the change from the day before ("↗ Up 16% vs Saturday"; never for today, which isn't over), and its rank ("Busiest of these 10 days", "3rd busiest", "Quietest"; today only ever "Already the busiest"). As it opens, a streak of light crosses that letter's glass, its number grows a little, and the other letters step back. No JavaScript.
+   - Hover or keyboard focus dims the other letters, and a plain sentence above the word says the day, its visitors and "the busiest of these 10 days" when it is.
+   - The bars rise one after another as the word scrolls into view (a CSS scroll-driven animation, transforms and `clip-path` only, so no layout shift). Browsers without it, and reduced motion, show the finished bars.
+   - Above the word: "This word is a chart: each letter is a day of visitors to simpledash.app" and "Click a letter" ("Tap a letter" on touch screens).
+
+**Where the numbers come from** (`src/config/footer.ts`, `src/lib/public-page/footer.ts`):
+
+- SimpleDash's own public stats page, named by its slug in `src/config/footer.ts` (`simpledash-app`; not the demo's site). The footer shows only what that page shows: the word needs the page to be on and to show "Visitors over time"; the live band needs "Right now", and its countries, pages and devices need those cards.
+- The 10 days are the last 10 points of the page's Last 30 days chart, through the same report cache as the public page. A day before the GA4 property existed has no number: its column stays empty with "–", never a zero.
+- The live band uses the live view's data (`getLive`), shared with the dashboard and public page.
+- `getFooterStats()` is `"use cache"` for about 10 minutes and tagged like the public page. The footer streams in after the static page (`connection()` inside `Suspense`), so the landing and legal pages stay partly prerendered and send the public pages' `Cache-Control` (Cloudflare keeps them about 10 minutes).
+- **Nothing to show** (the page is off or paused, Google failed, or before it streams in): the plain ghost word at the same size, with no numbers, no live band and no caption. Never a fake zero, and nothing moves when the real word arrives.
+- **Cost:** at most one series report an hour (shared with the public page) and six small realtime requests every 10 minutes.
 
 **Brand:** the name is always SimpleDash, one word. The logo is a "–" dash mark, drawn by the shared `Logo` component. The favicons (`icon.tsx`, `apple-icon.tsx`) and the Open Graph images draw it from the theme file (section 18), so a brand colour change reaches them too.
 
@@ -1115,6 +1147,7 @@ Siamak's rule: the whole look and the brand live in one file, and the code only 
 | Charts | `chart-1` to `chart-5` | Chart lines and series. `chart-1` is the visitors line, its fill and the share bars in lists |
 | Layers | `overlay` | The dim layer behind dialogs |
 | Decoration | `window-close`, `window-minimize`, `window-zoom` | The three dots of the browser frame around the landing demo |
+| Footer | `footer`, `footer-foreground`, `footer-muted`, `footer-border`, `footer-ghost`, `footer-accent`, `footer-live-dot` | The footer band (section 17): the brand colour, white text, quiet text, lines, the dim letters, the white bars and focus ring, and the live dot |
 
 **How the values reach the page:**
 

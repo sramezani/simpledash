@@ -25,7 +25,13 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     // The inline script below may add data-signed-in before React loads.
-    <html lang="en" className={fontVariables} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={fontVariables}
+      // Smooth scrolling for same-page links (Pricing); Next.js turns it off while changing pages.
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
+    >
       <head>
         <ThemeStyle />
         <Script id="signed-in-hint" strategy="beforeInteractive">

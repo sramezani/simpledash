@@ -65,6 +65,38 @@ export function formatDay(isoDate: string, withYear = false): string {
   return `${d} ${MONTHS[m - 1]}${withYear ? ` ${y}` : ""}`;
 }
 
+const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const LONG_MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+function weekday(isoDate: string): string {
+  const { y, m, d } = parts(isoDate);
+  return WEEKDAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]!;
+}
+
+/** "2026-10-23" → "Friday 23 October": a day in a sentence. */
+export function formatLongDay(isoDate: string): string {
+  const { m, d } = parts(isoDate);
+  return `${weekday(isoDate)} ${d} ${LONG_MONTHS[m - 1]}`;
+}
+
+/** "2026-10-23" → "Fri 23": a day in a tight label. */
+export function formatShortDay(isoDate: string): string {
+  return `${weekday(isoDate).slice(0, 3)} ${parts(isoDate).d}`;
+}
+
 /** "2026-10" or "2026-10-01" → "Oct 2026". */
 export function formatMonth(isoMonth: string): string {
   const { y, m } = parts(isoMonth.length === 7 ? `${isoMonth}-01` : isoMonth);
