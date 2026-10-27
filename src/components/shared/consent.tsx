@@ -1,5 +1,6 @@
 "use client";
 
+import { CookieIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
@@ -168,43 +169,44 @@ export function ConsentBanner() {
   }, [state]);
 
   if (state !== "ask") return null;
+  // A full-width bar along the bottom edge (a sheet on phones), its content as wide as the
+  // page's: easy to notice, never in the way. It floats over the page, so nothing moves when it
+  // slides up, and it doesn't block the page (no cookie wall).
   return (
     <section
       aria-labelledby="consent-title"
-      className="fixed inset-x-4 bottom-4 z-50 mx-auto flex max-w-md flex-col gap-3 rounded-2xl border bg-card p-4 shadow-lg sm:right-auto sm:left-4 sm:mx-0"
+      className="fixed inset-x-0 bottom-0 z-50 animate-in rounded-t-2xl border-t bg-card/95 shadow-lg backdrop-blur-md duration-500 ease-out fade-in slide-in-from-bottom-6 sm:rounded-none"
     >
-      <div className="flex flex-col gap-1">
-        <h2 id="consent-title" className="text-sm font-semibold">
-          This website uses cookies
-        </h2>
-        <p className="text-sm text-pretty text-muted-foreground">
-          We use Google Analytics to understand how {brand.name} is used, so we can make it better.
-          No ads.{" "}
-          <Link
-            href="/privacy#analytics"
-            className="font-medium text-primary underline-offset-2 hover:underline"
-          >
-            Learn more
-          </Link>
-        </p>
-      </div>
-      {/* Same size and side by side: declining is as easy to see and click as accepting. */}
-      <div className="grid grid-cols-2 gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          className="h-10 pointer-coarse:h-11"
-          onClick={() => choose("denied")}
-        >
-          Decline
-        </Button>
-        <Button
-          type="button"
-          className="h-10 pointer-coarse:h-11"
-          onClick={() => choose("granted")}
-        >
-          Accept
-        </Button>
+      <div className="mx-auto flex max-w-6xl flex-col gap-4 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:flex-row sm:items-center sm:gap-6 sm:px-6 sm:py-5">
+        <div className="flex flex-1 items-start gap-3">
+          <span className="hidden size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:flex">
+            <CookieIcon className="size-5" aria-hidden="true" />
+          </span>
+          <div className="flex flex-col gap-1">
+            <h2 id="consent-title" className="text-base font-semibold">
+              This website uses cookies
+            </h2>
+            <p className="text-sm text-pretty text-muted-foreground">
+              We use Google Analytics to understand how {brand.name} is used, so we can make it
+              better. No ads.{" "}
+              <Link
+                href="/privacy#analytics"
+                className="font-medium text-primary underline-offset-2 hover:underline"
+              >
+                Learn more
+              </Link>
+            </p>
+          </div>
+        </div>
+        {/* Same size and side by side: declining is as easy to see and click as accepting. */}
+        <div className="grid shrink-0 grid-cols-2 gap-2 sm:w-64">
+          <Button type="button" variant="outline" className="h-11" onClick={() => choose("denied")}>
+            Decline
+          </Button>
+          <Button type="button" className="h-11" onClick={() => choose("granted")}>
+            Accept
+          </Button>
+        </div>
       </div>
     </section>
   );

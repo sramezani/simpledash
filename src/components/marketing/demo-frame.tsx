@@ -34,7 +34,7 @@ export function DemoFrame() {
               target="_blank"
               rel="noopener"
               prefetch={false}
-              className="group/address mx-auto flex max-w-full min-w-0 items-center justify-center gap-1.5 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="group/address mx-auto flex max-w-full min-w-0 items-center justify-center gap-1.5 rounded-md px-1 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:px-2"
             >
               <LockIcon className="size-3 shrink-0" aria-hidden="true" />
               <span className="truncate">
@@ -42,7 +42,7 @@ export function DemoFrame() {
                 {host}/<span className="font-medium text-foreground">demo</span>
               </span>
               <ArrowUpRightIcon
-                className="size-3.5 shrink-0 opacity-0 transition-opacity group-hover/address:opacity-100 group-focus-visible/address:opacity-100"
+                className="hidden size-3.5 shrink-0 opacity-0 transition-opacity group-hover/address:opacity-100 group-focus-visible/address:opacity-100 sm:block"
                 aria-hidden="true"
               />
               <span className="sr-only"> (opens the live demo in a new tab)</span>
