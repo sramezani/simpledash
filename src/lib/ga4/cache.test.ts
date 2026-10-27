@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { GoogleAccessError } from "@/lib/auth/google-errors";
 import type { Site } from "@/lib/db/schema";
 import {
   getReports,
@@ -250,14 +251,25 @@ describe("getReports", () => {
     expect(deps.sites.blockQuota).toHaveBeenCalledWith("site_1", result.quotaUntil);
   });
 
-  it("marks the user's sites for reconnect on 401", async () => {
+  it("marks the user's sites for reconnect when Google's token server refuses the grant", async () => {
+    const deps = makeDeps();
+    deps.fetchBatch = vi.fn(async () => {
+      throw new GoogleAccessError("revoked", "Google access was revoked");
+    });
+    const result = await getReports(site, "7d", ["totals"], deps, { now: NOW });
+    expect(result.problem).toBe("revoked");
+    expect(deps.sites.markNeedsReconnect).toHaveBeenCalledWith("user_1");
+  });
+
+  it("doesn't mark a reconnect on an API's 401: the token was turned down, not the grant", async () => {
     const deps = makeDeps();
     deps.fetchBatch = vi.fn(async () => {
       throw Object.assign(new Error("unauthenticated"), { code: 16, httpStatusCode: 401 });
     });
     const result = await getReports(site, "7d", ["totals"], deps, { now: NOW });
-    expect(result.problem).toBe("revoked");
-    expect(deps.sites.markNeedsReconnect).toHaveBeenCalledWith("user_1");
+    expect(result.problem).toBe("unavailable");
+    expect(deps.sites.markNeedsReconnect).not.toHaveBeenCalled();
+    expect(deps.logError).toHaveBeenCalled();
   });
 
   it("marks lost access on 403", async () => {

@@ -354,6 +354,13 @@ What's done and what's next, in plain words.
 - [ ] Lighthouse on the landing page, `/demo` and a public page after deploy (not installed here)
 - [ ] Siamak: on simpledash.app, open the dashboard and check you show up in Right now within about 5 seconds
 
+### Fix: a false "Google access ended" (26 Oct)
+
+- [x] Google access tokens are kept until a minute before they run out (at most 10 minutes), and one with less than a minute left is swapped for a new one (26 Oct)
+- [x] A 401 from GA4 (Data and Admin) or Search Console gets a new token and runs once more; only Google's token server refusing the grant shows "Google access ended" (26 Oct)
+- [x] Unit tested (the token cache's lifetime and sharing, the retry, the error mapping, the cache's reconnect marking), and the wiring checked once with Better Auth and Google's token server mocked. `npm run check` passes (26 Oct)
+- [ ] Siamak: after the next deploy, watch for the banner; Sentry now gets "GA4 request failed" if a 401 ever survives a new token
+
 ## V3: later (postponed 13 Oct; `docs/SPEC.md` section 29)
 
 - X mentions on the chart · Ask your data in plain English · Milestone images · Hacker News and Product Hunt markers · "Tracking looks broken" alert

@@ -1,6 +1,7 @@
 import "server-only";
+import type { BetaAnalyticsDataClient } from "@google-analytics/data";
 import type { Site } from "@/lib/db/schema";
-import { dataClient } from "./clients";
+import { withDataClient } from "./clients";
 import { LIVE_REFRESH } from "./freshness";
 import { withPropertySlot } from "./limiter";
 import { parseLive, parseLiveCount, type LiveCount, type LiveData } from "./live";
@@ -47,18 +48,19 @@ export function getLiveCount(
   if (fresh && now - fresh.at < maxAge) {
     return fresh.data.then(({ total, minutes }) => ({ total, minutes }));
   }
-  return cached(counts, site.propertyId, now, maxAge, async () => {
-    const { run, property, minutes, metric } = await realtime(site);
-    return parseLiveCount(await run({ property, metrics: metric }), minutes);
-  });
+  return cached(counts, site.propertyId, now, maxAge, () =>
+    withDataClient(site.userId, async (client) => {
+      const { run, property, minutes, metric } = realtime(site, client);
+      return parseLiveCount(await run({ property, metrics: metric }), minutes);
+    }),
+  );
 }
 
 export function getLive(site: Site, now: number = Date.now()): Promise<LiveData> {
   return cached(full, site.propertyId, now, LIVE_TTL, () => fetchLive(site));
 }
 
-async function realtime(site: Site) {
-  const client = await dataClient(site.userId);
+function realtime(site: Site, client: BetaAnalyticsDataClient) {
   const minutes = site.serviceLevel === "GOOGLE_ANALYTICS_360" ? 60 : 30;
   const property = site.propertyId;
   const options = { timeout: 10_000, retry: null } as const;
@@ -67,8 +69,12 @@ async function realtime(site: Site) {
   return { run, property, minutes, metric: [{ name: "activeUsers" }] };
 }
 
-async function fetchLive(site: Site): Promise<LiveData> {
-  const { run, property, minutes, metric } = await realtime(site);
+function fetchLive(site: Site): Promise<LiveData> {
+  return withDataClient(site.userId, (client) => fetchLiveWith(site, client));
+}
+
+async function fetchLiveWith(site: Site, client: BetaAnalyticsDataClient): Promise<LiveData> {
+  const { run, property, minutes, metric } = realtime(site, client);
   const desc = [{ metric: { metricName: "activeUsers" }, desc: true }];
   const by = (dimension: string, limit: number) =>
     run({ property, dimensions: [{ name: dimension }], metrics: metric, orderBys: desc, limit });

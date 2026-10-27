@@ -1,13 +1,14 @@
 import "server-only";
 import { AnalyticsAdminServiceClient } from "@google-analytics/admin";
 import { BetaAnalyticsDataClient, type protos } from "@google-analytics/data";
-import { getGoogleAuthClient } from "@/lib/auth/google";
+import { authClientFor, withGoogleToken } from "@/lib/auth/google";
 import { isRetryable } from "./errors";
 import { recordQuota, recordServerError, withPropertySlot } from "./limiter";
 
 /**
  * The only place that creates Google Analytics clients (docs/SPEC.md section 10.1).
  * Clients are made per request with the user's token, over REST (`fallback: true`).
+ * If Google turns the token down (a 401), the whole use runs once more with a new client.
  */
 
 type RunReportRequest = protos.google.analytics.data.v1beta.IRunReportRequest;
@@ -16,18 +17,22 @@ type RunReportResponse = protos.google.analytics.data.v1beta.IRunReportResponse;
 const TIMEOUT_MS = 15_000;
 const callOptions = { timeout: TIMEOUT_MS, retry: null } as const;
 
-export async function dataClient(userId: string) {
-  return new BetaAnalyticsDataClient({
-    authClient: await getGoogleAuthClient(userId),
-    fallback: true,
-  });
+export function withDataClient<T>(
+  userId: string,
+  use: (client: BetaAnalyticsDataClient) => Promise<T>,
+): Promise<T> {
+  return withGoogleToken(userId, (token) =>
+    use(new BetaAnalyticsDataClient({ authClient: authClientFor(token), fallback: true })),
+  );
 }
 
-export async function adminClient(userId: string) {
-  return new AnalyticsAdminServiceClient({
-    authClient: await getGoogleAuthClient(userId),
-    fallback: true,
-  });
+export function withAdminClient<T>(
+  userId: string,
+  use: (client: AnalyticsAdminServiceClient) => Promise<T>,
+): Promise<T> {
+  return withGoogleToken(userId, (token) =>
+    use(new AnalyticsAdminServiceClient({ authClient: authClientFor(token), fallback: true })),
+  );
 }
 
 /** Retries once, after about a second, on server errors and timeouts. */
@@ -55,15 +60,16 @@ export async function runReportBatch(
 ): Promise<RunReportResponse[]> {
   if (requests.length === 0) return [];
   if (requests.length > 5) throw new Error("A GA4 batch holds at most 5 reports");
-  const client = await dataClient(userId);
-  const [response] = await withPropertySlot(propertyId, () =>
-    withOneRetry(propertyId, () =>
-      client.batchRunReports(
-        {
-          property: propertyId,
-          requests: requests.map((r) => ({ ...r, returnPropertyQuota: true })),
-        },
-        callOptions,
+  const [response] = await withDataClient(userId, (client) =>
+    withPropertySlot(propertyId, () =>
+      withOneRetry(propertyId, () =>
+        client.batchRunReports(
+          {
+            property: propertyId,
+            requests: requests.map((r) => ({ ...r, returnPropertyQuota: true })),
+          },
+          callOptions,
+        ),
       ),
     ),
   );
@@ -79,9 +85,10 @@ export async function runSingleReport(
   request: RunReportRequest,
   timeoutMs = TIMEOUT_MS,
 ): Promise<RunReportResponse> {
-  const client = await dataClient(userId);
-  const [response] = await withPropertySlot(propertyId, () =>
-    client.runReport({ ...request, property: propertyId }, { timeout: timeoutMs, retry: null }),
+  const [response] = await withDataClient(userId, (client) =>
+    withPropertySlot(propertyId, () =>
+      client.runReport({ ...request, property: propertyId }, { timeout: timeoutMs, retry: null }),
+    ),
   );
   return response;
 }

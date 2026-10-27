@@ -559,7 +559,8 @@ Channel names are mapped to plain words in section 11.4.
 | Google says | We do | User sees |
 | --- | --- | --- |
 | 429 `RESOURCE_EXHAUSTED` | Set `quota_blocked_until` to the next hour, or to Pacific midnight for the daily quota. No GA4 calls for that property until then | Cached numbers with the note "Google's hourly limit for this site was reached. Numbers refresh after 14:00." With nothing cached, the **quota reached** state |
-| 401 or `invalid_grant` | `site.status = needs_reconnect` | **Google access revoked** state |
+| `invalid_grant` from Google's token server (the grant is gone) | `site.status = needs_reconnect` | **Google access revoked** state |
+| 401 `UNAUTHENTICATED` from an API (the access token was turned down) | Drop the token and ask once more with a new one from Google's token server (`withGoogleToken`). If the token server refuses the grant, it's the row above. A 401 that a new token doesn't fix is logged as unavailable, never a reconnect | Nothing, or with nothing cached: "Google Analytics isn't answering right now." |
 | 403 `PERMISSION_DENIED` | `site.status = no_access` | "You no longer have access to this Google Analytics site", plus the switcher |
 | 500, 503 or timeout | Retry once after about 1 s. A per-property breaker opens after 5 server errors in an hour, because Google blocks a project and property pair after 10 | Cached numbers. With nothing cached: "Google Analytics isn't answering right now." |
 | Quota running low | When `tokensPerHour.remaining` drops below 10%, skip background refreshes and serve the cache | Nothing |
@@ -569,6 +570,7 @@ Other limits:
 - At most 5 GA4 requests run at once per property, using an in-process limiter. Google allows 10.
 - Each request has a 15 s timeout.
 - Every failure goes to Sentry with the property ID. Tokens are never sent.
+- **Access tokens** are kept in memory for at most 10 minutes, and never past a minute before Google says they run out. Better Auth hands back its stored token until 5 seconds before the end, so one with less than a minute left is swapped for a new one first (since 26 Oct: a token kept past its hour gave 401s, which used to mark every site "access ended").
 
 **Quota budget:** loading one range from scratch takes 3 batch calls covering 11 reports. Google says most requests cost 10 tokens or fewer. That is far below the limit of 14,000 tokens per project per property per hour.
 

@@ -25,10 +25,17 @@ describe("classifyError", () => {
     });
   });
 
-  it("maps 401 and invalid_grant to revoked", () => {
-    expect(classifyError(googleError(16, 401)).problem).toBe("revoked");
+  it("maps only a refused grant to revoked", () => {
     expect(classifyError(new GoogleAccessError("revoked")).problem).toBe("revoked");
+    expect(classifyError(new GoogleAccessError("no_account")).problem).toBe("revoked");
     expect(classifyError(new Error("invalid_grant")).problem).toBe("revoked");
+  });
+
+  it("maps an API's 401 to unavailable: a turned-down token isn't lost access", () => {
+    expect(classifyError(googleError(16, 401)).problem).toBe("unavailable");
+    expect(classifyError(Object.assign(new Error("boom"), { code: 16 })).problem).toBe(
+      "unavailable",
+    );
   });
 
   it("maps 403 to no access, unless our API is disabled", () => {

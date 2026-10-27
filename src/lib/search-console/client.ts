@@ -1,5 +1,5 @@
 import "server-only";
-import { getGoogleAccessToken } from "@/lib/auth/google";
+import { withGoogleToken } from "@/lib/auth/google";
 import { GoogleAccessError } from "@/lib/auth/google-errors";
 import { classifyError } from "@/lib/ga4/errors";
 import type { ScSite } from "./match";
@@ -7,7 +7,8 @@ import type { ScRequest, ScResponse } from "./reports";
 
 /**
  * The only code that calls the Search Console API (docs/SPEC.md section 28.2), with
- * `fetch` and the user's own access token: no client library.
+ * `fetch` and the user's own access token: no client library. A 401 is asked once more
+ * with a new token (withGoogleToken).
  */
 
 const BASE = "https://www.googleapis.com/webmasters/v3";
@@ -47,8 +48,11 @@ export function classifySearchError(error: unknown): SearchProblem {
   return problem;
 }
 
-async function call<T>(userId: string, path: string, body?: unknown): Promise<T> {
-  const token = await getGoogleAccessToken(userId);
+function call<T>(userId: string, path: string, body?: unknown): Promise<T> {
+  return withGoogleToken(userId, (token) => callWith<T>(token, path, body));
+}
+
+async function callWith<T>(token: string, path: string, body?: unknown): Promise<T> {
   let response: Response;
   try {
     response = await fetch(`${BASE}${path}`, {

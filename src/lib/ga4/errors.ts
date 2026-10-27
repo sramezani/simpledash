@@ -42,9 +42,11 @@ export function classifyError(error: unknown): ClassifiedError {
       message,
     };
   }
-  if (code === GRPC.UNAUTHENTICATED || http === 401 || /invalid_grant/.test(message)) {
-    return { problem: "revoked", message };
-  }
+  // Only Google's token server can say access ended (GoogleAccessError above, or its
+  // invalid_grant). A 401 from an API is a turned-down token that a new one didn't fix
+  // (withGoogleToken already tried): not lost access, so try again later.
+  if (/invalid_grant/.test(message)) return { problem: "revoked", message };
+  if (code === GRPC.UNAUTHENTICATED || http === 401) return { problem: "unavailable", message };
   if (code === GRPC.PERMISSION_DENIED || http === 403) {
     // A disabled API is our project's setup, not the user's lost access.
     if (

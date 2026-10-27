@@ -16,7 +16,7 @@ How SimpleDash reads Google Analytics. The plan is in `docs/SPEC.md` sections 7,
 | `limiter.ts` | Per property: at most 5 requests at once, the server-error breaker, low-quota memory | yes |
 | `cache.ts` | Cache logic: fresh, stale or missing; background refresh with a lease; error effects | yes, with fakes |
 | `data.ts` | The cache wired to Postgres, GA4 and `after()`: `loadReports()` and `warm()` | |
-| `clients.ts` | Creates the Google clients per request (REST transport), batches, one retry, timeouts | |
+| `clients.ts` | Creates the Google clients per request (REST transport) inside `withGoogleToken`, so a 401 runs once more with a new token; batches, one retry, timeouts | |
 | `properties.ts` | Lists properties, picks one automatically, connects and switches | |
 | `property-choice.ts` | Pure helpers for the choice: busiest property, host name, timestamps | yes |
 | `derive.ts` | The four numbers from cached totals: % change, Avg. time, Signups | yes |
@@ -49,7 +49,8 @@ Reports go to Google in `batchRunReports` calls of up to 5. Every request asks f
 | Google says | Code | Effect | User sees |
 | --- | --- | --- | --- |
 | 429, `RESOURCE_EXHAUSTED` | 8 | `site.quota_blocked_until` = next hour, or Pacific midnight for the daily quota | Quota banner with the time it clears |
-| 401, `UNAUTHENTICATED`, `invalid_grant` | 16 | Every site of the user: `status = needs_reconnect` | "Google access ended" banner, numbers greyed |
+| `invalid_grant` from Google's token server | | Every site of the user: `status = needs_reconnect` | "Google access ended" banner, numbers greyed |
+| 401, `UNAUTHENTICATED` from the API | 16 | Asked once more with a new token (`withGoogleToken`); a second 401 is logged as unavailable | Nothing, or "isn't answering" with nothing cached |
 | 403, `PERMISSION_DENIED` (not a disabled API) | 7 | `status = no_access` | "You no longer have access" banner with the switcher |
 | 403 because our API is disabled | 7 | Logged as an error | "Google Analytics isn't answering" |
 | 500, 503, timeout | 13, 14, 4 | One retry after about 1 s; counted for the breaker (5 an hour) | Cached numbers, or "isn't answering" |

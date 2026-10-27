@@ -45,10 +45,12 @@ The only place a property ID comes from the browser is the switcher, and `switch
 `src/lib/auth/google.ts`:
 
 - `getGoogleAccessToken(userId)` asks Better Auth (`auth.api.getAccessToken`), which refreshes the token when needed. Jobs call it with the site owner's user ID.
+- The token is kept in memory (`token-cache.ts`) for at most 10 minutes, and never past a minute before Google says it runs out. Better Auth returns its stored token until 5 seconds before the end, so one with less than a minute left is swapped for a new one from Google's token endpoint first.
+- `withGoogleToken(userId, call)` runs every Google API call (GA4 Data and Admin, Search Console). If Google answers 401 (the token ran out early or was replaced), it asks the token endpoint for a new token and runs the call once more. Parallel calls that hit the same 401 share one new token (`replaceToken`). A 401 is never "access ended" by itself.
 - Better Auth doesn't say **why** a refresh failed. So on failure we decrypt the refresh token with Better Auth's own key (`symmetricDecrypt` from `better-auth/crypto`) and ask Google's token endpoint directly:
-  - `invalid_grant` → `GoogleAccessError("revoked")` → the "Google access ended" state.
+  - `invalid_grant` → `GoogleAccessError("revoked")` → the "Google access ended" state. This is the only way a site gets there from a Google call.
   - Anything else (network, 5xx) → `GoogleAccessError("unavailable")`: try again later, not a reconnect.
-- `getGoogleAuthClient(userId)` wraps the token in an `OAuth2Client` for the GA4 libraries.
+- `authClientFor(token)` wraps one token in an `OAuth2Client` for the GA4 libraries (`withDataClient` and `withAdminClient` in `src/lib/ga4/clients.ts`).
 - `revokeGoogleAccess(userId)` revokes the grant at Google (disconnect and account deletion).
 
 Tokens never leave the server and are never logged.

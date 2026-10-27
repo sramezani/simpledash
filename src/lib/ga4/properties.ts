@@ -2,7 +2,7 @@ import "server-only";
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { site, type Site } from "@/lib/db/schema";
-import { adminClient, runSingleReport } from "./clients";
+import { runSingleReport, withAdminClient } from "./clients";
 import {
   enumIs,
   hostnameFromUri,
@@ -18,30 +18,31 @@ const ADMIN_TIMEOUT = { timeout: 15_000, retry: null } as const;
 const MAX_CHECKED = 20;
 
 /** Every ordinary GA4 property the user can read, following every page. */
-export async function listProperties(userId: string): Promise<PropertySummary[]> {
-  const client = await adminClient(userId);
-  const out: PropertySummary[] = [];
-  let pageToken: string | undefined;
-  do {
-    const [accounts, , raw] = await client.listAccountSummaries(
-      { pageSize: 200, pageToken },
-      { ...ADMIN_TIMEOUT, autoPaginate: false },
-    );
-    for (const acc of accounts) {
-      for (const p of acc.propertySummaries ?? []) {
-        const ordinary = !p.propertyType || enumIs(p.propertyType, "PROPERTY_TYPE_ORDINARY", 1);
-        if (p.property && ordinary) {
-          out.push({
-            propertyId: p.property,
-            displayName: p.displayName || p.property,
-            account: acc.displayName ?? "",
-          });
+export function listProperties(userId: string): Promise<PropertySummary[]> {
+  return withAdminClient(userId, async (client) => {
+    const out: PropertySummary[] = [];
+    let pageToken: string | undefined;
+    do {
+      const [accounts, , raw] = await client.listAccountSummaries(
+        { pageSize: 200, pageToken },
+        { ...ADMIN_TIMEOUT, autoPaginate: false },
+      );
+      for (const acc of accounts) {
+        for (const p of acc.propertySummaries ?? []) {
+          const ordinary = !p.propertyType || enumIs(p.propertyType, "PROPERTY_TYPE_ORDINARY", 1);
+          if (p.property && ordinary) {
+            out.push({
+              propertyId: p.property,
+              displayName: p.displayName || p.property,
+              account: acc.displayName ?? "",
+            });
+          }
         }
       }
-    }
-    pageToken = raw?.nextPageToken || undefined;
-  } while (pageToken);
-  return out;
+      pageToken = raw?.nextPageToken || undefined;
+    } while (pageToken);
+    return out;
+  });
 }
 
 async function visitorsLast7Days(userId: string, propertyId: string): Promise<number | null> {
@@ -84,14 +85,15 @@ export async function chooseProperty(userId: string): Promise<Site | null> {
  * becomes active, and one that left the list comes back with its notes and settings.
  */
 export async function connectProperty(userId: string, propertyId: string): Promise<Site> {
-  const client = await adminClient(userId);
-  const [[property], [streams]] = await Promise.all([
-    client.getProperty({ name: propertyId }, ADMIN_TIMEOUT),
-    client.listDataStreams(
-      { parent: propertyId, pageSize: 50 },
-      { ...ADMIN_TIMEOUT, autoPaginate: false },
-    ),
-  ]);
+  const [[property], [streams]] = await withAdminClient(userId, (client) =>
+    Promise.all([
+      client.getProperty({ name: propertyId }, ADMIN_TIMEOUT),
+      client.listDataStreams(
+        { parent: propertyId, pageSize: 50 },
+        { ...ADMIN_TIMEOUT, autoPaginate: false },
+      ),
+    ]),
+  );
   const web = streams.find((s) => enumIs(s.type, "WEB_DATA_STREAM", 1));
   const values = {
     displayName: property.displayName || propertyId,
@@ -193,10 +195,11 @@ export async function listKeyEventNames(
 ): Promise<string[]> {
   const cached = keyEventCache.get(propertyId);
   if (!fresh && cached && Date.now() - cached.at < 10 * 60_000) return cached.names;
-  const client = await adminClient(userId);
-  const [events] = await client.listKeyEvents(
-    { parent: propertyId, pageSize: 200 },
-    { ...ADMIN_TIMEOUT, autoPaginate: false },
+  const [events] = await withAdminClient(userId, (client) =>
+    client.listKeyEvents(
+      { parent: propertyId, pageSize: 200 },
+      { ...ADMIN_TIMEOUT, autoPaginate: false },
+    ),
   );
   const names = [...new Set(events.map((e) => e.eventName).filter((n): n is string => !!n))].sort();
   keyEventCache.set(propertyId, { names, at: Date.now() });

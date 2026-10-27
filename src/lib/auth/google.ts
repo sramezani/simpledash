@@ -5,9 +5,16 @@ import { db } from "@/lib/db/client";
 import { account } from "@/lib/db/schema";
 import { env } from "@/lib/env";
 import { auth } from "./auth";
-import { GoogleAccessError, isRevokedGrant } from "./google-errors";
+import { GoogleAccessError, isRevokedGrant, withTokenRetry } from "./google-errors";
 import { decryptSecret } from "./secrets";
-import { cachedToken, forgetGoogleToken, rememberToken } from "./token-cache";
+import {
+  cachedToken,
+  EXPIRY_MARGIN_MS,
+  forgetGoogleToken,
+  rememberToken,
+  replaceToken,
+  type GoogleToken,
+} from "./token-cache";
 
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const REVOKE_URL = "https://oauth2.googleapis.com/revoke";
@@ -29,26 +36,44 @@ export { forgetGoogleToken };
  * Throws GoogleAccessError: "revoked" when Google says the grant is gone.
  */
 export function getGoogleAccessToken(userId: string): Promise<string> {
-  const cached = cachedToken(userId);
-  if (cached) return cached;
-  const token = fetchAccessToken(userId);
-  rememberToken(userId, token);
-  return token;
+  return cachedToken(userId) ?? rememberToken(userId, fetchAccessToken(userId));
 }
 
-async function fetchAccessToken(userId: string): Promise<string> {
+/**
+ * Runs a Google call with the user's token. If Google turns the token down (a 401: it ran
+ * out early), the call runs once more with a new one. Every Google API call goes through this.
+ */
+export function withGoogleToken<T>(userId: string, call: (token: string) => Promise<T>) {
+  return withTokenRetry(
+    () => getGoogleAccessToken(userId),
+    (stale) => replaceToken(userId, stale, () => fetchAccessToken(userId, true)),
+    call,
+  );
+}
+
+/** `fresh`: skip Better Auth's stored token and ask Google for a new one (after a 401). */
+async function fetchAccessToken(userId: string, fresh = false): Promise<GoogleToken> {
   const row = await getGoogleAccount(userId);
   if (!row) throw new GoogleAccessError("no_account");
-  try {
-    const { accessToken } = await auth.api.getAccessToken({ body: { userId, accountId: row.id } });
-    if (accessToken) return accessToken;
-  } catch {
-    // Better Auth doesn't say why a refresh failed, so ask Google directly below.
+  if (!fresh) {
+    try {
+      const { accessToken, accessTokenExpiresAt } = await auth.api.getAccessToken({
+        body: { userId, accountId: row.id },
+      });
+      const expiresAt = accessTokenExpiresAt ? new Date(accessTokenExpiresAt).getTime() : null;
+      // Better Auth hands back its stored token until 5 seconds before it runs out. One with
+      // less than a minute left is swapped for a new one below instead.
+      if (accessToken && (expiresAt === null || expiresAt - Date.now() > EXPIRY_MARGIN_MS)) {
+        return { token: accessToken, expiresAt };
+      }
+    } catch {
+      // Better Auth doesn't say why a refresh failed, so ask Google directly below.
+    }
   }
   return refreshDirectly(row.refreshToken);
 }
 
-async function refreshDirectly(encryptedRefreshToken: string | null): Promise<string> {
+async function refreshDirectly(encryptedRefreshToken: string | null): Promise<GoogleToken> {
   if (!encryptedRefreshToken) throw new GoogleAccessError("revoked", "No refresh token stored");
   const refreshToken = await decrypt(encryptedRefreshToken);
   if (!refreshToken) throw new GoogleAccessError("revoked", "Stored token can't be decrypted");
@@ -68,17 +93,26 @@ async function refreshDirectly(encryptedRefreshToken: string | null): Promise<st
   } catch {
     throw new GoogleAccessError("unavailable", "Google's token server didn't answer");
   }
-  const body: unknown = await response.json().catch(() => null);
-  const accessToken = (body as { access_token?: unknown } | null)?.access_token;
-  if (response.ok && typeof accessToken === "string") return accessToken;
+  const body = (await response.json().catch(() => null)) as {
+    access_token?: unknown;
+    expires_in?: unknown;
+  } | null;
+  const accessToken = body?.access_token;
+  if (response.ok && typeof accessToken === "string") {
+    const seconds = body?.expires_in;
+    return {
+      token: accessToken,
+      expiresAt: typeof seconds === "number" ? Date.now() + seconds * 1000 : null,
+    };
+  }
   if (isRevokedGrant(body)) throw new GoogleAccessError("revoked", "Google access was revoked");
   throw new GoogleAccessError("unavailable", `Google's token server answered ${response.status}`);
 }
 
-/** An auth client for the GA4 libraries, holding a fresh access token. */
-export async function getGoogleAuthClient(userId: string): Promise<OAuth2Client> {
+/** An auth client for the GA4 libraries, holding one access token (from withGoogleToken). */
+export function authClientFor(accessToken: string): OAuth2Client {
   const client = new OAuth2Client();
-  client.setCredentials({ access_token: await getGoogleAccessToken(userId) });
+  client.setCredentials({ access_token: accessToken });
   return client;
 }
 

@@ -4,6 +4,28 @@ A dated log with one entry per session. **Newest entry first.**
 
 It is written for future Claude sessions: read the latest entry before starting work. Ideas that fall outside the roadmap go here too (Working rule 5).
 
+## 2026-10-26 · Session 17, continued · A false "Google access ended", and deploys with SSH locked
+
+### Done
+
+- **Why the banner showed after a deploy:** Better Auth returns its stored Google access token until 5 seconds before it runs out, and `token-cache.ts` kept whatever it got for a fixed 10 minutes. A token picked up in its last 10 minutes (about 1 time in 6, and a fresh process after a deploy always picks one up) was used after Google had ended it. Google answered 401, `classifyError` called every 401 "revoked", and `markNeedsReconnect` set all of Siamak's sites to `needs_reconnect`. It cleared when the site menu asked for his property list: Better Auth refreshed the expired token, and the account hook set the sites back to `ok`.
+- **Fix:**
+  - The cache keeps a token until a minute before its expiry (at most 10 minutes), from Better Auth's `accessTokenExpiresAt` or the token endpoint's `expires_in`. A token with under a minute left is swapped for a new one first.
+  - `withGoogleToken(userId, call)` runs every Google API call: `withDataClient` and `withAdminClient` in `clients.ts` (reports, realtime, the Admin API) and Search Console's `call()`. On a 401 it gets a new token from Google's token endpoint and runs the call once more; parallel calls share one new token (`replaceToken`).
+  - `classifyError` only says "revoked" for the token server refusing the grant (`GoogleAccessError`, `invalid_grant`). A 401 that a new token doesn't fix is "unavailable" and goes to Sentry.
+- **Tests:** `token-cache.test.ts` and `google-errors.test.ts` are new, and the error and cache tests were changed. The wiring in `google.ts` was checked once with Better Auth, the database and the token endpoint mocked (deleted after). `npm run check` passes (60 files, 476 tests).
+- **Deploys with SSH locked to Siamak's IP:** went through the options (open 22 again, a Cloudflare Tunnel, Tailscale, opening Azure's rule during a deploy, the server pulling the build). A Cloudflare Tunnel fits best. Nothing was built; waiting for Siamak.
+
+### Learned
+
+- Better Auth's `getAccessToken` only refreshes when fewer than 5 seconds are left (`accessTokenExpired` in `better-auth/dist/api/routes/account.mjs`), and it returns `accessTokenExpiresAt`, so the cache can follow the real expiry.
+- A 401 from a Google API means the access token was turned down. Only the token endpoint's `invalid_grant` says the grant itself is gone.
+
+### Next
+
+- Siamak: after the next deploy, check the banner doesn't come back. If a 401 ever survives a new token, Sentry gets "GA4 request failed".
+- Siamak: pick a way to deploy with port 22 closed (a Cloudflare Tunnel is the suggestion), or open 22 to Any again as `docs/deploy.md` describes.
+
 ## 2026-10-24 · Session 17 · Live count in the overview, globe in the demo
 
 ### Done
