@@ -375,6 +375,8 @@ What's done and what's next, in plain words.
 - [x] Footer letters soft by default, bright white on hover, focus or an open card (27 Oct)
 - [x] How it works redesigned: a drawing per step (HTML, no images), "01–03", the three reasons in one card; a "Works with" band with "Verified by Google"; ids on every landing section (`#hero`, `#demo`, `#works-with`, `#how-it-works`, `#pricing`, `#faq`, `#footer`) (27 Oct)
 - [x] The docs' "unverified app" note says Google has verified SimpleDash (27 Oct)
+- [x] Pastel colour in How it works (violet, mint, sky per step and reason) and in the Works with icons (27 Oct)
+- [x] The landing demo's address bar reads `simpledash.app/demo` and opens `/demo` in a new tab (27 Oct)
 - [ ] Siamak: on simpledash.app's settings page, turn on the public page with the address `simpledash-app` and the cards "Visitors over time" and "Right now" (Countries, Pages and Devices fill the live band). Until then the footer shows the plain word
 - [ ] Lighthouse on the landing page and a legal page after deploy (not installed here)
 

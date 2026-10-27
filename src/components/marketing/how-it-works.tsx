@@ -7,44 +7,77 @@ import {
   PlugZapIcon,
   TagIcon,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { Container } from "@/components/shared/container";
 import { LogoMark } from "@/components/shared/logo";
 import { FREE_HISTORY_DAYS, plans } from "@/config/plans";
 import { SAMPLE_DOMAIN } from "@/lib/ga4/sample/sample";
 import { cn } from "@/lib/utils";
 
-const steps: { title: string; body: string; visual: ReactNode }[] = [
+/**
+ * The section's three pastel tones, from the theme's own colours: violet is the brand, mint the
+ * product's revenue green, sky its visitors line. Only shapes are tinted; text stays neutral so
+ * it keeps its contrast.
+ */
+const TONES = {
+  violet: {
+    panel: "from-primary/20 via-primary/5",
+    dot: "bg-primary",
+    tile: "bg-primary/15 text-primary",
+    grid: "var(--primary)",
+  },
+  mint: {
+    panel: "from-chart-4/20 via-chart-4/5",
+    dot: "bg-chart-4",
+    tile: "bg-chart-4/15 text-chart-4",
+    grid: "var(--chart-4)",
+  },
+  sky: {
+    panel: "from-chart-1/20 via-chart-1/5",
+    dot: "bg-chart-1",
+    tile: "bg-chart-1/15 text-chart-1",
+    grid: "var(--chart-1)",
+  },
+} as const;
+type Tone = keyof typeof TONES;
+
+const steps: { title: string; body: string; tone: Tone; visual: ReactNode }[] = [
   {
     title: "Sign in with Google",
     body: "One screen. We ask for read-only access to Google Analytics, nothing else.",
+    tone: "violet",
     visual: <SignInVisual />,
   },
   {
     title: "We find your GA4 site",
     body: "No setup. If you have several sites, we pick the busiest one. Switch any time.",
+    tone: "mint",
     visual: <FindSiteVisual />,
   },
   {
     title: "See it on one page",
     body: `Your visitors, sources and top pages, in plain words. On ${plans.pro.name}, a short email every Monday too.`,
+    tone: "sky",
     visual: <OnePageVisual />,
   },
 ];
 
-const reasons = [
+const reasons: { icon: typeof PlugZapIcon; title: string; body: string; tone: Tone }[] = [
   {
     icon: PlugZapIcon,
+    tone: "violet",
     title: "Zero setup",
     body: "If GA4 is already on your site, it works in one click. No new tracking code.",
   },
   {
     icon: HistoryIcon,
+    tone: "sky",
     title: "Full charts from day one",
     body: `Google already stores your visits, so nothing starts empty: the last ${FREE_HISTORY_DAYS} days on ${plans.free.name}, years on ${plans.pro.name}.`,
   },
   {
     icon: TagIcon,
+    tone: "mint",
     title: "A flat price",
     body: "No traffic limits and no per-event pricing, because we store almost nothing.",
   },
@@ -86,13 +119,23 @@ export function HowItWorks() {
             >
               <div
                 aria-hidden="true"
-                className="relative flex h-52 items-center justify-center overflow-hidden rounded-xl bg-linear-to-b from-primary/10 via-primary/5 to-card"
+                className={cn(
+                  "relative flex h-52 items-center justify-center overflow-hidden rounded-xl bg-linear-to-b to-card",
+                  TONES[step.tone].panel,
+                )}
               >
-                <div className="how-dots absolute inset-0" />
+                <div
+                  className="how-dots absolute inset-0"
+                  style={{ "--dot": TONES[step.tone].grid } as CSSProperties}
+                />
                 {step.visual}
               </div>
               <div className="flex flex-col gap-2 px-3.5">
-                <span className="font-mono text-xs font-medium text-primary">
+                <span className="flex items-center gap-2 font-mono text-xs font-medium text-muted-foreground">
+                  <span
+                    aria-hidden="true"
+                    className={cn("size-1.5 rounded-full", TONES[step.tone].dot)}
+                  />
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <h3 className="text-lg font-semibold tracking-tight">{step.title}</h3>
@@ -104,7 +147,12 @@ export function HowItWorks() {
         <ul className="grid divide-y rounded-2xl border bg-card md:grid-cols-3 md:divide-x md:divide-y-0">
           {reasons.map((reason) => (
             <li key={reason.title} className="flex gap-4 p-6">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <span
+                className={cn(
+                  "flex size-10 shrink-0 items-center justify-center rounded-xl",
+                  TONES[reason.tone].tile,
+                )}
+              >
                 <reason.icon className="size-5" aria-hidden="true" />
               </span>
               <div className="flex flex-col gap-1">
@@ -171,7 +219,7 @@ function FindSiteVisual() {
             key={site.name}
             className={cn(
               "flex items-center gap-2 rounded-lg px-2.5 py-2",
-              site.picked && "bg-primary/10 ring-1 ring-primary/25",
+              site.picked && "bg-chart-4/10 ring-1 ring-chart-4/30",
             )}
           >
             <GlobeIcon className="size-3.5 shrink-0 text-muted-foreground" />
@@ -180,12 +228,12 @@ function FindSiteVisual() {
               <span
                 className={cn(
                   "block h-full rounded-full",
-                  site.picked ? "bg-primary" : "bg-primary/30",
+                  site.picked ? "bg-chart-4" : "bg-chart-4/30",
                 )}
                 style={{ width: `${site.share}%` }}
               />
             </span>
-            <CheckIcon className={cn("size-3.5 text-primary", !site.picked && "invisible")} />
+            <CheckIcon className={cn("size-3.5 text-chart-4", !site.picked && "invisible")} />
           </li>
         ))}
       </ul>

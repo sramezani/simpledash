@@ -999,7 +999,7 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 
 **Live demo** (`DemoFrame`):
 
-- A real public stats page (`/demo?embed=1`) inside a browser window: three dots on the left, the page address in the middle (`simpledash.app/p/<slug>`), a soft outer frame, and a handwritten "Interactive demo" note with an arrow.
+- A real public stats page (`/demo?embed=1`) inside a browser window: three dots on the left, the page address in the middle (`simpledash.app/demo`, a link that opens `/demo` in a new tab; Siamak, Oct 27, 2026), a soft outer frame, and a handwritten "Interactive demo" note with an arrow.
 - Fixed height: the page scrolls inside the window, and its date menu, tabs and tooltips work.
 - The frame starts loading only when it comes near the screen, then fades in over a placeholder of the same shape, so the landing page's first load stays light.
 - **Which page:** `src/config/demo.ts` holds the slug (now `meetline-me`) and the range the demo opens with. If that page is missing or paused, `/demo` shows sample data instead, so the landing page never breaks.
@@ -1007,7 +1007,7 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 - **`/demo` on its own** shows the same page with a "Live demo" banner and a "Get yours, free" button. It always allows every range and shows "Powered by SimpleDash", whatever the demo owner's plan. It is `noindex` (the original is `/p/<slug>`), may be framed by our own site only (`frame-ancestors 'self'`), and is cached like a public page.
 - **No Recharts on the landing page:** the demo uses the server-rendered chart, and its JavaScript runs inside the frame.
 
-**Works with** (`WorksWith`, `#works-with`, between the demo and How it works; Siamak, Oct 27, 2026): "Works with the tools you already use", then Google Analytics 4, Google Search Console and Stripe as names with our own plain icons (integrations, not customers, so never "trusted by"; Google's logos aren't ours to use), then four facts as chips: "Verified by Google" (Google approved the app's data access on Oct 27, 2026), "Read-only access", "No tracking script", "Open source".
+**Works with** (`WorksWith`, `#works-with`, between the demo and How it works; Siamak, Oct 27, 2026): "Works with the tools you already use", then Google Analytics 4, Google Search Console and Stripe as names with our own plain icons, each icon in a theme colour near that tool's own (amber, blue, violet) (integrations, not customers, so never "trusted by"; Google's logos aren't ours to use), then four facts as chips: "Verified by Google" (Google approved the app's data access on Oct 27, 2026), "Read-only access", "No tracking script", "Open source".
 
 **How it works, in 3 steps** (`#how-it-works`; redesigned Oct 27, 2026):
 
@@ -1017,8 +1017,8 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 
 - A pill "How it works", the heading "Three steps to your numbers" and one line under it.
 - Each step is a card with a small drawing of it made of HTML (no image files): the consent screen reduced to "See your Google Analytics · Read-only access · Allow", the account's sites with the busiest picked, and one page with the visitors line (it draws itself in as it scrolls into view) and top sources. The drawings show shapes and labels, never made-up numbers. Under the drawing: "01", the step and its sentence.
-- A soft brand glow behind the cards and a fading dot grid behind each drawing.
-- Under the steps, one card split in three: Zero setup, Full charts from day one, A flat price, each with an icon tile.
+- Three pastel tones from the theme's own colours (Siamak, Oct 27, 2026): violet (the brand) for step 1, mint (`chart-4`, the revenue green) for step 2, sky (`chart-1`, the visitors line) for step 3. Each drawing's panel and fading dot grid take its tone, and so do its accents (the picked site in mint). Text stays neutral; the step number has a small dot in its tone instead. A soft brand glow sits behind the cards.
+- Under the steps, one card split in three: Zero setup (violet tile), Full charts from day one (sky), A flat price (mint).
 
 **Section addresses:** every landing section has an id to link to and share: `#hero`, `#demo`, `#works-with`, `#how-it-works`, `#pricing`, `#faq`, `#footer`.
 

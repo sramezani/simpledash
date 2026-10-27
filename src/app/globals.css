@@ -504,8 +504,9 @@
   );
 }
 .how-dots {
+  /* --dot: the step's tone, set inline. */
   background-image: radial-gradient(
-    color-mix(in srgb, var(--primary) 22%, transparent) 1px,
+    color-mix(in srgb, var(--dot, var(--primary)) 25%, transparent) 1px,
     transparent 1.5px
   );
   background-size: 14px 14px;

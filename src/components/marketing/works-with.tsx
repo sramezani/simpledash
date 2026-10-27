@@ -14,10 +14,11 @@ import { Container } from "@/components/shared/container";
  * text with our own plain icons: these are integrations, not customers, and Google's logos
  * aren't ours to use. Every fact here is true and checkable.
  */
+// Each icon takes a soft nod to that tool's own colour, from the theme: amber, blue, violet.
 const tools = [
-  { icon: ChartNoAxesColumnIcon, name: "Google Analytics 4" },
-  { icon: SearchIcon, name: "Google Search Console" },
-  { icon: CreditCardIcon, name: "Stripe" },
+  { icon: ChartNoAxesColumnIcon, name: "Google Analytics 4", tone: "text-chart-3" },
+  { icon: SearchIcon, name: "Google Search Console", tone: "text-chart-1" },
+  { icon: CreditCardIcon, name: "Stripe", tone: "text-primary" },
 ];
 
 const facts = [
@@ -45,7 +46,7 @@ export function WorksWith() {
               key={tool.name}
               className="flex items-center gap-2.5 text-lg font-semibold tracking-tight text-foreground/75 sm:text-xl"
             >
-              <tool.icon className="size-5 text-primary" aria-hidden="true" />
+              <tool.icon className={`size-5 ${tool.tone}`} aria-hidden="true" />
               {tool.name}
             </li>
           ))}

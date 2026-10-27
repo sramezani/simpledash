@@ -1,6 +1,6 @@
-import { LockIcon } from "lucide-react";
+import { ArrowUpRightIcon, LockIcon } from "lucide-react";
+import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
-import { demo } from "@/config/demo";
 import { brand } from "@/config/theme";
 import { HandNote } from "./hand-note";
 import { LazyFrame } from "./lazy-frame";
@@ -8,7 +8,8 @@ import { LazyFrame } from "./lazy-frame";
 /**
  * The landing page's live demo (docs/SPEC.md section 17): a real public stats page
  * (/demo) inside a browser window, with a fixed height. The page scrolls inside the
- * window and its date menu and tabs work.
+ * window and its date menu and tabs work. The address bar shows /demo and opens it in a
+ * new tab.
  */
 export function DemoFrame() {
   const host = new URL(brand.url).host;
@@ -28,13 +29,24 @@ export function DemoFrame() {
               <span className="size-3 rounded-full bg-window-minimize" />
               <span className="size-3 rounded-full bg-window-zoom" />
             </div>
-            <p className="flex min-w-0 items-center justify-center gap-1.5 text-sm text-muted-foreground">
+            <Link
+              href="/demo"
+              target="_blank"
+              rel="noopener"
+              prefetch={false}
+              className="group/address mx-auto flex max-w-full min-w-0 items-center justify-center gap-1.5 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
               <LockIcon className="size-3 shrink-0" aria-hidden="true" />
               <span className="truncate">
                 <span className="hidden sm:inline">https://</span>
-                {host}/p/<span className="font-medium text-foreground">{demo.slug}</span>
+                {host}/<span className="font-medium text-foreground">demo</span>
               </span>
-            </p>
+              <ArrowUpRightIcon
+                className="size-3.5 shrink-0 opacity-0 transition-opacity group-hover/address:opacity-100 group-focus-visible/address:opacity-100"
+                aria-hidden="true"
+              />
+              <span className="sr-only"> (opens the live demo in a new tab)</span>
+            </Link>
           </div>
           <div className="h-[34rem] bg-background sm:h-[42rem] lg:h-[46rem]">
             <LazyFrame
