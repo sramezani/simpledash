@@ -4,6 +4,18 @@ A dated log with one entry per session. **Newest entry first.**
 
 It is written for future Claude sessions: read the latest entry before starting work. Ideas that fall outside the roadmap go here too (Working rule 5).
 
+## 2026-10-31 · Session 19 · Deploy actions on Node 24
+
+### Done
+
+- GitHub Actions warned on every deploy that `docker/setup-buildx-action@v3` and `docker/build-push-action@v6` run on Node 20, which is deprecated (forced onto Node 24 for now). `.github/workflows/deploy.yml` now uses `setup-qemu-action@v4`, `setup-buildx-action@v4` and `build-push-action@v7`, all on Node 24. QEMU was on Node 20 too; it wasn't in the warning only because it runs just for non-amd64 builds.
+- The new majors drop deprecated inputs and the `DOCKER_BUILD_NO_SUMMARY` / `DOCKER_BUILD_EXPORT_RETENTION_DAYS` env vars; the workflow uses none of them. `actions/checkout@v5` and `actions/setup-node@v5` already run on Node 24.
+- Made from a myloopland session, which has the same workflow and got the same fix.
+
+### Next
+
+- Check the warning is gone on the next deploy run.
+
 ## 2026-10-27 · Session 18 · A footer whose word is a chart
 
 ### Done
