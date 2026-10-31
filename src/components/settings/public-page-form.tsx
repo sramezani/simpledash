@@ -3,21 +3,27 @@
 import { useActionState } from "react";
 import { CopyButton } from "@/components/shared/copy-button";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 export type PublicPageValues = {
+  /** Shown, never edited: it comes from the site's domain. */
   slug: string;
   enabled: boolean;
   indexable: boolean;
   cards: string[];
 };
 
-type FormState = { error?: string; saved?: boolean; values?: PublicPageValues };
+type FormState = {
+  error?: string;
+  saved?: boolean;
+  values?: Omit<PublicPageValues, "slug">;
+};
 
 const checkbox = "size-4 shrink-0 accent-primary";
 
-/** Settings → Public page (docs/SPEC.md section 15): on or off, address, cards, indexing. */
+/**
+ * Settings → Public page (docs/SPEC.md section 15): on or off, cards, indexing. The address is
+ * made from the site's domain and can't be changed, so links to the page never break.
+ */
 export function PublicPageForm({
   action,
   values: saved,
@@ -34,6 +40,7 @@ export function PublicPageForm({
   // After a rejected save, show what was sent: React resets the form to these defaults.
   const values = state.values ?? saved;
   const url = `${base}${saved.slug}`;
+  const address = url.replace(/^https?:\/\//, "");
   return (
     <form action={save} className="flex flex-col gap-5">
       <label className="flex items-center gap-3 text-sm font-medium">
@@ -46,39 +53,25 @@ export function PublicPageForm({
         Public page is on
       </label>
 
-      {saved.enabled ? (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg bg-muted p-3">
-          <a
-            href={url}
-            className="min-w-0 flex-1 truncate rounded-md text-sm font-medium text-primary underline-offset-2 hover:underline"
-          >
-            {url.replace(/^https?:\/\//, "")}
-          </a>
-          <CopyButton text={url} />
-        </div>
-      ) : null}
-
       <div className="flex flex-col gap-2">
-        <Label htmlFor="public-slug">Address</Label>
-        <div className="flex min-w-0 items-center gap-1 text-sm">
-          <span className="shrink-0 text-muted-foreground">{base.replace(/^https?:\/\//, "")}</span>
-          <Input
-            id="public-slug"
-            name="slug"
-            defaultValue={values.slug}
-            required
-            minLength={3}
-            maxLength={40}
-            pattern="[a-z0-9]+(-[a-z0-9]+)*"
-            autoCapitalize="off"
-            autoComplete="off"
-            spellCheck={false}
-            aria-describedby="public-slug-help"
-            className="min-w-0 flex-1 pointer-coarse:h-11"
-          />
+        <span className="text-sm font-medium">Address</span>
+        <div className="flex flex-wrap items-center gap-2 rounded-lg bg-muted p-3">
+          {saved.enabled ? (
+            <a
+              href={url}
+              className="min-w-0 flex-1 truncate rounded-md text-sm font-medium text-primary underline-offset-2 hover:underline"
+            >
+              {address}
+            </a>
+          ) : (
+            <span className="min-w-0 flex-1 truncate text-sm font-medium text-muted-foreground">
+              {address}
+            </span>
+          )}
+          {saved.enabled ? <CopyButton text={url} /> : null}
         </div>
-        <p id="public-slug-help" className="text-xs text-muted-foreground">
-          Lowercase letters, numbers and dashes. Changing it breaks links to the old address.
+        <p className="text-xs text-muted-foreground">
+          Made from your site&apos;s address, so links to the page never break.
         </p>
       </div>
 

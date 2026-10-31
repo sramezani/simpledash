@@ -20,7 +20,11 @@ import { SettingsSection } from "./settings-shell";
  */
 
 type Action = (formData: FormData) => Promise<void>;
-type PublicPageFormState = { error?: string; saved?: boolean; values?: PublicPageValues };
+type PublicPageFormState = {
+  error?: string;
+  saved?: boolean;
+  values?: Omit<PublicPageValues, "slug">;
+};
 
 const buttonClass = "h-9 self-start pointer-coarse:h-11";
 const linkClass = "font-medium text-primary underline-offset-2 hover:underline";

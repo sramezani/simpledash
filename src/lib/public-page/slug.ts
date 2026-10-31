@@ -1,7 +1,7 @@
 /**
- * Public page addresses (docs/SPEC.md sections 9 and 15): 3–40 characters of
- * a–z, 0–9 and "-", not starting or ending with "-", and not a reserved word.
- * Pure, so it is tested.
+ * Public page addresses (docs/SPEC.md sections 9 and 15), made from the site's domain:
+ * 3–40 characters of a–z, 0–9 and "-", not starting or ending with "-", and not a
+ * reserved word. Pure, so it is tested.
  */
 
 const RESERVED = new Set([
@@ -48,17 +48,6 @@ export function isValidSlug(slug: string): boolean {
     !slug.includes("--") &&
     !RESERVED.has(slug)
   );
-}
-
-/** Why a slug can't be used, in plain words, or null when it's fine. */
-export function slugProblem(slug: string): string | null {
-  if (slug.length < 3 || slug.length > 40) return "Use 3 to 40 characters.";
-  if (!/^[a-z0-9-]+$/.test(slug)) return "Use only lowercase letters, numbers and dashes.";
-  if (slug.startsWith("-") || slug.endsWith("-") || slug.includes("--")) {
-    return "Dashes can't be at the start or end, or next to each other.";
-  }
-  if (RESERVED.has(slug)) return "That address is reserved. Try another.";
-  return null;
 }
 
 /** "www.My-Site.com" → "my-site-com". Falls back to "my-site" when nothing usable is left. */

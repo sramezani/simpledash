@@ -469,7 +469,7 @@ Primary key (`property_id`, `report`, `range_type`, `params_hash`).
 
 - **`chart_note`**: `id`, `site_id` fk → site (cascade), `day` date, `text` varchar(80), `created_at`, `updated_at`.
 - **`public_page`**: `site_id` pk fk → site (cascade), `user_id` fk (for clean-up), `slug` unique, `enabled` boolean (default false), `cards` text[], `indexable` boolean (default true), `updated_at`.
-  - A slug is 3–40 characters of `[a-z0-9-]`. Reserved words are blocked.
+  - A slug is 3–40 characters of `[a-z0-9-]`, made from the domain (`slugFromDomain`) and never edited. Reserved words are blocked.
   - One page per site since Sprint 5 (it was one per user, showing the active site).
 - **`user_settings`**: `user_id` pk fk, `weekly_email` boolean (default true), `email_notice_dismissed` boolean (default false), `created_at`, `updated_at`.
 - **`billing`**: `user_id` pk fk, `status` (Stripe subscription status, or null on Free), `plan` (`pro`, from the price; null until the first payment), `stripe_customer_id`, `stripe_subscription_id`, `plan_interval` (`month` or `year`, null until the first payment), `current_period_end`, `cancel_at_period_end`, `state_at`, `updated_at`.
@@ -886,7 +886,7 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 **Turning it on and settings:**
 
 - Turned on from its dashboard card or from settings.
-- **Slug:** defaults to the domain, e.g. `mysite-com`. Must be unique.
+- **Address (slug):** made from the site's domain when the page is first created, e.g. `xyz.com` → `/p/xyz-com`, and it never changes (Siamak, Oct 27, 2026), so shared links can't break. Settings shows it with **Copy link** but can't edit it. Only if that address is already taken (two accounts connected the same site) does the page get a number: `xyz-com-2`. Pages made before Oct 27 keep the address they have.
 - **Cards:** the user picks which cards to show, from the card list in `src/config/cards.ts` (section 4).
 - **Indexing:** "Let search engines index this page" is on by default.
 - **Copy link** button.

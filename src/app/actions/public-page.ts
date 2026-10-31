@@ -11,7 +11,7 @@ export type PublicPageFormState = {
   error?: string;
   saved?: boolean;
   /** What was sent, so a rejected form keeps the visitor's input. */
-  values?: { slug: string; enabled: boolean; indexable: boolean; cards: string[] };
+  values?: { enabled: boolean; indexable: boolean; cards: string[] };
 };
 
 /**
@@ -31,16 +31,14 @@ export async function turnOnPublicPageAction(siteId: string): Promise<ShareState
   }
 }
 
-/** Settings → Public page: on or off, address, cards and indexing. */
+/** Settings → Public page: on or off, cards and indexing. The address comes from the domain. */
 export async function savePublicPageAction(
   siteId: string,
   _state: PublicPageFormState,
   formData: FormData,
 ): Promise<PublicPageFormState> {
   const { site } = await requireSite(siteId);
-  const slug = formData.get("slug");
   const values = {
-    slug: typeof slug === "string" ? slug.slice(0, 100) : "",
     enabled: formData.get("enabled") === "on",
     indexable: formData.get("indexable") === "on",
     cards: formData
@@ -52,14 +50,10 @@ export async function savePublicPageAction(
   try {
     result = await savePublicPage(site, values);
   } catch {
-    // Most likely someone took the same address a moment ago.
-    return { error: "Couldn't save. Please try again, or try another address.", values };
+    return { error: "Couldn't save. Please try again.", values };
   }
   if ("error" in result) return { error: result.error, values };
   updateTag(publicTag(result.page.slug));
-  if (result.previousSlug && result.previousSlug !== result.page.slug) {
-    updateTag(publicTag(result.previousSlug));
-  }
   refresh();
   return { saved: true };
 }

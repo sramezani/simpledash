@@ -377,6 +377,7 @@ What's done and what's next, in plain words.
 - [x] The docs' "unverified app" note says Google has verified SimpleDash (27 Oct)
 - [x] Pastel colour in How it works (violet, mint, sky per step and reason) and in the Works with icons (27 Oct)
 - [x] The landing demo's address bar reads `simpledash.app/demo` and opens `/demo` in a new tab (27 Oct)
+- [x] A public page's address comes from the site's domain (`/p/xyz-com`) and can't be edited in Settings (27 Oct)
 - [x] The cookie banner is a full-width bar along the bottom (a sheet on phones), its content lined up with the page, sliding up; Decline and Accept still the same size (27 Oct)
 - [ ] Siamak: on simpledash.app's settings page, turn on the public page with the address `simpledash-app` and the cards "Visitors over time" and "Right now" (Countries, Pages and Devices fill the live band). Until then the footer shows the plain word
 - [ ] Lighthouse on the landing page and a legal page after deploy (not installed here)

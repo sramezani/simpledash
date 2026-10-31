@@ -1,34 +1,25 @@
 import "server-only";
-import { and, eq, ne } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { defaultPublicCardIds, publicCardIds, type CardId } from "@/config/cards";
 import { db } from "@/lib/db/client";
 import { publicPage, type PublicPage, type Site } from "@/lib/db/schema";
-import { slugCandidates, slugFromDomain, slugProblem } from "./slug";
+import { slugCandidates, slugFromDomain } from "./slug";
 
 /** A site's public page settings, or undefined when it was never turned on. */
 export function getSitePublicPage(siteId: string): Promise<PublicPage | undefined> {
   return db.query.publicPage.findFirst({ where: eq(publicPage.siteId, siteId) });
 }
 
-/** The dashboard card's one-click "Turn on": a slug from the domain and the default cards. */
-export async function turnOnPublicPage(owned: Site): Promise<PublicPage> {
-  const existing = await getSitePublicPage(owned.id);
-  if (existing) {
-    const [row] = await db
-      .update(publicPage)
-      .set({ enabled: true })
-      .where(eq(publicPage.siteId, owned.id))
-      .returning();
-    return row!;
-  }
+type PageSettings = { enabled: boolean; indexable: boolean; cards: CardId[] };
+
+/**
+ * A site's first public page. Its address comes from the site's domain and never changes, so
+ * shared links keep working: `mysite.com` → `mysite-com`. Only when that address is taken (two
+ * accounts connected the same site) does it get a number: `mysite-com-2`.
+ */
+async function createPublicPage(owned: Site, settings: PageSettings): Promise<PublicPage> {
   const base = slugFromDomain(owned.domain ?? owned.displayName);
-  const values = {
-    siteId: owned.id,
-    userId: owned.userId,
-    enabled: true,
-    cards: [...defaultPublicCardIds],
-    indexable: true,
-  };
+  const values = { siteId: owned.id, userId: owned.userId, ...settings };
   for (const slug of slugCandidates(base)) {
     const [row] = await db
       .insert(publicPage)
@@ -48,8 +39,26 @@ export async function turnOnPublicPage(owned: Site): Promise<PublicPage> {
   return row!;
 }
 
+/** The dashboard card's one-click "Turn on": the address from the domain and the default cards. */
+export async function turnOnPublicPage(owned: Site): Promise<PublicPage> {
+  const existing = await getSitePublicPage(owned.id);
+  if (existing) {
+    const [row] = await db
+      .update(publicPage)
+      .set({ enabled: true })
+      .where(eq(publicPage.siteId, owned.id))
+      .returning();
+    return row!;
+  }
+  return createPublicPage(owned, {
+    enabled: true,
+    indexable: true,
+    cards: [...defaultPublicCardIds],
+  });
+}
+
+/** What Settings → Public page can change. The address isn't one of them. */
 export type PublicPageInput = {
-  slug: string;
   enabled: boolean;
   indexable: boolean;
   cards: string[];
@@ -59,22 +68,16 @@ export type PublicPageInput = {
 export async function savePublicPage(
   owned: Site,
   input: PublicPageInput,
-): Promise<{ error: string } | { page: PublicPage; previousSlug: string | null }> {
-  const slug = input.slug.trim().toLowerCase();
-  const problem = slugProblem(slug);
-  if (problem) return { error: problem };
+): Promise<{ error: string } | { page: PublicPage }> {
   const cards = publicCardIds.filter((id) => input.cards.includes(id)) as CardId[];
   if (cards.length === 0) return { error: "Pick at least one card to show." };
-  const taken = await db.query.publicPage.findFirst({
-    where: and(eq(publicPage.slug, slug), ne(publicPage.siteId, owned.id)),
-  });
-  if (taken) return { error: "That address is taken. Try another." };
-  const previous = await getSitePublicPage(owned.id);
-  const set = { slug, enabled: input.enabled, indexable: input.indexable, cards };
+  const settings = { enabled: input.enabled, indexable: input.indexable, cards };
+  const existing = await getSitePublicPage(owned.id);
+  if (!existing) return { page: await createPublicPage(owned, settings) };
   const [page] = await db
-    .insert(publicPage)
-    .values({ siteId: owned.id, userId: owned.userId, ...set })
-    .onConflictDoUpdate({ target: publicPage.siteId, set })
+    .update(publicPage)
+    .set(settings)
+    .where(eq(publicPage.siteId, owned.id))
     .returning();
-  return { page: page!, previousSlug: previous?.slug ?? null };
+  return { page: page! };
 }

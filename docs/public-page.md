@@ -23,7 +23,7 @@ The optional public stats page at `/p/<slug>`, one per site. The plan is in `doc
 ## Turning it on
 
 - **Dashboard:** the "Share your stats publicly?" card (only while the user has never set one up). "Turn on" creates the page with a slug from the domain (`mysite.com` → `mysite-com`, then `mysite-com-2` and so on if taken) and the default cards, then shows the link with **Copy link**.
-- **Settings → Public page:** on or off, the address, the cards and "Let search engines index this page" (on by default). Saving drops the cached copy at once (`updateTag`), for the old address too when it changed.
+- **Settings → Public page:** on or off, the cards and "Let search engines index this page" (on by default). The address is shown with Copy link but can't be edited: it is made from the domain when the page is first created (`createPublicPage`: `xyz.com` → `xyz-com`, `xyz-com-2` only when taken) and never changes. Saving drops the cached copy at once (`updateTag`).
 
 ## What it shows
 
