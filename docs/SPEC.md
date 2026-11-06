@@ -60,7 +60,7 @@ Added later the same day:
 
 - **Pricing** (replaced on Oct 14 by Free and Pro, section 16): one plan, **Starter**, at €9 a month or €90 a year (2 months free). **Growth** (€19 a month or €190 a year) shows as "Coming soon". Pricing is a section on the landing page with a Monthly / Yearly switch (sections 16 and 17). This replaces the roadmap's "one plan at €9 a month" for V1.
 - **Theme and brand in one file:** `src/config/theme.ts`, and the code only uses its tokens (section 18).
-- **Light theme only** in V1, confirmed (section 18).
+- **Light theme only** in V1, confirmed (section 18). Replaced on Nov 6, 2026 (Siamak): light and dark, following the device unless the visitor picks one (section 18).
 - **UI bar:** the polish of the best tools in this space (Siamak named DataFast), with our own design (section 18).
 
 ## 2. Architecture
@@ -243,7 +243,7 @@ More features come in V2 (several sites, alerts, revenue), so the code is built 
 | `/demo` | **Live demo** (section 17): a real public stats page, framed on the landing page with `?embed=1` | public | partly prerendered, cached about 10 minutes, plus Cloudflare |
 | `/signin` | **Sign in**: one screen saying what we read (read-only), then "Continue with Google". A signed-in browser is sent to `/dashboard` (by the proxy, unless the address has a query such as `?expired=1`, so a stale cookie can't loop) | public | static |
 | `/dashboard` | **Dashboard**: the cards (section 11); `?site=<id>` names the site (section 28.1) | signed in | dynamic, streamed per card, cache-first |
-| `/settings` | **Settings → Profile**: the account, sign out, disconnect Google, delete account. Settings pages share one frame: a menu on the left ("Account", then "Sites"; a sideways row on phones) and the page beside it | signed in | dynamic |
+| `/settings` | **Settings → Profile**: the account, sign out, Appearance (System, Light or Dark, section 18), disconnect Google, delete account. Settings pages share one frame: a menu on the left ("Account", then "Sites"; a sideways row on phones) and the page beside it. Opening Settings adds Google Analytics sites the user has never had (section 28.1) | signed in | dynamic |
 | `/settings/billing` | **Settings → Plan & billing**: the plan, Upgrade or Manage billing (section 16) | signed in | dynamic |
 | `/settings/email` | **Settings → Monday email**: on or off (Pro, section 14) | signed in | dynamic |
 | `/settings/sites/[siteId]` | **Settings for one site**: public page, Google search insights, revenue, what counts as a sale, remove the site (section 28.1) | signed in, the user's own site | dynamic |
@@ -1126,13 +1126,13 @@ Siamak's rule: the whole look and the brand live in one file, and the code only 
 **The file: `src/config/theme.ts`**
 
 - **`brand`:** name (SimpleDash), tagline, description, URL and support email.
-- **`colors.light`:** the tokens below, as hex values. Hex works everywhere the theme is needed: CSS, email clients and the Open Graph image renderer.
-- **`radius` and `shadows`.**
+- **`colors.light` and `colors.dark`:** the tokens below, as hex values, with the same keys in both (the type and a test check it). Hex works everywhere the theme is needed: CSS, email clients and the Open Graph image renderer.
+- **`radius`, `shadows` and `darkShadows`** (deeper, or they vanish on dark).
 - **Two settings at the top drive the rest:**
   - `brandColor` feeds `primary`, `ring` and `brand`, so changing the main colour is a one-line edit. `chart-1` is its own light, clear blue (it still reaches 3:1 against the card).
   - The `neutral` scale feeds the surfaces, borders and quiet text.
 - **Plain data with no runtime imports,** so pages, emails, Open Graph images, tests and the globe can all import it.
-- **Light theme only in V1.** A `colors.dark` palette can be added later: the CSS then gets a `prefers-color-scheme: dark` block, and nothing else changes.
+- **Light and dark (Siamak, Nov 6, 2026).** The page follows the device's setting until the visitor picks one; see "Light and dark" below. Emails, Open Graph images and favicons stay light.
 
 **Tokens**
 
@@ -1154,7 +1154,7 @@ Siamak's rule: the whole look and the brand live in one file, and the code only 
 - `src/lib/theme/css.ts` turns the theme into CSS variables (`--primary: #…`). It is a pure function with tests.
 - `<ThemeStyle />` writes them into `<head>` from the root layout and from `global-error.tsx`. A saved edit shows at once in development, and there is no generated file.
 - `src/app/globals.css` only maps token names to Tailwind utilities (`@theme inline { --color-primary: var(--primary); … }`), so classes like `bg-primary` and `text-muted-foreground` exist. It holds no colour values.
-- `color-scheme: light` is set, and shadcn's class-based `dark:` variant stays unused.
+- Each palette sets its own `color-scheme`, so scrollbars and form controls match. shadcn's `dark:` variant follows the `dark` class on `<html>` (below), so its parts' own dark touches apply.
 
 **The same values outside the page:**
 
@@ -1162,12 +1162,22 @@ Siamak's rule: the whole look and the brand live in one file, and the code only 
 - The favicons (`icon.tsx`, `apple-icon.tsx`) draw the dash with the `Logo` component in `brandColor`.
 - **Fonts are the one exception.** Next.js needs `next/font` calls in their own module, so `src/lib/theme/fonts.ts` loads Geist, and Caveat for the two handwritten notes on the landing page (`font-hand`, not preloaded, placed absolutely so nothing moves when it arrives). Changing a font is one import line there.
 
+**Light and dark** (Siamak, Nov 6, 2026):
+
+- **The dark palette:** deep blue-grey surfaces, never pure black (page `#101117`, cards a step lighter, menus another), soft white text, the brand as a brighter periwinkle (`#8580FF`) so links and the focus ring read on dark, and brighter chart colours from the same families. Brand-coloured buttons carry dark text there, which keeps them at AA. The footer band becomes a deep brand indigo, so it still ends the page without glaring. The globe keeps its own night sky in both.
+- **CSS only for the colours** (`themeToCss` in `src/lib/theme/css.ts`): `:root` gets light; `@media (prefers-color-scheme: dark)` gives `:root:not([data-theme="light"])` the dark palette; `:root[data-theme="dark"]` gets it whatever the device says. So System needs no script, and pages are right before any JavaScript runs.
+- **The visitor's choice** (System, Light or Dark) lives in this browser only (`localStorage`, key `sd-theme`), never on the server, so pages stay static and cacheable. `themeScript` (`src/components/shared/theme-pref.ts`, tested) is a plain inline `<script>` in `<head>` (not Next's `beforeInteractive`, which runs after the first paint): it sets `data-theme` for a picked theme and the `dark` class whenever the page is dark (for Fumadocs' code colours and shadcn's `dark:`), follows the device and other tabs live, and leaves `window.__sdTheme()` for the switch.
+- **The theme switch** (`ThemeSwitch`, `src/components/shared/theme-switch.tsx`): three icon radios in a pill (System, Light, Dark) with a thumb that glides to the choice and an icon that turns as it's picked. The picked look comes from `<html data-theme>` with CSS, so it's right before hydration. Arrow keys move between them. It sits in the dashboard's top bar, the settings top bar, the footer of the landing and legal pages (a frosted `footer` tone), and the docs menu (Fumadocs' theme slot; its own theme handling stays off).
+- **Changing the theme:** when the page really changes colour, the new theme grows out of the switch as a circle (a view transition on `::view-transition-new(root)`, scoped by a `theme-switching` class). Without view transitions or with reduced motion, it swaps in one frame with colour transitions paused (`theme-instant`).
+- **Settings → Profile → Appearance** (`AppearancePicker`): the same three choices as tiles, each a small drawing of the dashboard in its own colours (System split between the two). The drawings use `themeScopeCss()`: either palette inside `data-theme-scope="light"` or `"dark"`, whatever the page's theme.
+- `viewport.themeColor` gives the browser bar both backgrounds, by `prefers-color-scheme`.
+
 **Guards**, all part of `npm run check`:
 
 1. **Only tokens exist.** Tailwind's default colours are removed (`@theme { --color-*: initial; }`), so classes like `bg-blue-500` don't exist.
 2. **No raw colours.** ESLint (`no-restricted-syntax`) blocks hex, `rgb()`, `hsl()` and `oklch()` strings, and arbitrary colour and font-size classes such as `bg-[#…]` or `text-[13px]`, everywhere except `src/config/theme.ts`.
 3. **Nothing missing.** A test checks that every token has a Tailwind mapping in `globals.css`, that every mapping has a token, and that `globals.css` holds no colour values.
-4. **Contrast.** A test checks WCAG AA: 4.5:1 for every text and background pair, and 3:1 for the focus ring and `chart-1` against the card. A theme edit that would hurt accessibility (and Lighthouse) fails with a message naming the pair.
+4. **Contrast.** A test checks WCAG AA in both palettes: 4.5:1 for every text and background pair, and 3:1 for the focus ring and `chart-1` against the card. A theme edit that would hurt accessibility (and Lighthouse) fails with a message naming the pair and the palette.
 
 When a shadcn part is added, it is moved onto tokens. For example, the dialog overlay uses `bg-overlay` instead of `bg-black/50`, and the destructive button uses `text-destructive-foreground` instead of `text-white`.
 
@@ -1260,7 +1270,7 @@ The bar is the polish of the best tools in this space: everything clear, quick a
 - **Charts:** a caption plus "View as table". The globe's places are listed in the live view's panel, and picking one there flies the globe to it; the globe itself is hidden from screen readers.
 - **Changes:** shown with arrows and words, never colour alone.
 - `prefers-reduced-motion` is respected.
-- **Theme:** light only in V1, confirmed by Siamak on Oct 11, 2026. The theme file can take a dark palette later (Design system, above).
+- **Theme:** light only in V1, confirmed by Siamak on Oct 11, 2026. Since Nov 6, 2026, light and dark ("Light and dark", above).
 
 ## 19. Security
 
@@ -1573,6 +1583,16 @@ Siamak's decisions on Oct 13, 2026 replace the roadmap's V2 list (`docs/ROADMAP.
 - **Links and buttons** all show the pointer cursor (one base rule in `globals.css`, and the menu items).
 - **No site limit (later the same day, Siamak):** Free and Pro both open every Google Analytics site in the account; the menu works the same on both. This replaces "Limits" and "Going back to Starter" above for sites: there are no paused sites any more. Gone with it: the `sites` limit in `plans.ts`, `openableSites`, the replace mode and `SiteLimitError` in `connectProperty`, `switchProperty`, the paused-site dashboard and settings (`PausedSiteView`, `PausedSiteSettings`, "Show … instead"), the "Several sites are part of Pro" panel, "n of 10 in use" and the Free footer in the menu, and "Paused" in the settings menu. A Pro account's Monday email has one block per listed site; public pages pause only when Google access ended.
 
+**Update (Nov 6, 2026, Siamak): new sites join on their own, and sites are named by Google Analytics.**
+
+- **New sites join Settings on their own.** A property made in Google Analytics used to reach Settings only after being opened from the dashboard's site menu. Now opening Settings runs `addNewProperties(userId)` (`src/lib/ga4/properties.ts`) before the menu draws:
+  - it lists the account's properties (as the site menu does) and keeps the ones the user has **never had a site row for** (`newProperties`, pure and tested);
+  - for up to 25 of them, 5 at a time, it fetches the same details as `connectProperty` (`propertyDetails`: name, time zone, currency, service level, creation date, web address) and inserts them **in the list but not active**, a millisecond apart so the list keeps Google's order, with `on conflict do nothing`;
+  - it asks Google at most every 2 minutes per user (in memory, like the other Admin API checks), and a failure never stops Settings from opening (reported to Sentry, except Google access that ended);
+  - a site the user removed keeps its row (`added_at` null), so it stays removed until it's opened again from the site menu. Rows from before Oct 15 that were switched away from look the same, so they don't come back on their own either.
+  - The menu then reads the list fresh (`getUserSites`), not through `getSiteContext`, which the page may have cached before the sync.
+- **Names.** Two properties can share a web address (a blog with its own property, a reverse proxy), so a site is named by its **Google Analytics name** (`siteName`), with a smaller line under it: **its address and property number**, "mysite.com · ID 123456" (`siteDetail`; only the ID without a web stream). Both in `src/lib/sites/label.ts`, tested. Used by the settings menu (two lines per site, the full text on hover), a site's settings heading (the name, then the line), the site menu's rows (`MenuSite.detail`; Google-only rows show just the ID) and the site chip (the name, the line on hover). The public page's address and Search Console matching still use the web address.
+
 ### 28.2 Sprint 6: Google search insights (Search Console)
 
 **Connecting** (Settings → a "Google Search Console" card, Growth): "Connect Search Console" asks Google for one more read-only scope, `webmasters.readonly`, only then. We list the user's Search Console sites (`sites.list`) and pick the one that matches the site's domain (`sc-domain:example.com` first, then `https://example.com/`); the user can change it. If none matches, the card says how to add the site in Search Console. Disconnecting drops the scope's use and the link.
@@ -1677,7 +1697,7 @@ What and why: `docs/CONTENT-PLAN.md`, including the rules for keeping pages righ
 | `description` | 70 to 160 characters: the meta description and the line under the H1 |
 | `updated` | `YYYY-MM-DD`, moved only when the page was really changed |
 
-**Routes.** `src/app/(content)/{docs,guides,glossary,compare}/[[...slug]]/page.tsx`, all prerendered (`generateStaticParams`); the page reads its address inside a Suspense boundary (`ContentRoute`), as Cache Components asks. One layout, `src/app/(content)/layout.tsx`: Fumadocs' `RootProvider` (theme switching off: light only) and `DocsLayout`: the section tabs and the menu on the left, the page in the middle and "On this page" on the right, which follows the scroll. On phones the menu is a drawer and "On this page" folds into a button. Search (Ctrl/⌘ K) asks `/api/search`, built from the same pages.
+**Routes.** `src/app/(content)/{docs,guides,glossary,compare}/[[...slug]]/page.tsx`, all prerendered (`generateStaticParams`); the page reads its address inside a Suspense boundary (`ContentRoute`), as Cache Components asks. One layout, `src/app/(content)/layout.tsx`: Fumadocs' `RootProvider` (its own theme switching off: our theme script and `ThemeSwitch` drive it, section 18) and `DocsLayout`: the section tabs and the menu on the left, the page in the middle and "On this page" on the right, which follows the scroll. On phones the menu is a drawer and "On this page" folds into a button. Search (Ctrl/⌘ K) asks `/api/search`, built from the same pages.
 
 **Each page has:**
 

@@ -7,6 +7,7 @@ import {
   enumIs,
   hostnameFromUri,
   mapLimit,
+  newProperties,
   pickBusiest,
   toDate,
   type PropertySummary,
@@ -79,23 +80,19 @@ export async function chooseProperty(userId: string): Promise<Site | null> {
   return connectProperty(userId, chosen.propertyId);
 }
 
-/**
- * Fetches the property's details, adds it to the user's list (docs/SPEC.md section 28.1:
- * no limit on any plan) and makes it the active site. A site already in the list just
- * becomes active, and one that left the list comes back with its notes and settings.
- */
-export async function connectProperty(userId: string, propertyId: string): Promise<Site> {
-  const [[property], [streams]] = await withAdminClient(userId, (client) =>
-    Promise.all([
-      client.getProperty({ name: propertyId }, ADMIN_TIMEOUT),
-      client.listDataStreams(
-        { parent: propertyId, pageSize: 50 },
-        { ...ADMIN_TIMEOUT, autoPaginate: false },
-      ),
-    ]),
-  );
+type AdminClient = Parameters<Parameters<typeof withAdminClient>[1]>[0];
+
+/** What a site row keeps from Google: the property's name and settings, and its web address. */
+async function propertyDetails(client: AdminClient, propertyId: string) {
+  const [[property], [streams]] = await Promise.all([
+    client.getProperty({ name: propertyId }, ADMIN_TIMEOUT),
+    client.listDataStreams(
+      { parent: propertyId, pageSize: 50 },
+      { ...ADMIN_TIMEOUT, autoPaginate: false },
+    ),
+  ]);
   const web = streams.find((s) => enumIs(s.type, "WEB_DATA_STREAM", 1));
-  const values = {
+  return {
     displayName: property.displayName || propertyId,
     domain: hostnameFromUri(web?.webStreamData?.defaultUri),
     timeZone: property.timeZone || "UTC",
@@ -105,6 +102,15 @@ export async function connectProperty(userId: string, propertyId: string): Promi
       : "GOOGLE_ANALYTICS_STANDARD",
     propertyCreatedAt: toDate(property.createTime),
   };
+}
+
+/**
+ * Fetches the property's details, adds it to the user's list (docs/SPEC.md section 28.1:
+ * no limit on any plan) and makes it the active site. A site already in the list just
+ * becomes active, and one that left the list comes back with its notes and settings.
+ */
+export async function connectProperty(userId: string, propertyId: string): Promise<Site> {
+  const values = await withAdminClient(userId, (client) => propertyDetails(client, propertyId));
 
   return db.transaction(async (tx) => {
     // One change to a user's list at a time, so two quick clicks can't leave two active sites.
@@ -137,6 +143,58 @@ export async function connectProperty(userId: string, propertyId: string): Promi
       .returning();
     return row!;
   });
+}
+
+const SYNC_EVERY = 2 * 60_000;
+const MAX_NEW = 25;
+const syncedAt = new Map<string, number>();
+
+/**
+ * Adds the Google Analytics sites the user has never had to their list, so a property
+ * made in Google Analytics shows up in Settings on its own (docs/SPEC.md section 28.1).
+ * None becomes the active site. A site the user removed keeps its row, so it stays
+ * removed. Asks Google at most every 2 minutes per user, and adds up to 25 at a time.
+ * Returns how many joined.
+ */
+export async function addNewProperties(userId: string, now = Date.now()): Promise<number> {
+  const last = syncedAt.get(userId);
+  if (last && now - last < SYNC_EVERY) return 0;
+  syncedAt.set(userId, now);
+  const [properties, known] = await Promise.all([
+    listProperties(userId),
+    db.select({ propertyId: site.propertyId }).from(site).where(eq(site.userId, userId)),
+  ]);
+  const fresh = newProperties(
+    properties,
+    known.map((k) => k.propertyId),
+  ).slice(0, MAX_NEW);
+  if (fresh.length === 0) return 0;
+  const details = await withAdminClient(userId, (client) =>
+    mapLimit(fresh, 5, (p) => propertyDetails(client, p.propertyId).catch(() => null)),
+  );
+  const rows = fresh.flatMap((p, i) => {
+    const values = details[i];
+    if (!values) return [];
+    return [
+      {
+        id: crypto.randomUUID(),
+        userId,
+        propertyId: p.propertyId,
+        isActive: false,
+        status: "ok" as const,
+        // A millisecond apart, so the list keeps Google's order.
+        addedAt: new Date(now + i),
+        ...values,
+      },
+    ];
+  });
+  if (rows.length === 0) return 0;
+  const added = await db
+    .insert(site)
+    .values(rows)
+    .onConflictDoNothing({ target: [site.userId, site.propertyId] })
+    .returning({ id: site.id });
+  return added.length;
 }
 
 /** The site menu: opens a site, after checking it is in the user's own Google list. */

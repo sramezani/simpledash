@@ -4,6 +4,31 @@ A dated log with one entry per session. **Newest entry first.**
 
 It is written for future Claude sessions: read the latest entry before starting work. Ideas that fall outside the roadmap go here too (Working rule 5).
 
+## 2026-11-06 · Session 20 · New sites in Settings, site names, light and dark
+
+### Done
+
+- **New sites join Settings on their own** (Siamak: a property made in GA4 only reached Settings after opening it from the dashboard's site menu). `addNewProperties` in `src/lib/ga4/properties.ts` runs when the settings menu draws: properties the user has **never had a row for** (`newProperties`, tested) get their details (`propertyDetails`, pulled out of `connectProperty`) and join the list, not active, up to 25, 5 at a time, `on conflict do nothing`, Google asked at most every 2 minutes per user. "Never had a row" keeps a removed site removed without a new column. The menu reads the list fresh, since the page may have cached `getSiteContext` before the sync.
+- **Site names** (Siamak's screenshot: two "abozaralizadeh.github.io" sites, one a reverse proxy). `siteName` / `siteDetail` (`src/lib/sites/label.ts`, tested): the GA4 name, then "address · ID 123456" smaller. In the settings menu (two lines, full text on hover), a site's settings heading, the site menu's rows (`MenuSite.detail`) and the site chip.
+- **Light and dark** (Siamak: system default, a switch, colours that really work, not plain black):
+  - `colors.dark` in `theme.ts` with every light key (typed), `darkShadows`. Page `#101117`, cards `#16171F`, menus `#1B1C26`, text `#ECEDF3`, quiet text `#9D9FB2`, brand `#8580FF` with dark text on brand buttons (no brand colour passes 4.5:1 both as text on dark and under white text), brighter chart colours, a deep indigo footer `#2E2A8F`. The contrast test runs on both palettes.
+  - `themeToCss`: light on `:root`, dark by `prefers-color-scheme` unless `data-theme="light"`, and on `data-theme="dark"`. System needs no script.
+  - The choice is in `localStorage` (`sd-theme`). `themeScript` (`src/components/shared/theme-pref.ts`, tested with a fake page) sets `data-theme` and the `dark` class (Fumadocs' code colours, shadcn's `dark:`), follows the device and other tabs. **Learned:** Next's `<Script strategy="beforeInteractive">` with inline code is queued in `self.__next_s` and runs after the first paint; the docs sidebar (`transition: all`) visibly faded from light. A plain inline `<script>` in `<head>` fixed it. The signed-in hint still uses `beforeInteractive`, so "Sign in" can flash to "Dashboard" the same way.
+  - `ThemeSwitch` (shared): three icon radios in a pill, a springy thumb and turning icons, the picked look driven by `<html data-theme>` in CSS so it's right before hydration; the new theme grows out of it as a circle (view transition, scoped by `theme-switching`), or swaps in one frame (`theme-instant`) with reduced motion. In the dashboard and settings top bars, the footer (`tone="footer"`) and the docs menu (Fumadocs' `slots.themeSwitch`: passing a server-side wrapper function crashed the docs with "Functions cannot be passed directly to Client Components"; the client component itself works).
+  - Settings → Profile → **Appearance** (`AppearancePicker`): three tiles, each a tiny dashboard drawn in its palette through `themeScopeCss()` (`data-theme-scope`), System split diagonally.
+  - `viewport.themeColor` per scheme and `colorScheme: "light dark"`.
+- **Checked:** `npm run check` (63 files, 549 tests), the production build (same rendering per route), the site sync once with Google and the database mocked in `.vitest/` (deleted), and the browser at 1440 and 375 px in both themes: landing, pricing, footer, legal, docs, `/ui-kit/dashboard` (site menu) and `/ui-kit/settings`; arrow keys on the switch; System following an emulated dark device; the circle starting at the switch. Docs screenshots `site-menu` and `settings-pages` retaken. Spec sections 1, 5, 18, 28.1 and 30, `docs/ui.md`, six decisions, README, `content/docs/sites.mdx` and `settings-and-billing.mdx`, CLAUDE.md's stack row.
+
+### Problems
+
+- The local database wasn't reachable (the Supabase tenant isn't found), so the landing demo and footer numbers failed locally and the real signed-in Settings couldn't be opened; the dev previews covered the screens. No Lighthouse here.
+
+### Next
+
+- Siamak: make a GA4 property and open Settings on the real site; run Lighthouse on the landing and a legal page in both themes after deploy.
+- Idea: move the signed-in hint to a plain inline script too, so "Sign in" never flashes before "Dashboard".
+- Idea: show the measurement ID (G-…) instead of the property number, if people recognise it better (needs a column and one call per site).
+
 ## 2026-10-31 · Session 19 · Deploy actions on Node 24
 
 ### Done

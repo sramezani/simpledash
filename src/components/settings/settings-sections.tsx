@@ -11,6 +11,7 @@ import { plans } from "@/config/plans";
 import type { PlanState } from "@/lib/billing/plan";
 import { planInWords } from "@/lib/billing/prices";
 import { cn } from "@/lib/utils";
+import { AppearancePicker } from "./appearance-picker";
 import { PublicPageForm, type PublicPageValues } from "./public-page-form";
 import { SettingsSection } from "./settings-shell";
 
@@ -50,6 +51,19 @@ export function ProfileSettings({
           Sign out
         </Button>
       </form>
+    </SettingsSection>
+  );
+}
+
+/** Profile → how SimpleDash looks: the device's setting, light or dark. */
+export function AppearanceSettings() {
+  return (
+    <SettingsSection
+      id="appearance"
+      title="Appearance"
+      description="SimpleDash follows your device until you pick light or dark. The choice is kept in this browser."
+    >
+      <AppearancePicker />
     </SettingsSection>
   );
 }

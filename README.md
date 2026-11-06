@@ -68,7 +68,7 @@ Pages:
 | `/demo` | The live demo: a real public stats page, set in `src/config/demo.ts` (sample data, live globe included, if that page is off) |
 | `/signin` | "Continue with Google" (needs `GOOGLE_CLIENT_ID` and the redirect URI on the Google client) |
 | `/dashboard` | The dashboard (signed in). `?site=<id>` names the site (default: the one opened last). `?range=today`, `yesterday`, `7d` (default), `30d`, `12m`, or a custom range like `?range=2026-09-01..2026-09-30`. On Free, anything older than 30 days shows Last 30 days |
-| `/settings` | Settings → Profile: your account, disconnect Google, delete account (signed in). A menu on the left links every settings page |
+| `/settings` | Settings → Profile: your account, Appearance (System, Light or Dark), disconnect Google, delete account (signed in). A menu on the left links every settings page; each site shows its Google Analytics name with its address and property number, and sites made in Google Analytics since the last visit join the list on their own |
 | `/settings/billing` | Settings → Plan & billing: upgrade to Pro or manage billing (signed in) |
 | `/settings/email` | Settings → Monday email: on or off (signed in) |
 | `/settings/sites/<id>` | Settings for one of your sites: public page, Google search, revenue, sales, remove (signed in). The gear next to a site in the dashboard's site menu opens it |
@@ -167,7 +167,8 @@ All of them are listed with comments in [.env.example](.env.example). `src/lib/e
 The look of the whole site and the brand facts live in one file, `src/config/theme.ts`: colours, corner radius, shadows, name, tagline and contact email.
 
 - Editing it re-themes the site, the weekly email, the social images and the favicons.
-- The code only uses its tokens. `npm run check` blocks raw colours and checks contrast.
+- Two palettes, light and dark. Pages follow the device's setting until the visitor picks one with the theme switch (top bar, footer, docs menu, Settings → Profile); the choice stays in the browser. Emails and social images stay light.
+- The code only uses its tokens. `npm run check` blocks raw colours and checks contrast in both palettes.
 - How it works: [docs/ui.md](docs/ui.md).
 
 ## Deploy

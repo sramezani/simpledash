@@ -83,6 +83,7 @@ import { getSiteContext, markSiteOpened, type SiteContext } from "@/lib/sites/si
 import { markSiteOk } from "@/lib/sites/status";
 import { settingsRoutes } from "@/lib/settings-routes";
 import { readSiteId, siteProblem } from "@/lib/sites/access";
+import { siteDetail, siteName } from "@/lib/sites/label";
 
 export const metadata: Metadata = { title: "Dashboard", robots: { index: false, follow: false } };
 
@@ -170,8 +171,9 @@ async function FirstVisit({ userId, range }: { userId: string; range: RangeType 
 const toSwitcherSite = (s: Site): SwitcherSite => ({
   id: s.id,
   propertyId: s.propertyId,
-  label: s.domain ?? s.displayName,
+  label: siteName(s),
   domain: s.domain,
+  detail: siteDetail(s),
   problem: siteProblem(s.status),
 });
 

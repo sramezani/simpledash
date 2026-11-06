@@ -16,7 +16,9 @@
  * A test checks that every token has a mapping and every mapping has a token.
  */
 
-/* Light theme only in V1: `dark:` classes (from shadcn parts) never apply, whatever the OS setting. */
+/* `dark:` applies whenever the page is dark: the theme script (src/components/shared/theme-pref.ts)
+   puts the `dark` class on <html>. Colours still come from the tokens; this is only for
+   shadcn parts' own dark touches. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* `signed-in:` applies when this browser is signed in (src/lib/auth/signed-in-hint.ts). */
@@ -186,6 +188,24 @@
       scroll-behavior: auto !important;
     }
   }
+}
+
+/*
+ * Changing the theme (src/components/shared/theme-switch.tsx): the new colours grow out of
+ * the switch as a circle over a picture of the old ones. Scoped to the switch's own view
+ * transition, so nothing else that uses view transitions changes.
+ */
+:root.theme-switching::view-transition-old(root),
+:root.theme-switching::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+/* Without that (or with reduced motion), colours swap in one frame instead of each control
+   fading at its own speed. */
+.theme-instant *,
+.theme-instant *::before,
+.theme-instant *::after {
+  transition: none !important;
 }
 
 /* Small popovers (help, CSV) fade and drop in, and fade out when they close. */

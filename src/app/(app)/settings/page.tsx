@@ -5,6 +5,7 @@ import { deleteAccountAction, disconnectGoogleAction } from "@/app/actions/accou
 import { signOut } from "@/app/actions/auth";
 import { LegacySettingsHash } from "@/components/settings/legacy-settings-hash";
 import {
+  AppearanceSettings,
   DeleteAccountSettings,
   GoogleSettings,
   ProfileSettings,
@@ -52,9 +53,10 @@ async function Profile({ searchParams }: Pick<PageProps<"/settings">, "searchPar
     <>
       <SettingsHeader
         title="Profile"
-        description="Your account, and SimpleDash's access to Google."
+        description="Your account, how SimpleDash looks, and its access to Google."
       />
       <ProfileSettings user={user} signOut={signOut} />
+      <AppearanceSettings />
       <GoogleSettings siteCount={Math.max(1, sites.length)} disconnect={disconnectGoogleAction} />
       <DeleteAccountSettings
         problem={

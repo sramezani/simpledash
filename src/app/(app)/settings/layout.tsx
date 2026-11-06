@@ -4,7 +4,12 @@ import { SettingsNav, SettingsNavSkeleton } from "@/components/settings/settings
 import { SettingsShell } from "@/components/settings/settings-shell";
 import { requireUser } from "@/lib/auth/session";
 import { settingsNavGroups } from "@/lib/settings-nav";
-import { getSiteContext } from "@/lib/sites/sites";
+import { classifyError } from "@/lib/ga4/errors";
+import { addNewProperties } from "@/lib/ga4/properties";
+import { reportError } from "@/lib/report-error";
+import { siteList } from "@/lib/sites/access";
+import { siteDetail, siteName } from "@/lib/sites/label";
+import { getUserSites } from "@/lib/sites/sites";
 
 export const metadata: Metadata = {
   title: { default: "Settings", template: "%s · Settings · SimpleDash" },
@@ -31,11 +36,25 @@ export default function SettingsLayout({ children }: LayoutProps<"/settings">) {
 
 async function Nav() {
   const user = await requireUser();
-  const { sites } = await getSiteContext(user.id);
+  // A site made in Google Analytics since the last visit joins the list here, without a
+  // trip through the dashboard's site menu. Settings still opens when Google doesn't answer.
+  await addNewProperties(user.id).catch((error) => {
+    // Google access that ended shows on the dashboard and the Profile page; nothing to report.
+    if (classifyError(error).problem !== "revoked") {
+      reportError("Adding new Google Analytics sites failed", error, { userId: user.id });
+    }
+  });
+  // Read fresh, not through getSiteContext: the page may have cached the list before the sync.
+  const sites = siteList(await getUserSites(user.id));
   return (
     <SettingsNav
       groups={settingsNavGroups(
-        sites.map((s) => ({ id: s.id, label: s.domain ?? s.displayName, domain: s.domain })),
+        sites.map((s) => ({
+          id: s.id,
+          label: siteName(s),
+          domain: s.domain,
+          detail: siteDetail(s),
+        })),
       )}
     />
   );

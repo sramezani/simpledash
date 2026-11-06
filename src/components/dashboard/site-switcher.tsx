@@ -167,7 +167,7 @@ export function SiteSwitcher({
         onPointerEnter={() => load()}
       >
         <SiteIcon domain={current.domain} />
-        <span className="truncate">
+        <span className="truncate" title={current.detail}>
           <span className="sr-only">Showing: </span>
           {current.label}
         </span>
@@ -314,6 +314,9 @@ function SiteRow({
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate" title={row.label}>
           {row.label}
+        </span>
+        <span className="truncate text-xs text-muted-foreground" title={row.detail}>
+          {row.detail}
         </span>
         {row.problem ? <span className="truncate text-xs text-warning">{row.problem}</span> : null}
       </span>

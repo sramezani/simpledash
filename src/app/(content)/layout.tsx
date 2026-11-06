@@ -2,12 +2,14 @@ import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { RootProvider } from "fumadocs-ui/provider/next";
 import type { ReactNode } from "react";
 import { Logo } from "@/components/shared/logo";
+import { ThemeSwitch } from "@/components/shared/theme-switch";
 import { brand } from "@/config/theme";
 import { menuTree } from "@/lib/content/source";
 
 /**
  * Docs, guides, glossary and comparisons (docs/SPEC.md section 30): the section tabs and
- * the menu on the left, the page in the middle, "On this page" on the right. Light only.
+ * the menu on the left, the page in the middle, "On this page" on the right. Fumadocs' own
+ * theme handling stays off: our theme script and switch drive it, like every other page.
  */
 export default function ContentLayout({ children }: { children: ReactNode }) {
   return (
@@ -29,7 +31,8 @@ export default function ContentLayout({ children }: { children: ReactNode }) {
           tree={menuTree()}
           nav={{ title: <Logo />, url: "/" }}
           githubUrl={brand.sourceUrl}
-          themeSwitch={{ enabled: false }}
+          // Our switch, where Fumadocs puts its own (a client component, so it can cross over).
+          slots={{ themeSwitch: ThemeSwitch }}
           links={[
             { text: "Pricing", url: "/#pricing", active: "none" },
             {

@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { colors, shadows, textPairs, uiPairs } from "@/config/theme";
+import { colors, darkShadows, shadows, textPairs, uiPairs } from "@/config/theme";
 import { contrastRatio } from "./contrast";
-import { shadowVar, themeToCss } from "./css";
+import { shadowVar, themeScopeCss, themeToCss } from "./css";
 
 const globalsCss = readFileSync(
   fileURLToPath(new URL("../../app/globals.css", import.meta.url)),
@@ -13,17 +13,49 @@ const tokens = Object.keys(colors.light);
 
 describe("themeToCss", () => {
   const css = themeToCss();
+  const [root, media, picked] = css.split(/(?=@media|:root\[data-theme)/);
 
-  it("writes a CSS variable for every colour token", () => {
+  it("writes a CSS variable for every colour token, in both palettes", () => {
     for (const [token, value] of Object.entries(colors.light)) {
-      expect(css).toContain(`--${token}:${value}`);
+      expect(root).toContain(`--${token}:${value}`);
+    }
+    for (const [token, value] of Object.entries(colors.dark)) {
+      expect(media).toContain(`--${token}:${value}`);
+      expect(picked).toContain(`--${token}:${value}`);
     }
   });
 
-  it("writes the radius, the shadows and the light colour scheme", () => {
-    expect(css).toContain("--radius:");
-    for (const name of Object.keys(shadows)) expect(css).toContain(`${shadowVar(name)}:`);
-    expect(css).toContain("color-scheme:light");
+  it("gives both palettes the same tokens", () => {
+    expect(Object.keys(colors.dark).sort()).toEqual(Object.keys(colors.light).sort());
+    expect(Object.keys(darkShadows).sort()).toEqual(Object.keys(shadows).sort());
+  });
+
+  it("writes the radius, the shadows and each colour scheme", () => {
+    expect(root).toContain("--radius:");
+    for (const name of Object.keys(shadows)) {
+      expect(root).toContain(`${shadowVar(name)}:${shadows[name as keyof typeof shadows]}`);
+      expect(picked).toContain(`${shadowVar(name)}:${darkShadows[name as keyof typeof shadows]}`);
+    }
+    expect(root).toContain("color-scheme:light");
+    expect(media).toContain("color-scheme:dark");
+    expect(picked).toContain("color-scheme:dark");
+  });
+
+  it("follows the device unless the visitor picked light, and applies a picked dark", () => {
+    expect(media).toMatch(
+      /^@media \(prefers-color-scheme:dark\)\{:root:not\(\[data-theme="light"\]\)\{/,
+    );
+    expect(picked).toMatch(/^:root\[data-theme="dark"\]\{/);
+  });
+
+  it("scopes each palette for the Appearance previews", () => {
+    const scoped = themeScopeCss();
+    expect(scoped).toContain(
+      `[data-theme-scope="light"]{color-scheme:light;--background:${colors.light.background}`,
+    );
+    expect(scoped).toContain(
+      `[data-theme-scope="dark"]{color-scheme:dark;--background:${colors.dark.background}`,
+    );
   });
 });
 
@@ -77,19 +109,19 @@ describe("globals.css (guard 3: nothing missing)", () => {
   });
 });
 
-describe("contrast (guard 4: WCAG AA)", () => {
-  const light = colors.light as Record<string, string>;
+describe.each(["light", "dark"] as const)("contrast in %s (guard 4: WCAG AA)", (name) => {
+  const palette = colors[name] as Record<string, string>;
 
   it.each(textPairs.map(([text, bg]) => [text, bg] as const))(
     "%s on %s reaches 4.5:1",
     (text, bg) => {
-      const ratio = contrastRatio(light[text]!, light[bg]!);
+      const ratio = contrastRatio(palette[text]!, palette[bg]!);
       expect(ratio, `${text} on ${bg} is ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
     },
   );
 
   it.each(uiPairs.map(([fg, bg]) => [fg, bg] as const))("%s against %s reaches 3:1", (fg, bg) => {
-    const ratio = contrastRatio(light[fg]!, light[bg]!);
+    const ratio = contrastRatio(palette[fg]!, palette[bg]!);
     expect(ratio, `${fg} against ${bg} is ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(3);
   });
 });

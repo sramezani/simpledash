@@ -6,6 +6,7 @@ const site = (id: string, propertyId: string, over: Partial<MenuSite> = {}): Men
   propertyId,
   label: `${id}.com`,
   domain: `${id}.com`,
+  detail: `${id}.com · ID ${propertyId.split("/")[1]}`,
   problem: null,
   ...over,
 });
@@ -35,7 +36,7 @@ describe("siteMenuGroups", () => {
     const groups = siteMenuGroups(properties, [site("b", "properties/2")], "b");
     expect(groups.map((g) => g.account)).toEqual(["Studio", "Client"]);
     const [alpha, beta] = groups[0]!.rows;
-    expect(alpha).toMatchObject({ label: "Alpha", siteId: null, current: false });
+    expect(alpha).toMatchObject({ label: "Alpha", detail: "ID 1", siteId: null, current: false });
     expect(beta).toMatchObject({ label: "b.com", siteId: "b", current: true });
     expect(groups[1]!.rows[0]).toMatchObject({ label: "Gamma", account: "Client", siteId: null });
   });

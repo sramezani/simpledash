@@ -40,7 +40,7 @@ These are not up for debate. Anything that would break one goes to Siamak first.
 | --- | --- |
 | Framework | Next.js 16 (App Router, standalone Docker image, Cache Components), React 19, TypeScript 6.0 (pinned) |
 | UI | Tailwind CSS 4, shadcn/ui and lucide icons |
-| Theme and brand | One file, `src/config/theme.ts`, written into each page as CSS variables. Light theme only in V1 |
+| Theme and brand | One file, `src/config/theme.ts`, written into each page as CSS variables. Light and dark palettes: the device's setting by default, or the visitor's pick (`ThemeSwitch`) |
 | Charts | shadcn/ui charts (Recharts) in the dashboard only. Server-rendered SVG on landing and public pages |
 | Live globe | MapLibre GL JS (globe projection) with self-hosted Natural Earth map data, loaded only when the live view opens |
 | Database | Postgres 17 in a container on the server, through Drizzle ORM and postgres.js. Local Postgres in Docker (or Supabase, for now) for development |

@@ -156,18 +156,21 @@ const PREVIEW_SITES = [
     propertyId: "properties/101",
     label: "yoursite.com",
     domain: null,
+    detail: "yoursite.com · ID 101",
   },
   {
     id: "00000000-0000-4000-8000-000000000002",
     propertyId: "properties/102",
-    label: "blog.yoursite.com",
+    label: "Blog",
     domain: null,
+    detail: "yoursite.com · ID 102",
   },
   {
     id: "00000000-0000-4000-8000-000000000003",
     propertyId: "properties/103",
-    label: "docs.yoursite.com",
+    label: "Docs",
     domain: null,
+    detail: "docs.yoursite.com · ID 103",
   },
 ];
 

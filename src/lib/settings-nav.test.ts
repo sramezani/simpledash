@@ -30,6 +30,13 @@ describe("settingsNavGroups", () => {
     ]);
   });
 
+  it("carries a site's smaller line", () => {
+    const [, sites] = settingsNavGroups([
+      { id: "a", label: "Blog", domain: "a.com", detail: "a.com · ID 1" },
+    ]);
+    expect(sites!.items[0]).toMatchObject({ label: "Blog", detail: "a.com · ID 1" });
+  });
+
   it("says Site for one site, and leaves the group out without any", () => {
     const one = settingsNavGroups([{ id: "a", label: "a.com", domain: null }]);
     expect(one[1]!.label).toBe("Site");

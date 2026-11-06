@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { GitHubIcon, XIcon } from "@/components/shared/brand-icons";
 import { CookieSettingsButton } from "@/components/shared/consent";
+import { ThemeSwitch } from "@/components/shared/theme-switch";
 import { plans } from "@/config/plans";
 import { brand } from "@/config/theme";
 import { getFooterStats } from "@/lib/public-page/footer";
@@ -119,7 +120,7 @@ export function SiteFooter({
               </div>
             ))}
           </nav>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <a
               href={brand.sourceUrl}
               target="_blank"
@@ -140,6 +141,7 @@ export function SiteFooter({
               Made by {brand.makerName}
               <span className="sr-only"> (opens in a new tab)</span>
             </a>
+            <ThemeSwitch tone="footer" />
           </div>
         </div>
       </div>

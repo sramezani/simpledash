@@ -9,16 +9,24 @@ How the look of SimpleDash is built and kept consistent. The rules behind it are
 - **`brandColor`** at the top is the main colour. It feeds `primary`, `ring`, `brand` and `chart-1`, so changing it is a one-line edit.
 - **`neutral`** is the grey scale. It feeds the surfaces, borders and quiet text.
 - **`brand`** holds the name (SimpleDash), tagline, description, URL and support email.
-- **`colors.light`** holds every colour token as hex. Hex works in CSS, in email clients and in the image renderer.
+- **`colors.light`** and **`colors.dark`** hold every colour token as hex, with the same keys. Hex works in CSS, in email clients and in the image renderer.
 - **`radius`** is the base corner radius. Tailwind's `rounded-sm` to `rounded-2xl` are worked out from it.
-- **`shadows`** are for raised layers only (menus, dialogs). Cards stay flat with a 1 px edge.
-- **`textPairs`** and **`uiPairs`** list the colour pairs the contrast test checks. Add a pair when a new token is used as text on a new background.
+- **`shadows`** (and deeper **`darkShadows`**) are for raised layers only (menus, dialogs). Cards stay flat with a 1 px edge.
+- **`textPairs`** and **`uiPairs`** list the colour pairs the contrast test checks, in both palettes. Add a pair when a new token is used as text on a new background.
 
-Light theme only in V1. A `colors.dark` palette with the same keys can be added later.
+## Light and dark
+
+The page follows the device's setting until the visitor picks Light or Dark (docs/SPEC.md section 18).
+
+- **A new token needs a value in both palettes.** `colors.dark` is typed with the light keys, so a missing one fails the typecheck, and the contrast test runs on both.
+- **Never style for one theme by hand.** Token classes switch on their own. A shadcn part's `dark:` classes apply when `<html>` has the `dark` class, which the theme script sets.
+- **The switch:** `ThemeSwitch` (`src/components/shared/theme-switch.tsx`), `tone="footer"` on the brand band. The choice is kept in `localStorage` (`sd-theme`); `themeScript` (`src/components/shared/theme-pref.ts`) applies it in `<head>` before the first paint.
+- **Showing a palette whatever the page's theme** (the Appearance tiles): wrap it in `data-theme-scope="light"` or `"dark"` and render `themeScopeCss()` once.
+- **Emails, Open Graph images and favicons stay light**: they import `colors.light`.
 
 ## How the values reach the page
 
-1. `src/lib/theme/css.ts` turns the theme into CSS variables on `:root` (`--primary: #…`). It is a pure, tested function.
+1. `src/lib/theme/css.ts` turns the theme into CSS variables (`--primary: #…`): light on `:root`, dark through `prefers-color-scheme` unless the visitor picked light, and on `:root[data-theme="dark"]`. It is a pure, tested function.
 2. `<ThemeStyle />` (`src/lib/theme/theme-style.tsx`) writes that CSS into `<head>`, from the root layout and from `global-error.tsx`. An edit shows at once in development.
 3. `src/app/globals.css` maps each variable to a Tailwind colour in `@theme inline`, so classes like `bg-primary` and `text-muted-foreground` exist. It holds no colour values.
 

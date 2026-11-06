@@ -11,11 +11,18 @@ export type SettingsNavItem = {
   icon: "profile" | "billing" | "email" | "site";
   /** A site's address, for its icon. */
   domain?: string | null;
+  /** A site's smaller line: its address and Google Analytics property number. */
+  detail?: string;
 };
 
 export type SettingsNavGroup = { label: string; items: SettingsNavItem[] };
 
-export type SettingsNavSite = { id: string; label: string; domain: string | null };
+export type SettingsNavSite = {
+  id: string;
+  label: string;
+  domain: string | null;
+  detail?: string;
+};
 
 type Routes = { account: string; billing: string; email: string; site: (siteId: string) => string };
 
@@ -41,6 +48,7 @@ export function settingsNavGroups(
         label: s.label,
         icon: "site",
         domain: s.domain,
+        ...(s.detail ? { detail: s.detail } : {}),
       })),
     },
   ];

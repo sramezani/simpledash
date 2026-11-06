@@ -382,6 +382,18 @@ What's done and what's next, in plain words.
 - [ ] Siamak: on simpledash.app's settings page, turn on the public page with the address `simpledash-app` and the cards "Visitors over time" and "Right now" (Countries, Pages and Devices fill the live band). Until then the footer shows the plain word
 - [ ] Lighthouse on the landing page and a legal page after deploy (not installed here)
 
+### Sites in Settings, and light and dark (6 Nov; `docs/SPEC.md` sections 18 and 28.1)
+
+- [x] A property made in Google Analytics joins the Settings menu on its own when Settings opens (never-seen properties only, so a removed site stays removed; not active; up to 25 at a time; Google asked at most every 2 minutes) (6 Nov)
+- [x] Each site is named by its Google Analytics name, with "address · ID 123456" on a smaller line, in the settings menu, a site's settings heading and the dashboard's site menu (6 Nov)
+- [x] A dark palette for every token (deep blue-grey surfaces, a brighter periwinkle brand, AA contrast tested in both), following the device's setting by default (6 Nov)
+- [x] A System / Light / Dark switch in the dashboard and settings top bars, the landing and legal footer and the docs menu, with the new theme growing out of it as a circle; Settings → Profile → Appearance with a drawn preview of each (6 Nov)
+- [x] The choice stays in the browser and is applied before the first paint (no flash, pages stay static) (6 Nov)
+- [x] Unit tested (labels, new properties, the head script, both palettes); the site sync checked once with Google and the database mocked. `npm run check` passes and the production build keeps every page's rendering (6 Nov)
+- [x] Checked in the browser at 1440 and 375 px in light and dark: landing, legal, docs, `/ui-kit/dashboard` and `/ui-kit/settings`, keyboard on the switch, System following the device. The docs screenshots of the site menu and settings retaken (6 Nov)
+- [ ] Siamak: with a real account, make a GA4 property and open Settings: it should be in the menu (the local database wasn't reachable here, so this wasn't run against real Google)
+- [ ] Lighthouse on the landing page and a legal page after deploy, in light and dark (not installed here)
+
 ## V3: later (postponed 13 Oct; `docs/SPEC.md` section 29)
 
 - X mentions on the chart · Ask your data in plain English · Milestone images · Hacker News and Product Hunt markers · "Tracking looks broken" alert

@@ -44,6 +44,7 @@ import { listProperties } from "@/lib/search-console/connect";
 import { propertyLabel } from "@/lib/search-console/match";
 import { settingsRoutes } from "@/lib/settings-routes";
 import { readSiteId } from "@/lib/sites/access";
+import { siteDetail, siteName } from "@/lib/sites/label";
 import { getSiteContext, type SiteContext } from "@/lib/sites/sites";
 
 export const metadata: Metadata = { title: "Site" };
@@ -81,11 +82,13 @@ async function SiteSettings({ params, searchParams }: Props) {
   const header = (
     <SettingsHeader
       icon={<SiteIcon domain={site.domain} />}
-      title={label}
+      title={siteName(site)}
       description={
-        site.displayName !== label
-          ? `${site.displayName} · these settings are for this site only.`
-          : "These settings are for this site only."
+        <>
+          <span className="font-medium text-foreground">{siteDetail(site)}</span>
+          <span aria-hidden="true"> · </span>
+          These settings are for this site only.
+        </>
       }
       action={
         <Button asChild variant="outline" className="h-9 pointer-coarse:h-11">

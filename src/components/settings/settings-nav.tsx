@@ -60,9 +60,14 @@ export function SettingsNav({
                 ref={current ? activeLink : undefined}
                 href={item.href as Route}
                 aria-current={current ? "page" : undefined}
-                title={item.icon === "site" ? item.label : undefined}
+                title={
+                  item.icon === "site"
+                    ? [item.label, item.detail].filter(Boolean).join("\n")
+                    : undefined
+                }
                 className={cn(
-                  "flex h-9 shrink-0 items-center gap-2.5 rounded-lg px-3 text-sm whitespace-nowrap transition-colors duration-150 ease-out md:px-2.5 pointer-coarse:h-11",
+                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 text-sm whitespace-nowrap transition-colors duration-150 ease-out md:px-2.5",
+                  item.detail ? "min-h-11 py-1" : "h-9 pointer-coarse:h-11",
                   "border md:border-transparent",
                   current
                     ? "border-transparent bg-muted font-medium text-foreground"
@@ -70,7 +75,16 @@ export function SettingsNav({
                 )}
               >
                 <NavIcon item={item} />
-                <span className="min-w-0 truncate md:flex-1">{item.label}</span>
+                {item.detail ? (
+                  <span className="flex min-w-0 flex-col md:flex-1">
+                    <span className="truncate">{item.label}</span>
+                    <span className="truncate text-xs font-normal text-muted-foreground">
+                      {item.detail}
+                    </span>
+                  </span>
+                ) : (
+                  <span className="min-w-0 truncate md:flex-1">{item.label}</span>
+                )}
               </Link>
             );
           })}

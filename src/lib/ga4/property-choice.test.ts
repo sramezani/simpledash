@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { enumIs, hostnameFromUri, mapLimit, pickBusiest, toDate } from "./property-choice";
+import {
+  enumIs,
+  hostnameFromUri,
+  mapLimit,
+  newProperties,
+  pickBusiest,
+  toDate,
+} from "./property-choice";
 
 describe("pickBusiest", () => {
   it("picks the most visitors, the first on a tie, and ignores failed checks", () => {
@@ -51,5 +58,18 @@ describe("mapLimit", () => {
     });
     expect(out).toEqual([2, 4, 6, 8, 10, 12, 14]);
     expect(peak).toBe(5);
+  });
+});
+
+describe("newProperties", () => {
+  const p = (id: string) => ({ propertyId: `properties/${id}`, displayName: id, account: "A" });
+
+  it("keeps the properties without a site row, in Google's order", () => {
+    expect(newProperties([p("3"), p("1"), p("2")], ["properties/1"])).toEqual([p("3"), p("2")]);
+  });
+
+  it("drops repeats, and has nothing new when every property is known", () => {
+    expect(newProperties([p("1"), p("1")], [])).toEqual([p("1")]);
+    expect(newProperties([p("1")], ["properties/1"])).toEqual([]);
   });
 });

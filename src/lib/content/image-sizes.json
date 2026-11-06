@@ -32,7 +32,7 @@
   "settings-pages": {
     "src": "/content/settings-pages.webp",
     "width": 1600,
-    "height": 711
+    "height": 755
   },
   "signups-picker": {
     "src": "/content/signups-picker.webp",
@@ -42,7 +42,7 @@
   "site-menu": {
     "src": "/content/site-menu.webp",
     "width": 720,
-    "height": 808
+    "height": 944
   },
   "what-brings-customers-card": {
     "src": "/content/what-brings-customers-card.webp",

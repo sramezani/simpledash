@@ -1,4 +1,5 @@
 import type { PropertySummary } from "@/lib/ga4/property-choice";
+import { siteDetail } from "./label";
 
 /**
  * The rows of the site menu (docs/SPEC.md section 28.1). Pure, so it is tested.
@@ -14,8 +15,11 @@ import type { PropertySummary } from "@/lib/ga4/property-choice";
 export type MenuSite = {
   id: string;
   propertyId: string;
+  /** The Google Analytics name (siteName). */
   label: string;
   domain: string | null;
+  /** The smaller line under the name: address and property number (siteDetail). */
+  detail: string;
   /** "Google access ended", "No access…": shown under the name. */
   problem: string | null;
 };
@@ -24,6 +28,8 @@ export type SiteMenuRow = {
   propertyId: string;
   label: string;
   domain: string | null;
+  /** The smaller line under the name: address and property number. */
+  detail: string;
   /** The Analytics account the property belongs to ("" when unknown). */
   account: string;
   /** Set when the property is one of the user's sites: a plain link to its dashboard. */
@@ -39,6 +45,7 @@ const toRow = (s: MenuSite, currentId: string, account = ""): SiteMenuRow => ({
   propertyId: s.propertyId,
   label: s.label,
   domain: s.domain,
+  detail: s.detail,
   account,
   siteId: s.id,
   current: s.id === currentId,
@@ -72,6 +79,7 @@ export function siteMenuGroups(
           propertyId: p.propertyId,
           label: p.displayName,
           domain: null,
+          detail: siteDetail({ domain: null, propertyId: p.propertyId }),
           account: p.account,
           siteId: null,
           current: false,

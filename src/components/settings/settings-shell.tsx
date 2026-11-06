@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Container } from "@/components/shared/container";
 import { LogoMark } from "@/components/shared/logo";
+import { ThemeSwitch } from "@/components/shared/theme-switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +34,7 @@ export function SettingsShell({
             <ArrowLeftIcon className="size-4" aria-hidden="true" />
             Dashboard
           </Link>
+          <ThemeSwitch className="ml-auto" />
         </Container>
       </header>
       <main id="main" className="pb-20">

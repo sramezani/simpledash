@@ -14,6 +14,7 @@ import {
   EmailSettings,
   GoogleSettings,
   ProfileSettings,
+  AppearanceSettings,
   PublicPageSettings,
   RemoveSiteSettings,
 } from "@/components/settings/settings-sections";
@@ -113,10 +114,26 @@ function previewPlans() {
 const PAGES = ["account", "billing", "email", "site"] as const;
 type PreviewPage = (typeof PAGES)[number];
 
+// Two share an address (a blog with its own property): the smaller line tells them apart.
 const PREVIEW_SITES = [
-  { id: "00000000-0000-4000-8000-000000000001", label: "yoursite.com", domain: null },
-  { id: "00000000-0000-4000-8000-000000000002", label: "blog.yoursite.com", domain: null },
-  { id: "00000000-0000-4000-8000-000000000003", label: "docs.yoursite.com", domain: null },
+  {
+    id: "00000000-0000-4000-8000-000000000001",
+    label: "Your site",
+    domain: null,
+    detail: "yoursite.com · ID 101",
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000002",
+    label: "Your blog",
+    domain: null,
+    detail: "yoursite.com · ID 102",
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000003",
+    label: "Docs",
+    domain: null,
+    detail: "docs.yoursite.com · ID 103",
+  },
 ];
 
 async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/settings">, "searchParams">) {
@@ -180,6 +197,7 @@ async function Preview({ searchParams }: Pick<PageProps<"/ui-kit/settings">, "se
               user={{ name: "Alex Example", email: "alex@yoursite.com" }}
               signOut={noop}
             />
+            <AppearanceSettings />
             <GoogleSettings siteCount={sites.length} disconnect={noop} />
             <DeleteAccountSettings problem={state === "errors" ? "error" : null} action={noop} />
           </>

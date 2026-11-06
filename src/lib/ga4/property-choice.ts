@@ -20,6 +20,19 @@ export function pickBusiest(counts: (number | null)[]): number {
   return best;
 }
 
+/**
+ * The properties in Google's list that the user has never had a site row for, in Google's
+ * order and without repeats. A removed site keeps its row, so it isn't new.
+ */
+export function newProperties(properties: PropertySummary[], known: string[]): PropertySummary[] {
+  const seen = new Set(known);
+  return properties.filter((p) => {
+    if (seen.has(p.propertyId)) return false;
+    seen.add(p.propertyId);
+    return true;
+  });
+}
+
 /** "https://www.mysite.com/app" → "mysite.com". Null when there is no usable URL. */
 export function hostnameFromUri(uri: string | null | undefined): string | null {
   if (!uri) return null;
