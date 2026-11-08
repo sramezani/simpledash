@@ -2,7 +2,7 @@
 
 import { CookieIcon } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { analytics } from "@/config/analytics";
 import { brand } from "@/config/theme";
@@ -11,6 +11,9 @@ import { cn } from "@/lib/utils";
 /**
  * The analytics consent banner and Google Analytics itself (docs/SPEC.md section 17).
  * - Nothing loads before a choice: "Decline" means Google's script never loads at all.
+ * - Until a choice is made, the page behind is dimmed and can't be clicked (a modal <dialog>,
+ *   shown after a short pause), but it stays visible and scrolls. Decline is as easy as Accept
+ *   and opens everything, so this asks for a choice, not for a yes (no cookie wall).
  * - The choice is kept in this browser (localStorage, not a cookie) with its date, and asked
  *   again only after a while: 13 months after "Accept", 6 months after "Decline" (asking more
  *   often would push people towards yes). "Cookie settings" changes it any time.
@@ -23,6 +26,14 @@ type Choice = "granted" | "denied";
 const KEY = "sd-analytics-consent";
 const OPEN_EVENT = "sd-consent-open";
 const DAY = 24 * 60 * 60 * 1000;
+/**
+ * How long the page shows on its own before the choice appears, so the banner is noticed as
+ * something new to act on instead of blending into the first paint. "Cookie settings" opens
+ * it at once.
+ */
+const FIRST_ASK_DELAY_MS = 1200;
+/** How long the nudge mark stays on the bar after a click on the dimmed page. */
+const NUDGE_MS = 600;
 /** How long a choice holds before the banner asks once more. */
 const KEEP_DAYS: Record<Choice, number> = { granted: analytics.cookieDays, denied: 182 };
 
@@ -169,46 +180,115 @@ export function ConsentBanner() {
   }, [state]);
 
   if (state !== "ask") return null;
-  // A full-width bar along the bottom edge (a sheet on phones), its content as wide as the
-  // page's: easy to notice, never in the way. It floats over the page, so nothing moves when it
-  // slides up, and it doesn't block the page (no cookie wall).
+  return <ConsentDialog />;
+}
+
+/**
+ * The banner as a modal dialog: a full-width bar along the bottom edge (a sheet on phones),
+ * its content as wide as the page's. The browser keeps the page behind it inert (no clicks, no
+ * keyboard focus) and dims it through ::backdrop (`.consent-dialog` in globals.css),
+ * with no blur, so the page stays readable. Esc doesn't close it: only a choice does.
+ *
+ * A click on the dimmed page lands on the dialog itself, and nudges the whole bar (both answers
+ * together, never Accept alone) so people see why nothing happened: a small shake, or a short
+ * outline with reduced motion. Focus moves to the question for keyboard and screen readers.
+ */
+function ConsentDialog() {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const bar = useRef<HTMLElement>(null);
+  const title = useRef<HTMLHeadingElement>(null);
+  const nudgeTimer = useRef<number | undefined>(undefined);
+
+  function nudge() {
+    const node = bar.current;
+    if (!node) return;
+    // Take the mark off and put it back, so a second click starts the shake again.
+    node.removeAttribute("data-nudge");
+    void node.offsetWidth;
+    node.setAttribute("data-nudge", "");
+    window.clearTimeout(nudgeTimer.current);
+    nudgeTimer.current = window.setTimeout(() => node.removeAttribute("data-nudge"), NUDGE_MS);
+    title.current?.focus();
+  }
+
+  useEffect(() => {
+    const node = dialog.current;
+    if (!node || node.open) return;
+    // `asking` is true only when "Cookie settings" reopened it: then there's no wait.
+    const timer = window.setTimeout(
+      () => {
+        node.showModal();
+        // Start on the question itself, not on "Learn more" or one of the two answers.
+        title.current?.focus();
+      },
+      asking ? 0 : FIRST_ASK_DELAY_MS,
+    );
+    return () => {
+      window.clearTimeout(timer);
+      window.clearTimeout(nudgeTimer.current);
+      node.close();
+    };
+  }, []);
+
   return (
-    <section
+    <dialog
+      ref={dialog}
       aria-labelledby="consent-title"
-      className="fixed inset-x-0 bottom-0 z-50 animate-in rounded-t-2xl border-t bg-card/95 shadow-lg backdrop-blur-md duration-500 ease-out fade-in slide-in-from-bottom-6 sm:rounded-none"
+      aria-describedby="consent-text"
+      onCancel={(event) => event.preventDefault()}
+      // Only clicks on the dim reach the dialog itself; clicks in the bar land on its children.
+      onClick={(event) => {
+        if (event.target === event.currentTarget) nudge();
+      }}
+      className="consent-dialog fixed inset-x-0 top-auto bottom-0 m-0 h-auto max-h-none w-full max-w-none border-0 bg-transparent p-0 text-foreground"
     >
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:flex-row sm:items-center sm:gap-6 sm:px-6 sm:py-5">
-        <div className="flex flex-1 items-start gap-3">
-          <span className="hidden size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:flex">
-            <CookieIcon className="size-5" aria-hidden="true" />
-          </span>
-          <div className="flex flex-col gap-1">
-            <h2 id="consent-title" className="text-base font-semibold">
-              This website uses cookies
-            </h2>
-            <p className="text-sm text-pretty text-muted-foreground">
-              We use Google Analytics to understand how {brand.name} is used, so we can make it
-              better. No ads.{" "}
-              <Link
-                href="/privacy#analytics"
-                className="font-medium text-primary underline-offset-2 hover:underline"
+      <section
+        ref={bar}
+        className="consent-bar animate-in rounded-t-2xl border-t bg-card/95 shadow-lg backdrop-blur-md duration-500 ease-out fade-in slide-in-from-bottom-6 sm:rounded-none"
+      >
+        <div className="consent-row mx-auto flex max-w-6xl flex-col gap-4 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:flex-row sm:items-center sm:gap-6 sm:px-6 sm:py-5">
+          <div className="flex flex-1 items-start gap-3">
+            <span className="hidden size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:flex">
+              <CookieIcon className="size-5" aria-hidden="true" />
+            </span>
+            <div className="flex flex-col gap-1">
+              <h2
+                id="consent-title"
+                ref={title}
+                tabIndex={-1}
+                className="text-base font-semibold outline-none"
               >
-                Learn more
-              </Link>
-            </p>
+                This website uses cookies
+              </h2>
+              <p id="consent-text" className="text-sm text-pretty text-muted-foreground">
+                We use Google Analytics to understand how {brand.name} is used, so we can make it
+                better. No ads.{" "}
+                <Link
+                  href="/privacy#analytics"
+                  className="font-medium text-primary underline-offset-2 hover:underline"
+                >
+                  Learn more
+                </Link>
+              </p>
+            </div>
+          </div>
+          {/* Same size and side by side: declining is as easy to see and click as accepting. */}
+          <div className="grid shrink-0 grid-cols-2 gap-2 sm:w-64">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11"
+              onClick={() => choose("denied")}
+            >
+              Decline
+            </Button>
+            <Button type="button" className="h-11" onClick={() => choose("granted")}>
+              Accept
+            </Button>
           </div>
         </div>
-        {/* Same size and side by side: declining is as easy to see and click as accepting. */}
-        <div className="grid shrink-0 grid-cols-2 gap-2 sm:w-64">
-          <Button type="button" variant="outline" className="h-11" onClick={() => choose("denied")}>
-            Decline
-          </Button>
-          <Button type="button" className="h-11" onClick={() => choose("granted")}>
-            Accept
-          </Button>
-        </div>
-      </div>
-    </section>
+      </section>
+    </dialog>
   );
 }
 

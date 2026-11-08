@@ -252,6 +252,65 @@
 }
 
 /*
+ * The consent dialog (src/components/shared/consent.tsx): a light dim with no blur, so the page
+ * stays readable behind it, fading in with the bar. It never hides the page.
+ */
+.consent-dialog::backdrop {
+  @apply bg-overlay/45;
+  transition: background-color 600ms ease-out;
+}
+/* Dark on a dark page reads weaker, so the dark theme dims a little more. */
+.dark .consent-dialog::backdrop {
+  @apply bg-overlay/60;
+}
+
+/*
+ * A click on the dimmed page nudges the whole bar (data-nudge, set by the dialog): its content
+ * shakes a few pixels, Decline and Accept together. The row moves, not the bar, so the bar's
+ * edges stay put and its slide-in animation isn't restarted. With reduced motion, a short
+ * outline instead.
+ */
+@keyframes consent-nudge {
+  0%,
+  100% {
+    translate: 0;
+  }
+  20% {
+    translate: -6px;
+  }
+  40% {
+    translate: 5px;
+  }
+  60% {
+    translate: -3px;
+  }
+  80% {
+    translate: 2px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .consent-bar[data-nudge] .consent-row {
+    animation: consent-nudge 320ms ease-in-out;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .consent-bar[data-nudge] {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+  }
+}
+@starting-style {
+  .consent-dialog[open]::backdrop {
+    @apply bg-overlay/0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .consent-dialog::backdrop {
+    transition: none;
+  }
+}
+
+/*
  * The footer (docs/SPEC.md section 17). Colours are token classes in the components; this holds
  * the sizes that depend on each other, the motion and the glow.
  *
