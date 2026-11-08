@@ -35,6 +35,26 @@ Read **Active users**. To see the change, turn on **Compare** in the date menu a
 </Step>
 </Steps>
 
+## How to see unique visitors
+
+"Unique visitors" is what GA4 calls **users**: each person counted once in the dates you picked, however many times they came. Read **Active users** in the Acquisition overview, as above. GA4 really counts browsers, so one person on a phone and a laptop counts twice. [Users vs sessions vs views](/glossary/sessions).
+
+## How many people visited today
+
+Pick **Today** in the date menu. Today's numbers are partial and arrive late in reports, so for "right now" use Realtime (next section). [Why today is late](/guides/ga4-data-delay).
+
+## Compare this month with last month
+
+In the date menu, pick the dates (for example **Last 28 days**), turn on **Compare**, and choose the period before or the same period last year. Each number then shows its change.
+
+## Average visitors per day
+
+GA4 has no "daily average" number. The line chart in the Acquisition overview shows visitors for each day; for an exact average, build a free-form exploration with **Date** as the row and **Active users** as the value, then average the rows. Don't divide the period's total by the number of days: someone who came on three days counts once in the total, so that gives a number that's too low.
+
+## Which countries and devices
+
+Reports → User → User attributes → **Demographic details** shows countries (switch the first column to City for cities). Reports → User → Tech → **Tech details** shows devices: switch the first column to **Device category** for mobile, desktop and tablet.
+
 ## How many people are on your site right now
 
 Open Reports → **Realtime overview**. It shows active users in the last 30 minutes, where they are and which pages they're on. [What Realtime counts](/glossary/realtime).

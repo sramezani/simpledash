@@ -279,7 +279,54 @@ Logged in `docs/STORY.md` too.
   9. What is SimpleDash? (checks the name problem)
   10. SimpleDash vs Plausible?
 
+## 12. Second round: questions people ask (Nov 8, 2026)
+
+Siamak asked for the six standard sources, done carefully. What the first round missed is now covered.
+
+### 12.1 What was done
+
+| Source | How | Result |
+| --- | --- | --- |
+| Google autocomplete with how, why, what, when, which, can, does, is, where | 16 core topics × 15 question starts, plus "vs", "not" and "without" (288 seeds, about 2,300 phrases) | Done |
+| Google "People also ask" | Real Google results in Siamak's Chrome (US English), 20 searches | Done. Google now shows an "AI Mode reply" first on most of these searches, and "People also ask" appeared on about half |
+| Google "related searches" | The same 20 searches | Done |
+| Competitors | Headings of 9 competitor guides on the same questions | Done |
+| Reddit | `site:reddit.com` searches on Google (Reddit itself blocks automated reading, so the wording comes from titles and snippets) | Done |
+| AI engines | Google AI Mode and ChatGPT (Siamak's account, web search on); Perplexity needed a sign-in | Done |
+
+### 12.2 What people ask that we didn't answer
+
+| Question, in their words | Where it came from | What we do |
+| --- | --- | --- |
+| What's the difference between Google Analytics and Search Console? Is Search Console part of Google Analytics? Can you use them together? | Autocomplete (many "vs" and "is … the same as" forms), People also ask, ChatGPT's list | **New page** `/guides/google-analytics-vs-search-console` |
+| What is GA4, what is it used for, is it free, is it the same as Google Analytics, what can it tell you? | People also ask, autocomplete, the first questions in both AI engines' lists | **New page** `/guides/what-is-google-analytics-4` |
+| Does GA4 filter out bot traffic? How do I filter suspected bots? | Autocomplete, People also ask, related searches | **New page** `/guides/ga4-bot-traffic` |
+| Users vs sessions vs views: what's the difference, which should I use, what counts as a session? | Autocomplete (about 15 "vs" forms), People also ask, ChatGPT's list | The glossary page on sessions gets a question title and a fuller comparison (one page, not two) |
+| "All I want to see is unique visitors", "how many visits each page got", daily average visitors, today, this month vs last, countries, mobile or desktop | Reddit titles and snippets, ChatGPT's list | New sections in `/guides/see-website-traffic-google-analytics` |
+| How do I add a second website to Google Analytics? Can I see several Google accounts in one dashboard? | People also ask, a competitor's questions | New sections in the all-sites guide |
+| How do I share a report with someone who has no access? How do agencies manage client access? | People also ask, result titles | New sections in the sharing guide |
+| Can GA4 show traffic from Google's AI Overviews or AI Mode? | Autocomplete ("how to track ai overview traffic in ga4") | Its own question heading in the AI traffic guide |
+| Do I need Google Analytics for my small website? Is it worth it? | People also ask, autocomplete | The "worth learning" heading in the GA4-is-hard guide becomes this question |
+
+Already covered and checked against the new questions: key events, data delay, numbers that differ, cookie banners, direct and unassigned traffic, (not set), engagement and bounce rate, measurement ID and setup, Looker Studio.
+
+### 12.3 What the AI engines say today
+
+- **Asked by name** ("What is SimpleDash (simpledash.app)?"), Google AI Mode describes us correctly: an open-source, read-only GA4 dashboard, no script, all sites, public pages. The definition work is reaching it.
+- **Asked by category** ("GA4 is too complicated, is there an easier way?", "a simple GA4 dashboard for a small site", "all my GA4 sites in one dashboard"), Google AI Mode doesn't name us. It answers in three paths: switch to Plausible or Fathom; keep GA4 and use Looker Studio, Site Kit or MonsterInsights (citing Reddit's r/webdev); or Cloudflare's own analytics. The "keep GA4, simpler view" path is the one to win, and it is built from Reddit threads and lists.
+- **ChatGPT** ("I already use GA4 but it's too complicated; what tools give me a simple dashboard without a new script?") named SimpleDash first, citing simpledash.app, then Owl Insight, AnalyticsMade and Calm Analytics. It ran in Siamak's own signed-in account, which may lean on his history: check again signed out.
+- **Both engines' "20 beginner questions"** lists match what the pages now cover. The ones not ours to answer (Google Ads linking, Tag Manager, event parameters) stay out.
+
+### 12.4 Other findings
+
+- **"… reddit" is a related search on almost every query** ("ga4 users vs sessions reddit", "why is ga4 so hard to use reddit"). People want answers from other people. Helpful, honest Reddit answers that link the right guide are worth more than another page.
+- **"does google analytics have mcp", "does ga4 have a claude connector", "how to connect search console to claude"** are searched. Still only an idea (section 10).
+- **WordPress plugins** (Site Kit by Google, MonsterInsights) are what AI Mode suggests for "keep GA4, simpler". The dashboards list now names them honestly.
+
 ## Sources
+
+- Google: [Known bot-traffic exclusion](https://support.google.com/analytics/answer/9888366)
+- Google: [Connect Search Console to Google Analytics](https://support.google.com/analytics/answer/10737381)
 
 - Google Search Central, "Optimizing your website for generative AI features on Google Search", updated Jul 10, 2026: https://developers.google.com/search/docs/fundamentals/ai-optimization-guide
 - Google Analytics Help, "About Google Analytics dashboard": https://support.google.com/analytics/answer/17217303

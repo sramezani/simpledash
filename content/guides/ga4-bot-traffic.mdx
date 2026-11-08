@@ -1,0 +1,58 @@
+---
+title: Does GA4 filter out bot traffic?
+menuTitle: "Bot traffic"
+seoTitle: "Does GA4 filter bot traffic? What it catches and misses"
+description: "GA4 removes known bots on its own, but not every bot. How to spot the ones that get through, what you can and can't filter, and how to keep them out."
+updated: 2026-11-08
+---
+
+Yes, partly. Google Analytics 4 automatically excludes traffic from **known** bots and spiders, using Google's own research and the IAB's International Spiders and Bots List. You can't turn this off or see how much it removed, and bots that aren't on the list can still show up as visitors.
+
+## What GA4 removes on its own
+
+- Search engine crawlers and other bots on the known list.
+- Most automated tools that never run JavaScript, like many scrapers and AI crawlers: GA4's tag needs a browser that runs it, so they never reach your reports.
+
+There's no setting for it and nothing to switch on.
+
+## Signs a bot got through
+
+| Sign                                                           | Where to look                                  |
+| -------------------------------------------------------------- | ---------------------------------------------- |
+| A sudden spike in visitors that doesn't match signups or sales | Acquisition overview, compared with key events |
+| Most of the spike is **Direct** or one odd referral source     | Traffic acquisition, by session source         |
+| It comes from one country or city you don't usually see        | User attributes → Demographic details          |
+| Average engagement time near zero, one page per visit          | Pages and screens, Landing page                |
+
+One sign alone proves little; several together usually mean automated visits.
+
+## Can I filter suspected bots out?
+
+Not completely, and not for past data:
+
+- **GA4's data filters** only remove internal traffic (your own visits, [how](/guides/exclude-internal-traffic-ga4)) and developer traffic. There's no filter for "suspected bots".
+- **In reports,** you can add a comparison or an Explore segment that leaves out the country, city or source behind the spike. It hides them from that view; the data stays.
+- **Before they reach your site,** a firewall or bot protection (for example Cloudflare's) can block them, so they're never counted.
+
+Listing a source under [unwanted referrals](/guides/ga4-unwanted-referrals-stripe) doesn't remove its visits; it only stops it taking credit for them.
+
+## Do bots affect my numbers much?
+
+On most small sites, little: the known ones are already gone. They matter when a spike makes a week look like a launch. Compare visitors with signups: real visitors sign up at a fairly steady rate, bots don't.
+
+<InSimpleDash title="Spikes, explained from the numbers">
+  SimpleDash's summary line and What changed show which sources and landing pages a change came
+  from, so a spike from one odd source stands out. It reads what GA4 counted and never guesses which
+  visits were bots.
+</InSimpleDash>
+
+## Related
+
+- [Why GA4, Stripe, Search Console and your host show different numbers](/guides/ga4-numbers-differ)
+- [What is direct traffic, and why is mine so high?](/guides/ga4-direct-traffic)
+- [Your traffic dropped? Find what changed](/guides/traffic-dropped)
+
+## Sources
+
+- Google: [Known bot-traffic exclusion](https://support.google.com/analytics/answer/9888366)
+- Google: [Filter out internal traffic](https://support.google.com/analytics/answer/10104470)

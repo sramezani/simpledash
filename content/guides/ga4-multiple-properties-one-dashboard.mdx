@@ -41,6 +41,34 @@ In Looker Studio, add each GA4 property as a data source, then put a score card 
 
 Some tools sign in with your Google account and list every GA4 property it can see, so a new site shows up on its own. [The options compared](/compare/best-google-analytics-dashboards).
 
+## How do I add a second website to Google Analytics?
+
+Give each separate site its own property:
+
+<Steps>
+<Step>
+
+In GA4, open **Admin**, then **Create** → **Property**.
+
+</Step>
+<Step>
+
+Name it after the site, and set its time zone and currency.
+
+</Step>
+<Step>
+
+Add a **web data stream** with the site's address, then put the tag it gives you on that site ([how](/guides/add-google-analytics-to-website)).
+
+</Step>
+</Steps>
+
+The new site then appears in the property menu next to the first.
+
+## Can I see sites from different Google accounts together?
+
+GA4 shows the properties one Google account can reach. If your sites sit under different Google accounts, add your main account to each of them with the **Viewer** role (Admin → **Access management**, [how](/guides/share-google-analytics#give-someone-access)). Then every site shows in that account's property menu, and in any tool you sign in to with it.
+
 ## Which GA4 sites can I see?
 
 Every property your Google account has access to, across all your Analytics accounts. If a site is missing, the account that owns it hasn't given yours access: an Administrator adds you in Admin → **Access management** ([how](/guides/share-google-analytics)).

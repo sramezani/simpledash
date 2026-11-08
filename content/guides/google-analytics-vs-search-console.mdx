@@ -1,0 +1,88 @@
+---
+title: "Google Analytics vs Search Console: what's the difference?"
+menuTitle: "Analytics vs Search Console"
+seoTitle: "Google Analytics vs Search Console: the difference"
+description: "Search Console shows how people find you on Google; Google Analytics shows what they do on your site. What each counts, why numbers differ, how to link them."
+updated: 2026-11-08
+---
+
+Google Search Console shows how your site does **in Google search, before the click**: which searches showed your pages, how often people clicked, and your position. Google Analytics 4 shows what happens **on your site, after the click**, from every source: how many people came, from where, which pages they read and whether they signed up.
+
+They're separate free tools from Google that answer different questions, and they work best together.
+
+## The difference at a glance
+
+|                           | Search Console                                      | Google Analytics 4                                         |
+| ------------------------- | --------------------------------------------------- | ---------------------------------------------------------- |
+| Answers                   | How do people find me on Google search?             | What do people do once they're on my site?                 |
+| Covers                    | Google search only                                  | Every source: Google, social, email, AI assistants, direct |
+| Main numbers              | Clicks, impressions, click rate, average position   | Visitors (active users), sessions, views, key events       |
+| Shows the searches?       | Yes, the words people typed                         | No: Google hides them, so organic search shows as "google" |
+| Needs a tag on your site? | No: you verify the site once                        | Yes: the GA4 tag on every page                             |
+| Counts                    | Clicks from Google's results                        | People whose browser ran the GA4 tag (and allowed cookies) |
+| Also checks               | Indexing, sitemaps, page experience, manual actions | Realtime, landing pages, countries, devices, events        |
+
+## Is Search Console part of Google Analytics?
+
+No. They're two products with their own sign-ins and reports. You can **link** them, so GA4 shows Search Console's numbers next to its own (see below), but each keeps working on its own.
+
+## Why the numbers don't match
+
+Search Console's **clicks** and GA4's **Google organic visitors** never match exactly:
+
+- Search Console counts clicks; GA4 counts people whose browser ran the tag. Ad blockers, a declined cookie banner or someone leaving before the page loads mean a click with no GA4 visit.
+- One person can click several times (several clicks, one visitor).
+- Search Console uses Pacific Time days; GA4 uses your property's time zone.
+
+So a gap is normal; watch whether both move the same way. [Why tools show different numbers](/guides/ga4-numbers-differ).
+
+## Which one should I use?
+
+Both, for different questions:
+
+- "Which searches bring people, and which pages could rank higher?" → Search Console. [How to use it](/guides/google-search-console).
+- "How many people came, from where, and did they sign up?" → Google Analytics. [How to read it](/guides/understand-website-traffic).
+
+## How to see them together
+
+Link them, then GA4 gets two extra reports: **Queries** (the searches) and **Google organic search traffic** (landing pages with both tools' numbers).
+
+<Steps>
+<Step>
+
+Make sure the site is in Search Console ([how](/guides/add-site-to-search-console)) and that you have the Editor role in GA4 and are a verified owner in Search Console.
+
+</Step>
+<Step>
+
+In GA4, open **Admin**, and under **Product links** click **Search Console links**, then **Link**.
+
+</Step>
+<Step>
+
+Choose the Search Console property, then the GA4 web data stream for the same site, and submit.
+
+</Step>
+<Step>
+
+The Search Console reports are unpublished at first: open **Reports** → **Library**, find the **Search Console** collection and publish it.
+
+</Step>
+</Steps>
+
+<InSimpleDash title="Both on one page">
+  SimpleDash reads both: visitors, sources and signups from GA4, and with Pro, Google search
+  insights from Search Console (clicks, how often you were seen, the searches, and one page to work
+  on each week), in plain words on the same dashboard. [How it works](/docs/google-search).
+</InSimpleDash>
+
+## Related
+
+- [How to use Search Console to grow Google traffic](/guides/google-search-console)
+- [What is Google Analytics 4?](/guides/what-is-google-analytics-4)
+- [Why GA4, Stripe, Search Console and your host show different numbers](/guides/ga4-numbers-differ)
+
+## Sources
+
+- Google: [Connect Search Console to Google Analytics](https://support.google.com/analytics/answer/10737381)
+- Google: [Performance report (Search results)](https://support.google.com/webmasters/answer/7576553)

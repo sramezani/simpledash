@@ -3,7 +3,7 @@ title: How to track ChatGPT, Perplexity and Claude traffic in GA4
 menuTitle: "AI assistant traffic"
 seoTitle: How to track ChatGPT and AI traffic in GA4
 description: Find visitors from ChatGPT, Perplexity, Claude, Gemini and Copilot in Google Analytics 4, build an AI channel that groups them, and know what GA4 can't see.
-updated: 2026-10-16
+updated: 2026-11-08
 ---
 
 Visits from AI assistants show up in Google Analytics 4 as referrals from their websites, such as `chatgpt.com`, `perplexity.ai` and `claude.ai`. GA4 also groups many of them under an **AI Assistant** channel. To see them all in one place, filter Traffic acquisition by source, or create a custom channel group with a short rule.
@@ -73,9 +73,12 @@ In Traffic acquisition, switch the first column to your new channel group.
 </Step>
 </Steps>
 
-## What GA4 can't see
+## Can GA4 show traffic from AI Overviews or AI Mode?
 
-- **Google's AI Overviews and AI Mode** count as Google organic search. Google doesn't report them separately in GA4; their clicks are in Search Console's performance report, together with other Google results.
+No. Clicks from Google's AI Overviews and AI Mode count as Google organic search, and GA4's **AI Assistant** channel leaves them out on purpose. Search Console counts them too, but together with Google's other results, not on their own. So GA4's AI numbers are visits from assistants like ChatGPT, Perplexity, Claude, Gemini and Copilot, not from Google's own AI answers.
+
+## What else GA4 can't see
+
 - **Apps that hide the referrer.** Some visits from AI apps arrive without a referrer and show up as **Direct**. [Why direct traffic is high](/guides/ga4-direct-traffic).
 - **Answers without a click.** If an assistant mentions your site but nobody clicks, there's no visit to count.
 

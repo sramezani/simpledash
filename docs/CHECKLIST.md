@@ -404,6 +404,8 @@ What's done and what's next, in plain words.
 - [ ] Siamak: walk through the new guides' GA4 steps in a real property and add screenshots (written from Google's help pages, not clicked through here)
 - [ ] Siamak: GitHub repo description and topics, X bio and listings with the new definition; ask Founderkit to fix the old "client management" listing
 - [ ] Siamak: Search Console's generative AI setting and report; Bing Webmaster Tools (it can import the site from Search Console)
+- [x] Second research round: question-word autocomplete, People also ask, related searches, competitors, Reddit, Google AI Mode and ChatGPT; three new guides and new question sections (8 Nov)
+- [ ] Siamak: ask ChatGPT the target questions signed out, and answer GA4 questions on Reddit with the matching guide where it helps
 - [ ] Siamak: ask the authors of the lists in `docs/KEYWORD-RESEARCH.md` section 8.3 to consider SimpleDash
 - [ ] Lighthouse on the landing page after deploy
 

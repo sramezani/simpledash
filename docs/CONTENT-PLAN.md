@@ -175,6 +175,9 @@ Terms that already have a guide (key events, direct, unassigned) link to that gu
 | `/guides/ga4-multiple-properties-one-dashboard` | How do I see all my GA4 sites in one dashboard? | The site menu | Written Nov 8 |
 | `/guides/google-analytics-weekly-email-report` | How do I get a weekly Google Analytics report by email? | The Monday email | Written Nov 8 |
 | `/guides/share-google-analytics` | How do I share Google Analytics with someone? | The public page | Written Nov 8 |
+| `/guides/what-is-google-analytics-4` | What is GA4, what can it tell me, and is it free? (second round, Nov 8) | The whole dashboard | Written Nov 8 |
+| `/guides/google-analytics-vs-search-console` | What's the difference between Google Analytics and Search Console? | Google search insights | Written Nov 8 |
+| `/guides/ga4-bot-traffic` | Does GA4 filter out bot traffic? | What changed | Written Nov 8 |
 
 ### Cluster D: Google search with Search Console (guides)
 
