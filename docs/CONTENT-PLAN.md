@@ -29,7 +29,9 @@ Targets get set after the first four weeks of data. Before then any number would
 
 **One definition, word for word, everywhere:** the site, `llms.txt`, GitHub, Product Hunt, directories and the X bio. That way search engines and assistants learn one clear description. It is the first line of `llms.txt`:
 
-> SimpleDash turns the Google Analytics 4 data a site already has into one simple dashboard page, a weekly Monday email and an optional public stats page. There is no tracking script: it reads GA4 with read-only access.
+> SimpleDash (simpledash.app) is a simple dashboard for Google Analytics 4 (GA4). It turns the GA4 data a site already has into one simple dashboard page, a weekly Monday email and an optional public stats page. There is no tracking script: it reads GA4 with read-only access.
+
+The first sentence names the category in the words people search ("simple GA4 dashboard"), and "(simpledash.app)" tells it apart from other products called SimpleDash (`docs/KEYWORD-RESEARCH.md` sections 8 and 9, Nov 8, 2026).
 
 **What we stand for, in this order** (the angle of every page):
 
@@ -58,6 +60,8 @@ Targets get set after the first four weeks of data. Before then any number would
 - **Finish clusters instead of scattering.** A topic covered fully, with pages linking to each other, beats the same number of pages spread across many topics. Within a phase, finish one cluster before starting the next.
 
 ### 4.3 How a topic earns a page
+
+The first keyword research (Nov 8, 2026), with the searched phrases, competitors and the AI assistant plan, is in `docs/KEYWORD-RESEARCH.md`.
 
 Score each idea from 0 to 3 on three things, and write the highest totals first:
 
@@ -159,7 +163,18 @@ Terms that already have a guide (key events, direct, unassigned) link to that gu
 | `/guides/ga4-unassigned-traffic` | What does "Unassigned" mean? | Channels | 3 |
 | `/guides/ga4-numbers-differ` | Why do GA4, Stripe, Search Console and my host's analytics all show different numbers? | Honest numbers | 3 |
 | `/guides/traffic-dropped` | My traffic dropped: how do I find what changed? (facts only) | The summary line, and "What changed" on Pro | 3 |
-| `/guides/understand-website-traffic` (hub) | Reading GA4 for a small site: what matters and what doesn't | The whole dashboard | 4 |
+| `/guides/understand-website-traffic` (hub) | How to read Google Analytics: what matters and what doesn't (retitled Nov 8, 2026) | The whole dashboard | 4 |
+
+### Cluster C2: GA4 made simple (guides, added Nov 8, 2026 from `docs/KEYWORD-RESEARCH.md`)
+
+| Page | The question it answers | Hook | Phase |
+| --- | --- | --- | --- |
+| `/guides/ga4-too-complicated` | Why is GA4 so hard to use, and what should I look at instead? | The whole dashboard | Written Nov 8 |
+| `/guides/see-website-traffic-google-analytics` | How many people visit my website? | Visitors, Right now | Written Nov 8 |
+| `/guides/ga4-built-in-dashboard` | How do I use GA4's own dashboard, and when is it not enough? | Nothing to build | Written Nov 8 |
+| `/guides/ga4-multiple-properties-one-dashboard` | How do I see all my GA4 sites in one dashboard? | The site menu | Written Nov 8 |
+| `/guides/google-analytics-weekly-email-report` | How do I get a weekly Google Analytics report by email? | The Monday email | Written Nov 8 |
+| `/guides/share-google-analytics` | How do I share Google Analytics with someone? | The public page | Written Nov 8 |
 
 ### Cluster D: Google search with Search Console (guides)
 

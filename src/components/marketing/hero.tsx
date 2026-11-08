@@ -4,7 +4,10 @@ import { brand } from "@/config/theme";
 import { plans } from "@/config/plans";
 import { formatPrice } from "@/lib/format";
 
-/** The headline and button, exactly as in the roadmap. */
+/**
+ * The headline and button. The headline and subheadline come from docs/KEYWORD-RESEARCH.md
+ * section 4 (Nov 8, 2026), replacing the roadmap's first wording.
+ */
 export function Hero() {
   return (
     <section id="hero" aria-labelledby="hero-title" className="scroll-mt-4 pt-14 pb-10 sm:pt-20">

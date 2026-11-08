@@ -1,8 +1,8 @@
 # SimpleDash
 
-**Google Analytics, in a dash.**
+**Google Analytics, made simple.** A simple GA4 dashboard for all your sites.
 
-SimpleDash ([simpledash.app](https://simpledash.app)) takes the Google Analytics 4 data a site already has and turns it into:
+SimpleDash ([simpledash.app](https://simpledash.app)) is a simple dashboard for Google Analytics 4 (GA4). It takes the Google Analytics 4 data a site already has and turns it into:
 
 - one simple dashboard page, in plain words instead of GA jargon, that also shows what changed and where
 - a Monday email with last week's numbers

@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { LogoTile } from "@/components/shared/logo";
 import { brand, colors } from "@/config/theme";
 
-export const alt = `${brand.name}: ${brand.tagline}`;
+export const alt = `${brand.name}: ${brand.title}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -33,7 +33,8 @@ export default function OpenGraphImage() {
         <span
           style={{ fontSize: 32, color: c["muted-foreground"], lineHeight: 1.35, maxWidth: 980 }}
         >
-          Your visitors, sources and top pages on one page. No setup, no new tracking code.
+          A simple GA4 dashboard for all your sites: visitors, sources, top pages and signups on one
+          page. No tracking script, nothing to build.
         </span>
       </div>
       <div

@@ -1,0 +1,81 @@
+---
+title: How to get a weekly Google Analytics report by email
+menuTitle: "Weekly email report"
+seoTitle: How to get a weekly Google Analytics report by email
+description: "Send yourself a weekly Google Analytics 4 report by email: GA4's scheduled emails step by step, what they include, their limits, and other ways to get one."
+updated: 2026-11-08
+---
+
+To get a weekly Google Analytics report by email, open the GA4 report you want, click **Share this report** at the top right, choose **Schedule email**, set it to **Weekly** and save. GA4 then emails that report as a PDF or CSV file on the day you picked. You need to be an Administrator of the property.
+
+It's free and built in. What it doesn't do is tell you what changed: you get one report's table, not a summary.
+
+## Before you start
+
+- GA4 collecting data on your site ([check it](/guides/check-ga4-is-working)).
+- The **Administrator** role on the GA4 property. Only administrators can schedule emails: if **Schedule email** is missing from the menu, that's why.
+- Recipients must already have access to the property in GA4 (up to 50 people). To add someone, see [how to share Google Analytics](/guides/share-google-analytics).
+- Pick the report first. For most small sites, **Traffic acquisition** (visitors by channel) or **Pages and screens** (views per page) is the one to send. [Which numbers matter](/guides/understand-website-traffic).
+
+## Schedule the email
+
+<Steps>
+<Step>
+
+In GA4, open **Reports** and the report you want to receive, with the dates and comparison you want.
+
+</Step>
+<Step>
+
+Click **Share this report** (the share icon at the top right), then **Schedule email**.
+
+</Step>
+<Step>
+
+Give the email a name (it becomes the subject: "GA4 Scheduled Email: your name"), choose the recipients from the people with access, choose **Weekly** and the day, and pick **PDF** or **CSV**.
+
+</Step>
+<Step>
+
+**Save**. The first email arrives on the next day you picked, with the dates, filters and comparison the report had when you scheduled it.
+
+</Step>
+</Steps>
+
+## Change or stop a scheduled email
+
+In **Admin**, open the **Scheduled reports** page for the property. Each email shows its status and can be edited or deleted there. Recipients can also stop it with the **Unsubscribe** link in the email.
+
+## What you get, and its limits
+
+| What                       | GA4's scheduled email                             |
+| -------------------------- | ------------------------------------------------- |
+| How often                  | Daily, weekly, monthly or quarterly               |
+| What's in it               | One report, as a PDF or CSV file                  |
+| Who can receive it         | Only people with access to the property, up to 50 |
+| Realtime                   | Can't be scheduled                                |
+| Several sites in one email | No: one property per email                        |
+| What changed and why       | No summary: you compare the numbers yourself      |
+| Words                      | GA4's own (active users, sessions, key events)    |
+| Cost                       | Free                                              |
+
+## Other ways to get a weekly report
+
+- **Looker Studio:** build a report, then use **Schedule delivery** to email it. More work, but you choose every chart. [SimpleDash vs Looker Studio](/compare/simpledash-vs-looker-studio).
+- **A tool that writes the email for you,** with the numbers that matter and what changed, for all your sites in one email.
+
+<InSimpleDash title="The Monday email">
+  With Pro, SimpleDash emails you every Monday: a one-line summary, visitors, page views and signups
+  with the change from the week before, the top sources and pages, and what moved, one block per
+  site. No report to pick and nothing to schedule. [How the Monday email works](/docs/monday-email).
+</InSimpleDash>
+
+## Related
+
+- [How to read Google Analytics](/guides/understand-website-traffic)
+- [How to share Google Analytics](/guides/share-google-analytics)
+- [Why is GA4 so hard to use?](/guides/ga4-too-complicated)
+
+## Sources
+
+- Google: [Schedule reports](https://support.google.com/analytics/answer/13722168)

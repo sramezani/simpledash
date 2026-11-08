@@ -107,7 +107,7 @@ export default function UiKitPage() {
         </Section>
 
         <Section title="Type">
-          <p className="text-4xl font-semibold tracking-tight">Google Analytics, in a dash.</p>
+          <p className="text-4xl font-semibold tracking-tight">Google Analytics, made simple.</p>
           <p className="text-2xl font-semibold tracking-tight">
             Visitors up 23% vs the previous 7 days
           </p>

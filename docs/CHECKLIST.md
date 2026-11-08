@@ -394,6 +394,19 @@ What's done and what's next, in plain words.
 - [ ] Siamak: with a real account, make a GA4 property and open Settings: it should be in the menu (the local database wasn't reachable here, so this wasn't run against real Google)
 - [ ] Lighthouse on the landing page and a legal page after deploy, in light and dark (not installed here)
 
+### Search words and AI assistants (8 Nov; `docs/KEYWORD-RESEARCH.md`)
+
+- [x] Keyword research: autocomplete, search results, competitors, Google's AI search guide and a citation study (8 Nov)
+- [x] Landing page: title "SimpleDash: Simple GA4 Dashboard, Free for All Your Sites", headline "Google Analytics, made simple.", a subheadline and meta description in searched words, the social image, and six searched questions (8 Nov)
+- [x] Structured data: `Organization`, `sameAs`, `alternateName`; `llms.txt` opens with "SimpleDash (simpledash.app) is a simple dashboard for GA4" (8 Nov)
+- [x] Six new guides and six pages retitled, linked from the guides hub and related pages (8 Nov)
+- [ ] Siamak: update the H1 line in `docs/ROADMAP.md` to "Google Analytics, made simple."
+- [ ] Siamak: walk through the new guides' GA4 steps in a real property and add screenshots (written from Google's help pages, not clicked through here)
+- [ ] Siamak: GitHub repo description and topics, X bio and listings with the new definition; ask Founderkit to fix the old "client management" listing
+- [ ] Siamak: Search Console's generative AI setting and report; Bing Webmaster Tools (it can import the site from Search Console)
+- [ ] Siamak: ask the authors of the lists in `docs/KEYWORD-RESEARCH.md` section 8.3 to consider SimpleDash
+- [ ] Lighthouse on the landing page after deploy
+
 ## V3: later (postponed 13 Oct; `docs/SPEC.md` section 29)
 
 - X mentions on the chart · Ask your data in plain English · Milestone images · Hacker News and Product Hunt markers · "Tracking looks broken" alert

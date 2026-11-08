@@ -1,0 +1,79 @@
+---
+title: How to see how many people visit your website in Google Analytics
+menuTitle: "How many people visit"
+seoTitle: How many people visit my website? Check it in GA4
+description: "See how many people visit your website in Google Analytics 4: right now, this week, per page and per source, with the exact menus, and why it can look low."
+updated: 2026-11-08
+---
+
+To see how many people visit your website in Google Analytics 4, open Reports → Acquisition → **Acquisition overview** and read the **Active users** number for the dates at the top right. For right now, open **Realtime overview**; for each page, open Engagement → **Pages and screens**.
+
+"Active users" is GA4's name for visitors: the people who came, each counted once, however many pages they read.
+
+## Before you start
+
+- GA4 must be on your site and collecting data. Not yet? [Add GA4 to your website](/guides/add-google-analytics-to-website), then [check it works](/guides/check-ga4-is-working).
+- Sign in at analytics.google.com with the Google account that has access to the site. If you have several sites, pick the right one in the property menu at the top left.
+
+## How many people came this week or this month
+
+<Steps>
+<Step>
+
+Open **Reports** in the left menu, then Acquisition → **Acquisition overview**.
+
+</Step>
+<Step>
+
+Set the dates at the top right, for example **Last 7 days**. GA4 opens on the last 28 days.
+
+</Step>
+<Step>
+
+Read **Active users**. To see the change, turn on **Compare** in the date menu and pick the period before.
+
+</Step>
+</Steps>
+
+## How many people are on your site right now
+
+Open Reports → **Realtime overview**. It shows active users in the last 30 minutes, where they are and which pages they're on. [What Realtime counts](/glossary/realtime).
+
+## How many people saw each page
+
+Open Reports → Engagement → **Pages and screens**. Each row is a page, with **Views** (how many times it was opened) and **Active users** (how many people opened it). Change the first column to **Page path and screen class** to see addresses instead of page titles.
+
+## Where your visitors came from
+
+Open Reports → Acquisition → **Traffic acquisition**. Each row is a channel (Organic Search, Direct, Referral, Organic Social and so on). Change the first column to **Session source** to see Google, X, a newsletter or ChatGPT by name. [Source and medium in plain words](/glossary/source-medium).
+
+## Why the number looks low (or wrong)
+
+| What you see                       | Why                                                                                                                                |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Today is low or empty              | GA4 adds today's visits late. [Why](/guides/ga4-data-delay)                                                                        |
+| Lower than your host shows         | Hosts count every request, bots too; GA4 counts people whose browser ran the tag. [Why numbers differ](/guides/ga4-numbers-differ) |
+| Lower after adding a cookie banner | People who decline aren't counted in full. [Cookie banners and GA4](/guides/ga4-cookie-consent)                                    |
+| Higher than expected               | Your own visits count too. [Exclude them](/guides/exclude-internal-traffic-ga4)                                                    |
+| Zero everywhere                    | The tag isn't working. [Check it](/guides/check-ga4-is-working)                                                                    |
+
+## Can I see how many people visit someone else's website?
+
+Not in Google Analytics: GA4 only shows sites you have access to. Tools that estimate other sites' traffic exist, but they're estimates, not counts.
+
+<InSimpleDash title="See your visitors without the menus">
+  SimpleDash shows visitors, page views, sources and top pages on one page, compared with the period
+  before, with a live count of who's on your site right now. Sign in with Google: free for all your
+  sites.
+</InSimpleDash>
+
+## Related
+
+- [How to read Google Analytics](/guides/understand-website-traffic)
+- [Why is GA4 so hard to use?](/guides/ga4-too-complicated)
+- [What are active users?](/glossary/active-users)
+
+## Sources
+
+- Google: [Understand user metrics](https://support.google.com/analytics/answer/12253918)
+- Google: [Realtime report](https://support.google.com/analytics/answer/9271392)

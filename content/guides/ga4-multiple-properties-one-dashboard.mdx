@@ -1,0 +1,62 @@
+---
+title: How to see all your GA4 sites in one dashboard
+menuTitle: "All your sites in one place"
+seoTitle: How to see all your GA4 sites in one dashboard
+description: "GA4 shows one property at a time. Four ways to see several sites together: the property menu, one shared property, Looker Studio, or a ready dashboard."
+updated: 2026-11-08
+---
+
+Google Analytics 4 shows one property (one site) at a time, and standard GA4 has no screen that puts several sites side by side. To see them together you can switch with the property menu, measure every site in one property, build a Looker Studio report that combines them, or use a dashboard that reads all your properties for you.
+
+Roll-up properties, GA4's own way to combine properties, are only in the paid Google Analytics 360.
+
+## The four ways
+
+| Way                                   | Effort                       | Each site's own numbers? | Cost                |
+| ------------------------------------- | ---------------------------- | ------------------------ | ------------------- |
+| Switch with GA4's property menu       | None, but one site at a time | Yes                      | Free                |
+| One GA4 property for all your sites   | Set up once                  | Only with a filter       | Free                |
+| A Looker Studio report                | Build and keep it working    | Yes                      | Free                |
+| A dashboard that reads every property | None                         | Yes                      | Depends on the tool |
+
+## 1. Switch with the property menu
+
+At the top left of GA4, click the property name to open the menu, then pick another site. You can search by name or ID. It's free and always there, but you see one site at a time, so comparing them means writing numbers down.
+
+## 2. Put all your sites in one property
+
+You can add the same GA4 tag to several sites, so one property counts them all. Use the **Hostname** dimension in a report to tell the sites apart.
+
+- **Good for:** sites that belong together, like a site and its docs on another domain ([cross-domain measurement](/guides/ga4-cross-domain)).
+- **Not great for:** separate projects. Totals mix up, each site's key events and settings are shared, and moving a site out later loses its history.
+
+## 3. Build a Looker Studio report
+
+In Looker Studio, add each GA4 property as a data source, then put a score card or chart for each site on one page, or blend them into one table.
+
+- **Good for:** a custom view you control.
+- **Trade-offs:** you build it, and add each new site by hand. Many charts on many properties load slowly and can reach GA4's limits on API requests.
+
+## 4. Use a dashboard that reads every property
+
+Some tools sign in with your Google account and list every GA4 property it can see, so a new site shows up on its own. [The options compared](/compare/best-google-analytics-dashboards).
+
+## Which GA4 sites can I see?
+
+Every property your Google account has access to, across all your Analytics accounts. If a site is missing, the account that owns it hasn't given yours access: an Administrator adds you in Admin → **Access management** ([how](/guides/share-google-analytics)).
+
+<InSimpleDash title="Every site, one click apart">
+  SimpleDash lists every GA4 property your Google account can see, grouped by account, and opens any
+  of them in one click. Free covers all your sites with no limit, and with Pro the Monday email has
+  one block per site. [How the site menu works](/docs/sites).
+</InSimpleDash>
+
+## Related
+
+- [How to share Google Analytics](/guides/share-google-analytics)
+- [Set up cross-domain measurement](/guides/ga4-cross-domain)
+- [How to get a weekly report by email](/guides/google-analytics-weekly-email-report)
+
+## Sources
+
+- Google: [Add, edit, and delete users](https://support.google.com/analytics/answer/9305788)

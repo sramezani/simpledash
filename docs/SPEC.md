@@ -989,11 +989,15 @@ There is no setup screen. Every state below is a card or banner on the dashboard
 
 ### Landing page (`/`), statically generated
 
-**Headline and button:** exactly as in the roadmap.
+**Headline and button** (from `docs/KEYWORD-RESEARCH.md` section 4, Nov 8, 2026; they replace the roadmap's first wording):
 
-- H1 "Google Analytics, in a dash."
-- The roadmap's subheadline.
+- `<title>` "SimpleDash: Simple GA4 Dashboard, Free for All Your Sites" (`brand.title`), with the words people search for.
+- H1 "Google Analytics, made simple." (`brand.tagline`, also the footer line and the social image).
+- Subheadline (`brand.description`): "A simple GA4 dashboard for all your sites. See visitors, where they came from, top pages and signups on one page. No tracking script, nothing to build. Free."
+- Meta description and structured data (`brand.summary`): "SimpleDash is a simple dashboard for Google Analytics 4 (GA4). …", the same "X is a Y" sentence that opens `llms.txt`.
 - Button "See my dashboard, free" → `/signin`.
+- The questions section, "Questions about SimpleDash and GA4", adds the questions people search: what SimpleDash is, whether it's a Google Analytics alternative, GA4's own dashboard, all sites in one place, a weekly email, Looker Studio, and sharing stats publicly.
+- `SoftwareApplication` data also carries `alternateName`, `sameAs` (GitHub, AlternativeTo) and an `Organization` publisher, so search engines and assistants can tell this SimpleDash from other products with the name.
 
 **Signed in:** the top bar shows "Dashboard →" instead of "Sign in", and the hero button and both pricing buttons read "Open my dashboard →". The page stays static and cacheable: the proxy keeps a small `sd_signed_in=1` hint cookie (not HttpOnly, no secret) while the app is used, an inline script in `<head>` reads it before the first paint and marks `<html data-signed-in>`, and CSS (the `signed-in:` variant) shows the right buttons. Nothing moves. Signing out clears the cookie. It is only a hint: `/dashboard` still checks the session (`src/lib/auth/signed-in-hint.ts`).
 

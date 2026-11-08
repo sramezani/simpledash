@@ -16,6 +16,13 @@ describe("softwareApplication", () => {
     expect(data.offers.every((o) => o.priceCurrency === "USD")).toBe(true);
   });
 
+  it("says which SimpleDash it is: the GA4 dashboard, with our pages elsewhere", () => {
+    const data = softwareApplication("https://simpledash.app");
+    expect(data.description).toMatch(/^SimpleDash is a simple dashboard for Google Analytics 4/);
+    expect(data.sameAs).toContain("https://github.com/sramezani/simpledash");
+    expect(data.publisher).toMatchObject({ "@type": "Organization", name: "SimpleDash" });
+  });
+
   it("escapes < so it can't close the script tag", () => {
     expect(jsonLd({ x: "</script>" })).toBe('{"x":"\\u003c/script>"}');
   });

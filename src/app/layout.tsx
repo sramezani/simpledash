@@ -11,8 +11,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(env.APP_URL),
-  title: { default: `${brand.name}: ${brand.tagline}`, template: `%s · ${brand.name}` },
-  description: brand.description,
+  title: { default: `${brand.name}: ${brand.title}`, template: `%s · ${brand.name}` },
+  description: brand.summary,
   applicationName: brand.name,
   openGraph: { type: "website", siteName: brand.name, locale: "en_GB" },
   twitter: { card: "summary_large_image" },

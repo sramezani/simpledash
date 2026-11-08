@@ -1,0 +1,77 @@
+---
+title: Why is GA4 so hard to use? And what to look at instead
+menuTitle: "Why GA4 is hard"
+seoTitle: "Why is GA4 so hard to use? The 5 numbers that matter"
+description: "GA4 feels hard because it was built for analysts, renamed its words and spreads simple answers over many reports. Why, and the five numbers a small site needs."
+updated: 2026-11-08
+---
+
+Google Analytics 4 is hard to use because it was built to measure apps and websites for analysts and advertisers, not to answer a site owner's three questions: how many came, from where, and did they sign up. Its words changed from the old Google Analytics, and the answers you want are spread across several reports, so it isn't you.
+
+The good news: a small site needs about five numbers, and you can ignore most of GA4.
+
+## Why GA4 feels so complicated
+
+1. **It counts events, not visits.** GA4 records every page view, scroll and click as an [event](/glossary/events). That's flexible, but it means many simple questions need a report someone has to build first.
+2. **The words changed.** Universal Analytics, the old Google Analytics, stopped collecting data on July 1, 2023. In GA4, "conversions" became [key events](/guides/ga4-key-events) in 2024, "users" usually means [active users](/glossary/active-users), and bounce rate came back with a new meaning ([engaged sessions](/glossary/engaged-sessions) explains it).
+3. **The answers are spread out.** Visitors are in one report, sources in another, signups under Events, and the pages people land on in a fourth.
+4. **The menus show everything.** GA4 serves online shops, app makers and ad buyers, so the left menu has reports most small sites will never need.
+5. **Some answers need Explore.** Questions like "which blog post brought the people who signed up" need an exploration you build by dragging dimensions and metrics.
+6. **The numbers move.** Today's numbers arrive late ([why](/guides/ga4-data-delay)), small numbers can be hidden by [data thresholds](/glossary/data-thresholds), and rows like [(not set)](/glossary/not-set) and [Unassigned](/guides/ga4-unassigned-traffic) appear without explaining themselves.
+
+## The 5 numbers a small site needs
+
+| Your question              | Plain word    | GA4's name                       | Where in GA4                                     |
+| -------------------------- | ------------- | -------------------------------- | ------------------------------------------------ |
+| How many people came?      | Visitors      | Active users                     | Reports → Acquisition → **Acquisition overview** |
+| Where did they come from?  | Sources       | Session source, or channel group | Reports → Acquisition → **Traffic acquisition**  |
+| Which pages do they read?  | Pages         | Views by page path               | Reports → Engagement → **Pages and screens**     |
+| Where do visits start?     | Landing pages | Landing page                     | Reports → Engagement → **Landing page**          |
+| Did anyone sign up or buy? | Signups       | Key events                       | Reports → Engagement → **Key events**            |
+
+Look at each one compared with the period before (the date picker has a **Compare** switch). A number on its own says little; "up 20% on last week, mostly from Google" says a lot. [How to read Google Analytics](/guides/understand-website-traffic) goes through each one.
+
+## What you can safely ignore
+
+- **Bounce rate and engagement rate**, at first. They're useful later, for comparing pages.
+- **Sessions next to users.** Sessions grow when the same people come back; visitors are the cleaner count.
+- **Demographics and tech details**, unless you have a reason to look.
+- **Explore**, until you have a question the standard reports can't answer.
+- **Daily ups and downs.** Compare weeks, not days.
+
+## How to make GA4 simpler
+
+| Way                                                        | Effort                    | Good for            |
+| ---------------------------------------------------------- | ------------------------- | ------------------- |
+| Hide reports you don't use in GA4's menu                   | An hour                   | Staying inside GA4  |
+| [GA4's built-in dashboard](/guides/ga4-built-in-dashboard) | Build each card yourself  | One page inside GA4 |
+| A Looker Studio report or template                         | Build and keep it working | Custom reports      |
+| A ready dashboard that reads your GA4                      | None                      | Answers in seconds  |
+
+All of them read the same data GA4 already collects, so none needs a new script on your site. [The options compared](/compare/best-google-analytics-dashboards).
+
+## Is GA4 worth learning?
+
+If you'll run ads, sell in an online shop or work in marketing, yes: GA4 is the standard, and its reports and Explore go deep. If you run a small site and want to know how it's doing, learn the five numbers above and where they are. That's enough to make good decisions.
+
+## Should I switch away from GA4?
+
+Only if you have a reason beyond "it's confusing": GA4 is free, already on your site and has your history. Tools with their own script make sense if you want to stop using Google or avoid a cookie banner ([compare them](/compare/simple-analytics-for-indie-hackers)). If the problem is only reading it, keep GA4 and read it more simply.
+
+<InSimpleDash title="The 5 numbers, on one page">
+  SimpleDash reads your GA4 and shows visitors, sources, top pages, landing pages and signups on one
+  page, in plain words, each compared with the period before. Sign in with Google: free for all your
+  sites, read-only access, no new script.
+</InSimpleDash>
+
+## Related
+
+- [How to read Google Analytics](/guides/understand-website-traffic)
+- [How to see how many people visit your website](/guides/see-website-traffic-google-analytics)
+- [GA4 terms in plain words](/glossary)
+
+## Sources
+
+- Google: [Understand user metrics](https://support.google.com/analytics/answer/12253918)
+- Google: [Mark events as key events](https://support.google.com/analytics/answer/13128484)
+- Google: [Engagement rate and bounce rate](https://support.google.com/analytics/answer/12195621)

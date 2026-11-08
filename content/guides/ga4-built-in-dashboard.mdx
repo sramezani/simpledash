@@ -1,0 +1,100 @@
+---
+title: "How to use GA4's built-in dashboard, and when it's not enough"
+menuTitle: "GA4's built-in dashboard"
+seoTitle: "GA4 dashboard: how to build one inside Google Analytics"
+description: "GA4 can now show your own cards on one page. How to create a GA4 dashboard step by step, six cards worth adding for a small site, and its limits."
+updated: 2026-11-08
+---
+
+Google Analytics 4 now has a built-in dashboard: one page of cards you build yourself, inside GA4. To make one, open **Reports**, click **+ Create** at the top of the left menu, choose **Dashboard**, drag charts onto the page, then **Save** and **Publish**.
+
+You need the Editor or Administrator role to build one. Anyone with access to the property can view it once it's published.
+
+## What it can show
+
+| Card        | Shows                                                |
+| ----------- | ---------------------------------------------------- |
+| Score card  | One number, with the % change when you compare dates |
+| Table       | Rows like pages or sources, with shaded bars         |
+| Line chart  | A metric over time, by day, week or month            |
+| Bar chart   | Rows compared side by side                           |
+| Donut chart | How parts make up a whole, like devices              |
+| Funnel      | Steps towards a goal, and where people drop off      |
+
+## Create a dashboard
+
+<Steps>
+<Step>
+
+In GA4, open **Reports** in the left menu.
+
+</Step>
+<Step>
+
+Click **+ Create** at the top of the reports menu, then **Dashboard**.
+
+</Step>
+<Step>
+
+Drag a card type, such as a score card, onto the grid.
+
+</Step>
+<Step>
+
+Drag the metrics and dimensions you want onto the card. Change its details in the panel on the right.
+
+</Step>
+<Step>
+
+Click **Save**, then **Publish** to add the dashboard to the reports menu, where everyone with access to the property can open it.
+
+</Step>
+</Steps>
+
+To change it later, open it from the reports menu and click the edit icon.
+
+## Six cards for a small site
+
+These answer the questions that matter ([which ones and why](/guides/understand-website-traffic)), using GA4's names:
+
+1. **Score card: Active users.** Your visitors.
+2. **Score card: Key events.** Signups or sales, once you've [marked them](/guides/ga4-key-events).
+3. **Line chart: Active users by date.** The trend.
+4. **Table: Session source, with Active users.** Where people came from.
+5. **Table: Page path, with Views.** Your top pages.
+6. **Table: Landing page, with Sessions.** Where visits start.
+
+Then turn on **Compare** in the date menu, so the score cards show the change from the period before.
+
+## Its limits
+
+- **Up to 15 cards** on a standard property (30 on Google Analytics 360).
+- **No segments and no comparisons inside a single card.**
+- **No API**, so other tools can't read it.
+- **Shared with the whole property** once published.
+- **One property at a time.** For several sites, see [all your GA4 sites in one dashboard](/guides/ga4-multiple-properties-one-dashboard).
+- **GA4's words.** It shows "active users" and "key events", so it's easiest if you already know them ([plain words](/glossary)).
+
+## Built-in dashboard, Looker Studio or a ready dashboard?
+
+| You want                                         | Use                                                                         |
+| ------------------------------------------------ | --------------------------------------------------------------------------- |
+| One page inside GA4, and you know its metrics    | GA4's built-in dashboard                                                    |
+| Charts mixing GA4 with other data, or many sites | Looker Studio                                                               |
+| Nothing to build, plain words, all your sites    | A ready dashboard. [The options](/compare/best-google-analytics-dashboards) |
+
+<InSimpleDash title="A dashboard you don't have to build">
+  SimpleDash is ready the moment you sign in: visitors, sources, top pages, landing pages, signups
+  and AI traffic on one page, in plain words, for every GA4 site your account can see. Viewer access
+  is enough, and there's nothing to drag. Free for all your sites.
+</InSimpleDash>
+
+## Related
+
+- [Why is GA4 so hard to use?](/guides/ga4-too-complicated)
+- [Best GA4 dashboards for small sites](/compare/best-google-analytics-dashboards)
+- [SimpleDash vs Looker Studio](/compare/simpledash-vs-looker-studio)
+
+## Sources
+
+- Google: [About Google Analytics dashboard](https://support.google.com/analytics/answer/17217303)

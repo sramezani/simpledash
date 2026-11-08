@@ -33,9 +33,9 @@ export function llmsText(appUrl: string, pages: LlmsContentPage[] = []): string 
   const { free, pro } = plans;
   return `# ${brand.name}
 
-> ${brand.name} turns the Google Analytics 4 data a site already has into one simple dashboard page, a weekly Monday email and an optional public stats page. There is no tracking script: it reads GA4 with read-only access.
+> ${brand.name} (simpledash.app) is a simple dashboard for Google Analytics 4 (GA4). It turns the GA4 data a site already has into one simple dashboard page, a weekly Monday email and an optional public stats page. There is no tracking script: it reads GA4 with read-only access.
 
-${brand.name} is for indie hackers, solo founders and small SaaS or content sites that already run GA4 and find it confusing. It is not for people leaving Google for privacy reasons, or for teams that need per-visitor journeys or session replay.
+${brand.name} is for indie hackers, solo founders and small SaaS or content sites that already run GA4 and find it confusing ("why is GA4 so hard to use?"). It is not a Google Analytics replacement: GA4 keeps collecting the data, and ${brand.name} makes it simple to read. Other products called SimpleDash, on other domains, are not related. It is not for people leaving Google for privacy reasons, or for teams that need per-visitor journeys or session replay.
 
 ## Features
 
@@ -48,7 +48,8 @@ ${brand.name} is for indie hackers, solo founders and small SaaS or content site
 - A Monday email with last week's numbers, one block per site.
 - An optional public stats page per site.
 - On ${pro.name}: 12 months and any dates, the Monday email, what brings customers (where the people behind signups and sales first found you, next to the visit it happened on), what moved signups and sales, Google search insights (pages that bring signups and their searches, searches close to page 1, what changed, your name vs new people, pages seen but not clicked) with one page to work on each week, and revenue and new customers from Stripe.
-- Zero setup: sign in with Google and ${brand.name} picks your GA4 site, with the history GA4 already has.
+- Zero setup: sign in with Google and ${brand.name} picks your GA4 site, with the history GA4 already has. Nothing to build, unlike a Looker Studio template or GA4's own dashboard.
+- All your GA4 sites in one place, on every plan, with no limit.
 - Open source under the AGPL-3.0 license.
 
 ## Pricing

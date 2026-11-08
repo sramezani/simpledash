@@ -1,0 +1,90 @@
+---
+title: "How to share Google Analytics: access, a report, or a public page"
+menuTitle: "Share Google Analytics"
+seoTitle: "How to share Google Analytics with someone (GA4)"
+description: "Three ways to share Google Analytics 4: give someone Viewer access, send them a report, or show your numbers on a public page that needs no Google login."
+updated: 2026-11-08
+---
+
+To share Google Analytics 4 with someone, give their Google account the **Viewer** role in Admin → **Access management**: they can then see every report but change nothing. To share only some numbers, send a report as a PDF, or show them on a public stats page that needs no Google login.
+
+## Which way to pick
+
+| You want them to                          | Share this way                                     |
+| ----------------------------------------- | -------------------------------------------------- |
+| Look around your GA4 themselves           | [Give access](#give-someone-access)                |
+| See one report, once or every week        | [Send a report](#send-a-report)                    |
+| See a few numbers, without a Google login | [A public stats page](#show-your-numbers-publicly) |
+
+## Give someone access
+
+You need the **Administrator** role on the account or property.
+
+<Steps>
+<Step>
+
+In GA4, open **Admin**. Under **Property** (one site) or **Account** (every site in it), click **Access management**.
+
+</Step>
+<Step>
+
+Click **+**, then **Add users**.
+
+</Step>
+<Step>
+
+Enter the email of their Google account and pick a role. **Viewer** is the safe choice: they can read reports and settings, and change nothing.
+
+</Step>
+<Step>
+
+Tick **Notify new users by email** if you want GA4 to tell them, then click **Add**.
+
+</Step>
+</Steps>
+
+To remove them later, go back to **Access management**, tick their name and click **Remove**.
+
+### Which role to give
+
+| Role          | Can                                    |
+| ------------- | -------------------------------------- |
+| Viewer        | See reports and settings               |
+| Analyst       | Also build explorations and share them |
+| Marketer      | Also edit audiences and key events     |
+| Editor        | Also change the property's settings    |
+| Administrator | Everything, including who has access   |
+
+Give the lowest role that does the job. An agency or a freelancer who changes your setup needs Editor; a co-founder or investor who only reads needs Viewer.
+
+## Send a report
+
+Open the report, click **Share this report** at the top right, then:
+
+- **Download file** for a PDF or CSV you can attach to an email, or
+- **Share link** to copy its address (it opens only for people who already have access), or
+- **Schedule email** to send it every week ([how](/guides/google-analytics-weekly-email-report)).
+
+## Show your numbers publicly
+
+GA4 has no public page. To show your visitors to anyone, such as followers when you build in public, an investor, or a sponsor, use a tool that publishes chosen numbers on a page without giving anyone your Google account. [How to share your Google Analytics stats publicly](/guides/public-analytics-page).
+
+## Is it safe to share Google Analytics access?
+
+Viewer access can't change your setup or delete data, but it shows everything in the property, including revenue if you track it. To hide money numbers, GA4's data restrictions (**No cost metrics**, **No revenue metrics**) can be set for each person in Access management.
+
+<InSimpleDash title="Share without giving access">
+  A SimpleDash public stats page shows the cards you pick, like visitors over time, top pages and
+  countries, at an address you can post anywhere. It's free, and nobody gets into your Google
+  account. [Set one up](/docs/public-page).
+</InSimpleDash>
+
+## Related
+
+- [How to share your stats publicly](/guides/public-analytics-page)
+- [How to see all your GA4 sites in one dashboard](/guides/ga4-multiple-properties-one-dashboard)
+
+## Sources
+
+- Google: [Add, edit, and delete users](https://support.google.com/analytics/answer/9305788)
+- Google: [Access and data-restriction management](https://support.google.com/analytics/answer/9305587)

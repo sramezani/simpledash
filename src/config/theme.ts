@@ -33,9 +33,24 @@ const neutral = {
 
 export const brand = {
   name: "SimpleDash",
-  tagline: "Google Analytics, in a dash.",
+  /** The landing page's headline (H1), the footer line and the social image. */
+  tagline: "Google Analytics, made simple.",
+  /**
+   * The landing page's <title> after "SimpleDash: ", with the words people search for
+   * (docs/KEYWORD-RESEARCH.md section 4). The headline is for people, this is for search.
+   */
+  title: "Simple GA4 Dashboard, Free for All Your Sites",
+  /** The landing page's subheadline. */
   description:
-    "Connect your Google account and see your visitors, sources and top pages on one page. No setup, no new tracking code, and the history GA4 already has.",
+    "A simple GA4 dashboard for all your sites. See visitors, where they came from, top pages and signups on one page. No tracking script, nothing to build. Free.",
+  /**
+   * One "X is a Y" sentence that search results and AI assistants can quote: the meta
+   * description and the structured data. Same words as the definition in llms.txt.
+   */
+  summary:
+    "SimpleDash is a simple dashboard for Google Analytics 4 (GA4). Sign in with Google and see visitors, sources, top pages and signups on one page. Free.",
+  /** Other names people use for us, for structured data. */
+  alternateName: "SimpleDash GA4 dashboard",
   url: "https://simpledash.app",
   supportEmail: "hello@simpledash.app",
   /** The open-source code (AGPL-3.0). */
@@ -43,6 +58,14 @@ export const brand = {
   /** Who makes SimpleDash: "Made by Sia" in the footer, linking to X. */
   makerName: "Sia",
   makerUrl: "https://x.com/siaramzee",
+  /**
+   * Our own pages on other sites, as structured data's sameAs. They tell search engines and
+   * AI assistants which SimpleDash we are (other products share the name).
+   */
+  profiles: [
+    "https://github.com/sramezani/simpledash",
+    "https://alternativeto.net/software/simpledash/about/",
+  ],
 } as const;
 
 /** The light palette: the default, and the one emails and images use. */

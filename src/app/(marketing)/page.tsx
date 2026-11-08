@@ -13,8 +13,8 @@ import { env } from "@/lib/env";
 import { jsonLd, softwareApplication } from "@/lib/seo/structured-data";
 
 export const metadata: Metadata = {
-  title: { absolute: `${brand.name}: ${brand.tagline}` },
-  description: brand.description,
+  title: { absolute: `${brand.name}: ${brand.title}` },
+  description: brand.summary,
   alternates: { canonical: "/" },
 };
 

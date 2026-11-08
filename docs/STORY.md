@@ -4,6 +4,34 @@ A dated log with one entry per session. **Newest entry first.**
 
 It is written for future Claude sessions: read the latest entry before starting work. Ideas that fall outside the roadmap go here too (Working rule 5).
 
+## 2026-11-08 · Session 21 · Keyword research for search and AI assistants
+
+### Done
+
+- **Keyword research** (Siamak: the title "Google Analytics, in a dash." feels random and unsearchable). Written up in `docs/KEYWORD-RESEARCH.md`: about 430 Google autocomplete seeds, search results for about 25 phrases, the titles and headlines of 11 competitors, Google's generative AI search guide (Jul 10, 2026) and a study of 468,037 AI citations (arXiv 2610.15033).
+- **Findings:** the title and H1 hold no searched word; "simple GA4 dashboard" and "Google Analytics made simple" are the words to own (not "Google Analytics alternative", which is privacy leavers). The biggest content gap is the pain searches ("why is ga4 so hard to use", "how to read google analytics"). GA4 now has its own built-in dashboard. About ten small "GA4 on top" tools compete (MetriBee, BetterGA, OwlInsight, SitePulse, Ramprt). The name SimpleDash is shared with at least five other products, and Founderkit still lists simpledash.app as a client-management tool.
+- Proposed: a new title, three headline options, subheadline, meta description and six question-shaped FAQ items; six retitles; seven new guides; a GEO plan (question-shaped titles, an "X is a Y" definition, getting named on the lists assistants search, Organization `sameAs`, Bing Webmaster Tools and IndexNow, Search Console's generative AI setting and report) and ten prompts to check each month.
+- Checked live: robots.txt allows all content, and GPTBot, ClaudeBot and PerplexityBot get 200.
+- **Then built it** (Siamak: "I trust you, pick the best one and change the whole site"):
+  - Landing: `<title>` "SimpleDash: Simple GA4 Dashboard, Free for All Your Sites" (`brand.title`), H1 "Google Analytics, made simple." (`brand.tagline`, also the footer and social image), a subheadline and an "X is a Y" meta description (`brand.summary`) in searched words. The questions section is "Questions about SimpleDash and GA4" with seven new questions (what it is, alternative or not, GA4's own dashboard, all sites, weekly email, Looker Studio, sharing publicly).
+  - `SoftwareApplication` gains `alternateName`, `sameAs` (GitHub, AlternativeTo, `brand.profiles`), license and an `Organization` publisher, shared with content pages (`organization()`, tested). `llms.txt` opens with "SimpleDash (simpledash.app) is a simple dashboard for GA4" and says other SimpleDash products aren't related; same definition in the content plan and README.
+  - Six new guides: `ga4-too-complicated`, `see-website-traffic-google-analytics`, `ga4-built-in-dashboard`, `ga4-multiple-properties-one-dashboard`, `google-analytics-weekly-email-report`, `share-google-analytics`, in a new "GA4 made simple" hub section and menu group. Steps come from Google's own help pages (read today): only Administrators can schedule emails and recipients must already have access; GA4's dashboard needs Editor, has up to 15 cards and no segments.
+  - Retitled: understand-website-traffic ("How to read Google Analytics", used instead of a second page), public-analytics-page, ga4-ai-traffic ("track"), docs/sites, the indie hackers list and the Looker Studio comparison. `best-google-analytics-dashboards` rewritten with GA4's built-in dashboard and five GA4-on-top tools in their own words. Older pages link to the new ones.
+  - Spec section 17, three decisions, README, checklist, content plan (cluster C2).
+- **Checked:** `npm run check` (63 files, 550 tests); in the browser at 1440 and 375 px: landing title, H1, meta description, FAQ and structured data; every new guide returns 200 with its title, the Markdown copy and `llms.txt`.
+
+### Learned
+
+- WebSearch failed in this setup (model error); DuckDuckGo's HTML results and Google's autocomplete endpoint worked from a script. Google Trends answers automated requests with 429, so there are no search volumes: check phrases in Keyword Planner.
+- The H1 is fixed in `docs/ROADMAP.md`, which only Siamak edits; the build went ahead on his go-ahead, so the roadmap's H1 line is now out of date until he changes it.
+- Typed routes don't know content pages (`/compare`, `/guides/...` are optional catch-alls), so a `Link` to them from a component needs `as Route`.
+
+### Next
+
+- Siamak: change the roadmap's H1 line to "Google Analytics, made simple."; click through the new guides' GA4 steps in a real property and add screenshots (not done here: written from Google's help pages); update the GitHub description, X bio and listings with the new definition; Search Console's generative AI setting and Bing Webmaster Tools; Lighthouse on the landing page after deploy.
+- Check each new guide's phrase in Keyword Planner, and in Search Console after a few weeks.
+- Idea: a read-only MCP server so people can ask Claude or ChatGPT about their numbers ("connect google analytics to claude" is searched; four competitors offer it). Outside the roadmap.
+
 ## 2026-11-06 · Session 20 · New sites in Settings, site names, light and dark
 
 ### Done

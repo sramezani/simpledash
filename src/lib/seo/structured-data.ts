@@ -29,15 +29,34 @@ export function softwareApplication(appUrl: string) {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: brand.name,
-    description: brand.description,
+    alternateName: brand.alternateName,
+    description: brand.summary,
     url: appUrl,
     applicationCategory: "BusinessApplication",
+    applicationSubCategory: "Google Analytics 4 dashboard",
     operatingSystem: "Web",
+    isAccessibleForFree: true,
+    license: "https://www.gnu.org/licenses/agpl-3.0.html",
+    sameAs: [...brand.profiles],
+    publisher: organization(appUrl),
+    creator: { "@type": "Person", name: brand.makerName, url: brand.makerUrl },
     offers: [
       offer(0, free.name),
       offer(pro.prices.month, `${pro.name}, monthly`, "MON"),
       offer(pro.prices.year, `${pro.name}, yearly`, "ANN"),
     ],
+  };
+}
+
+/** Who makes SimpleDash, with our pages elsewhere, so the name can't be mixed up. */
+export function organization(appUrl: string) {
+  return {
+    "@type": "Organization",
+    name: brand.name,
+    url: appUrl,
+    logo: `${appUrl}/icon`,
+    email: brand.supportEmail,
+    sameAs: [...brand.profiles],
   };
 }
 
@@ -51,12 +70,7 @@ export function contentArticle(input: {
   /** Docs pages are technical articles; guides, glossary and comparisons are articles. */
   technical: boolean;
 }) {
-  const publisher = {
-    "@type": "Organization",
-    name: brand.name,
-    url: input.appUrl,
-    logo: `${input.appUrl}/icon`,
-  };
+  const publisher = organization(input.appUrl);
   return {
     "@context": "https://schema.org",
     "@type": input.technical ? "TechArticle" : "Article",

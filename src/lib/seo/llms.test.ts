@@ -19,6 +19,9 @@ describe("llmsText", () => {
     expect(text).toContain("[Pricing](https://simpledash.app/#pricing)");
     expect(text).toContain("[Privacy policy](https://simpledash.app/privacy)");
     expect(text.startsWith("# SimpleDash")).toBe(true);
+    expect(text).toContain(
+      "> SimpleDash (simpledash.app) is a simple dashboard for Google Analytics 4 (GA4).",
+    );
   });
 
   it("lists content pages by section, each with its Markdown copy", () => {
