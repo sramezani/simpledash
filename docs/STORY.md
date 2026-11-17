@@ -4,6 +4,17 @@ A dated log with one entry per session. **Newest entry first.**
 
 It is written for future Claude sessions: read the latest entry before starting work. Ideas that fall outside the roadmap go here too (Working rule 5).
 
+## 2026-11-17 · Session 22 · Next.js 16.4.6 (security update)
+
+### Done
+
+- `next` and `eslint-config-next` moved from 16.4.2 to 16.4.6 (both still pinned exactly), after `next dev` in dr-noodle reported a known security vulnerability in the 16.4.x line. Only `package.json` and `package-lock.json` changed, and only Next's own packages (`next`, `@next/*` and its compiled binaries) in the lockfile.
+- `npm run check` passes (63 test files, 550 tests) and `npm run build` passes. Not committed: Siamak handles git.
+
+### Learned
+
+- `next dev` 16.4.6 writes an `AGENTS.md` into the repo and re-adds it on every start. Not checked here (the dev server was not started in this repo); expect it to appear. Disable with `agentRules: false` in `next.config.ts` or commit it.
+
 ## 2026-11-08 · Session 21 · Keyword research for search and AI assistants
 
 ### Done
